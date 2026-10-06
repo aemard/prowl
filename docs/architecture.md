@@ -195,6 +195,34 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour of
 the 5,000; four sections of 100 PRs every minute stay under 2,000.
 
+## Diff engine
+
+`diffSnapshots(prev, next, viewerLogin)` (`src/lib/diff/diffSnapshots.ts`) compares the PRs
+present in both snapshots and returns `PrEvent[]`, oldest first. A null `prev` (first poll after
+sign-in) or a `prev` taken for another account gives `[]`. A PR in only one snapshot gives
+nothing: a new one has no baseline, a missing one simply left the search scope (merged and
+closed PRs stay in `next`, see above). Changes the viewer made are left out; logins compare
+case-insensitively.
+
+| Event | prev -> next | `actor` | `at` | Id key |
+|---|---|---|---|---|
+| `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA |
+| `ci_passed` | checks `failure` -> `success` | null | `next.fetchedAt` | head SHA |
+| `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
+| `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
+| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, and `mergeStateStatus` `clean`, or `reviewDecision` approved / none with checks success / none and `mergeable` | null | `next.fetchedAt` | head SHA |
+| `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
+
+Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
+worker restart yields the same ids for the notifier to dedupe; the price is one event of each
+kind per head commit (a re-run that fails again on the same commit reuses the id).
+`comment_new` needs a newer latest issue comment because `commentCount` also counts review
+comments, which the review events already report. `isReadyToMerge` is exported for the badge.
+
+`ci_passed` compares consecutive polls only: failure -> pending -> success (a fix pushed, CI
+running during a poll) gives no `ci_passed`. To report it, the poller can pass a `prev` whose
+pending PRs carry their last settled check state.
+
 ## Storage
 
 All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of

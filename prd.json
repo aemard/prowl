@@ -126,8 +126,8 @@
       ],
       "priority": 6,
       "dependsOn": ["US-005"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "diffSnapshots + isReadyToMerge in src/lib/diff (100% coverage, 51 table-driven tests); ci_passed is literal (previous poll failure), so failure -> pending -> success needs the poller to pass the last settled check state (docs/architecture.md Diff engine)."
     },
     {
       "id": "US-007",
