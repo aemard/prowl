@@ -44,6 +44,7 @@ export default defineConfig({
         statements: 80,
         'src/lib/diff/**': strict,
         'src/lib/github/**': strict,
+        'src/lib/storage/**': { lines: 90, branches: 90, functions: 90, statements: 90 },
       },
     },
   },

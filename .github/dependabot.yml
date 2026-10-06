@@ -7,6 +7,16 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Pinned on purpose, see docs/decisions.md.
+      - dependency-name: '@playwright/test'
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: preact
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
