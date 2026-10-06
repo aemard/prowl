@@ -10,6 +10,31 @@
   padding: 0;
 }
 
+.onboarding__unavailable {
+  padding: var(--space-3);
+  border: var(--border-width) dashed var(--color-border-control);
+  border-radius: var(--radius-lg);
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+/* A rule on both sides of the text. */
+.onboarding__or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.onboarding__or::before,
+.onboarding__or::after {
+  content: "";
+  flex: 1;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
 .onboarding__form {
   display: flex;
   flex-direction: column;

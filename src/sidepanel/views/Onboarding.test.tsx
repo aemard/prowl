@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { viewerNode } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
+import { env } from '../../lib/env';
+import { AUTH_DOCS_URL } from '../../lib/github/auth/deviceFlow';
 import { TOKEN_URLS } from '../../lib/github/auth/pat';
 import { fakeChrome } from '../../test/chrome';
 import { toasts } from '../components/ui/Toast';
@@ -34,6 +36,16 @@ const submit = async (token: string) => {
 };
 
 describe('OnboardingView', () => {
+  it('offers to sign in from the browser first, and the token form as the alternative', () => {
+    render(<OnboardingView />);
+    expect(screen.getByRole('button', { name: 'Continue with GitHub' })).toBeTruthy();
+    expect(screen.getByText('or paste a token')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
+      'secondary',
+    );
+    expect(screen.queryByText(/not available in this build/)).toBeNull();
+  });
+
   it('explains both token types and links to pre-filled creation pages', () => {
     render(<OnboardingView />);
     expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
@@ -155,5 +167,37 @@ describe('OnboardingView', () => {
     await submit(TOKEN);
 
     await waitFor(() => expect(screen.getByText('Could not sign in. Try again.')).toBeTruthy());
+  });
+});
+
+describe('OnboardingView in a build without an OAuth client id', () => {
+  const clientId = env.clientId;
+  beforeEach(() => {
+    Object.assign(env, { clientId: '' });
+  });
+  afterEach(() => {
+    Object.assign(env, { clientId });
+  });
+
+  it('shows browser sign-in as unavailable with a link to the docs, and no dead button', () => {
+    render(<OnboardingView />);
+
+    expect(
+      screen.getByText(/Signing in from the browser is not available in this build/),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'How to sign in with a token' }).getAttribute('href'),
+    ).toBe(AUTH_DOCS_URL);
+    expect(screen.queryByRole('button', { name: 'Continue with GitHub' })).toBeNull();
+    expect(screen.queryByText('or paste a token')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
+      'primary',
+    );
+  });
+
+  it('opens the docs in a tab', () => {
+    render(<OnboardingView />);
+    fireEvent.click(screen.getByRole('link', { name: 'How to sign in with a token' }));
+    expect(fakeChrome().__state.createdTabs).toEqual([{ url: AUTH_DOCS_URL }]);
   });
 });

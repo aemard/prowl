@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getItems } from '../../lib/storage/storage';
 import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
+import { toasts } from '../components/ui/Toast';
 import { completeSignIn, signOut } from './session';
 
 afterEach(() => {
   location.hash = '';
+  toasts.value = [];
 });
 
 describe('completeSignIn', () => {
@@ -17,6 +19,13 @@ describe('completeSignIn', () => {
     expect((await chrome.storage.local.get('auth')).auth).toEqual(buildAuth('octocat'));
     expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
     expect(location.hash).toBe('#/');
+  });
+
+  it('keeps a warning on screen as a toast', async () => {
+    await completeSignIn(buildAuth('octocat'), 'This token has no repo scope.');
+    expect(toasts.value).toMatchObject([
+      { message: 'Signed in as octocat. This token has no repo scope.' },
+    ]);
   });
 
   it('does not navigate or poll when storing fails', async () => {

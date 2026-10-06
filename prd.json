@@ -236,8 +236,8 @@
       ],
       "priority": 12,
       "dependsOn": ["US-011"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Device flow in the panel: host permission asked in the click, code with copy and countdown, verification page opened, cancel; deviceFlow.ts (interval, slow_down, expired, denied, unsupported, abort); unavailable without a client id; 404-for-unknown-client unverified live."
     },
     {
       "id": "US-013",

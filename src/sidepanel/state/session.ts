@@ -1,14 +1,24 @@
 /** Signing in and out: what the panel owns of it (the worker reacts to the messages). */
 import { type AuthState, STORAGE_KEYS } from '../../lib/model';
 import { removeItems, setItem } from '../../lib/storage/storage';
+import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
 import { navigate } from './router';
 
-/** Stores the validated sign-in, asks the worker for the first poll and shows the list. */
-export async function completeSignIn(auth: AuthState): Promise<void> {
+/**
+ * Stores the validated sign-in (PAT or device flow), asks the worker for the first poll and shows
+ * the list. A `warning` (the token works but not fully) stays on screen as a toast.
+ */
+export async function completeSignIn(
+  auth: AuthState,
+  warning: string | null = null,
+): Promise<void> {
   await setItem(STORAGE_KEYS.auth, auth);
   void sendToBackground({ type: 'poll', force: true });
   navigate('list');
+  if (warning) {
+    showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
+  }
 }
 
 /**

@@ -1,14 +1,16 @@
 import type { ComponentChildren } from 'preact';
 import { useRef, useState } from 'preact/hooks';
+import { env } from '../../lib/env';
+import { AUTH_DOCS_URL } from '../../lib/github/auth/deviceFlow';
 import { signInErrorMessage, TOKEN_URLS, validatePat } from '../../lib/github/auth/pat';
 import { LinkExternalIcon, MarkGithubIcon } from '../components/icons';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { TextField } from '../components/ui/TextField';
-import { showToast } from '../components/ui/Toast';
 import { openGitHubUrl } from '../openUrl';
 import { completeSignIn } from '../state/session';
+import { DeviceFlow } from './DeviceFlow';
 import './Onboarding.css';
 
 /** A link to a GitHub page; opens through the allowlisted helper, not in the panel itself. */
@@ -30,12 +32,13 @@ function GitHubLink({ href, children }: { href: string; children: ComponentChild
   );
 }
 
-/** Shown while signed out: the token form and how to create a token. */
+/** Shown while signed out: sign in from the browser, or paste a token and learn how to make one. */
 export function OnboardingView() {
   const [token, setToken] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLElement>(null);
+  const deviceFlow = env.clientId !== '';
 
   async function submit(event: Event) {
     event.preventDefault();
@@ -44,10 +47,7 @@ export function OnboardingView() {
     setError(undefined);
     try {
       const { auth, warning } = await validatePat(token);
-      await completeSignIn(auth);
-      if (warning) {
-        showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
-      }
+      await completeSignIn(auth, warning);
     } catch (failure) {
       setError(signInErrorMessage(failure));
       setBusy(false);
@@ -62,8 +62,20 @@ export function OnboardingView() {
         class="onboarding__intro"
         icon={<MarkGithubIcon size={24} />}
         title="Sign in with GitHub"
-        description="Paste a personal access token. It stays in this browser and is only ever sent to GitHub."
+        description={`${deviceFlow ? 'Approve Prowl on GitHub, or paste' : 'Paste'} a personal access token. It stays in this browser and is only ever sent to GitHub.`}
       />
+
+      {deviceFlow ? (
+        <>
+          <DeviceFlow />
+          <p class="onboarding__or">or paste a token</p>
+        </>
+      ) : (
+        <p class="onboarding__unavailable">
+          Signing in from the browser is not available in this build.{' '}
+          <GitHubLink href={AUTH_DOCS_URL}>How to sign in with a token</GitHubLink>
+        </p>
+      )}
 
       <form class="onboarding__form" onSubmit={submit} noValidate>
         <TextField
@@ -77,7 +89,7 @@ export function OnboardingView() {
           spellcheck={false}
           inputRef={input}
         />
-        <Button type="submit" variant="primary" loading={busy}>
+        <Button type="submit" variant={deviceFlow ? 'secondary' : 'primary'} loading={busy}>
           Sign in
         </Button>
       </form>

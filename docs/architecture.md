@@ -404,9 +404,9 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   plus an optional warning, and throws only `GitHubError`; `signInErrorMessage(error)` turns it
   into the text onboarding shows inline (never the token: the client masks it in GitHub's
   messages and our own messages do not contain it).
-- **After validation** (`src/sidepanel/state/session.ts`): `completeSignIn(auth)` stores `auth`,
-  sends `{ type: 'poll', force: true }` and navigates to the list; a warning is shown as a toast
-  ("Signed in as octocat. ..."). `signOut()` (account menu, after a confirmation dialog) removes
+- **After validation** (`src/sidepanel/state/session.ts`): `completeSignIn(auth, warning)` stores
+  `auth`, sends `{ type: 'poll', force: true }` and navigates to the list; a warning is shown as a
+  toast ("Signed in as octocat. ..."), for PAT and device sign-ins alike. `signOut()` (account menu, after a confirmation dialog) removes
   `auth`, `snapshot` and `pollState` and sends `{ type: 'signedOut' }`; the worker clears alarms,
   badge and notifications. `settings` and `prLocal` stay (they hold no secrets and no account
   data beyond PR ids).
@@ -426,9 +426,32 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   access tokens" (limitations list "Using fine-grained personal access token to call the Checks
   API"), "Permissions required for fine-grained personal access tokens" (no Checks section),
   community discussion 129512.
-- **OAuth device flow**: needs an OAuth App client id (`PROWL_GITHUB_CLIENT_ID` at build time).
-  `github.com` is an optional host permission requested right before the flow starts. Scope
-  `repo`. Without a client id the UI explains how to use a PAT instead.
+- **OAuth device flow** (`src/lib/github/auth/deviceFlow.ts`, UI in `views/DeviceFlow.tsx`): needs
+  an OAuth App client id (`PROWL_GITHUB_CLIENT_ID` at build time; the id is public, there is no
+  client secret). Builds without one hide the button and link to `docs/auth.md` instead.
+  1. The button's click handler first calls `chrome.permissions.request` for `env.webUrl/*`
+     (`https://github.com/*`, an optional host permission; granted already in e2e builds), because
+     Chrome only prompts during the user gesture. A refusal is explained inline and nothing is sent.
+  2. `requestDeviceCode()` POSTs `client_id` + `scope=repo` (form-encoded, `Accept: application/json`)
+     to `{webUrl}/login/device/code` and returns `{ deviceCode, userCode, verificationUri,
+     expiresAt, interval }`. The panel shows the code (copy button, `Code expires in m:ss`, cancel),
+     and opens `verificationUri` in a tab through `openGitHubUrl`.
+  3. `pollForToken(code, { signal })` waits `interval` seconds, then POSTs
+     `client_id`, `device_code`, `grant_type=urn:ietf:params:oauth:grant-type:device_code` to
+     `{webUrl}/login/oauth/access_token`, repeating while GitHub answers `authorization_pending`
+     (`slow_down` adds 5 s to the interval for the rest of the flow). It resolves to the access token, or
+     throws `DeviceFlowError` with `reason`: `expired` (`expired_token`, or the code's lifetime ran
+     out locally), `denied` (`access_denied`), `unsupported` (`device_flow_disabled`,
+     `unauthorized_client`, `incorrect_client_credentials`, `unsupported_grant_type`, an empty
+     client id, or a 404), `network` or `server`. Aborting the signal rejects with its reason; the
+     panel aborts on cancel and when the view unmounts.
+  4. `validateDeviceToken(token)` is `validatePat` (viewer + scopes, a warning when `repo` is
+     missing) with `method: 'oauth'`; `completeSignIn(auth, warning)` stores it, polls and shows
+     the list, as for a PAT.
+  The flow lives in the panel only: closing the panel ends it (the code stays valid at GitHub for
+  its 15 minutes, but nothing polls), and the user starts again. Tokens from the flow do not
+  expire (OAuth Apps), and sign-out only forgets them locally; the user can revoke Prowl under
+  GitHub's "Authorized OAuth Apps" (`docs/auth.md`).
 - The token lives only in `chrome.storage.local` under `auth`. Sign-out: the panel deletes
   `auth`, `snapshot` and `pollState`, then sends `{ type: 'signedOut' }`; the worker clears the
   alarm, `pollState`, the badge and notifications, and drops a poll that was in flight.
