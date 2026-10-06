@@ -3,6 +3,7 @@ import type { JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Theme } from '../lib/model';
 import { Header } from './components/Header';
+import { StatusBanner } from './components/StatusBanner';
 import { Skeleton } from './components/ui/Skeleton';
 import { ToastRegion } from './components/ui/Toast';
 import { type Route, route } from './state/router';
@@ -72,6 +73,7 @@ function Shell() {
     <>
       <Header />
       <main ref={mainRef} class="app-main" tabIndex={-1} aria-label={LABELS[current]}>
+        {current !== 'onboarding' && <StatusBanner />}
         <View />
       </main>
     </>

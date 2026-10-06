@@ -394,8 +394,8 @@
       ],
       "priority": 21,
       "dependsOn": ["US-013", "US-007"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "StatusBanner above every view but sign-in: rejected token (alert, Re-authenticate keeps settings), rate limited until time, offline retrying in N min, GitHub error with Retry, stale data with its age; list never hidden. E2E drives 401, 403 rate limit, 502, refused connection and stale data; axe clean in light and dark; pnpm verify green."
     },
     {
       "id": "US-022",

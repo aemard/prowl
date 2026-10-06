@@ -102,16 +102,14 @@ describe('states without pull requests', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('says why nothing loaded, and retries on request', () => {
+  it('says nothing loaded and leaves the reason and the retry to the banner', () => {
     pollState.value = buildPollState({
       lastError: { kind: 'network', message: 'You are offline' },
     });
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
     render(<ListView />);
     expect(screen.getByRole('heading', { name: 'Could not load pull requests' })).toBeTruthy();
-    expect(screen.getByText('You are offline')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(screen.getByText(/The notice above says why/)).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('keeps the skeleton while a retry is running', () => {

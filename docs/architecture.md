@@ -520,9 +520,28 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match). The
   selected tab and the filter are module signals, so they survive a visit to Settings. States:
-  skeleton until the first snapshot (or an error with "Try again" when the first poll failed),
-  no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
+  skeleton until the first snapshot (or "Could not load pull requests" when the first poll failed;
+  the banner has the reason and the retry), no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
   for a section in `snapshot.sectionErrors`.
+- Status banner (`components/StatusBanner.tsx`, in `<main>` above every view except onboarding):
+  `describeStatus(pollState, snapshot.fetchedAt, interval, now)` (`StatusBannerModel.ts`, pure,
+  table-tested) picks at most one banner from what the worker stored, and the list below it is
+  never replaced or hidden by it:
+
+  | `pollState` | Banner | Action |
+  |---|---|---|
+  | `unauthorized` | "Your GitHub token was revoked or expired" (`role="alert"`, danger) | Re-authenticate: `navigate('onboarding')`; settings and snapshot stay, a new token signs in and forces a poll |
+  | `rate_limited`, wait pending | "Rate limited until 3:37 PM" (`nextAllowedAt`; warning) | none: a forced poll respects the wait. Once it has passed: "GitHub rate limit has reset" and Retry |
+  | no error, `nextAllowedAt` pending, under 100 points left | "GitHub rate limit almost used up", "Refreshing resumes at ..." | none |
+  | `network` | "Offline — retrying in N min" (`nextAllowedAt`, else "retrying soon"; warning) | Retry (forced poll, which skips a backoff) |
+  | any other error | "GitHub error — retrying in N min" and GitHub's message (danger) | Retry |
+  | none, snapshot older than max(10 min, 5 intervals), no poll running | "Pull requests may be out of date" (warning) | Refresh now |
+
+  Every banner adds "Last updated 14 min ago." when the snapshot is at least a minute old. Only
+  the title and detail are in the live region (`role="status"`, or `alert` for a rejected token):
+  the age and the countdown tick, and a screen reader should not hear them again each time. The
+  banner re-renders every 30 s and reads `Date.now()` itself. A poll that is running shows the
+  Retry button as busy.
 - Unseen: a PR is unseen when `prLocal.seen[id]` is missing or older than its `updatedAt`
   (`isSeen`). The list observes its cards (IntersectionObserver, 60% visible) and, once the same
   unseen cards have stayed on screen for 1.5 s while `document.visibilityState` is visible, sends

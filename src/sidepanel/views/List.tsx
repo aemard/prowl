@@ -162,16 +162,12 @@ export function ListView() {
 
   if (!snap) {
     const failure = pollState.value;
+    // The banner above has the reason and the way out (retry, re-authenticate).
     return failure?.lastError && !failure.inFlight ? (
       <EmptyState
         icon={<AlertIcon size={24} />}
         title="Could not load pull requests"
-        description={failure.lastError.message}
-        action={
-          <Button onClick={() => void sendToBackground({ type: 'poll', force: true })}>
-            Try again
-          </Button>
-        }
+        description="Nothing has been fetched yet. The notice above says why."
       />
     ) : (
       <ListSkeleton />

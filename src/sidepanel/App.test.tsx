@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildAuth } from '../test/panel';
+import { buildAuth, buildPollState, buildPullRequest, buildSnapshotOf } from '../test/panel';
 import { App } from './App';
 import { navigate } from './state/router';
 import { hydrated, hydrateStore } from './state/store';
@@ -85,6 +85,23 @@ describe('App', () => {
 
     await act(() => chrome.storage.local.set({ settings: { theme: 'system' } }));
     expect(theme()).toBeUndefined();
+  });
+
+  it('shows a banner above the list without hiding it, and not on the sign-in screen', async () => {
+    const pr = buildPullRequest({ number: 7, title: 'Still readable' });
+    await open({
+      auth: buildAuth(),
+      snapshot: buildSnapshotOf({ authored: [pr] }),
+      pollState: buildPollState({
+        lastError: { kind: 'unauthorized', message: 'Bad credentials' },
+      }),
+    });
+    expect(screen.getByRole('alert').textContent).toContain('token was revoked or expired');
+    expect(screen.getByRole('link', { name: /Still readable/ })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Re-authenticate' }));
+    expect(await screen.findByRole('main', { name: 'Sign in' })).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('mounts the toast region once', async () => {
