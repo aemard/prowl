@@ -35,5 +35,5 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
 
-Flake check for v1.0.0: the full suite ran three times in a row without a failure (see
+Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time (see
 `progress.txt`, US-027).

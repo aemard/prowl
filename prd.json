@@ -493,8 +493,8 @@
       ],
       "priority": 27,
       "dependsOn": ["US-022", "US-023"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "docs/e2e-coverage.md maps every Decisions row to E2E; added every-event notifications and scope E2E; screenshots regenerated; full suite 3x in a row: 93/93 each; coverage 99.4% statements / 98.4% branches (diff/github 100%)."
     },
     {
       "id": "US-028",
