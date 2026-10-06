@@ -1,0 +1,63 @@
+.section-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: 0 var(--space-3);
+  overflow-x: auto;
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  scrollbar-width: none;
+}
+
+.section-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.section-tabs__tab {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--control-md);
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-muted);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.section-tabs__tab:hover {
+  color: var(--color-fg);
+}
+
+.section-tabs__tab[aria-selected="true"] {
+  color: var(--color-fg);
+}
+
+/* Selection is the underline plus the accent count, never color alone: the tab also reads as
+   selected to assistive tech and is the only one in the tab order. */
+.section-tabs__tab::after {
+  content: "";
+  position: absolute;
+  right: var(--space-2);
+  bottom: calc(var(--border-width) * -1);
+  left: var(--space-2);
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+
+.section-tabs__tab[aria-selected="true"]::after {
+  background: var(--color-accent-solid);
+}
+
+.section-tabs__tab:focus-visible {
+  outline-offset: calc(var(--focus-width) * -1);
+}
+
+.section-tabs__failed {
+  display: inline-flex;
+  color: var(--color-warning-fg);
+}

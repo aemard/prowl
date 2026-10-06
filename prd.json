@@ -255,8 +255,8 @@
       ],
       "priority": 13,
       "dependsOn": ["US-010", "US-007"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "List with section tabs (counts follow the filter), sort, quick filter, cards with status chips and labels with computed contrast, unseen dot with markSeen after 1.5 s, empty/skeleton/error states; screenshots list-light.png and list-dark.png, axe clean."
     },
     {
       "id": "US-014",

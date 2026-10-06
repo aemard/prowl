@@ -1,0 +1,47 @@
+.list__filter {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.pr-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-warning-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-fg);
+  overflow-wrap: anywhere;
+}
+
+.list__notice .icon {
+  flex-shrink: 0;
+  margin-top: var(--space-0-5);
+}
+
+.list__skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.list__skeleton-head,
+.list__skeleton-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.list__skeleton-chips {
+  gap: var(--space-1);
+}

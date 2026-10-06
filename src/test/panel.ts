@@ -1,5 +1,5 @@
 /** Builders for the stored values the side panel reads. Used by the panel's unit tests. */
-import type { AuthState, PollState, Snapshot } from '../lib/model';
+import type { AuthState, PollState, PullRequest, Snapshot } from '../lib/model';
 
 export function buildAuth(login = 'octocat'): AuthState {
   return {
@@ -27,4 +27,53 @@ export function buildPollState(overrides: Partial<PollState> = {}): PollState {
     inFlight: false,
     ...overrides,
   };
+}
+
+/** An open, mergeable PR with no checks, reviews or labels; override what a test cares about. */
+export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequest {
+  const number = overrides.number ?? 1;
+  const nameWithOwner = overrides.repo?.nameWithOwner ?? 'acme/widgets';
+  const [owner = '', name = ''] = nameWithOwner.split('/');
+  return {
+    id: `PR_${nameWithOwner.replace('/', '_')}_${number}`,
+    number,
+    title: `Improve widget ${number}`,
+    url: `https://github.com/${nameWithOwner}/pull/${number}`,
+    repo: { owner, name, nameWithOwner },
+    author: { login: 'alice', avatarUrl: 'https://avatars.githubusercontent.com/alice' },
+    state: 'open',
+    isDraft: false,
+    headRefName: `feature-${number}`,
+    baseRefName: 'main',
+    headSha: 'a'.repeat(40),
+    createdAt: '2026-10-01T09:00:00.000Z',
+    updatedAt: '2026-10-06T10:00:00.000Z',
+    checks: { state: 'none', total: 0, passed: 0, failed: 0, pending: 0, neutral: 0 },
+    reviewDecision: 'none',
+    reviews: [],
+    requestedReviewers: [],
+    mergeable: 'mergeable',
+    mergeStateStatus: 'blocked',
+    labels: [],
+    unresolvedThreads: 0,
+    commentCount: 0,
+    lastComment: null,
+    closedBy: null,
+    allowedMergeMethods: ['merge', 'squash'],
+    viewerCanUpdate: true,
+    ...overrides,
+  };
+}
+
+/** A snapshot whose sections hold these PRs (section id -> PRs, in order). */
+export function buildSnapshotOf(
+  sections: Record<string, PullRequest[]>,
+  overrides: Partial<Snapshot> = {},
+): Snapshot {
+  const snapshot = buildSnapshot();
+  for (const [id, prs] of Object.entries(sections)) {
+    snapshot.sections[id] = prs.map((pr) => pr.id);
+    for (const pr of prs) snapshot.pullRequests[pr.id] = pr;
+  }
+  return { ...snapshot, ...overrides };
 }

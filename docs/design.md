@@ -139,8 +139,12 @@ UI components and graphics, 3:1 minimum.
 | `brand-pupil` | `brand-eye` | 9.03 | 9.03 |
 <!-- contrast:end -->
 
-GitHub label colors are user-defined; the PR card must compute a readable text color from the
-label color at runtime (US-013) rather than use them as-is.
+GitHub label colors are user-defined, so the PR card cannot take label text from tokens:
+`labelColors()` (`components/labelColor.ts`) fills the chip with the label color and picks white
+text when that reaches 4.5:1, black otherwise (black then has at least 4.67:1). The border is the
+label color mixed with `--color-fg`, so near-white and near-black labels keep an edge in both
+themes. A unit test checks the ratio over the whole color cube and an E2E test on the rendered
+chips.
 
 ## Typography
 
@@ -210,7 +214,7 @@ an icon, copy the `d` of its 16 px SVG into `icons/index.ts` as
 | `GitPullRequestIcon`, `GitPullRequestDraftIcon`, `GitPullRequestClosedIcon`, `GitMergeIcon` | PR open, draft, closed, merged |
 | `CheckIcon`, `XIcon`, `DotFillIcon`, `SkipIcon` | Checks passed, failed, pending, skipped; approve; close |
 | `CheckCircleFillIcon`, `XCircleFillIcon`, `AlertIcon`, `AlertFillIcon`, `InfoIcon` | Toast and banner tones, conflicts, field errors |
-| `CommentIcon`, `CommentDiscussionIcon`, `EyeIcon`, `PersonIcon`, `MentionIcon` | Comments, unresolved threads, review requested, author, mentioned |
+| `CommentIcon`, `CommentDiscussionIcon`, `EyeIcon`, `PersonIcon`, `MentionIcon`, `FileDiffIcon` | Comments, unresolved threads, review required, author, mentioned, changes requested |
 | `SyncIcon`, `GearIcon`, `KebabHorizontalIcon`, `ChevronDownIcon`, `ChevronUpIcon`, `ChevronRightIcon`, `ArrowLeftIcon` | Refresh, settings, more actions, expand, navigate, back |
 | `SearchIcon`, `BellIcon`, `BellSlashIcon`, `ClockIcon`, `LinkExternalIcon`, `CopyIcon`, `GitBranchIcon` | Filter, notifications, muted, snooze, open in GitHub, copy, branch |
 | `SignOutIcon`, `MarkGithubIcon`, `KeyIcon`, `PlusIcon`, `TrashIcon`, `PencilIcon`, `InboxIcon`, `CloudOfflineIcon` | Account, sign-in, token, add/remove/edit, empty list, offline |
@@ -240,12 +244,27 @@ attributes (`data-variant`, `data-size`, `data-tone`) styled in the component's 
 `Field` (label, hint, error layout plus `.ui-control` chrome) is internal to `TextField` and
 `Select`. `cx.ts` has `cx()` for class names, the shared `Tone` type and `focusableIn()`.
 
+### Feature components
+
+Built from the components above; they live in `components/`, not `components/ui/`.
+
+| Component | Use it for | Notes |
+|---|---|---|
+| `PullRequestCard` | One PR in the list | A single `<a>` to GitHub, full width, hairline separated, hover `bg-hover`, ring inset. Rows: repo#number + last activity (avatar left), title (2 lines, then ellipsis), status chips, labels, counts + "Opened ... ago". Labels and counts share a line when they fit. The accessible name is the title first, then every fact the card shows (`describePullRequest`). A dot in the left gutter marks unseen changes and is in the name too. |
+| `SectionTabs` | Sections of the list | APG tabs: one tab stop, arrows / Home / End select, count `Badge` (accent when selected), warning icon + "Could not load" instead of a count for a failed section. Scrolls sideways when too wide; the wheel scrolls it. |
+
+**Status chips** (`prStatus.ts`, always icon + word, tone from the table above): Draft (neutral);
+CI "2 failing" / "3 pending" / "8 passed" (none when there are no checks); Approved / Changes
+requested / Review required (hidden on drafts, which nobody is expected to review yet);
+Conflicts (warning) or Ready to merge (success, replaces Approved because it implies it).
+
 ### Patterns
 
 - **One primary button per view.** Destructive confirmations put Cancel first and a `danger`
   button last; `initialFocus` goes to the least destructive control.
 - **Lists:** rows are full-width, hairline-separated (`--color-border-subtle`), hover
   `--color-bg-hover`, selected `--color-bg-active`. Row actions use `size="sm"` controls.
+  Rows that touch the panel edge draw their focus ring inside (`outline-offset` negative).
 - **Status chips:** `Badge tone=… size="sm"` with a 12 px icon: ✕ "2 failing", ● "Review
   required", ⚠ "Conflicts", merge icon "Merged".
 - **Loading:** show skeletons that match the final layout for first loads. For refreshes keep the

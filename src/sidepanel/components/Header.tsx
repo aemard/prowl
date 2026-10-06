@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { env } from '../../lib/env';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { openGitHubUrl } from '../openUrl';
@@ -13,19 +13,11 @@ import { Dialog } from './ui/Dialog';
 import { IconButton } from './ui/IconButton';
 import { Menu } from './ui/Menu';
 import { showToast } from './ui/Toast';
+import { useNow } from './useNow';
 import './Header.css';
 
-/** Re-renders every `ms` so relative times keep up with the clock. */
-function useTicker(ms: number): void {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((tick) => tick + 1), ms);
-    return () => clearInterval(id);
-  }, [ms]);
-}
-
 function UpdatedAt() {
-  useTicker(15_000);
+  useNow(15_000);
   const fetchedAt = snapshot.value?.fetchedAt;
   if (!fetchedAt) {
     return (

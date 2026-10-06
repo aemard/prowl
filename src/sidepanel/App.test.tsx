@@ -49,7 +49,7 @@ describe('App', () => {
   it('lands signed-in users on the list with the header controls', async () => {
     await open({ auth: buildAuth() });
     expect(screen.getByRole('main', { name: 'Pull requests' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'No pull requests yet' })).toBeTruthy();
+    expect(screen.getByRole('status', { name: 'Loading pull requests' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
   });
 

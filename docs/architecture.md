@@ -425,6 +425,23 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   `prefers-color-scheme` applies); `<ToastRegion />` is mounted once in `App`.
 - Components in `src/sidepanel/components/ui/` are the design system; feature components
   compose them. One CSS file per component, tokens only (no raw colors).
+- List (`views/List.tsx`): sections come from `settings.sections` (enabled ones; a single one has
+  no tabs), each tab shows its number of PRs that match the quick filter. PRs are
+  `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
+  `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match). The
+  selected tab and the filter are module signals, so they survive a visit to Settings. States:
+  skeleton until the first snapshot (or an error with "Try again" when the first poll failed),
+  no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
+  for a section in `snapshot.sectionErrors`.
+- Unseen: a PR is unseen when `prLocal.seen[id]` is missing or older than its `updatedAt`
+  (`isSeen`). The list observes its cards (IntersectionObserver, 60% visible) and, once the same
+  unseen cards have stayed on screen for 1.5 s while `document.visibilityState` is visible, sends
+  one `{ type: 'markSeen', prIds }`; a scroll, a hidden panel or a new snapshot restarts the wait.
+  The worker stores `seen`, and the dot disappears through the storage subscription.
+- `PullRequestCard` is one `<a>`: `href` only for URLs on `env.webUrl`, click opens through
+  `openGitHubUrl`. Chips and the accessible name come from `components/prStatus.ts` (pure,
+  table-tested; ready-to-merge reuses `isReadyToMerge` from the diff engine). Relative times take
+  `now` from `useNow` in the list, so they refresh every 30 s.
 
 ## Testing
 

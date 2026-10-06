@@ -1,0 +1,164 @@
+.pr-card {
+  position: relative;
+  list-style: none;
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.pr-card__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-fg);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.pr-card__link:hover {
+  background: var(--color-bg-hover);
+}
+
+.pr-card__link:active {
+  background: var(--color-bg-active);
+}
+
+/* The card spans the panel edge to edge, so the focus ring sits inside it. */
+.pr-card__link:focus-visible {
+  outline-offset: calc(var(--focus-width) * -1);
+}
+
+/* Unseen changes: a dot in the left gutter (the accessible name says it too). */
+.pr-card__dot {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-1);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-accent-solid);
+}
+
+.pr-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-fg-muted);
+}
+
+.pr-card__avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-active);
+  color: var(--color-fg-muted);
+  object-fit: cover;
+}
+
+/* The repository name gives way first; the number always stays. */
+.pr-card__repo {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.pr-card__repo-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-card__number {
+  flex-shrink: 0;
+  margin-left: var(--space-0-5);
+}
+
+.pr-card__updated {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pr-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.pr-card__chips,
+.pr-card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* Labels and counts share a line when they fit; otherwise the counts wrap below. */
+.pr-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.pr-card__labels {
+  max-width: 100%;
+}
+
+/* GitHub label: its own color, with black or white text chosen for contrast (labelColor.ts). */
+.pr-label {
+  --label-bg: var(--color-neutral-bg);
+  --label-fg: var(--color-neutral-fg);
+
+  max-width: 100%;
+  height: var(--leading-sm);
+  padding: 0 var(--space-1-5);
+  overflow: hidden;
+  border: var(--border-width) solid color-mix(in srgb, var(--label-bg), var(--color-fg) 22%);
+  border-radius: var(--radius-full);
+  background: var(--label-bg);
+  color: var(--label-fg);
+  font-size: var(--text-xs);
+  line-height: calc(var(--leading-sm) - 2 * var(--border-width));
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-label--more {
+  border-color: var(--color-neutral-border);
+}
+
+.pr-card__foot {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-fg-muted);
+}
+
+.pr-card__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-card__age {
+  margin-left: auto;
+  white-space: nowrap;
+}
