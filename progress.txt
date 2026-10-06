@@ -23,6 +23,9 @@ Started: 2026-10-06
 - Signals gotcha: a component that reads signals only re-renders when those signals or its props change, so a parent's timer re-render does not reach a child; put `useTicker` (relative times) in the component that shows the time.
 - Panel unit tests: build stored values with `src/test/panel.ts` (`buildAuth`, `buildSnapshot`, `buildPollState`), seed `chrome.storage.local`, `await hydrateStore()` inside `act`, and reset `auth.value` / `location.hash` in `afterEach` (module signals outlive a test).
 - Panel E2E: `seedStorage({ auth, snapshot, pollState })` writes from the service worker and an open panel follows live; seed before `openPanel()` for the first render. Spy on messages with `chrome.runtime.onMessage.addListener` in `serviceWorker.evaluate`.
+- Worker: `poll({ force })` (src/background/poller.ts) is the only way to poll; it is single-flight, never rejects, and resolves to `{ snapshot, events }` or null. US-008/US-009 hook in at the end of `runPoll` (once per poll), not in callers. `clearSignedOut()` clears alarm, pollState, badge and notifications. Backoff/rate-limit math is pure in src/lib/time/backoff.ts.
+- Worker messages are answered once handled (`await chrome.runtime.sendMessage({ type: 'poll', force: true })` resolves when the poll is done). E2E: `signIn(overrides?)` stores `E2E_AUTH` (token `ghp_e2e`), `poll()` forces a poll and waits; register `github.onGraphQL('ProwlSearch', ...)` before `poll()`.
+- Snapshot has optional `sectionErrors` (custom section id -> message) and `settledChecks` (built by `carrySettledChecks`); readers treat absent as empty.
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -94,4 +97,14 @@ Started: 2026-10-06
   - Sign-out (US-011) only has to remove `auth`, `snapshot` and `pollState` from storage: the panel switches to onboarding on its own because the route derives from `auth`. Add the item to the account menu in `Header.tsx`.
   - Side panel bundle is now 16.5 KB JS / 3.6 KB CSS gzip (budget 60 / 12 KB) now that the design-system components are imported.
   - Bundled views are placeholders; US-022 should lazy-load Settings.
+---
+## 2026-10-06 - US-007 Background poller with alarms, backoff and rate-limit awareness
+- poller.ts: `poll({ force })` single-flight (in-memory promise), `scheduleAlarm` (idempotent, re-created by every poll that runs), skip rules (signed out -> clear alarm; unauthorized stops until forced; backoff skipped by force, rate-limit waits never), two pollState writes (inFlight, then outcome), atomic snapshot + pollState write, prLocal pruning (kept while a section failed), auth re-check before writing (drop on sign-out, restart for another account), stale inFlight reset. messages.ts routes poll / markSeen / signedOut (sender + shape checked, answered once handled). register.ts: install/startup poll, alarm, messages, interval changes.
+- backoff.ts: `backoffDelay` (interval x 2^n, 30 min cap, up to 25% jitter below), `rateLimitedUntil`, `isWaiting` (waits > 1 h ignored: clock went back), `retryAt`.
+- Diff: `Snapshot.settledChecks` + `carrySettledChecks` so failure -> pending -> success gives one `ci_passed`; `Snapshot.sectionErrors` persisted.
+- Files: src/background/{poller,messages,register}.ts (+ tests), src/lib/time/backoff.ts (+ test), src/lib/diff/diffSnapshots.ts (+ test), src/lib/model.ts, tests/e2e/{fixtures,poller.spec}.ts, docs/{architecture,decisions}.md.
+- Learnings:
+  - The worker cannot `runtime.sendMessage` to itself: E2E `poll()` sends from a panel tab. Seeding `auth` does not start polling by itself (no auth subscription); US-011 should send a forced poll after storing auth, which also re-creates the alarm.
+  - Unit tests: `vi.useFakeTimers({ now, toFake: ['Date'] })` + `vi.stubGlobal('fetch', ...)` drives the real client; build a fresh `Response` per request (a body reads once). `vi.spyOn(Math, 'random')` pins jitter.
+  - Not done (other stories): notifications, badge (US-008/009 hook at the end of runPoll), panel banners for `lastError` / `sectionErrors` (US-021), `ensureSettings()` on install (no migrations yet).
 ---

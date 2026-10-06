@@ -7,6 +7,9 @@
 /** Aggregated CI state for the head commit. `none` = no checks configured. */
 export type CheckState = 'success' | 'failure' | 'pending' | 'none';
 
+/** What CI last concluded: any check state but `pending`. */
+export type SettledCheckState = Exclude<CheckState, 'pending'>;
+
 export interface CheckSummary {
   state: CheckState;
   total: number;
@@ -123,6 +126,16 @@ export interface Snapshot {
   pullRequests: Record<string, PullRequest>;
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
+  /**
+   * Custom section id -> why it could not be loaded in this poll (invalid query, or GitHub
+   * refused it); such a section has no entry in `sections`. Absent means none.
+   */
+  sectionErrors?: Record<string, string>;
+  /**
+   * PR id -> check state of its last poll that was not `pending`, for the PRs whose checks are
+   * pending now, so failure -> pending -> success still reports `ci_passed`. Absent means none.
+   */
+  settledChecks?: Record<string, SettledCheckState>;
 }
 
 export type PrEventType =

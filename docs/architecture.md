@@ -39,8 +39,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
-| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours, backoff | 80% |
-| `src/background/` | Service worker wiring: poller, notifier, badge, message router | 80% |
+| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours, backoff (`backoff.ts`) | 80% |
+| `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
 | `src/styles/` | `tokens.css` (design tokens, light/dark), `base.css` | n/a |
 | `src/test/` | `chrome.ts` fake used by every unit test | excluded |
@@ -49,18 +49,21 @@ in-memory updates that the next snapshot replaces.
 
 ## Data flow of a poll
 
-1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 1, default 2).
-2. The poller skips if no auth, if a poll is in flight (single-flight), or if
-   `pollState.nextAllowedAt` is in the future (backoff or rate limit), unless forced and not
-   rate-limited.
+1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 1, default 2). The
+   worker also polls on `runtime.onInstalled` / `onStartup`, and a forced poll on the panel's
+   `{ type: 'poll', force: true }`.
+2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
+   forced), or if `pollState.nextAllowedAt` is in the future: a forced poll skips a backoff
+   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight).
 3. `fetchPullRequests` (see [Fetching pull requests](#fetching-pull-requests)) builds each
    enabled section's search query (`src/lib/github/search.ts`) and fetches it with
    `query ProwlSearch` (pages of 50, cursor-paginated up to `maxPerSection`), selecting
    `rateLimit { limit remaining resetAt cost }`.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
-5. Repo include/exclude filters are applied; the poller adds `fetchedAt` and the viewer (from
-   `auth`) to build the new `Snapshot` and persists it.
+5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
+   `auth`), `sectionErrors` and `settledChecks` to build the new `Snapshot`, and persists it
+   with `pollState` in one write. Local PR state of PRs no longer in the snapshot is pruned.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm).
 7. Notifier filters events (per-event toggles, mute, snooze, quiet hours) and creates
@@ -207,7 +210,7 @@ case-insensitively.
 | Event | prev -> next | `actor` | `at` | Id key |
 |---|---|---|---|---|
 | `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA |
-| `ci_passed` | checks `failure` -> `success` | null | `next.fetchedAt` | head SHA |
+| `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, and `mergeStateStatus` `clean`, or `reviewDecision` approved / none with checks success / none and `mergeable` | null | `next.fetchedAt` | head SHA |
@@ -219,9 +222,56 @@ kind per head commit (a re-run that fails again on the same commit reuses the id
 `comment_new` needs a newer latest issue comment because `commentCount` also counts review
 comments, which the review events already report. `isReadyToMerge` is exported for the badge.
 
-`ci_passed` compares consecutive polls only: failure -> pending -> success (a fix pushed, CI
-running during a poll) gives no `ci_passed`. To report it, the poller can pass a `prev` whose
-pending PRs carry their last settled check state.
+CI usually goes failure -> pending (a fix pushed, a re-run) -> success, so `ci_passed` compares
+with the state CI last concluded rather than the previous poll: `snapshot.settledChecks` holds,
+for each PR whose checks are pending, the last non-pending state, and the poller builds it with
+`carrySettledChecks(prev, next.pullRequests)` (exported next to `diffSnapshots`).
+failure -> pending -> success gives one `ci_passed`, success -> pending -> success none.
+`ci_failed` still compares consecutive polls (a failure after pending is news either way).
+
+## Service worker
+
+`register.ts` adds every listener synchronously at startup: install / startup (side panel
+behavior, then `poll()`), the `poll` alarm, `runtime.onMessage` (`messages.ts`) and settings
+changes (a new `pollIntervalMinutes` replaces a running alarm; nothing is scheduled while
+signed out or stopped).
+
+`poller.ts`:
+
+- `poll({ force })` runs at most one poll at a time (an in-memory promise; concurrent callers
+  share it) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
+  stored a snapshot, null otherwise. Notifications (US-008) and the badge (US-009) hook in at
+  the end of the poll itself, once per poll, not in its callers.
+- Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
+  with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
+- `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
+  the outcome. Single-flight lives in memory, so a stored `inFlight: true` seen by a poll that
+  is skipped is stale (the worker stopped mid-poll) and is reset.
+- Outcome (pure helpers in `src/lib/time/backoff.ts`):
+
+  | Outcome | `nextAllowedAt` | Other |
+  |---|---|---|
+  | success | `rateLimit.resetAt` when fewer than 100 points remain, else null | failures 0, `lastError` null, `lastSuccessAt` |
+  | `rate_limited` | later of `resetAt` and now + `retryAfterSeconds` | failures + 1 |
+  | `unauthorized` | null | alarm cleared: only a forced poll (re-auth, refresh) tries again |
+  | any other error | now + `interval × 2^failures` (this failure included), at most 30 min, minus up to 25% jitter | failures + 1 |
+
+  A wait after an error other than `rate_limited` is a backoff, which a forced poll skips; a
+  wait after a rate limit or a low-budget success is not. Waits are capped at one hour, and a
+  stored wait longer than that is ignored (the clock went back). A failure of something other
+  than GitHub (a bug) is stored as `server` with a generic message; details go to the console.
+- A custom section that GitHub refuses lands in `snapshot.sectionErrors` and the poll counts as
+  a success. While any section failed, pruning keeps the local state of PRs not in the
+  snapshot (only ended snoozes go), since that section's PRs are missing.
+- Before storing anything the poller re-reads `auth`: if its token changed (sign-out, another
+  account) the result is dropped; it starts over when someone is signed in, else it clears
+  what a sign-out clears. A snapshot of another account is never used as the baseline.
+
+`messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
+their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
+a forced poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
+`signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text and every
+notification.
 
 ## Storage
 
@@ -263,8 +313,9 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 - **OAuth device flow**: needs an OAuth App client id (`PROWL_GITHUB_CLIENT_ID` at build time).
   `github.com` is an optional host permission requested right before the flow starts. Scope
   `repo`. Without a client id the UI explains how to use a PAT instead.
-- The token lives only in `chrome.storage.local` under `auth`. Sign-out deletes `auth`,
-  `snapshot`, `pollState` and clears the badge and alarms.
+- The token lives only in `chrome.storage.local` under `auth`. Sign-out: the panel deletes
+  `auth`, `snapshot` and `pollState`, then sends `{ type: 'signedOut' }`; the worker clears the
+  alarm, `pollState`, the badge and notifications, and drops a poll that was in flight.
 
 ## Side panel
 
@@ -297,6 +348,7 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 - E2E: Playwright loads `dist-e2e/` (`vite build --mode e2e`) whose API and web URLs point to
   the mock server on `http://127.0.0.1:4010`. Seed auth/settings with the `seedStorage(items)`
   fixture (it writes `chrome.storage.local` from the service worker, so an open panel updates
-  live); drive polls with `{ type: 'poll', force: true }`; assert on `github.requests` and on
+  live) or `signIn(overrides?)`; drive polls with `poll()` (a forced poll sent from an extension
+  page, resolved once it is done); assert on `github.requests` and on
   `chrome.notifications.getAll()` in the worker.
 - Every screen gets an axe check; screenshot specs write to `docs/screenshots/`.

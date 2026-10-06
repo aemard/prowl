@@ -3,7 +3,14 @@
  * by one; a PR that is only in one of the snapshots produces nothing: it is new (no baseline)
  * or it simply left the search scope.
  */
-import type { PrEvent, PrEventType, PullRequest, ReviewState, Snapshot } from '../model';
+import type {
+  PrEvent,
+  PrEventType,
+  PullRequest,
+  ReviewState,
+  SettledCheckState,
+  Snapshot,
+} from '../model';
 
 /** Dismissed reviews no longer count, so they are not news. */
 const REVIEW_EVENTS: Partial<Record<ReviewState, PrEventType>> = {
@@ -25,6 +32,29 @@ export function isReadyToMerge(pr: PullRequest): boolean {
         (pr.checks.state === 'success' || pr.checks.state === 'none') &&
         pr.mergeable === 'mergeable'))
   );
+}
+
+/** `pr`'s check state at the last poll up to `snapshot` that was not pending, when known. */
+function settledChecks(snapshot: Snapshot, pr: PullRequest): SettledCheckState | undefined {
+  return pr.checks.state === 'pending' ? snapshot.settledChecks?.[pr.id] : pr.checks.state;
+}
+
+/**
+ * `settledChecks` for the snapshot that follows `prev`: for every PR whose checks are pending
+ * in `pullRequests`, the state CI last concluded (from `prev`, or carried over by it). Without
+ * it a fix pushed after a failure goes failure -> pending -> success and `ci_passed` is lost.
+ */
+export function carrySettledChecks(
+  prev: Snapshot | null,
+  pullRequests: Snapshot['pullRequests'],
+): Record<string, SettledCheckState> {
+  const carried: Record<string, SettledCheckState> = {};
+  for (const pr of Object.values(pullRequests)) {
+    const before = prev?.pullRequests[pr.id];
+    const settled = prev && before && pr.checks.state === 'pending' && settledChecks(prev, before);
+    if (settled) carried[pr.id] = settled;
+  }
+  return carried;
 }
 
 /**
@@ -59,7 +89,9 @@ export function diffSnapshots(
     const wasFailing = before.checks.state === 'failure';
     if (checks === 'failure' && (!wasFailing || before.headSha !== pr.headSha))
       add('ci_failed', pr.headSha, null, next.fetchedAt);
-    if (checks === 'success' && wasFailing) add('ci_passed', pr.headSha, null, next.fetchedAt);
+    // Across pending polls (a fix pushed, a re-run): compare with what CI last concluded.
+    if (checks === 'success' && settledChecks(prev, before) === 'failure')
+      add('ci_passed', pr.headSha, null, next.fetchedAt);
 
     const known = new Set(before.reviews.map(({ id }) => id));
     for (const review of pr.reviews) {

@@ -7,6 +7,7 @@ import {
   type Page,
   type Worker,
 } from '@playwright/test';
+import type { AuthState } from '../../src/lib/model';
 import { MockGitHub } from './mock-github/server';
 
 const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
@@ -21,7 +22,25 @@ export interface ExtensionFixtures {
   expectNoA11yViolations: (page: Page) => Promise<void>;
   /** Writes keys to `chrome.storage.local` from the service worker, as the poller would. */
   seedStorage: (items: Record<string, unknown>) => Promise<void>;
+  /** Stores `auth` for octocat (with `overrides`), as a sign-in would, and returns it. */
+  signIn: (overrides?: Partial<AuthState>) => Promise<AuthState>;
+  /** Sends `{ type: 'poll', force: true }` from an extension page; resolves once it is done. */
+  poll: () => Promise<void>;
 }
+
+/** What `signIn()` stores unless overridden. The token only ever reaches the mock. */
+export const E2E_AUTH: AuthState = {
+  method: 'pat',
+  token: 'ghp_e2e',
+  tokenType: 'classic',
+  scopes: ['repo'],
+  viewer: {
+    login: 'octocat',
+    avatarUrl: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg"/>')}`,
+    name: 'The Octocat',
+  },
+  createdAt: '2026-10-06T08:00:00.000Z',
+};
 
 export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
   github: [
@@ -81,6 +100,28 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     await use((items) =>
       serviceWorker.evaluate((stored) => chrome.storage.local.set(stored), items),
     );
+  },
+
+  signIn: async ({ seedStorage }, use) => {
+    await use(async (overrides = {}) => {
+      const auth = { ...E2E_AUTH, ...overrides };
+      await seedStorage({ auth });
+      return auth;
+    });
+  },
+
+  poll: async ({ context, extensionId }, use) => {
+    // The worker cannot message itself, so an extension page (the panel document in a tab)
+    // sends the request; the worker answers once the poll is done.
+    let sender: Page | undefined;
+    await use(async () => {
+      if (!sender) {
+        sender = await context.newPage();
+        await sender.goto(`chrome-extension://${extensionId}/sidepanel/index.html#/`);
+      }
+      await sender.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
+    });
+    await sender?.close();
   },
 
   // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture signature.

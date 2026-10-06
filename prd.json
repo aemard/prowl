@@ -146,8 +146,8 @@
       ],
       "priority": 7,
       "dependsOn": ["US-002", "US-005", "US-006"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "poller.ts (alarm, single-flight, backoff/rate-limit waits via src/lib/time/backoff.ts, sign-out-safe writes, prune), messages.ts (poll/markSeen/signedOut), Snapshot.sectionErrors + settledChecks (ci_passed across pending); hook for US-008/009 is the end of runPoll; E2E fixtures signIn()/poll(), tests/e2e/poller.spec.ts."
     },
     {
       "id": "US-008",

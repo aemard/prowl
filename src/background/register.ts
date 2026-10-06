@@ -1,9 +1,19 @@
+import { subscribeSettings } from '../lib/storage/settings';
+import { handleMessage } from './messages';
+import { POLL_ALARM, poll, scheduleAlarm } from './poller';
+
 /** Registers every service worker listener. Listeners must be added synchronously at startup. */
 export function registerBackground(): void {
-  chrome.runtime.onInstalled.addListener(() => {
+  const start = () => {
     void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    void poll();
+  };
+  chrome.runtime.onInstalled.addListener(start);
+  chrome.runtime.onStartup.addListener(start);
+  chrome.alarms.onAlarm.addListener(({ name }) => {
+    if (name === POLL_ALARM) void poll();
   });
-  chrome.runtime.onStartup.addListener(() => {
-    void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-  });
+  chrome.runtime.onMessage.addListener(handleMessage);
+  // A new interval applies to a running schedule; signed out or stopped, nothing is scheduled.
+  subscribeSettings(({ pollIntervalMinutes }) => void scheduleAlarm(pollIntervalMinutes, true));
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { prNode, viewerNode } from '../../../tests/fixtures/github';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { CheckState, PrEventType, PullRequest, Review, Snapshot } from '../model';
-import { diffSnapshots, isReadyToMerge } from './diffSnapshots';
+import { carrySettledChecks, diffSnapshots, isReadyToMerge } from './diffSnapshots';
 
 const VIEWER = 'octocat';
 const FETCHED_AT = '2026-10-06T09:00:00.000Z';
@@ -261,6 +261,63 @@ describe('diffSnapshots', () => {
       ['comment_new', 1],
       ['ci_failed', 1],
     ]);
+  });
+});
+
+describe('checks across pending polls', () => {
+  /**
+   * Event types of each poll after the first, building every snapshot the way the poller does.
+   * The first poll is on `SHA`, the others on `NEW_SHA` (a fix pushed).
+   */
+  function polls(...states: CheckState[]): PrEventType[][] {
+    let prev: Snapshot | null = null;
+    const events: PrEventType[][] = [];
+    states.forEach((state, index) => {
+      const next = snapshot([pr(ci(state, index === 0 ? SHA : NEW_SHA))]);
+      next.settledChecks = carrySettledChecks(prev, next.pullRequests);
+      if (prev) events.push(diffSnapshots(prev, next, VIEWER).map(({ type }) => type));
+      prev = next;
+    });
+    return events;
+  }
+
+  it.each<[CheckState[], PrEventType[][]]>([
+    [
+      ['failure', 'pending', 'success'],
+      [[], ['ci_passed']],
+    ],
+    [
+      ['failure', 'pending', 'pending', 'success', 'success'],
+      [[], [], ['ci_passed'], []],
+    ],
+    [
+      ['success', 'pending', 'success'],
+      [[], []],
+    ],
+    [
+      ['none', 'pending', 'success'],
+      [[], []],
+    ],
+    [['pending', 'success'], [[]]],
+    [
+      ['failure', 'pending', 'failure'],
+      [[], ['ci_failed']],
+    ],
+    [
+      ['failure', 'success', 'pending', 'success'],
+      [['ci_passed'], [], []],
+    ],
+  ])('%j gives %j', (states, expected) => {
+    expect(polls(...states)).toEqual(expected);
+  });
+
+  it('carries the settled state of pending PRs only', () => {
+    const failing = snapshot([pr(ci('failure'))]);
+    const pending = snapshot([pr(ci('pending', NEW_SHA))]);
+    expect(carrySettledChecks(failing, pending.pullRequests)).toEqual({ [base.id]: 'failure' });
+    expect(carrySettledChecks(failing, snapshot([pr(ci('success'))]).pullRequests)).toEqual({});
+    expect(carrySettledChecks(null, pending.pullRequests)).toEqual({});
+    expect(carrySettledChecks(snapshot([]), pending.pullRequests)).toEqual({});
   });
 });
 
