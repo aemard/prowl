@@ -5,7 +5,6 @@
  * stable per change, see the diff engine) and tells a click where to go; a notification for
  * one event has that event's id as its id.
  */
-import { env } from '../lib/env';
 import type { NotificationSettings, PrEvent, PrLocalState } from '../lib/model';
 import { filterEvents } from '../lib/notify/filterEvents';
 import {
@@ -13,6 +12,7 @@ import {
   notificationContent,
   summaryContent,
 } from '../lib/notify/messages';
+import { isGitHubUrl } from '../lib/url';
 
 const NOTIFIED = 'notified';
 /** Ids remembered; older ones are forgotten first. */
@@ -65,15 +65,6 @@ export async function notifyEvents(
     await chrome.storage.session.set({ [NOTIFIED]: Object.fromEntries(kept.slice(-MAX_NOTIFIED)) });
   } catch (error) {
     console.error('Prowl: notifying failed', error);
-  }
-}
-
-/** True for URLs on the configured GitHub web origin (`env.webUrl`) and nothing else. */
-function isGitHubUrl(url: string): boolean {
-  try {
-    return new URL(url).origin === new URL(env.webUrl).origin;
-  } catch {
-    return false;
   }
 }
 

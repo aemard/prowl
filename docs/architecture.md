@@ -40,6 +40,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
+| `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
+| `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
@@ -70,7 +72,7 @@ in-memory updates that the next snapshot replaces.
 7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
    rest (per-event toggles, mute, snooze, quiet hours) and creates `chrome.notifications`.
    Clicking opens the PR.
-8. Badge recomputes from the snapshot + local state.
+8. The badge repaints from the snapshot + local state (see [Badge](#badge)).
 9. On error: classify (`ErrorKind`), store in `pollState.lastError`, exponential backoff with
    jitter (`interval × 2^failures`, capped at 30 min). On `rate_limited` or low remaining
    budget (< 100 points) wait until `resetAt`. `unauthorized` stops polling until re-auth.
@@ -237,14 +239,14 @@ failure -> pending -> success gives one `ci_passed`, success -> pending -> succe
 `register.ts` adds every listener synchronously at startup: install / startup (side panel
 behavior, then `poll()`), the `poll` alarm, `runtime.onMessage` (`messages.ts`) and settings
 changes (a new `pollIntervalMinutes` replaces a running alarm; nothing is scheduled while
-signed out or stopped).
+signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `poller.ts`:
 
 - `poll({ force })` runs at most one poll at a time (an in-memory promise; concurrent callers
   share it) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
-  stored a snapshot, null otherwise. Notifications and the badge (US-009) hook in at the end of
-  the poll itself, once per poll, not in its callers.
+  stored a snapshot, null otherwise. The badge and notifications hook in at the end of the poll
+  itself, once per poll, not in its callers.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
   with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
@@ -275,6 +277,34 @@ their shape, and answers (with nothing) once handled, so `await sendMessage(...)
 a forced poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
 notification and the memory of what was reported.
+
+### Badge
+
+The toolbar badge is a pure function of storage: `computeBadge(snapshot, prLocal, settings.badge,
+now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/badge.ts`), which reads
+`snapshot`, `prLocal` and `settings` and sets the badge text, background color and tooltip
+(`action.setTitle`). Nothing is kept in memory, so any context may change those keys.
+
+- `attention` (default) counts the open PRs in a section with failing CI, requested changes,
+  conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
+  with `updatedAt` newer than `prLocal.seen` (a PR never seen counts; state does not matter);
+  `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count;
+  muted ones do (mute only silences notifications). Merged and closed PRs outside every section
+  never count.
+- Text is the count, empty for 0 and `99+` above 99. The color is `--color-danger-solid`
+  (`#c9222e`) when a counted PR has failing CI or requested changes, else `--color-accent-solid`
+  (`#3b4fd8`); a unit test keeps the two constants equal to the tokens. The tooltip is
+  `Prowl: 3 pull requests needing attention (2 CI failing, 1 ready to merge)` (reasons are
+  counted separately, so they can add up to more than the count), `Prowl: 2 pull requests with
+  unseen changes` in `unseen` mode, and plain `Prowl` when empty.
+- It repaints after every poll that ran (end of `runPoll`), at worker startup (a browser restart
+  drops the badge, and the poll that follows may be skipped), and on every change of `snapshot`,
+  `prLocal` or `settings` (`watchBadge`, listeners registered synchronously in `register.ts`):
+  a snooze or seen mark written by the panel, a badge mode change, a snapshot removed at sign-out.
+  Repaints run one at a time under a Web Lock and each reads storage inside it, so the last one
+  always shows the latest state. `clearBadge()` (sign-out) empties it whatever is stored.
+- A snooze that ends is noticed at the next poll (the prune writes `prLocal`), at most one
+  polling interval late: no alarm is created for it. A failing badge call is logged, never fatal.
 
 ### Notifications
 

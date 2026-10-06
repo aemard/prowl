@@ -6,6 +6,7 @@ import { defaultSettings } from '../lib/storage/settings';
 import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState } from '../test/panel';
+import { BADGE_COLORS } from './badge';
 import { clearSignedOut, POLL_ALARM, poll, scheduleAlarm } from './poller';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
@@ -135,6 +136,27 @@ describe('poll', () => {
     expect(await types('pending')).toEqual([]);
     expect(await types('success')).toEqual([]);
     expect(await types('failure')).toEqual(['ci_failed']);
+  });
+
+  it('updates the badge once the poll has stored its snapshot', async () => {
+    let checks: CheckState = 'failure';
+    github(() => searchWith(checks)());
+    await signIn();
+    await poll();
+    expect(fakeChrome().__state.badge).toMatchObject({ text: '1', color: BADGE_COLORS.danger });
+
+    checks = 'success';
+    later(2 * MINUTE);
+    await poll();
+    expect(fakeChrome().__state.badge).toMatchObject({ text: '', title: 'Prowl' });
+  });
+
+  it('leaves the badge alone when the poll fails', async () => {
+    github(fail(500, 'boom'));
+    await signIn();
+    await chrome.action.setBadgeText({ text: '3' });
+    await poll();
+    expect(fakeChrome().__state.badge.text).toBe('3');
   });
 
   it('does not notify on the first poll after sign-in', async () => {

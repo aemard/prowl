@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { prNode, viewerNode } from '../../tests/fixtures/github';
+import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { setItem, updateItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
@@ -49,6 +51,26 @@ describe('registerBackground', () => {
     expect(fakeChrome().__state.createdTabs).toEqual([
       { url: 'https://github.com/acme/widgets/pull/1' },
     ]);
+  });
+
+  it('paints the stored snapshot at startup and follows storage changes', async () => {
+    const pr = mapPullRequest(prNode({ mergeStateStatus: 'CLEAN' }));
+    const snapshot = {
+      fetchedAt: '2026-10-06T11:59:00Z',
+      viewer: viewerNode(),
+      pullRequests: { [pr.id]: pr },
+      sections: { authored: [pr.id] },
+    };
+    await chrome.storage.local.set({ snapshot });
+    registerBackground();
+    await settle();
+    expect(fakeChrome().__state.badge.text).toBe('');
+
+    fakeChrome().runtime.onStartup.emit();
+    await vi.waitFor(() => expect(fakeChrome().__state.badge.text).toBe('1'));
+
+    await chrome.storage.local.remove('snapshot');
+    await vi.waitFor(() => expect(fakeChrome().__state.badge.text).toBe(''));
   });
 
   it('applies a new interval to a running schedule only', async () => {

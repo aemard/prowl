@@ -13,6 +13,7 @@ import { pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storage/storage';
 import { isWaiting, LOW_RATE_LIMIT, rateLimitedUntil, retryAt } from '../lib/time/backoff';
+import { clearBadge, updateBadge } from './badge';
 import { forgetNotified, notifyEvents } from './notifier';
 
 export const POLL_ALARM = 'poll';
@@ -51,7 +52,7 @@ export async function clearSignedOut(): Promise<void> {
   await Promise.all([
     chrome.alarms.clear(POLL_ALARM),
     removeItems('pollState'),
-    chrome.action.setBadgeText({ text: '' }),
+    clearBadge(),
     forgetNotified(),
     ...Object.keys(shown).map((id) => chrome.notifications.clear(id)),
   ]);
@@ -160,8 +161,9 @@ async function runPoll(force: boolean): Promise<PollResult | null> {
     Object.keys(sectionErrors).length > 0 ? undefined : Object.keys(snapshot.pullRequests);
   const local = await updatePrLocal((state) => pruneExpired(state, Date.now(), known));
   const events = diffSnapshots(previous, snapshot, auth.viewer.login);
-  // Notifications and the badge (US-009) hook in here: once per poll that ran, while every
-  // caller sharing the poll gets the same result.
+  // The badge and notifications hook in here: once per poll that ran, while every caller
+  // sharing the poll gets the same result.
+  await updateBadge();
   await notifyEvents(events, settings.notifications, local);
   return { snapshot, events };
 }

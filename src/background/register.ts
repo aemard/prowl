@@ -1,4 +1,5 @@
 import { subscribeSettings } from '../lib/storage/settings';
+import { updateBadge, watchBadge } from './badge';
 import { handleMessage } from './messages';
 import { onNotificationClicked } from './notifier';
 import { POLL_ALARM, poll, scheduleAlarm } from './poller';
@@ -7,6 +8,8 @@ import { POLL_ALARM, poll, scheduleAlarm } from './poller';
 export function registerBackground(): void {
   const start = () => {
     void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    // The badge does not survive a browser restart: paint the stored snapshot before polling.
+    void updateBadge();
     void poll();
   };
   chrome.runtime.onInstalled.addListener(start);
@@ -18,4 +21,5 @@ export function registerBackground(): void {
   chrome.notifications.onClicked.addListener((id) => void onNotificationClicked(id));
   // A new interval applies to a running schedule; signed out or stopped, nothing is scheduled.
   subscribeSettings(({ pollIntervalMinutes }) => void scheduleAlarm(pollIntervalMinutes, true));
+  watchBadge();
 }

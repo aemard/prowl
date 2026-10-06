@@ -181,8 +181,8 @@
       ],
       "priority": 9,
       "dependsOn": ["US-007"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Badge derived from storage: computeBadge (src/lib/badge) + updateBadge/watchBadge (src/background/badge.ts); repaints after each poll, at startup and on snapshot/prLocal/settings changes; cleared on sign-out; unit + E2E (badge.spec.ts)."
     },
     {
       "id": "US-010",
