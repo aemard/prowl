@@ -427,8 +427,8 @@
       ],
       "priority": 23,
       "dependsOn": ["US-021"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Threat model (STRIDE), SECURITY.md, author review in docs/security/review.md, manifest attack-surface regression test; audit found no critical/high issues."
     },
     {
       "id": "US-024",
@@ -476,8 +476,8 @@
       ],
       "priority": 26,
       "dependsOn": ["US-025"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "README (install in 5 steps, sign-in table, features, privacy, dev), CONTRIBUTING (US-025), CODE_OF_CONDUCT, SECURITY.md, issue/PR templates, docs/chrome-web-store.md. Built by the main agent after the Ralph loop was stopped."
     },
     {
       "id": "US-027",

@@ -32,4 +32,17 @@ describe('createManifest', () => {
     expect(manifest.optional_host_permissions).toEqual([]);
     expect(manifest.content_security_policy?.extension_pages).toContain(E2E_ORIGIN);
   });
+
+  it('exposes no surface to web pages or other extensions', () => {
+    for (const mode of ['production', 'e2e'] as const) {
+      const manifest = createManifest(mode) as Record<string, unknown>;
+      expect(manifest.content_scripts).toBeUndefined();
+      expect(manifest.externally_connectable).toBeUndefined();
+      expect(manifest.web_accessible_resources).toBeUndefined();
+      const csp = (manifest.content_security_policy as { extension_pages: string }).extension_pages;
+      expect(csp).toMatch(/script-src 'self'(;|$)/);
+      expect(csp).toContain("object-src 'none'");
+      expect(csp).not.toMatch(/unsafe-(inline|eval)/);
+    }
+  });
 });

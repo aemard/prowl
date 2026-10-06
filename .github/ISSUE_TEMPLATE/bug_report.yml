@@ -1,0 +1,30 @@
+name: Bug report
+description: Something in Prowl does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open the side panel\n2. ..."
+  - type: input
+    id: version
+    attributes:
+      label: Prowl and Chrome versions
+      placeholder: Prowl 1.0.0, Chrome 141 (see chrome://extensions)
+    validations:
+      required: true
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Sign-in method
+      options: [Continue with GitHub, Classic token, Fine-grained token]
+  - type: markdown
+    attributes:
+      value: Never paste your token. Security issues go to a private advisory (see SECURITY.md).

@@ -246,3 +246,13 @@ Started: 2026-10-06
   - Playwright: `getByRole('button', { name: 'Refresh' })` also matches the header's Refresh, so the stale banner's button is "Refresh now" and is matched by that.
   - The expected clock text for a rate limit is computed in the page (`toLocaleTimeString` in Chrome's locale), not in Node.
 ---
+## 2026-10-06 - Ralph loop stopped after iteration 20 (maintainer request)
+- Remaining stories are built by the main agent directly; prd.json and this log stay the source of truth.
+---
+## 2026-10-06 - US-026 README and repository docs (main agent)
+- README: install in 5 steps, sign-in table, features, privacy, development, structure.
+---
+## 2026-10-06 - US-023 Security hardening and threat model (main agent)
+- docs/security/threat-model.md (STRIDE), docs/security/review.md, SECURITY.md, manifest surface test.
+- Audit: no sinks, URL allowlist everywhere, token masked, sender checks, pinned workflows, no vulnerable deps.
+---
