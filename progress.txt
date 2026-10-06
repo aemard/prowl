@@ -288,3 +288,7 @@ Started: 2026-10-06
 - Fix: `expectNoA11yViolations` (tests/e2e/fixtures.ts) awaits finite animations first; `RepoFilter.onChange` now gets an updater applied to the stored list (`changeRepos` in SettingsScope.tsx) instead of an array built from the rendered `patterns`.
 - Learnings: a CI failure listed under one cause can hide a second one: read the log of every failed test. Reproduce timing flakes by stretching the duration token, not by repeating runs.
 ---
+## 2026-10-06 - US-029 v1.0.0 release readiness (close story)
+- v1.0.0 released and merged: fixed stray `## Changelog` heading in CHANGELOG.md, removed `"release-as": "1.0.0"` from release-please-config.json, updated docs/releasing.md to past tense, recorded release in docs/status.md with assets and provenance link, updated prd.json and progress.txt.
+- Learning: release-please appends `## Changelog` on the first release to demote the old `# Changelog` heading; removing the stray trailing heading is the cleanup step post-release.
+---

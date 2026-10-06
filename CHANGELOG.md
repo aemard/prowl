@@ -40,5 +40,3 @@
 ### Performance Improvements
 
 * **sidepanel:** US-022 lazy-load settings and details, first-render budget ([28b23a5](https://github.com/aemard/prowl/commit/28b23a50eefa4997013f2457d87c05dfd3ac86b4))
-
-## Changelog

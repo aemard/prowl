@@ -7,7 +7,6 @@
   "packages": {
     ".": {
       "package-name": "prowl",
-      "release-as": "1.0.0",
       "changelog-path": "CHANGELOG.md"
     }
   }

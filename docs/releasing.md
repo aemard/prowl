@@ -18,7 +18,7 @@ One-time setup:
    and variables → Actions → Variables). Release builds bake it in; without it the zip supports
    token sign-in only.
 
-`release-please-config.json` pins `"release-as": "1.0.0"` for the first release. Remove it right
+`release-please-config.json` pinned `"release-as": "1.0.0"` for the first release. It was removed
 after v1.0.0 so later releases follow Conventional Commits (`feat` → minor, `fix` → patch).
 Releases are reproducible: the zip is built from a clean checkout of the tag with a frozen
 lockfile and no shared cache, and its file times are fixed (`scripts/zip.mjs`).

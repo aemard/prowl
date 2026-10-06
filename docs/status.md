@@ -1,5 +1,14 @@
 # Status
 
+## v1.0.0 release (2026-10-06)
+
+**Released**: [v1.0.0](https://github.com/aemard/prowl/releases/tag/v1.0.0)
+
+**Assets**:
+- `prowl-v1.0.0.zip` (72,351 bytes)
+- `prowl-v1.0.0.sbom.spdx.json`
+- Provenance attestation ([GitHub](https://github.com/aemard/prowl/releases/tag/v1.0.0) → Release assets → Provenance)
+
 v1.0.0 scope is complete: every story in `prd.json` passes. This page tracks what is left
 outside the v1 scope, in priority order.
 

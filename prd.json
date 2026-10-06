@@ -526,8 +526,8 @@
       ],
       "priority": 29,
       "dependsOn": ["US-028"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Released v1.0.0 (https://github.com/aemard/prowl/releases/tag/v1.0.0); assets prowl-v1.0.0.zip, SBOM, provenance; workflow run 37501409024."
     }
   ]
 }
