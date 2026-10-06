@@ -1,0 +1,84 @@
+.ui-switch-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-md);
+}
+
+.ui-switch-field__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-switch-field__label {
+  cursor: pointer;
+}
+
+.ui-switch-field__description {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.ui-switch-field[data-disabled] .ui-switch-field__label {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.ui-switch {
+  /* The button is the 40 x 28 hit target; the track inside is the visual. */
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: var(--control-sm);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-switch:focus-visible {
+  outline: none;
+}
+
+.ui-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-control);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.ui-switch:focus-visible .ui-switch__track {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+.ui-switch[aria-checked="true"] .ui-switch__track {
+  background: var(--color-accent-solid);
+}
+
+.ui-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-fg-on-solid);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.ui-switch[aria-checked="true"] .ui-switch__thumb {
+  transform: translateX(16px);
+}
+
+.ui-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

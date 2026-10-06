@@ -1,0 +1,47 @@
+.ui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--control-md);
+  height: var(--control-md);
+  padding: 0;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.ui-icon-button[data-size="sm"] {
+  width: var(--control-sm);
+  height: var(--control-sm);
+}
+
+.ui-icon-button[data-variant="secondary"] {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+.ui-icon-button:hover:not(:disabled, [aria-disabled="true"]) {
+  background: var(--color-bg-hover);
+  color: var(--color-fg);
+}
+
+.ui-icon-button:active:not(:disabled, [aria-disabled="true"]),
+.ui-icon-button[aria-pressed="true"] {
+  background: var(--color-bg-active);
+  color: var(--color-fg);
+}
+
+.ui-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ui-icon-button[aria-busy="true"] {
+  cursor: progress;
+}

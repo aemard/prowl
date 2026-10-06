@@ -1,0 +1,22 @@
+.ui-text-field__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ui-text-field__icon {
+  position: absolute;
+  left: var(--space-2);
+  display: inline-flex;
+  color: var(--color-fg-muted);
+  pointer-events: none;
+}
+
+.ui-text-field__wrap[data-icon] .ui-text-field__control {
+  padding-left: calc(var(--space-2) + var(--icon-md) + var(--space-1-5));
+}
+
+textarea.ui-text-field__control {
+  min-height: calc(var(--control-md) * 2);
+  resize: vertical;
+}

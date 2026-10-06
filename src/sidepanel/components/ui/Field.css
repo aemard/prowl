@@ -1,0 +1,73 @@
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ui-field__label {
+  font-weight: var(--weight-medium);
+}
+
+.ui-field__hint {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.ui-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--color-danger-fg);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.ui-field__error .icon {
+  margin-top: var(--space-0-5);
+}
+
+/* Shared control chrome for text inputs and selects. */
+.ui-control {
+  width: 100%;
+  min-height: var(--control-md);
+  padding: var(--space-1-5) var(--space-2);
+  border: var(--border-width) solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.ui-control::placeholder {
+  color: var(--color-fg-muted);
+  opacity: 1;
+}
+
+.ui-control:hover:not(:disabled, :focus) {
+  border-color: var(--color-fg-muted);
+}
+
+/* Inputs show focus for mouse users too (a caret alone is easy to miss). */
+.ui-control:focus {
+  border-color: var(--color-focus);
+  outline: var(--border-width) solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.ui-control:disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.ui-field[data-invalid] .ui-control {
+  border-color: var(--color-danger-fg);
+}
+
+.ui-field[data-invalid] .ui-control:focus {
+  outline-color: var(--color-danger-fg);
+}

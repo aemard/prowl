@@ -1,0 +1,49 @@
+.ui-skeleton {
+  display: block;
+  width: var(--skeleton-width, 100%);
+  height: var(--skeleton-height, var(--leading-md));
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-skeleton-shine) 50%,
+      transparent 100%
+    )
+    var(--color-skeleton) no-repeat;
+  background-size: 200% 100%;
+  animation: ui-shimmer var(--duration-shimmer) var(--ease-standard) infinite;
+}
+
+.ui-skeleton[data-shape="text"] {
+  /* Shorter than the line box so stacked lines read as text. */
+  height: var(--skeleton-height, var(--text-md));
+  margin: calc((var(--leading-md) - var(--text-md)) / 2) 0;
+}
+
+.ui-skeleton[data-shape="circle"] {
+  width: var(--skeleton-width, 20px);
+  height: var(--skeleton-height, var(--skeleton-width, 20px));
+  border-radius: var(--radius-full);
+}
+
+.ui-skeleton[data-shape="rect"] {
+  height: var(--skeleton-height, var(--space-12));
+  border-radius: var(--radius-lg);
+}
+
+@keyframes ui-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+/* Decorative motion: off under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton {
+    animation: none;
+    background-image: none;
+  }
+}

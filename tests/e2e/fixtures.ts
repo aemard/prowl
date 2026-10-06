@@ -47,6 +47,13 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 
   serviceWorker: async ({ context }, use) => {
     const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
+    // Chrome can report the worker before it has bound `chrome.*` to it (about 1 run in 20).
+    await base.expect
+      .poll(() => worker.evaluate(() => typeof chrome !== 'undefined' && !!chrome.runtime?.id), {
+        intervals: [50, 100, 250],
+        timeout: 5_000,
+      })
+      .toBe(true);
     await use(worker);
   },
 

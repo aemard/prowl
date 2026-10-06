@@ -1,25 +1,322 @@
-/* Design tokens. The design story (US-001) owns this file. */
+/*
+ * Prowl design tokens. The only place raw colors are allowed.
+ * Light is the default; dark follows the system preference unless `data-theme` on <html>
+ * forces one. The two dark blocks below must stay identical (tokens.test.ts checks it, and
+ * checks every text/background pair against WCAG AA). See docs/design.md.
+ */
+
+/* Theme-independent tokens */
 :root {
-  color-scheme: light dark;
+  /* Typography */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --radius-sm: 4px;
-  --radius-md: 8px;
+    system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --text-xs: 11px;
+  --leading-xs: 16px;
+  --text-sm: 12px;
+  --leading-sm: 16px;
+  --text-md: 13px;
+  --leading-md: 20px;
+  --text-lg: 15px;
+  --leading-lg: 22px;
+  --text-xl: 18px;
+  --leading-xl: 24px;
+  --text-2xl: 22px;
+  --leading-2xl: 28px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Spacing: 4 px grid */
+  --space-0-5: 2px;
   --space-1: 4px;
+  --space-1-5: 6px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
 
-  --color-bg: #ffffff;
-  --color-fg: #1f2328;
-  --color-muted: #59636e;
+  /* Sizes */
+  --control-sm: 28px;
+  --control-md: 32px;
+  --icon-sm: 12px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Borders */
+  --border-width: 1px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+
+  /* Motion: short and purposeful. Durations collapse under prefers-reduced-motion. */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-spin: 800ms;
+  --duration-shimmer: 1400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-menu: 40;
+  --z-toast: 50;
+
+  /* Brand (logo), identical in both themes */
+  --color-brand: #3b4fd8;
+  --color-brand-eye: #ffc53d;
+  --color-brand-pupil: #1d2266;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-reduced-motion: reduce) {
   :root {
-    --color-bg: #0d1117;
-    --color-fg: #e6edf3;
-    --color-muted: #9198a1;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    /* The spinner is essential feedback: it keeps turning, slowly. */
+    --duration-spin: 1600ms;
   }
+}
+
+/* Light theme (default) */
+:root {
+  color-scheme: light;
+
+  /* Neutral scale: 1 = app background ... 12 = high-contrast text */
+  --gray-1: #ffffff;
+  --gray-2: #f7f8fa;
+  --gray-3: #eff1f4;
+  --gray-4: #e6e9ed;
+  --gray-5: #dde1e6;
+  --gray-6: #d0d5dc;
+  --gray-7: #b6bdc6;
+  --gray-8: #848d98;
+  --gray-9: #6e7781;
+  --gray-10: #626b75;
+  --gray-11: #535c66;
+  --gray-12: #1c2026;
+
+  --color-bg: var(--gray-1);
+  --color-bg-subtle: var(--gray-2);
+  --color-bg-hover: var(--gray-3);
+  --color-bg-active: var(--gray-4);
+  --color-surface: #ffffff;
+  --color-border-subtle: var(--gray-4);
+  --color-border: var(--gray-6);
+  --color-border-control: var(--gray-8);
+  --color-fg: var(--gray-12);
+  --color-fg-muted: var(--gray-11);
+  --color-fg-disabled: var(--gray-8);
+  --color-fg-on-solid: #ffffff;
+  --color-focus: #3b4fd8;
+  --color-backdrop: rgb(20 22 26 / 0.36);
+  --color-skeleton: var(--gray-4);
+  --color-skeleton-shine: var(--gray-2);
+  --color-scrollbar: var(--gray-7);
+
+  --color-accent-fg: #3646c9;
+  --color-accent-bg: #eef0fd;
+  --color-accent-border: #c3c9f5;
+  --color-accent-solid: #3b4fd8;
+  --color-accent-solid-hover: #3242c2;
+
+  --color-success-fg: #1a7434;
+  --color-success-bg: #e8f5ec;
+  --color-success-border: #b2dcbe;
+  --color-success-solid: #1f7a39;
+
+  --color-danger-fg: #c01f2b;
+  --color-danger-bg: #fdecee;
+  --color-danger-border: #f4c0c5;
+  --color-danger-solid: #c9222e;
+  --color-danger-solid-hover: #b01c27;
+
+  --color-warning-fg: #a6420a;
+  --color-warning-bg: #fdf0e6;
+  --color-warning-border: #f1c9a6;
+  --color-warning-solid: #b0460c;
+
+  --color-attention-fg: #835700;
+  --color-attention-bg: #fcf4dc;
+  --color-attention-border: #ecd48a;
+  --color-attention-solid: #8a5c00;
+
+  --color-done-fg: #7041d1;
+  --color-done-bg: #f3eefd;
+  --color-done-border: #d7c7f5;
+  --color-done-solid: #7a4bda;
+
+  --color-neutral-fg: var(--gray-11);
+  --color-neutral-bg: var(--gray-3);
+  --color-neutral-border: var(--gray-6);
+  --color-neutral-solid: var(--gray-11);
+
+  --shadow-sm: 0 1px 2px rgb(20 22 26 / 0.06);
+  --shadow-md: 0 1px 3px rgb(20 22 26 / 0.08), 0 6px 16px rgb(20 22 26 / 0.12);
+  --shadow-lg: 0 2px 6px rgb(20 22 26 / 0.08), 0 16px 40px rgb(20 22 26 / 0.2);
+}
+
+/* Dark theme: system preference, unless forced light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --gray-1: #141619;
+    --gray-2: #1a1d21;
+    --gray-3: #222529;
+    --gray-4: #292d32;
+    --gray-5: #2f3339;
+    --gray-6: #3a3f46;
+    --gray-7: #4b515a;
+    --gray-8: #6d7580;
+    --gray-9: #7e8691;
+    --gray-10: #8f97a1;
+    --gray-11: #a6aeb8;
+    --gray-12: #e7e9ec;
+
+    --color-bg: var(--gray-1);
+    --color-bg-subtle: var(--gray-2);
+    --color-bg-hover: var(--gray-3);
+    --color-bg-active: var(--gray-4);
+    --color-surface: #1e2125;
+    --color-border-subtle: var(--gray-4);
+    --color-border: var(--gray-6);
+    --color-border-control: var(--gray-8);
+    --color-fg: var(--gray-12);
+    --color-fg-muted: var(--gray-11);
+    --color-fg-disabled: var(--gray-8);
+    --color-fg-on-solid: #ffffff;
+    --color-focus: #8d9cff;
+    --color-backdrop: rgb(0 0 0 / 0.56);
+    --color-skeleton: var(--gray-3);
+    --color-skeleton-shine: var(--gray-5);
+    --color-scrollbar: var(--gray-7);
+
+    --color-accent-fg: #8d9cff;
+    --color-accent-bg: #1d2246;
+    --color-accent-border: #343f8c;
+    --color-accent-solid: #4356de;
+    --color-accent-solid-hover: #5064ea;
+
+    --color-success-fg: #4cc26d;
+    --color-success-bg: #11281a;
+    --color-success-border: #1f5330;
+    --color-success-solid: #1f7a39;
+
+    --color-danger-fg: #ff7d75;
+    --color-danger-bg: #361519;
+    --color-danger-border: #6b2329;
+    --color-danger-solid: #c9222e;
+    --color-danger-solid-hover: #d3303b;
+
+    --color-warning-fg: #f39550;
+    --color-warning-bg: #33200f;
+    --color-warning-border: #683b17;
+    --color-warning-solid: #b0460c;
+
+    --color-attention-fg: #e3ad3b;
+    --color-attention-bg: #2d240d;
+    --color-attention-border: #5c4915;
+    --color-attention-solid: #8a5c00;
+
+    --color-done-fg: #b791f6;
+    --color-done-bg: #251c3b;
+    --color-done-border: #4b3776;
+    --color-done-solid: #7a4bda;
+
+    --color-neutral-fg: var(--gray-11);
+    --color-neutral-bg: var(--gray-3);
+    --color-neutral-border: var(--gray-6);
+    --color-neutral-solid: var(--gray-7);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
+  }
+}
+
+/* Dark theme: forced (keep identical to the block above) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --gray-1: #141619;
+  --gray-2: #1a1d21;
+  --gray-3: #222529;
+  --gray-4: #292d32;
+  --gray-5: #2f3339;
+  --gray-6: #3a3f46;
+  --gray-7: #4b515a;
+  --gray-8: #6d7580;
+  --gray-9: #7e8691;
+  --gray-10: #8f97a1;
+  --gray-11: #a6aeb8;
+  --gray-12: #e7e9ec;
+
+  --color-bg: var(--gray-1);
+  --color-bg-subtle: var(--gray-2);
+  --color-bg-hover: var(--gray-3);
+  --color-bg-active: var(--gray-4);
+  --color-surface: #1e2125;
+  --color-border-subtle: var(--gray-4);
+  --color-border: var(--gray-6);
+  --color-border-control: var(--gray-8);
+  --color-fg: var(--gray-12);
+  --color-fg-muted: var(--gray-11);
+  --color-fg-disabled: var(--gray-8);
+  --color-fg-on-solid: #ffffff;
+  --color-focus: #8d9cff;
+  --color-backdrop: rgb(0 0 0 / 0.56);
+  --color-skeleton: var(--gray-3);
+  --color-skeleton-shine: var(--gray-5);
+  --color-scrollbar: var(--gray-7);
+
+  --color-accent-fg: #8d9cff;
+  --color-accent-bg: #1d2246;
+  --color-accent-border: #343f8c;
+  --color-accent-solid: #4356de;
+  --color-accent-solid-hover: #5064ea;
+
+  --color-success-fg: #4cc26d;
+  --color-success-bg: #11281a;
+  --color-success-border: #1f5330;
+  --color-success-solid: #1f7a39;
+
+  --color-danger-fg: #ff7d75;
+  --color-danger-bg: #361519;
+  --color-danger-border: #6b2329;
+  --color-danger-solid: #c9222e;
+  --color-danger-solid-hover: #d3303b;
+
+  --color-warning-fg: #f39550;
+  --color-warning-bg: #33200f;
+  --color-warning-border: #683b17;
+  --color-warning-solid: #b0460c;
+
+  --color-attention-fg: #e3ad3b;
+  --color-attention-bg: #2d240d;
+  --color-attention-border: #5c4915;
+  --color-attention-solid: #8a5c00;
+
+  --color-done-fg: #b791f6;
+  --color-done-bg: #251c3b;
+  --color-done-border: #4b3776;
+  --color-done-solid: #7a4bda;
+
+  --color-neutral-fg: var(--gray-11);
+  --color-neutral-bg: var(--gray-3);
+  --color-neutral-border: var(--gray-6);
+  --color-neutral-solid: var(--gray-7);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 3px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
 }

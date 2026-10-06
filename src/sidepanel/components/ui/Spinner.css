@@ -1,0 +1,29 @@
+.ui-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: text-bottom;
+  animation: ui-spin var(--duration-spin) linear infinite;
+}
+
+.ui-spinner__track {
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.25;
+}
+
+.ui-spinner__arc {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.ui-spinner-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

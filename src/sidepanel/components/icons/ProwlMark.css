@@ -1,0 +1,17 @@
+.prowl-mark {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.prowl-mark__tile {
+  fill: var(--color-brand);
+}
+
+.prowl-mark__eye {
+  fill: var(--color-brand-eye);
+}
+
+.prowl-mark__pupil {
+  fill: var(--color-brand-pupil);
+}

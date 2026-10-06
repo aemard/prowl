@@ -32,8 +32,8 @@
       ],
       "priority": 1,
       "dependsOn": [],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Cat's-eye logo, light/dark tokens with a unit-tested WCAG table, 40 Octicons and 12 ui components with tests; not imported by App yet (US-010 wires them in)."
     },
     {
       "id": "US-002",

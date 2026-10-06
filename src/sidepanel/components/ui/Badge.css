@@ -1,0 +1,87 @@
+.ui-badge {
+  --badge-fg: var(--color-neutral-fg);
+  --badge-bg: var(--color-neutral-bg);
+  --badge-border: var(--color-neutral-border);
+  --badge-solid: var(--color-neutral-solid);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  height: 20px;
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.ui-badge__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-badge[data-size="sm"] {
+  height: 18px;
+  padding: 0 var(--space-1-5);
+  font-size: var(--text-xs);
+}
+
+.ui-badge[data-variant="solid"] {
+  background: var(--badge-solid);
+  color: var(--color-fg-on-solid);
+}
+
+.ui-badge[data-variant="outline"] {
+  background: transparent;
+  border-color: var(--badge-border);
+}
+
+.ui-badge[data-tone="accent"] {
+  --badge-fg: var(--color-accent-fg);
+  --badge-bg: var(--color-accent-bg);
+  --badge-border: var(--color-accent-border);
+  --badge-solid: var(--color-accent-solid);
+}
+
+.ui-badge[data-tone="success"] {
+  --badge-fg: var(--color-success-fg);
+  --badge-bg: var(--color-success-bg);
+  --badge-border: var(--color-success-border);
+  --badge-solid: var(--color-success-solid);
+}
+
+.ui-badge[data-tone="danger"] {
+  --badge-fg: var(--color-danger-fg);
+  --badge-bg: var(--color-danger-bg);
+  --badge-border: var(--color-danger-border);
+  --badge-solid: var(--color-danger-solid);
+}
+
+.ui-badge[data-tone="warning"] {
+  --badge-fg: var(--color-warning-fg);
+  --badge-bg: var(--color-warning-bg);
+  --badge-border: var(--color-warning-border);
+  --badge-solid: var(--color-warning-solid);
+}
+
+.ui-badge[data-tone="attention"] {
+  --badge-fg: var(--color-attention-fg);
+  --badge-bg: var(--color-attention-bg);
+  --badge-border: var(--color-attention-border);
+  --badge-solid: var(--color-attention-solid);
+}
+
+.ui-badge[data-tone="done"] {
+  --badge-fg: var(--color-done-fg);
+  --badge-bg: var(--color-done-bg);
+  --badge-border: var(--color-done-border);
+  --badge-solid: var(--color-done-solid);
+}
