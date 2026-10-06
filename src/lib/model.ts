@@ -120,7 +120,11 @@ export interface PullRequest {
   closedBy: string | null;
   /** Merge methods the repository allows. */
   allowedMergeMethods: MergeMethod[];
+  /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */
+  defaultMergeMethod: MergeMethod;
   viewerCanUpdate: boolean;
+  /** The viewer has write access to the repository (GraphQL has no `viewerCanMerge`). */
+  viewerCanMerge: boolean;
 }
 
 /**

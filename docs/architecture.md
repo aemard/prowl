@@ -193,6 +193,8 @@ Mapping (`mapPullRequest`):
 | `lastComment` | Latest issue comment. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
 | `closedBy` | `mergedBy` in search results; `ProwlNodes` adds the `ClosedEvent` actor. |
 | `allowedMergeMethods` | Repository `mergeCommitAllowed`, `squashMergeAllowed`, `rebaseMergeAllowed`. |
+| `defaultMergeMethod` | Repository `viewerDefaultMergeMethod`: the method the viewer used last there, else the repository's own. `merge` for a value the model does not know. |
+| `viewerCanMerge` | Repository `viewerPermission` is `WRITE`, `MAINTAIN` or `ADMIN` (GraphQL has no `viewerCanMerge`; `viewerCanUpdate` is also true for an author without write access). False for `TRIAGE`, `READ`, unknown levels and a GitHub App (null). |
 
 Estimated cost (GitHub counts the requests every connection could need, divides by 100 and
 rounds; `rateLimit.cost` in each response gives the real figure):
@@ -247,12 +249,18 @@ client and a PR node id, resolves once GitHub confirmed and throws `GitHubError`
 | `approve(client, prId, body?)` | `mutation ProwlApprove` | `addPullRequestReview`, variable `event: APPROVE`, optional note |
 | `requestChanges(client, prId, body)` | `mutation ProwlRequestChanges` | `addPullRequestReview`, `event: REQUEST_CHANGES`, message required |
 | `comment(client, prId, body)` | `mutation ProwlComment` | `addComment` on the PR's node id: a conversation comment, not a review |
+| `mergePullRequest(client, prId, { method, headSha, title? })` | `mutation ProwlMerge` | `mergePullRequest` with `mergeMethod` (`MERGE`, `SQUASH`, `REBASE`), `expectedHeadOid: headSha` and, for a merge or squash commit, `commitHeadline` |
 
 Messages are trimmed; an empty one (and one over GitHub's 65,536 characters) fails as `validation`
 before any request is sent. A payload without the new review or comment (no `errors`, but nothing
 created) is a `server` error, so it never reads as done. Mutations use strict GraphQL: a failure
-throws with GitHub's message, with the token masked by the client. Merge, re-run and the draft
-toggle (US-016, US-017) add their functions here.
+throws with GitHub's message, with the token masked by the client. `$oid` of `ProwlMerge` is
+required: GitHub refuses with "Head branch was modified. Review and try the merge again." when the
+head moved since the panel last saw it, so commits nobody looked at are never merged; the other
+refusals (not mergeable, conflicts, required checks or reviews, a merge queue) arrive the same way
+and are shown as GitHub words them. A payload whose pull request is not `merged` is a `server`
+error. A rebase has no commit of its own, so its `commitHeadline` is dropped. Re-run and the draft
+toggle (US-017) add their functions here.
 
 The panel runs them through `runPrAction(pr, name, done, run)` (`src/sidepanel/state/prActions.ts`):
 it builds a client for the signed-in token, marks `pendingActions[pr.id] = name` (the signal that
@@ -543,6 +551,18 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   that are not open; Comment is always there. While one action of a PR runs its other buttons are
   disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
   contains it (the card folds on Esc).
+- Merge (`components/MergeAction.tsx`, last in the `.pr-actions` row): a "Merge acme/web#12"
+  button (primary once `isReadyToMerge`, else secondary) for someone with write access (`viewerCanMerge`) on an open, non-draft PR whose
+  repository allows at least one method; it opens a confirmation naming the PR, its title and
+  target branch, a `Select` of `allowedMergeMethods` only (starting on `defaultMergeMethod`, else
+  the first allowed) and an optional commit title (not offered for a rebase). Focus starts on the
+  method, never on the button that merges. It sends `ProwlMerge` with `headSha` of the PR as the
+  panel last polled it. Readiness is not enforced by the panel (an admin may bypass rules, and
+  GitHub knows better): the Merge group above lists the blockers, and GitHub's refusal comes back
+  in a toast after the dialog closed, with the method and title kept for the next try, plus a
+  forced poll because a refusal usually means the PR changed (a moved head, new conflicts). On
+  success the toast and forced poll follow the usual route: the merged PR is in no search result
+  any more, so `ProwlNodes` marks it merged and it leaves the list.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
   reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`

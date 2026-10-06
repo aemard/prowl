@@ -307,8 +307,8 @@
       ],
       "priority": 16,
       "dependsOn": ["US-015"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "MergeAction in the Actions row (write access, open, non-draft PRs): confirmation with PR, target branch, a Select of allowedMergeMethods starting on viewerDefaultMergeMethod and an optional commit title; mutation ProwlMerge with expectedHeadOid in src/lib/github/actions.ts (100% covered); GitHub's refusal shows in a toast and refreshes, success leaves the list after the forced poll; merge.spec.ts covers method filtering, confirm, cancel, error and axe; merge-dialog.png."
     },
     {
       "id": "US-017",

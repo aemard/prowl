@@ -42,7 +42,7 @@ const rows = (name: string) =>
     .map((row) => row.textContent);
 
 describe('PullRequestDetails', () => {
-  it('offers the review actions at once, before the details have loaded', () => {
+  it('offers the actions at once, before the details have loaded', () => {
     stubDetailFetch(() => new Promise(() => {}));
     show();
     expect(screen.getByText('Actions')).toBeTruthy();
@@ -50,7 +50,7 @@ describe('PullRequestDetails', () => {
       screen
         .getAllByRole('button', { name: /acme\/widgets#1$/ })
         .map((button) => button.textContent),
-    ).toEqual(['Approve', 'Request changes', 'Comment']);
+    ).toEqual(['Approve', 'Request changes', 'Comment', 'Merge']);
   });
 
   it('says why it cannot be merged at once, then fills in checks and reviewers', async () => {

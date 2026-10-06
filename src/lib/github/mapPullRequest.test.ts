@@ -66,7 +66,9 @@ describe('mapPullRequest', () => {
       lastComment: { author: 'hubot', createdAt: '2026-10-05T11:00:00Z' },
       closedBy: null,
       allowedMergeMethods: ['merge', 'squash'],
+      defaultMergeMethod: 'merge',
       viewerCanUpdate: true,
+      viewerCanMerge: true,
     } satisfies PullRequest);
   });
 
@@ -251,6 +253,27 @@ describe('mapPullRequest', () => {
     expect(methods(true, true, true)).toEqual(['merge', 'squash', 'rebase']);
     expect(methods(false, true, false)).toEqual(['squash']);
     expect(methods(false, false, false)).toEqual([]);
+  });
+
+  it('starts the merge dialog on the viewer’s default method, merge when GitHub says something new', () => {
+    const start = (viewerDefaultMergeMethod: string) => {
+      const node = prNode();
+      node.repository = { ...node.repository, viewerDefaultMergeMethod };
+      return mapPullRequest(node).defaultMergeMethod;
+    };
+    expect(start('SQUASH')).toBe('squash');
+    expect(start('REBASE')).toBe('rebase');
+    expect(start('FAST_FORWARD')).toBe('merge');
+  });
+
+  it('lets the viewer merge with write access or more, not with less or as a GitHub App', () => {
+    const can = (viewerPermission: string | null) => {
+      const node = prNode();
+      node.repository = { ...node.repository, viewerPermission };
+      return mapPullRequest(node).viewerCanMerge;
+    };
+    expect(['WRITE', 'MAINTAIN', 'ADMIN'].map(can)).toEqual([true, true, true]);
+    expect(['TRIAGE', 'READ', 'FUTURE_LEVEL', null].map(can)).toEqual([false, false, false, false]);
   });
 
   it('takes closedBy from mergedBy', () => {

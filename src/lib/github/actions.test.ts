@@ -6,6 +6,8 @@ import {
   COMMENT_MUTATION,
   comment,
   MAX_BODY_LENGTH,
+  MERGE_MUTATION,
+  mergePullRequest,
   REQUEST_CHANGES_MUTATION,
   requestChanges,
 } from './actions';
@@ -13,6 +15,7 @@ import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
 
 const reviewed = { addPullRequestReview: { pullRequestReview: { id: 'PRR_1' } } };
+const merged = { mergePullRequest: { pullRequest: { merged: true } } };
 const commented = { addComment: { commentEdge: { node: { id: 'IC_1' } } } };
 
 /** A client whose fetch answers with `answer`; `sent` holds every GraphQL request body. */
@@ -159,5 +162,69 @@ describe('comment', () => {
     });
     const error = await comment(client, 'PR_1', 'Hi').catch((e: unknown) => e);
     expect(error).toMatchObject({ kind: 'network', message: 'Could not reach GitHub.' });
+  });
+});
+
+describe('mergePullRequest', () => {
+  const head = 'a'.repeat(40);
+
+  it('merges with the method and the head commit that was looked at', async () => {
+    const { client, sent } = setup(merged);
+    await mergePullRequest(client, 'PR_1', { method: 'squash', headSha: head });
+    expect(sent).toEqual([
+      { query: MERGE_MUTATION, variables: { id: 'PR_1', method: 'SQUASH', oid: head } },
+    ]);
+    expect(MERGE_MUTATION).toContain('mutation ProwlMerge(');
+    expect(MERGE_MUTATION).toContain('$oid: GitObjectID!');
+    expect(MERGE_MUTATION).toContain('expectedHeadOid: $oid');
+  });
+
+  it('sends each method in the enum’s spelling', async () => {
+    const { client, sent } = setup(merged);
+    for (const method of ['merge', 'squash', 'rebase'] as const) {
+      await mergePullRequest(client, 'PR_1', { method, headSha: head });
+    }
+    expect(sent.map((request) => request.variables.method)).toEqual(['MERGE', 'SQUASH', 'REBASE']);
+  });
+
+  it('adds a trimmed commit title for a merge or squash commit, not for a rebase', async () => {
+    const { client, sent } = setup(merged);
+    await mergePullRequest(client, 'PR_1', { method: 'merge', headSha: head, title: ' Ship it ' });
+    await mergePullRequest(client, 'PR_1', { method: 'squash', headSha: head, title: '  ' });
+    await mergePullRequest(client, 'PR_1', { method: 'rebase', headSha: head, title: 'Ignored' });
+    expect(sent.map((request) => request.variables.headline)).toEqual([
+      'Ship it',
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('does not report success when GitHub confirms nothing', async () => {
+    for (const data of [
+      { mergePullRequest: null },
+      { mergePullRequest: { pullRequest: null } },
+      { mergePullRequest: { pullRequest: { merged: false } } },
+    ]) {
+      await expect(
+        mergePullRequest(setup(data).client, 'PR_1', { method: 'merge', headSha: head }),
+      ).rejects.toMatchObject({ kind: 'server', message: 'GitHub did not confirm the merge.' });
+    }
+  });
+
+  it('says why GitHub refused, without the token', async () => {
+    for (const message of [
+      'Head branch was modified. Review and try the merge again.',
+      'Pull request is not mergeable ghp_secret',
+    ]) {
+      const { client } = setup(
+        jsonResponse({ data: null, errors: [graphqlError('UNPROCESSABLE', message)] }),
+      );
+      const error = await mergePullRequest(client, 'PR_1', {
+        method: 'merge',
+        headSha: head,
+      }).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(GitHubError);
+      expect((error as GitHubError).message).toBe(message.replace('ghp_secret', '[redacted]'));
+    }
   });
 });

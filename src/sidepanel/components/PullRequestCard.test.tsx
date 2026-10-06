@@ -203,7 +203,7 @@ describe('expanding', () => {
     renderCard();
     fireEvent.click(toggleOf().button);
     await screen.findByRole('link', { name: 'lint' });
-    fireEvent.click(screen.getByText('Merge'));
+    fireEvent.click(screen.getByText('Merge', { selector: '.pr-detail__label' }));
     expect(expanded()).toBe(true);
   });
 

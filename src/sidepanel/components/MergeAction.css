@@ -1,0 +1,4 @@
+/* The pull request being merged, at the top of the confirmation. */
+.merge-dialog__pr {
+  font-weight: var(--weight-medium);
+}

@@ -60,7 +60,9 @@ export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequ
     lastComment: null,
     closedBy: null,
     allowedMergeMethods: ['merge', 'squash'],
+    defaultMergeMethod: 'merge',
     viewerCanUpdate: true,
+    viewerCanMerge: true,
     ...overrides,
   };
 }

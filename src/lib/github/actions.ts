@@ -4,6 +4,7 @@
  * function resolves when GitHub confirmed and throws `GitHubError` otherwise (the client masks
  * the token in whatever GitHub answered). Reading the result back is the poller's job.
  */
+import type { MergeMethod } from '../model';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
 
@@ -29,8 +30,25 @@ mutation ProwlComment($id: ID!, $body: String!) {
   }
 }`;
 
+/**
+ * `$oid` is required: GitHub refuses the merge when the head moved since the panel looked
+ * ("Head branch was modified"), so commits nobody saw are never merged.
+ */
+export const MERGE_MUTATION = /* GraphQL */ `
+mutation ProwlMerge($id: ID!, $method: PullRequestMergeMethod!, $oid: GitObjectID!, $headline: String) {
+  mergePullRequest(
+    input: { pullRequestId: $id, mergeMethod: $method, expectedHeadOid: $oid, commitHeadline: $headline }
+  ) {
+    pullRequest { merged }
+  }
+}`;
+
 interface ReviewData {
   addPullRequestReview: { pullRequestReview: { id: string } | null } | null;
+}
+
+interface MergeData {
+  mergePullRequest: { pullRequest: { merged: boolean } | null } | null;
 }
 
 interface CommentData {
@@ -86,5 +104,30 @@ export async function comment(client: GitHubClient, prId: string, body: string):
   });
   if (!data.addComment?.commentEdge?.node) {
     throw new GitHubError('server', 'GitHub did not confirm the comment.');
+  }
+}
+
+export interface MergeOptions {
+  method: MergeMethod;
+  /** The head commit the person looked at (`PullRequest.headSha`). */
+  headSha: string;
+  /** Title of the merge or squash commit; GitHub's own when empty. A rebase has none. */
+  title?: string;
+}
+
+/** Merges the pull request, unless its head is no longer `headSha`. */
+export async function mergePullRequest(
+  client: GitHubClient,
+  prId: string,
+  { method, headSha, title }: MergeOptions,
+): Promise<void> {
+  const data = await client.graphql<MergeData>(MERGE_MUTATION, {
+    id: prId,
+    method: method.toUpperCase(),
+    oid: headSha,
+    headline: method === 'rebase' ? undefined : title?.trim() || undefined,
+  });
+  if (!data.mergePullRequest?.pullRequest?.merged) {
+    throw new GitHubError('server', 'GitHub did not confirm the merge.');
   }
 }

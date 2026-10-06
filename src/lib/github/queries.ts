@@ -41,6 +41,8 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           mergeCommitAllowed
           squashMergeAllowed
           rebaseMergeAllowed
+          viewerDefaultMergeMethod
+          viewerPermission
         }
         reviewDecision
         mergeable
@@ -175,6 +177,10 @@ export interface PullRequestNode {
     mergeCommitAllowed: boolean;
     squashMergeAllowed: boolean;
     rebaseMergeAllowed: boolean;
+    /** `PullRequestMergeMethod`. */
+    viewerDefaultMergeMethod: string;
+    /** `RepositoryPermission`; null for a GitHub App. */
+    viewerPermission: string | null;
   };
   reviewDecision: string | null;
   mergeable: string;

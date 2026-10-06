@@ -16,6 +16,7 @@ import {
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
+import { MergeAction } from './MergeAction';
 import { type MergeLine, mergeReadiness } from './mergeReadiness';
 import { ReviewActions } from './ReviewActions';
 import { Avatar } from './ui/Avatar';
@@ -208,9 +209,9 @@ export interface PullRequestDetailsProps {
 
 /**
  * What an expanded card shows: why the PR can or cannot be merged (at once, from the list's own
- * data), the actions on it (review, comment), then, once `ProwlPullRequestDetail` has loaded, its
- * checks (failed first, with links) and reviewers. Loads on mount and again when the PR changes;
- * the last detail stays on screen while a newer one loads.
+ * data), the actions on it (review, comment, merge), then, once `ProwlPullRequestDetail` has
+ * loaded, its checks (failed first, with links) and reviewers. Loads on mount and again when the
+ * PR changes; the last detail stays on screen while a newer one loads.
  */
 export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
   const key = detailKey(pr);
@@ -227,9 +228,10 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
         <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
       </Group>
       <Group id={`${id}-actions`} label="Actions">
-        {/* One row of small buttons; later actions (merge, re-run, draft) join it. */}
+        {/* One row of small buttons; later actions (re-run, draft) join it. */}
         <div class="pr-actions">
           <ReviewActions pr={pr} />
+          <MergeAction pr={pr} />
         </div>
       </Group>
       {entry?.error && (

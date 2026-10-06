@@ -45,6 +45,9 @@ const REVIEW_STATES: readonly ReviewState[] = [
   'commented',
   'dismissed',
 ];
+const MERGE_METHODS: readonly MergeMethod[] = ['merge', 'squash', 'rebase'];
+/** `RepositoryPermission` levels that can merge a pull request. */
+const CAN_MERGE = ['WRITE', 'MAINTAIN', 'ADMIN'];
 const MERGEABLE: readonly Mergeable[] = ['mergeable', 'conflicting', 'unknown'];
 const MERGE_STATE_STATUSES: readonly MergeStateStatus[] = [
   'clean',
@@ -124,11 +127,7 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
   const { repository: repo } = node;
   const contexts = node.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts;
   const lastComment = present(node.comments).at(-1);
-  const methods: [boolean, MergeMethod][] = [
-    [repo.mergeCommitAllowed, 'merge'],
-    [repo.squashMergeAllowed, 'squash'],
-    [repo.rebaseMergeAllowed, 'rebase'],
-  ];
+  const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
   return {
     id: node.id,
     number: node.number,
@@ -171,8 +170,10 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     // A search result does not carry the ClosedEvent: closed PRs get their closer from
     // `mapClosedState`, merged ones from `mergedBy`.
     closedBy: node.mergedBy?.login ?? null,
-    allowedMergeMethods: methods.flatMap(([allowed, method]) => (allowed ? [method] : [])),
+    allowedMergeMethods: MERGE_METHODS.filter((_, index) => allowed[index]),
+    defaultMergeMethod: pick(MERGE_METHODS, repo.viewerDefaultMergeMethod, 'merge'),
     viewerCanUpdate: node.viewerCanUpdate,
+    viewerCanMerge: CAN_MERGE.includes(repo.viewerPermission ?? ''),
   };
 }
 

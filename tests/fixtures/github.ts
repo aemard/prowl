@@ -38,6 +38,8 @@ export function repositoryNode(nameWithOwner = 'acme/widgets', overrides = {}) {
     mergeCommitAllowed: true,
     squashMergeAllowed: true,
     rebaseMergeAllowed: false,
+    viewerDefaultMergeMethod: 'MERGE',
+    viewerPermission: 'WRITE',
     ...overrides,
   };
 }
