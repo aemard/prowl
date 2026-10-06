@@ -36,7 +36,7 @@ in-memory updates that the next snapshot replaces.
 |---|---|---|
 | `src/lib/model.ts` | Domain types (the contract). Change with care. | n/a |
 | `src/lib/env.ts` | Build-time config (API URL, web URL, OAuth client id) | 80% |
-| `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen) | 80% |
+| `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/time/` | Relative time, quiet hours, backoff | 80% |
@@ -81,6 +81,37 @@ in-memory updates that the next snapshot replaces.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
   `statusContextCountsByState` so the list query stays cheap; individual check runs are
   fetched only when a PR is expanded.
+
+## Storage
+
+All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
+`src/lib/model.ts`; nothing uses `storage.sync`. `src/lib/storage/` is the only code that calls
+`chrome.storage.local`:
+
+- `storage.ts`: typed `getItem` / `getItems` / `setItem` / `setItems` / `removeItems` /
+  `subscribe(key, listener)` over `StorageSchema` (key -> model type), plus
+  `updateItem(key, update)`, a read-modify-write that holds a Web Lock named
+  `prowl:storage:<key>` (shared by the side panel and the service worker, which have the same
+  origin) and skips the write when the value is unchanged. Chrome itself fires `onChanged`
+  only for values that actually changed.
+- `settings.ts`: `DEFAULT_SETTINGS` (frozen), `normalizeSettings(unknown)` which repairs any
+  stored value (migrations first, then defaults for missing or invalid fields, clamping, unknown
+  keys dropped), `loadSettings`, `updateSettings(patch | updater)`, `ensureSettings` (persist
+  migrated settings, for `runtime.onInstalled`) and `subscribeSettings`.
+  - Presets (`authored`, `review_requested`, `mentioned`, `assigned`) always exist exactly once
+    with `id === kind` and a fixed label; they are enabled or disabled, never deleted. Custom
+    sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
+  - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, quiet hours are
+    `HH:MM`, repo filters are `owner` or `owner/name` (deduplicated, case-insensitive).
+  - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
+    Unversioned data counts as version 1; data from a newer version is normalized best-effort.
+- `prLocal.ts`: pure reducers over `PrLocalState` (`snooze`, `unsnooze`, `mute`, `unmute`,
+  `markSeen`, `pruneExpired`), which return the same object when nothing changes, and
+  predicates (`isSnoozed`, `isMuted`, `isSeen`); `updatePrLocal(fn)` applies reducers in one
+  locked write. `markSeen` never moves backwards. `pruneExpired(state, now, knownIds)` drops ended snoozes and
+  every entry for PRs not in `knownIds` (the snapshot's PR ids).
+
+Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl writes them.
 
 ## Auth
 

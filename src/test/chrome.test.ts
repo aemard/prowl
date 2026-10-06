@@ -7,9 +7,24 @@ describe('fake chrome', () => {
     chrome.storage.onChanged.addListener(listener);
     await chrome.storage.local.set({ a: 1 });
     expect(await chrome.storage.local.get('a')).toEqual({ a: 1 });
-    expect(listener).toHaveBeenCalledWith({ a: { oldValue: undefined, newValue: 1 } }, 'local');
+    expect(listener).toHaveBeenCalledWith({ a: { newValue: 1 } }, 'local');
     await chrome.storage.local.remove('a');
     expect(await chrome.storage.local.get({ a: 2 })).toEqual({ a: 2 });
+  });
+
+  it('reports only values that changed, like Chrome', async () => {
+    const listener = vi.fn();
+    chrome.storage.local.onChanged.addListener(listener);
+    await chrome.storage.local.set({ a: { x: 1, y: [1] } });
+    await chrome.storage.local.set({ a: { y: [1], x: 1 } });
+    await chrome.storage.local.set({ a: { x: 2, y: [1] }, b: 1 });
+    await chrome.storage.local.set({ b: 1 });
+    await chrome.storage.local.remove('missing');
+    expect(listener.mock.calls).toEqual([
+      [{ a: { newValue: { x: 1, y: [1] } } }],
+      [{ a: { oldValue: { x: 1, y: [1] }, newValue: { x: 2, y: [1] } }, b: { newValue: 1 } }],
+    ]);
+    expect(Object.keys(listener.mock.calls[0]?.[0].a ?? {})).toEqual(['newValue']);
   });
 
   it('tracks alarms, notifications and badge', async () => {

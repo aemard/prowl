@@ -50,8 +50,8 @@
       ],
       "priority": 2,
       "dependsOn": [],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "storage.ts (typed get/set/remove/subscribe + locked updateItem), settings.ts (defaults, normalizeSettings, migrations, load/update/ensure/subscribe), prLocal.ts (pure reducers + updatePrLocal); 100% coverage; nothing wires ensureSettings yet (US-007)."
     },
     {
       "id": "US-003",

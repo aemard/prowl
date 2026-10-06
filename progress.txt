@@ -9,6 +9,8 @@ Started: 2026-10-06
 - The e2e build (`vite build --mode e2e` -> dist-e2e/) points env.apiUrl and env.webUrl at http://127.0.0.1:4010 (override the port with PROWL_E2E_PORT, used for both the build and the mock server) and has a fixed client id `e2e-client-id`.
 - Biome formats with single quotes, 2 spaces, width 100. Run `pnpm lint:fix` before verify.
 - Vite 8 config uses `build.rolldownOptions`; the side panel entry is src/sidepanel/index.html, the worker is src/background/index.ts -> background.js.
+- Storage: never call chrome.storage.local directly; use src/lib/storage (getItem/setItem/subscribe, loadSettings/updateSettings/subscribeSettings, updatePrLocal((s) => snooze(s, id, until))). Settings and prLocal reads are always normalized; read-modify-write goes through updateItem (Web Lock shared by panel and worker, no-op writes skipped).
+- The chrome fake, like real Chrome, fires storage onChanged only for values that actually changed and omits oldValue for new keys.
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -16,4 +18,13 @@ Started: 2026-10-06
 - Generated manifest (src/manifest.ts), minimal worker + side panel, chrome fake, mock GitHub server, smoke E2E, size budget, zip, icons script.
 - Workflows: ci, codeql, dependency-review, scorecard, release-please (+ release-assets reusable), release-tag fallback, disabled Chrome Web Store stub.
 - Contracts: src/lib/model.ts, docs/architecture.md, CLAUDE.md, docs/decisions.md.
+---
+## 2026-10-06 - US-002 Settings and local storage layer
+- Implemented src/lib/storage: storage.ts (typed getItem/getItems/setItem/setItems/removeItems/subscribe over StorageSchema, updateItem read-modify-write under a Web Lock with an in-context fallback, skips unchanged writes), settings.ts (frozen DEFAULT_SETTINGS + defaultSettings(), normalizeSettings, migrateSettings + SETTINGS_MIGRATIONS, normalizeTime, normalizeRepoPattern, PR_EVENT_TYPES, BUILT_IN_SECTION_KINDS, loadSettings/updateSettings/ensureSettings/subscribeSettings), prLocal.ts (pure snooze/unsnooze/mute/unmute/markSeen/pruneExpired + isSnoozed/isMuted/isSeen, normalizePrLocal, loadPrLocal/updatePrLocal/subscribePrLocal), guards.ts.
+- Files: src/lib/storage/*.ts (+ tests), src/test/chrome.ts (+ test), docs/architecture.md (Storage section), docs/decisions.md.
+- Learnings:
+  - Verified in the sandbox Chromium: chrome.storage.local.onChanged does not fire for identical values (key order irrelevant) and omits oldValue for new keys; navigator.locks exists in the extension service worker and is shared with the side panel. happy-dom's navigator.locks is null, so unit tests run the fallback queue; stub `navigator` with vi.stubGlobal to test the Web Locks path.
+  - Nothing imports src/lib/storage yet, so the bundles did not grow; the whole API is about 3.2 KB gzip. US-007 should call ensureSettings() from runtime.onInstalled (persists defaults and migrations) and subscribeSettings() to reschedule the alarm; prune with updatePrLocal((s) => pruneExpired(s, now, Object.keys(snapshot.pullRequests))).
+  - Presets always exist once with id === kind and a fixed label; settings UIs toggle them, they cannot delete or rename them. Custom sections need a query.
+  - src/lib/storage is at 100% coverage; vitest.config.ts still gates it at the global 80% (the story asks for >= 90%).
 ---

@@ -3,6 +3,7 @@
  * Installed globally by `tests/unit/setup.ts` and reset before every test.
  * Extend it here (not in individual tests) when a new API is needed.
  */
+import { isDeepStrictEqual } from 'node:util';
 
 type Listener<A extends unknown[]> = (...args: A) => unknown;
 
@@ -61,8 +62,15 @@ class FakeStorageArea {
   async set(items: Record<string, unknown>): Promise<void> {
     const changes: StorageChanges = {};
     for (const [k, v] of Object.entries(items)) {
-      changes[k] = { oldValue: this.data.get(k), newValue: structuredClone(v) };
-      this.data.set(k, structuredClone(v));
+      const had = this.data.has(k);
+      const oldValue = this.data.get(k);
+      const newValue = structuredClone(v);
+      this.data.set(k, newValue);
+      // Like Chrome: only keys whose value changed, and no `oldValue` for new keys.
+      if (had && isDeepStrictEqual(oldValue, newValue)) continue;
+      changes[k] = had
+        ? { oldValue, newValue: structuredClone(v) }
+        : { newValue: structuredClone(v) };
     }
     this.fire(changes);
   }

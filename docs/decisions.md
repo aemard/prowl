@@ -24,3 +24,8 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-10-06 — Badge default `attention` = PRs with failing CI, changes requested, conflicts or ready to merge; red when CI fails or changes are requested.
 - 2026-10-06 — Releases: release-please with `release-as: 1.0.0`; a tag-triggered workflow is the fallback if Actions may not open PRs. Assets: zip, SPDX SBOM (syft), build provenance attestation.
 - 2026-10-06 — Actions are pinned to commit SHAs (Scorecard "Pinned-Dependencies").
+- 2026-10-06 — Preset sections are fixed (id = kind, fixed label, enable/disable only) and normalization re-adds missing ones: the settings screen only toggles presets, and stable ids keep `snapshot.sections` keys valid across versions.
+- 2026-10-06 — `pollIntervalMinutes` is capped at 60 (the brief only sets the minimum): a larger value is almost certainly corrupt data, and polling less than hourly defeats the product.
+- 2026-10-06 — Settings migrations are keyed by the version they upgrade from; unversioned data counts as version 1, and data from a newer version (downgrade) is normalized best-effort instead of being discarded.
+- 2026-10-06 — prLocal operations are pure reducers (state first) applied through `updatePrLocal()`, rather than one storage call each, so the notifier and badge can use them on in-memory state and one write can combine several operations.
+- 2026-10-06 — Read-modify-write updates hold a Web Lock (`navigator.locks`), which the side panel and the service worker share (verified in Chromium 141), so a snooze in the panel cannot be lost to a concurrent prune in the worker; an in-context queue is the fallback.
