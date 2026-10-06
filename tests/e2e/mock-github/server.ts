@@ -6,7 +6,7 @@
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
-export const MOCK_PORT = 4010;
+export const MOCK_PORT = Number(process.env.PROWL_E2E_PORT ?? 4010);
 export const MOCK_ORIGIN = `http://127.0.0.1:${MOCK_PORT}`;
 
 export interface LoggedRequest {

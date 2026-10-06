@@ -2,8 +2,11 @@ import pkg from '../package.json' with { type: 'json' };
 
 export type BuildMode = 'production' | 'development' | 'e2e';
 
+/** Port of the end-to-end mock GitHub server. Override with PROWL_E2E_PORT to run suites side by side. */
+export const E2E_PORT = Number(process.env.PROWL_E2E_PORT ?? 4010);
+
 /** Origin used by the end-to-end mock GitHub server. Only allowed in `e2e` builds. */
-export const E2E_ORIGIN = 'http://127.0.0.1:4010';
+export const E2E_ORIGIN = `http://127.0.0.1:${E2E_PORT}`;
 
 /** Chrome extension versions must be 1-4 dot-separated integers. */
 export function toExtensionVersion(version: string): string {
