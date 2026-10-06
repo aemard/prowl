@@ -12,6 +12,7 @@ Started: 2026-10-06
 - Storage: never call chrome.storage.local directly; use src/lib/storage (getItem/setItem/subscribe, loadSettings/updateSettings/subscribeSettings, updatePrLocal((s) => snooze(s, id, until))). Settings and prLocal reads are always normalized; read-modify-write goes through updateItem (Web Lock shared by panel and worker, no-op writes skipped).
 - The chrome fake, like real Chrome, fires storage onChanged only for values that actually changed and omits oldValue for new keys.
 - GitHub: all HTTP goes through `createGitHubClient({ token, apiUrl, fetch? })` (src/lib/github/client.ts); it only throws `GitHubError` (`kind`, `status`, `resetAt`, `retryAfterSeconds`). `graphql` is strict (any `errors` entry throws), pass `{ partial: true }` for reads that tolerate holes; read the rate limit with `parseRateLimit(data.rateLimit)`. HTTP-level test builders live in tests/fixtures/http.ts (`jsonResponse`, `rateLimitHeaders`, `graphqlRateLimit`, `graphqlError`).
+- GitHub search: build each section's query with `buildSearchQuery(section, settings)` and drop fetched PRs with `filterByRepo(prs, settings)` (src/lib/github/search.ts); skip custom sections whose `validateCustomQuery(query)` is non-empty. GitHub's search API answers 422 for >5 AND/OR/NOT, >256 chars of search words (qualifiers excluded) and operators between qualifiers; the MCP `search_pull_requests` tool is a quick way to check search semantics.
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -37,4 +38,13 @@ Started: 2026-10-06
   - Mutations return 200 with `data: { mergePullRequest: null }` plus `errors`, so `data` being present does not mean success: keep `graphql` strict unless the read tolerates holes.
   - For a rate limit, wait until the later of `resetAt` and now + `retryAfterSeconds` (US-007). No retries inside the client.
   - Skipped as speculative: a `restResponse` that returns headers (US-011 needs `x-oauth-scopes` from `GET /user` and should add it), a `retryAt` helper, per-error GraphQL details, token-shape scrubbing. Happy-dom provides `Response`/`Headers`/`AbortController`, so unit tests build real `Response` objects; use `vi.useFakeTimers()` + `advanceTimersByTimeAsync` for the timeout.
+---
+## 2026-10-06 - US-004 PR scope: search query builder and repo filters
+- Implemented src/lib/github/search.ts: `buildSearchQuery(section, { repoInclude, repoExclude })` (presets `is:pr is:open <qualifier>:@me archived:false`, custom = `is:pr <query>`, repo filters as `repo:`/`user:` and `-repo:`/`-user:`), `filterByRepo(prs, settings)` (case-insensitive owner or owner/name, exclude wins) and `validateCustomQuery(query)` returning readable errors (empty, is:issue/type:issue/-is:pr, operators between qualifiers only, >5 operators, >256 chars of search words).
+- Files: src/lib/github/search.ts (+ test, 100% coverage), docs/architecture.md (Search queries), docs/decisions.md, prd.json.
+- Learnings:
+  - Checked against the live search API: `user:` matches organizations and `org:` matches users; several `repo:`/`user:` qualifiers are OR-ed; AND/OR/NOT only apply to search words, so `is:pr x OR y` keeps `is:pr` global; qualifier-only OR (`author:a OR author:b`) is a 422; the 256-character limit ignores qualifiers (650 chars of `repo:` were accepted); a scope fully cancelled by exclusions (`repo:a/b -user:a`) turns into "all of GitHub", hence `filterByRepo` is the source of truth.
+  - The builder adds no `sort:`: US-005 should append `sort:updated-desc` (unless the custom query has `sort:`) or sort client-side, otherwise the first `maxPerSection` results are in best-match order.
+  - US-005/US-007: call `validateCustomQuery` before fetching a custom section and report the first error instead of sending the query; a `validation` (422) from GitHub for a section should not count toward global backoff failures.
+  - `buildSearchQuery` trusts normalized settings (patterns are interpolated verbatim): always pass `loadSettings()` / `normalizeSettings()` output.
 ---

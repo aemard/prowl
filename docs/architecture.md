@@ -115,6 +115,34 @@ back; mutations stay strict because their payload is null when they fail.
 `parseRateLimit(headers | rateLimit object)` (`rateLimit.ts`) normalizes both sources to the
 model's `RateLimit`.
 
+## Search queries
+
+`src/lib/github/search.ts` turns a `Section` into the GitHub search string of one list. Every
+query starts with `is:pr`, which cannot be OR-ed away: AND / OR / NOT only combine search words,
+never qualifiers.
+
+| Section | Query |
+|---|---|
+| `authored` | `is:pr is:open author:@me archived:false` |
+| `review_requested` | `is:pr is:open review-requested:@me archived:false` (includes your teams) |
+| `mentioned` | `is:pr is:open mentions:@me archived:false` |
+| `assigned` | `is:pr is:open assignee:@me archived:false` |
+| `custom` | `is:pr <the user's query>` (open or closed as the query says) |
+
+- `buildSearchQuery(section, settings)` appends the repo filters: `repoInclude` becomes
+  `repo:owner/name` or `user:owner` (`user:` also matches organizations), `repoExclude` becomes
+  `-repo:owner/name` or `-user:owner`. Positive scopes are OR-ed by GitHub; a custom query that
+  brings its own `repo:` / `org:` / `user:` keeps it and the include list is applied client-side
+  only, so the result is the intersection.
+- `filterByRepo(prs, settings)` enforces both lists client-side (case-insensitive; a pattern is a
+  PR's owner or its `owner/name`; exclude wins). It is the source of truth because GitHub
+  treats a scope that the exclusions cancel out completely as no scope at all.
+- `validateCustomQuery(query)` returns readable errors (empty array = valid) for an empty
+  query, `is:issue` / `type:issue` / `-is:pr`, operators between qualifiers only, and GitHub's
+  search limits: at most 5 AND / OR / NOT operators and 256 characters of search words,
+  qualifiers not counted (verified against the search API, which answers 422 otherwise).
+  Callers (settings screen, poller) skip a custom section that fails validation.
+
 ## Storage
 
 All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of

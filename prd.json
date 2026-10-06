@@ -86,8 +86,8 @@
       ],
       "priority": 4,
       "dependsOn": [],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "search.ts: buildSearchQuery, filterByRepo, validateCustomQuery at 100% coverage; query limits and scope semantics checked against the live search API."
     },
     {
       "id": "US-005",
