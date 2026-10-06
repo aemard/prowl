@@ -179,9 +179,12 @@ describe('expanding', () => {
 
     fireEvent.click(toggleOf().button);
     expect(expanded()).toBe(true);
-    const detail = document.getElementById(toggleOf().button.getAttribute('aria-controls') ?? '');
-    expect(detail?.classList.contains('pr-detail')).toBe(true);
-    expect(within(detail as HTMLElement).getByRole('list', { name: 'Merge' })).toBeTruthy();
+    // The button points at the detail at once (a placeholder while its chunk loads)...
+    const controls = toggleOf().button.getAttribute('aria-controls') ?? '';
+    expect(document.getElementById(controls)?.classList.contains('pr-detail')).toBe(true);
+    // ...and at the loaded detail afterwards.
+    const merge = await screen.findByRole('list', { name: 'Merge' });
+    expect(merge.closest('.pr-detail')?.id).toBe(controls);
     await screen.findByRole('link', { name: 'lint' });
     expect(document.querySelectorAll('.pr-card__summary')).toHaveLength(1);
 

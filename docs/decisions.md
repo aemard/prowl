@@ -174,3 +174,4 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-10-06 — Re-run targets suites concluded FAILURE, TIMED_OUT or STARTUP_FAILURE, and needs write access (`viewerCanMerge`): cancelled or skipped suites were stopped on purpose, and GitHub refuses re-runs without write access.
 - 2026-10-06 — Row actions live in one "More actions" menu per card rather than inline buttons: the card stays scannable at 400 px, and the menu is keyboard-navigable (arrows, Esc).
 - 2026-10-06 — j/k move focus between cards' expand buttons (not a strict roving tabindex): Tab order stays natural and every card remains reachable with Tab.
+- 2026-10-06 — The E2E render budget (150 ms) uses the best of three panel opens: one-off scheduler pauses on shared CI runners should not fail the build, while a real regression slows every run.

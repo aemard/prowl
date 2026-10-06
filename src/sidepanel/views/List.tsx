@@ -119,6 +119,10 @@ function SectionNotice({ section, message }: { section: Section; message: string
   );
 }
 
+/** Marked once, when cards first render: the E2E perf budget measures time to this mark. */
+export const LIST_RENDERED_MARK = 'prowl:list-rendered';
+let listRendered = false;
+
 /** The pull request list: section tabs with counts, a quick filter and one card per PR. */
 export function ListView() {
   const now = useNow(30_000);
@@ -152,6 +156,11 @@ export function ListView() {
     snoozed(pr.id),
   );
   const [snoozedOpen, setSnoozedOpen] = useState(false);
+  useEffect(() => {
+    if (listRendered || shown.length === 0) return;
+    listRendered = true;
+    performance.mark(LIST_RENDERED_MARK);
+  });
   useMarkSeen(
     list,
     shown.map((pr) => pr.id).join('\n'),

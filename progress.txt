@@ -269,3 +269,7 @@ Started: 2026-10-06
 - shortcutFor() is pure and ignores editable targets, menus, dialogs and modifier keys.
 - RefreshAnnouncer only speaks for user-requested refreshes (refreshRequested signal).
 ---
+## 2026-10-06 - US-022 Performance budget and fast first render (main agent)
+- lazy(load, fallback) for Settings and PullRequestDetails; fallback keeps the detail id so aria-controls stays valid.
+- Learning: a lazily replaced node is a new element; re-query after the chunk loads in tests.
+---

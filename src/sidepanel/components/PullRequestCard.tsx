@@ -22,13 +22,20 @@ import {
 } from './icons';
 import type { IconComponent } from './icons/Icon';
 import { labelColors } from './labelColor';
+import { lazy } from './lazy';
 import { PrMenu } from './PrMenu';
-import { PullRequestDetails } from './PullRequestDetails';
 import { describePullRequest, pullRequestStatuses, type StatusIcon } from './prStatus';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { IconButton } from './ui/IconButton';
 import './PullRequestCard.css';
+
+/** The expanded part (checks, reviewers, actions, dialogs) loads with the first expand. */
+const PullRequestDetails = lazy(
+  () => import('./PullRequestDetails').then((m) => m.PullRequestDetails),
+  // Same id, so the expand button's aria-controls points at it while the chunk loads.
+  ({ id }) => <div id={id} class="pr-detail" aria-busy="true" />,
+);
 
 const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
   draft: GitPullRequestDraftIcon,

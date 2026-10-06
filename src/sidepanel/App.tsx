@@ -1,8 +1,9 @@
 import { useSignalEffect } from '@preact/signals';
-import type { JSX } from 'preact';
+import type { ComponentType } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Theme } from '../lib/model';
 import { Header } from './components/Header';
+import { lazy } from './components/lazy';
 import { RefreshAnnouncer, ShortcutsDialog, useShortcuts } from './components/Shortcuts';
 import { StatusBanner } from './components/StatusBanner';
 import { Skeleton } from './components/ui/Skeleton';
@@ -11,10 +12,12 @@ import { type Route, route } from './state/router';
 import { hydrated, settings } from './state/store';
 import { ListView } from './views/List';
 import { OnboardingView } from './views/Onboarding';
-import { SettingsView } from './views/Settings';
 import './App.css';
 
-const VIEWS: Record<Route, () => JSX.Element> = {
+/** Settings is rarely opened: its own chunk, loaded on first visit. */
+const SettingsView = lazy(() => import('./views/Settings').then((m) => m.SettingsView));
+
+const VIEWS: Record<Route, ComponentType> = {
   list: ListView,
   settings: SettingsView,
   onboarding: OnboardingView,

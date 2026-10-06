@@ -410,8 +410,8 @@
       ],
       "priority": 22,
       "dependsOn": ["US-020"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Settings and expanded details lazy-loaded (src/sidepanel/components/lazy.tsx): startup JS 44.8 -> 39.1 KB gzip; prowl:list-rendered mark; E2E budget 150 ms (measured 56-80 ms), no network on open; docs/performance.md."
     },
     {
       "id": "US-023",
