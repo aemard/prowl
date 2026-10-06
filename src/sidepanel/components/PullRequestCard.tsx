@@ -1,6 +1,7 @@
 import type { PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
-import { isGitHubUrl, openGitHubUrl } from '../openUrl';
+import { isGitHubUrl } from '../../lib/url';
+import { openGitHubUrl } from '../openUrl';
 import {
   AlertIcon,
   CheckIcon,
