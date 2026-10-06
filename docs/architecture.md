@@ -497,8 +497,9 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   (labelled with the view's name), but not on first load. Expanded PR state is local UI state.
 - `Header`: brand, "Updated 2 min ago" (`snapshot.fetchedAt`, ticks every 15 s), refresh
   (`sendToBackground({ type: 'poll', force: true })`, spinner while `pollState.inFlight`),
-  settings / back toggle and the account menu (avatar: GitHub profile, Sign out behind a
-  confirmation dialog). Signed out or before hydration it is the brand alone.
+  settings / back toggle and the account menu (avatar: GitHub profile, Sign out behind the
+  `SignOutDialog` confirmation that Settings reuses). Signed out or before hydration it is the
+  brand alone.
 - `state/background.ts`: `sendToBackground(BackgroundRequest)` resolves even when the worker has
   no receiver. `openUrl.ts`: `openGitHubUrl(url)` is the only way the panel opens a URL, and it
   refuses anything outside the `env.webUrl` origin.
@@ -558,6 +559,34 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   nothing blocks; `blocked` without a known reason says "Blocked by the base branch's rules". It
   works from the list's data alone (generic counts) and sharpens once the detail has loaded, so
   the Merge group shows at once.
+- Settings (`views/Settings.tsx`, one scrolling screen of six groups: Pull requests, Refresh,
+  Notifications, Appearance, Account, About; `SettingsScope`, `SettingsNotifications` and
+  `SettingsAccount` hold the bigger ones, `SettingsModel.ts` the pure copy and the cost estimate).
+  Every control saves at once through `saveSettings(patch | updater, { refresh })`
+  (`state/settings.ts`, a thin `updateSettings` that toasts when the write fails); the panel
+  signals follow through the storage subscription, so a control shows what was stored, not what
+  was clicked. Rules:
+  - Sections: presets are switches (their id is their kind, `normalizeSettings` keeps them);
+    custom sections are added and edited in a `Dialog` whose query goes through
+    `validateCustomQuery` (errors shown with the field, focus on the first invalid one), get the
+    id `custom-<8 hex>`, and are removed with an Undo toast. `RepoFilter` (include / exclude) takes
+    chips validated by `normalizeRepoPattern`, rejects duplicates case-insensitively and announces
+    adds and removals in a live region.
+  - `refresh: true` (sections, repository lists, results per section) sends one forced poll 800 ms
+    after the last change, so the list does not wait for the next alarm. An interval change
+    sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`
+    recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
+  - `NumberField` saves valid whole numbers as typed (interval 1-60, results 1-100) and shows an
+    error for the rest; blur shows the saved value again. The Refresh note shows the estimated
+    cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
+  - Notifications: master switch (greys out the event switches, quiet hours and the test button),
+    one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
+    midnight; the note only appears for that or an empty window), and "Send test notification",
+    which calls `chrome.notifications.create` from the panel with id `test:<ms>` and
+    `icons/icon-128.png`; the worker's click handler finds no URL for that id and just clears it.
+  - Account: avatar, login, name, token type, scopes (a fine-grained token says why it has none)
+    and Sign out; the token itself is never rendered. About: `chrome.runtime.getManifest().version`
+    and three links opened through `openGitHubUrl` (docs folder, `docs/privacy.md`, repository).
 - Section tabs scroll sideways when they do not fit; a fade and a chevron at an edge with more
   tabs behind it say so (measured on scroll and resize), and a tab brought into view by the arrow
   keys stays clear of them.

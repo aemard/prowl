@@ -4,15 +4,12 @@ import { formatRelativeTime } from '../../lib/time/relative';
 import { openGitHubUrl } from '../openUrl';
 import { sendToBackground } from '../state/background';
 import { navigate, route } from '../state/router';
-import { signOut } from '../state/session';
 import { auth, pollState, snapshot } from '../state/store';
 import { ArrowLeftIcon, GearIcon, LinkExternalIcon, SignOutIcon, SyncIcon } from './icons';
 import { ProwlMark } from './icons/ProwlMark';
-import { Button } from './ui/Button';
-import { Dialog } from './ui/Dialog';
+import { SignOutDialog } from './SignOutDialog';
 import { IconButton } from './ui/IconButton';
 import { Menu } from './ui/Menu';
-import { showToast } from './ui/Toast';
 import { useNow } from './useNow';
 import './Header.css';
 
@@ -38,15 +35,6 @@ export function Header() {
   const viewer = auth.value?.viewer;
   const inSettings = route.value === 'settings';
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
-
-  async function confirmSignOut() {
-    try {
-      await signOut();
-    } catch {
-      showToast({ message: 'Could not sign out. Try again.', tone: 'danger' });
-    }
-    setConfirmingSignOut(false);
-  }
 
   return (
     <header class="header">
@@ -97,20 +85,7 @@ export function Header() {
           />
         </div>
       )}
-      <Dialog
-        open={confirmingSignOut}
-        onClose={() => setConfirmingSignOut(false)}
-        title="Sign out?"
-        description="Prowl forgets your token and the pull requests it saved in this browser. The token itself stays valid on GitHub until you revoke it there."
-        footer={
-          <>
-            <Button onClick={() => setConfirmingSignOut(false)}>Cancel</Button>
-            <Button variant="danger" onClick={() => void confirmSignOut()}>
-              Sign out
-            </Button>
-          </>
-        }
-      />
+      <SignOutDialog open={confirmingSignOut} onClose={() => setConfirmingSignOut(false)} />
     </header>
   );
 }

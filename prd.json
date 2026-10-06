@@ -361,8 +361,8 @@
       ],
       "priority": 19,
       "dependsOn": ["US-010", "US-007"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Settings screen with six groups (scope, refresh, notifications, appearance, account, about); every control saves at once, scope changes trigger one debounced forced poll, an interval change reschedules the worker alarm (E2E); test notification, custom section dialog with validated queries, repo chips; settings.png, axe clean in both themes."
     },
     {
       "id": "US-020",

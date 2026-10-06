@@ -1,0 +1,149 @@
+.settings__title {
+  padding: var(--space-4) var(--space-4) 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  font-weight: var(--weight-semibold);
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.settings-group:last-child {
+  border-bottom: 0;
+}
+
+.settings-group__title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.settings-group__description {
+  /* Closer to its title than the rest of the group is. */
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.settings-group__description,
+.settings-note {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  text-wrap: pretty;
+}
+
+.settings-subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  font-weight: var(--weight-semibold);
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A custom query can be one long word. */
+.settings-list .ui-switch-field__description {
+  overflow-wrap: anywhere;
+}
+
+.settings-row__actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: calc(-1 * var(--space-2));
+}
+
+/* A button on its own line keeps its natural width. */
+.settings-add {
+  align-self: flex-start;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Two short fields side by side. */
+.settings-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.settings-test {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings-account__names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.settings-facts > div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.settings-facts dt {
+  color: var(--color-fg-muted);
+}
+
+.settings-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.settings-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--weight-medium);
+}
