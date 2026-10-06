@@ -28,7 +28,7 @@ browser and is only ever sent to GitHub.
 5. Sign in: **Continue with GitHub**, or paste a token (see below).
 
 Requires Chrome 116 or later. Each release also ships an SBOM and a build provenance
-attestation (`gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl`).
+attestation (`gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl --signer-workflow aemard/prowl/.github/workflows/release-assets.yml`).
 
 ## Sign in
 

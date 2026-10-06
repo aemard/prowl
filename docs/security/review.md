@@ -20,3 +20,27 @@ storage, messaging, dependencies, workflows. Method: code audit against
 
 Verdict for this pass: no critical or high findings. The independent release review (US-028)
 follows below.
+
+## 2026-10-06 — US-028 independent release review
+
+Reviewer: a separate agent that did not write the code (`.claude/agents/security-reviewer.md`),
+read-only, at `28b23a5`. Scope: all of `src/`, the manifest, every workflow, dependencies, and the
+threat model's claims.
+
+| # | Severity | Finding | Resolution |
+|---|---|---|---|
+| F1 | Low | Approve/request changes did not pin the head commit: a push just before the click got approved unseen | Fixed: `commitOID` = `pr.headSha` (`actions.ts`), tested |
+| F2 | Low | Release job restored the shared pnpm cache before building the attested zip | Fixed: no dependency cache in `release-assets.yml` |
+| F3 | Low | Optional `github.com` permission kept forever after the device flow | Fixed: removed when the flow ends and on sign-out |
+| F4 | Low | "Copy branch name" copies attacker-chosen names with shell syntax or bidi controls | Fixed: warning toast for such names, tested |
+| F5 | Info | A sign-out racing a poll could leave another account's snapshot visible after the next sign-in | Fixed: list ignores a snapshot of another viewer; sign-in clears it |
+| F6 | Info | `img-src https://*.githubusercontent.com` broader than needed | Fixed: `avatars.githubusercontent.com` only |
+| F7 | Info | Attestation check accepted any workflow; anyone with push access can tag a release | README uses `--signer-workflow`; protect `v*` tags with a ruleset (maintainer setting, see docs/releasing.md) |
+
+Threat-model claims checked: sender checks, device-flow origin, no HTML sinks, label colors, CSP,
+confirmations, token masking and destination, storage areas, URL allowlist, polling limits,
+permissions and supply-chain controls were verified. Corrected in the threat model: notified
+event ids also store PR URLs; three runtime packages ship (two direct); the optional permission
+is now given back; avatar URLs are constrained by CSP, not by the mapper.
+
+**Verdict: APPROVE** (no critical or high findings; all low findings fixed before v1.0.0).

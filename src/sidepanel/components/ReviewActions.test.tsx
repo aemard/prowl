@@ -97,7 +97,7 @@ describe('approve', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => expect(toastTexts()).toEqual(['success: Approved acme/widgets#1']));
     expect(sent).toEqual([
-      { operation: 'ProwlApprove', variables: { id: pr.id, event: 'APPROVE' } },
+      { operation: 'ProwlApprove', variables: { id: pr.id, event: 'APPROVE', oid: pr.headSha } },
     ]);
     expect(send).toHaveBeenCalledWith(poll);
     expect(pendingActions.value).toEqual({});
@@ -187,7 +187,12 @@ describe('request changes', () => {
     expect(sent).toEqual([
       {
         operation: 'ProwlRequestChanges',
-        variables: { id: pr.id, event: 'REQUEST_CHANGES', body: 'Please add a test' },
+        variables: {
+          id: pr.id,
+          event: 'REQUEST_CHANGES',
+          body: 'Please add a test',
+          oid: pr.headSha,
+        },
       },
     ]);
     expect(send).toHaveBeenCalledWith(poll);

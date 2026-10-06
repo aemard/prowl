@@ -1,6 +1,7 @@
 /** Signing in and out: what the panel owns of it (the worker reacts to the messages). */
+import { env } from '../../lib/env';
 import { type AuthState, STORAGE_KEYS } from '../../lib/model';
-import { removeItems, setItem } from '../../lib/storage/storage';
+import { getItem, removeItems, setItem } from '../../lib/storage/storage';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
 import { navigate } from './router';
@@ -13,6 +14,11 @@ export async function completeSignIn(
   auth: AuthState,
   warning: string | null = null,
 ): Promise<void> {
+  // Never show one account's cached pull requests to another.
+  const cached = await getItem(STORAGE_KEYS.snapshot);
+  if (cached && cached.viewer.login.toLowerCase() !== auth.viewer.login.toLowerCase()) {
+    await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
+  }
   await setItem(STORAGE_KEYS.auth, auth);
   void sendToBackground({ type: 'poll', force: true });
   navigate('list');
@@ -28,4 +34,17 @@ export async function completeSignIn(
 export async function signOut(): Promise<void> {
   await removeItems(STORAGE_KEYS.auth, STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
   await sendToBackground({ type: 'signedOut' });
+  await releaseGitHubWebAccess();
+}
+
+/**
+ * Gives back the optional `github.com` host permission the device flow asked for. Chrome
+ * refuses to remove a required one (e2e builds list the mock origin as required): ignored.
+ */
+export async function releaseGitHubWebAccess(): Promise<void> {
+  try {
+    await chrome.permissions.remove({ origins: [`${env.webUrl}/*`] });
+  } catch {
+    // Required in this build, or already gone.
+  }
 }

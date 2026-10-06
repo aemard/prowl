@@ -11,10 +11,14 @@ import { GitHubError } from './errors';
 /** GitHub's cap on the body of a review or comment. */
 export const MAX_BODY_LENGTH = 65_536;
 
-/** `addPullRequestReview` is one mutation for three outcomes; the name keeps them apart. */
+/**
+ * `addPullRequestReview` is one mutation for three outcomes; the name keeps them apart. `$oid`
+ * pins the review to the head commit the reviewer looked at, so a push made just before the
+ * click is not approved unseen.
+ */
 const reviewMutation = (name: string) => /* GraphQL */ `
-mutation ${name}($id: ID!, $event: PullRequestReviewEvent!, $body: String) {
-  addPullRequestReview(input: { pullRequestId: $id, event: $event, body: $body }) {
+mutation ${name}($id: ID!, $event: PullRequestReviewEvent!, $body: String, $oid: GitObjectID) {
+  addPullRequestReview(input: { pullRequestId: $id, event: $event, body: $body, commitOID: $oid }) {
     pullRequestReview { id }
   }
 }`;
@@ -74,17 +78,23 @@ async function review(
   id: string,
   event: 'APPROVE' | 'REQUEST_CHANGES',
   body: string | undefined,
+  headSha: string | undefined,
 ) {
-  const data = await client.graphql<ReviewData>(query, { id, event, body });
+  const data = await client.graphql<ReviewData>(query, { id, event, body, oid: headSha });
   // Strict GraphQL throws on `errors`; a null payload without them still must not read as done.
   if (!data.addPullRequestReview?.pullRequestReview) {
     throw new GitHubError('server', 'GitHub did not confirm the review.');
   }
 }
 
-/** Approves the pull request with the node id `prId`, with an optional note. */
-export async function approve(client: GitHubClient, prId: string, body?: string): Promise<void> {
-  await review(client, APPROVE_MUTATION, prId, 'APPROVE', body?.trim() || undefined);
+/** Approves the pull request with the node id `prId` at `headSha`, with an optional note. */
+export async function approve(
+  client: GitHubClient,
+  prId: string,
+  body?: string,
+  headSha?: string,
+): Promise<void> {
+  await review(client, APPROVE_MUTATION, prId, 'APPROVE', body?.trim() || undefined, headSha);
 }
 
 /** Requests changes; GitHub refuses a review of that kind without a message, so does this. */
@@ -92,8 +102,9 @@ export async function requestChanges(
   client: GitHubClient,
   prId: string,
   body: string,
+  headSha?: string,
 ): Promise<void> {
-  await review(client, REQUEST_CHANGES_MUTATION, prId, 'REQUEST_CHANGES', messageOf(body));
+  await review(client, REQUEST_CHANGES_MUTATION, prId, 'REQUEST_CHANGES', messageOf(body), headSha);
 }
 
 /** Adds a comment to the conversation of the pull request. */

@@ -130,7 +130,9 @@ test.describe('scope', () => {
     await expect
       .poll(async () => (await savedSettings(serviceWorker))?.repoInclude)
       .toEqual(['acme', 'octo/docs']);
-    expect((await savedSettings(serviceWorker))?.repoExclude).toEqual(['acme/legacy']);
+    await expect
+      .poll(async () => (await savedSettings(serviceWorker))?.repoExclude)
+      .toEqual(['acme/legacy']);
     await expect
       .poll(() =>
         searches(github).some(

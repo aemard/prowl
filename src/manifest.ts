@@ -25,7 +25,7 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
     : "'self' https://api.github.com https://github.com";
   const imgSrc = e2e
     ? `'self' data: ${E2E_ORIGIN} https://avatars.githubusercontent.com`
-    : "'self' data: https://avatars.githubusercontent.com https://*.githubusercontent.com";
+    : "'self' data: https://avatars.githubusercontent.com";
 
   const icons = {
     '16': 'icons/icon-16.png',

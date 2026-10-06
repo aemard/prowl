@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
+import type { GitHubClient } from '../../lib/github/client';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { auth } from '../state/store';
@@ -16,13 +17,14 @@ const WRITTEN = {
     name: 'Request changes',
     done: 'Requested changes on',
     description: (ref: string) => `Tell the author what has to change in ${ref}.`,
-    send: requestChanges,
+    send: (client: GitHubClient, pr: PullRequest, text: string) =>
+      requestChanges(client, pr.id, text, pr.headSha),
   },
   comment: {
     name: 'Comment',
     done: 'Commented on',
     description: (ref: string) => `Add a comment to the conversation of ${ref}.`,
-    send: comment,
+    send: (client: GitHubClient, pr: PullRequest, text: string) => comment(client, pr.id, text),
   },
 } as const;
 
@@ -62,7 +64,7 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
     const { name, done, send: run } = WRITTEN[kind];
     const text = drafts[kind].trim();
     if (!text) return setError('Write a message first.');
-    const sent = await runPrAction(pr, name, done, (client) => run(client, pr.id, text));
+    const sent = await runPrAction(pr, name, done, (client) => run(client, pr, text));
     setWriting(null);
     if (sent) setDrafts((all) => ({ ...all, [kind]: '' }));
   };
@@ -76,7 +78,9 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
           aria-label={`${APPROVE} ${ref}`}
           {...state(APPROVE)}
           onClick={() =>
-            void runPrAction(pr, APPROVE, 'Approved', (client) => approve(client, pr.id))
+            void runPrAction(pr, APPROVE, 'Approved', (client) =>
+              approve(client, pr.id, undefined, pr.headSha),
+            )
           }
         >
           {APPROVE}

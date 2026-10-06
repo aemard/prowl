@@ -54,7 +54,8 @@
   align-items: center;
   gap: var(--space-1);
   height: var(--control-md);
-  padding: 0 var(--space-1-5);
+  /* Tight enough that three sections fit 400 px even with wide Linux fonts (DejaVu). */
+  padding: 0 var(--space-1);
   border: 0;
   background: transparent;
   color: var(--color-fg-muted);
@@ -77,9 +78,9 @@
 .section-tabs__tab::after {
   content: "";
   position: absolute;
-  right: var(--space-1-5);
+  right: var(--space-1);
   bottom: calc(var(--border-width) * -1);
-  left: var(--space-1-5);
+  left: var(--space-1);
   height: 2px;
   border-radius: var(--radius-full);
   background: transparent;

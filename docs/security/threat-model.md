@@ -2,7 +2,7 @@
 
 Prowl is a Manifest V3 extension that holds a GitHub token able to read private repositories,
 approve, merge and re-run CI. That token is the asset worth protecting. Method: STRIDE over the
-data flows below. Last reviewed: 2026-10-06 (v1.0.0).
+data flows below. Last reviewed: 2026-10-06, for the v1.0.0 release.
 
 ## Assets
 
@@ -11,7 +11,7 @@ data flows below. Last reviewed: 2026-10-06 (v1.0.0).
 | GitHub token (`repo` scope or fine-grained) | `chrome.storage.local` → `auth` | Read private code, approve/merge as the user, re-run CI |
 | PR snapshot (titles, branches, labels, CI and review state) | `chrome.storage.local` → `snapshot` | Disclosure of private repository metadata |
 | Settings, snoozes, mutes, seen markers | `chrome.storage.local` | Low (preferences) |
-| Notified event ids | `chrome.storage.session` | None |
+| Notified event ids and their PR URLs | `chrome.storage.session` | Low (names private repos and PR numbers; cleared when Chrome closes or on sign-out) |
 
 ## Trust boundaries and data flows
 
@@ -23,6 +23,7 @@ data flows below. Last reviewed: 2026-10-06 (v1.0.0).
  api.github.com ──untrusted JSON (titles, labels, names, URLs)──▶ Prowl
  Prowl ──chrome.tabs.create(url)──▶ browser tab (github.com only)
  Prowl ──chrome.notifications──▶ OS notification centre (PR title, repo, actor)
+ img-src: avatars.githubusercontent.com only (avatar URLs come from GitHub and are constrained by CSP)
 ```
 
 Untrusted input: everything GitHub returns that a third party can author (PR titles, branch and
@@ -37,6 +38,9 @@ another extension or web page could send.
 | S | A phishing page imitates the device-flow screen | Device flow only talks to `env.webUrl` (`github.com`); the user enters the code on github.com itself | `src/lib/github/auth/deviceFlow.ts` |
 | T | Script injection through PR titles, labels, branch names | Preact renders text only; `dangerouslySetInnerHTML` is a lint error; no `innerHTML`, `eval` or `new Function` anywhere | Biome `security/noDangerouslySetInnerHtml` |
 | T | Malicious label color breaks out of a style attribute | Colors validated as 6 hex digits by the mapper, fallback neutral | `src/lib/github/mapPullRequest.ts` |
+| T | A push lands just before Approve, so unseen code gets approved or merged | Reviews pass `commitOID` and merges `expectedHeadOid` = the head the panel showed | `src/lib/github/actions.ts` |
+| T | A branch name with shell syntax runs code when pasted into a terminal | "Copy branch name" warns when the name holds characters outside `[\w./+@-]` or bidi controls | `PrMenu.tsx` |
+| I | A snapshot from a previous account shows its private PRs to the next one | The list ignores a snapshot whose viewer is not the signed-in account; sign-in clears a foreign snapshot | `List.tsx`, `session.ts` |
 | T | Remote code loaded into extension pages | CSP `script-src 'self'; object-src 'none'; base-uri 'none'`; MV3 forbids remote code; no CDN assets | `src/manifest.ts` |
 | R | Actions taken without the user's intent | Merge and request changes need a confirmation dialog; every action is a user click; GitHub's audit log records them as the user | `src/sidepanel/components/*Actions*` |
 | I | Token leaks into logs, errors, UI or notifications | Client masks the token in every message it builds or relays (tested on message, stack, JSON, inspect); the token is never rendered; sign-in errors never echo input | `src/lib/github/client.ts`, `errors.ts`, `pat.ts` |
@@ -46,8 +50,8 @@ another extension or web page could send.
 | I | Notifications reveal private PR titles on a shared screen | Quiet hours and per-event toggles; OS notification privacy settings apply | `src/lib/notify` |
 | D | Polling exhausts the user's API budget | Minimum interval 1 min, rate-limit aware waits, low-budget pause, exponential backoff with jitter, single-flight polls | `src/background/poller.ts`, `src/lib/time/backoff.ts` |
 | D | A huge or hostile response stalls the panel | Results capped per section (≤ 100), error messages truncated, 20 s request timeout | `fetchPullRequests.ts`, `client.ts` |
-| E | Over-broad permissions widen the blast radius | Permissions: `sidePanel`, `storage`, `alarms`, `notifications`; host `api.github.com`; `github.com` optional and requested at use time | manifest test |
-| E | Supply-chain compromise of a dependency or action | Two runtime dependencies (Preact, signals); lockfile; Dependabot; CodeQL; dependency review; Scorecard; actions pinned to commit SHAs with least-privilege `permissions` and `persist-credentials: false`; releases ship an SBOM and provenance | `.github/workflows` |
+| E | Over-broad permissions widen the blast radius | Permissions: `sidePanel`, `storage`, `alarms`, `notifications`; host `api.github.com`; `github.com` optional, requested when the device flow starts and removed when it ends and on sign-out | manifest test, `session.ts` |
+| E | Supply-chain compromise of a dependency or action | Two direct runtime dependencies (Preact, @preact/signals, which pulls @preact/signals-core); the release job builds without a shared dependency cache; lockfile; Dependabot; CodeQL; dependency review; Scorecard; actions pinned to commit SHAs with least-privilege `permissions` and `persist-credentials: false`; releases ship an SBOM and provenance | `.github/workflows` |
 
 ## Residual risks (accepted)
 

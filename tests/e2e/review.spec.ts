@@ -81,7 +81,7 @@ test.describe('review actions', () => {
     expect(github.requestsFor('ProwlApprove')).toHaveLength(1);
     const [request] = github.requestsFor('ProwlApprove');
     expect(request?.body).toMatchObject({
-      variables: { id: THEIRS.id, event: 'APPROVE' },
+      variables: { id: THEIRS.id, event: 'APPROVE', oid: expect.stringMatching(/^[0-9a-f]{40}$/) },
       query: expect.stringContaining('addPullRequestReview'),
     });
     expect(request?.headers.authorization).toBe('Bearer ghp_e2e');

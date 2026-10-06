@@ -48,6 +48,14 @@ describe('approve', () => {
     expect(APPROVE_MUTATION).toContain('addPullRequestReview');
   });
 
+  it('pins the review to the head commit the reviewer saw', async () => {
+    const { client, sent } = setup(reviewed);
+    await approve(client, 'PR_1', undefined, 'f'.repeat(40));
+    await requestChanges(client, 'PR_1', 'Fix it', 'e'.repeat(40));
+    expect(sent.map((request) => request.variables.oid)).toEqual(['f'.repeat(40), 'e'.repeat(40)]);
+    expect(APPROVE_MUTATION).toContain('commitOID: $oid');
+  });
+
   it('adds a trimmed note, and ignores a blank one', async () => {
     const { client, sent } = setup(reviewed);
     await approve(client, 'PR_1', '  Looks good  ');

@@ -9,6 +9,20 @@ them to the release. If release-please cannot open pull requests, pushing a `v*`
 `release-tag.yml`, which creates the release and attaches the same assets. The website's Install
 button points to `releases/latest`, so the newest release is what visitors download.
 
+One-time setup:
+
+1. **Settings → Actions → General → Workflow permissions**: tick "Allow GitHub Actions to
+   create and approve pull requests" (release-please opens the release PR with `GITHUB_TOKEN`).
+2. Optional, for "Continue with GitHub": register an OAuth App with **Enable Device Flow** and
+   store its client id as the repository variable `PROWL_GITHUB_CLIENT_ID` (Settings → Secrets
+   and variables → Actions → Variables). Release builds bake it in; without it the zip supports
+   token sign-in only.
+
+`release-please-config.json` pins `"release-as": "1.0.0"` for the first release. Remove it right
+after v1.0.0 so later releases follow Conventional Commits (`feat` → minor, `fix` → patch).
+Releases are reproducible: the zip is built from a clean checkout of the tag with a frozen
+lockfile and no shared cache, and its file times are fixed (`scripts/zip.mjs`).
+
 ## Website
 
 The site in `site/` is built with Astro and deployed by `.github/workflows/pages.yml` to
@@ -43,3 +57,10 @@ so edit those, not the site: `/auth/` is `docs/auth.md`, `/privacy/` is `docs/pr
 `/changelog/` is `CHANGELOG.md` (release-please keeps it current) and `/contributing/` is
 `CONTRIBUTING.md`. `/install/` is written in `site/src/pages/install.astro`. `pnpm verify` also
 builds the site.
+
+## Recommended repository settings
+
+- **Protect release tags**: Settings → Rules → Rulesets → new tag ruleset for `v*` restricting
+  creation, update and deletion to maintainers, so only intended releases get signed assets.
+- **Verify a download**: `gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl
+  --signer-workflow aemard/prowl/.github/workflows/release-assets.yml`.

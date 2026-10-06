@@ -12,7 +12,7 @@ import { TextField } from '../components/ui/TextField';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
-import { pollState, prLocal, settings, snapshot } from '../state/store';
+import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import { filterPullRequests, sortPullRequests } from './ListModel';
 import './List.css';
 
@@ -131,7 +131,10 @@ export function ListView() {
   const filterInput = useRef<HTMLElement>(null);
 
   const { sections, sort } = settings.value;
-  const snap = snapshot.value;
+  // A snapshot left by another account (sign-out raced a poll) is never shown.
+  const viewer = auth.value?.viewer.login.toLowerCase();
+  const raw = snapshot.value;
+  const snap = raw && (!viewer || raw.viewer.login.toLowerCase() === viewer) ? raw : undefined;
   const local = prLocal.value;
   const query = filterQuery.value;
   const enabled = sections.filter((section) => section.enabled);

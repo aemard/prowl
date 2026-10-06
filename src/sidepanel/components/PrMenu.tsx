@@ -35,6 +35,13 @@ import { IconButton } from './ui/IconButton';
 import { Menu, type MenuEntry } from './ui/Menu';
 import { showToast } from './ui/Toast';
 
+/**
+ * Branch names are chosen by the PR's author and may hold shell syntax (`$(...)`, `;`, `|`) or
+ * bidi controls that disguise them; such a name gets a warning before it reaches a terminal.
+ */
+export const isRiskyBranchName = (name: string) =>
+  /[^\w./+@-]/.test(name) || /[\u202A-\u202E\u2066-\u2069]/.test(name);
+
 /** Copies `text`, with a fallback for when the async clipboard is refused. */
 async function copy(text: string): Promise<boolean> {
   try {
@@ -73,9 +80,15 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
       onSelect: () =>
         void copy(pr.headRefName).then((ok) =>
           showToast(
-            ok
-              ? { message: `Copied ${pr.headRefName}`, tone: 'success' }
-              : { message: 'Could not copy the branch name.', tone: 'danger' },
+            !ok
+              ? { message: 'Could not copy the branch name.', tone: 'danger' }
+              : isRiskyBranchName(pr.headRefName)
+                ? {
+                    message: `Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal.`,
+                    tone: 'danger',
+                    durationMs: 10_000,
+                  }
+                : { message: `Copied ${pr.headRefName}`, tone: 'success' },
           ),
         ),
     },

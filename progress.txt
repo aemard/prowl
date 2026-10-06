@@ -273,3 +273,11 @@ Started: 2026-10-06
 - lazy(load, fallback) for Settings and PullRequestDetails; fallback keeps the detail id so aria-controls stays valid.
 - Learning: a lazily replaced node is a new element; re-query after the chunk loads in tests.
 ---
+## 2026-10-06 - US-027 Full-spec E2E audit (main agent)
+- docs/e2e-coverage.md; new E2E: every notification event, scope presets + repo filters.
+- CI-only failures fixed: tabs overflowed 8 px with Ubuntu fonts (tab padding), racy repoExclude assertion (poll).
+- Learning: check CI on GitHub after every push; local fonts differ from ubuntu-latest.
+---
+## 2026-10-06 - US-028 Final security review (independent agent)
+- VERDICT: APPROVE. Fixed F1 (review commitOID), F2 (no cache in release build), F3 (release github.com permission), F4 (risky branch name warning), F5 (foreign snapshot), F6 (img-src), F7 (attestation signer, tag ruleset doc).
+---

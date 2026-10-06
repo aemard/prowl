@@ -14,7 +14,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { showToast } from '../components/ui/Toast';
 import { useNow } from '../components/useNow';
 import { openGitHubUrl } from '../openUrl';
-import { completeSignIn } from '../state/session';
+import { completeSignIn, releaseGitHubWebAccess } from '../state/session';
 import './DeviceFlow.css';
 
 const PERMISSION_DENIED =
@@ -81,6 +81,9 @@ export function DeviceFlow() {
     } catch (failure) {
       if (controller.signal.aborted) return;
       reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
+    } finally {
+      // github.com is only needed while the flow runs; give the permission back afterwards.
+      void releaseGitHubWebAccess();
     }
   }
 
