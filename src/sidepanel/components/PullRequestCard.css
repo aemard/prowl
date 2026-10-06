@@ -157,3 +157,12 @@
   margin-left: auto;
   white-space: nowrap;
 }
+
+.pr-card__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}

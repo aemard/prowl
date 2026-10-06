@@ -50,7 +50,14 @@ describe('PullRequestDetails', () => {
       screen
         .getAllByRole('button', { name: /acme\/widgets#1$/ })
         .map((button) => button.textContent),
-    ).toEqual(['Approve', 'Request changes', 'Comment', 'Merge']);
+    ).toEqual([
+      'Approve',
+      'Request changes',
+      'Comment',
+      'Merge',
+      'Re-run failed',
+      'Convert to draft',
+    ]);
   });
 
   it('says why it cannot be merged at once, then fills in checks and reviewers', async () => {

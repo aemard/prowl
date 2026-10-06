@@ -324,8 +324,8 @@
       ],
       "priority": 17,
       "dependsOn": ["US-015"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "rerunFailedChecks (ProwlFailedSuites + rerun-failed-jobs / check-suites rerequest, deduped, partial failures reported) and setDraft (ProwlMarkReady/ProwlConvertToDraft); in the Actions row and the card menu; unit + E2E (tests/e2e/maintenance.spec.ts)."
     },
     {
       "id": "US-018",
@@ -342,8 +342,8 @@
       ],
       "priority": 18,
       "dependsOn": ["US-013"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "PrMenu: open, copy branch, snooze presets/unsnooze, mute/unmute (+ re-run, draft); snoozed PRs hidden from tabs and badge behind \"Snoozed (n)\"; muted flag; unit + E2E (tests/e2e/local-actions.spec.ts)."
     },
     {
       "id": "US-019",

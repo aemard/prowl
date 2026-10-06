@@ -45,3 +45,7 @@
 .list__skeleton-chips {
   gap: var(--space-1);
 }
+
+.list__snoozed {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}

@@ -1,13 +1,16 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import type { PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
+import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
+  BellSlashIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ClockIcon,
   CommentDiscussionIcon,
   CommentIcon,
   DotFillIcon,
@@ -19,6 +22,7 @@ import {
 } from './icons';
 import type { IconComponent } from './icons/Icon';
 import { labelColors } from './labelColor';
+import { PrMenu } from './PrMenu';
 import { PullRequestDetails } from './PullRequestDetails';
 import { describePullRequest, pullRequestStatuses, type StatusIcon } from './prStatus';
 import { Avatar } from './ui/Avatar';
@@ -46,6 +50,10 @@ export interface PullRequestCardProps {
   unseen: boolean;
   /** `Date.now()` from the list's ticker, so relative times stay current. */
   now: number;
+  /** Notifications are off for this PR (local only). */
+  muted?: boolean;
+  /** ISO time the snooze ends, when the PR is snoozed. */
+  snoozedUntil?: string | null;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -57,7 +65,7 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
  * opens and describes the card with every fact it shows, so a screen reader gets the whole card
  * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
  */
-export function PullRequestCard({ pr, unseen, now }: PullRequestCardProps) {
+export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRequestCardProps) {
   const detailId = useId();
   const card = useRef<HTMLLIElement>(null);
   const expanded = expandedIds.value.includes(pr.id);
@@ -110,6 +118,22 @@ export function PullRequestCard({ pr, unseen, now }: PullRequestCardProps) {
           >
             {formatRelativeTime(pr.updatedAt, now)}
           </time>
+          {muted && (
+            <span class="pr-card__flag" title="Notifications muted">
+              <BellSlashIcon size={12} />
+              <span class="sr-only">Notifications muted</span>
+            </span>
+          )}
+          {snoozedUntil && (
+            <span
+              class="pr-card__flag"
+              title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
+            >
+              <ClockIcon size={12} />
+              {formatSnoozeEnd(snoozedUntil, now)}
+            </span>
+          )}
+          <PrMenu pr={pr} now={now} />
           <IconButton
             class="pr-card__toggle"
             size="sm"

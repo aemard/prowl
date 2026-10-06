@@ -1,8 +1,8 @@
 import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import type { Section, SectionKind, Snapshot } from '../../lib/model';
-import { isSeen } from '../../lib/storage/prLocal';
-import { AlertIcon, InboxIcon, SearchIcon } from '../components/icons';
+import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
+import { AlertIcon, ClockIcon, InboxIcon, SearchIcon } from '../components/icons';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { panelId, SectionTabs, tabId } from '../components/SectionTabs';
 import { Button } from '../components/ui/Button';
@@ -133,8 +133,10 @@ export function ListView() {
   const enabled = sections.filter((section) => section.enabled);
   const selected = enabled.find((section) => section.id === activeSectionId.value) ?? enabled[0];
 
-  // Per section, the PRs that pass the filter in the chosen order.
-  const matching = new Map(
+  // Per section, the PRs that pass the filter in the chosen order; snoozed ones are set aside.
+  const clock = Date.now();
+  const snoozed = (id: string) => isSnoozed(local, id, clock);
+  const filtered = new Map(
     enabled.map((section) => [
       section.id,
       snap
@@ -142,7 +144,14 @@ export function ListView() {
         : [],
     ]),
   );
+  const matching = new Map(
+    [...filtered].map(([id, prs]) => [id, prs.filter((pr) => !snoozed(pr.id))]),
+  );
   const shown = (selected && matching.get(selected.id)) || [];
+  const shownSnoozed = ((selected && filtered.get(selected.id)) || []).filter((pr) =>
+    snoozed(pr.id),
+  );
+  const [snoozedOpen, setSnoozedOpen] = useState(false);
   useMarkSeen(
     list,
     shown.map((pr) => pr.id).join('\n'),
@@ -176,7 +185,8 @@ export function ListView() {
 
   const error = snap.sectionErrors?.[selected.id];
   // Empty only because of the filter: the section itself has pull requests.
-  const filteredOut = shown.length === 0 && pullRequestsOf(snap, selected.id).length > 0;
+  const filteredOut =
+    shown.length === 0 && shownSnoozed.length === 0 && pullRequestsOf(snap, selected.id).length > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
   const tabs = enabled.map((section) => ({
     id: section.id,
@@ -231,11 +241,39 @@ export function ListView() {
                 pr={pr}
                 now={now}
                 unseen={!isSeen(local, pr.id, pr.updatedAt)}
+                muted={isMuted(local, pr.id)}
               />
             ))}
           </ul>
         )}
-        {shown.length === 0 && error === undefined && (
+        {shownSnoozed.length > 0 && (
+          <div class="list__snoozed">
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<ClockIcon size={12} />}
+              aria-expanded={snoozedOpen}
+              onClick={() => setSnoozedOpen(!snoozedOpen)}
+            >
+              Snoozed ({shownSnoozed.length})
+            </Button>
+            {snoozedOpen && (
+              <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
+                {shownSnoozed.map((pr) => (
+                  <PullRequestCard
+                    key={pr.id}
+                    pr={pr}
+                    now={now}
+                    unseen={false}
+                    muted={isMuted(local, pr.id)}
+                    snoozedUntil={local.snoozed[pr.id]}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {shown.length === 0 && shownSnoozed.length === 0 && error === undefined && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
             title={filteredOut ? 'No matches' : 'No pull requests'}

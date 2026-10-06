@@ -131,3 +131,108 @@ export async function mergePullRequest(
     throw new GitHubError('server', 'GitHub did not confirm the merge.');
   }
 }
+
+/**
+ * The check suites of the head commit, to find what failed. Each suite is either a GitHub
+ * Actions workflow run (re-run only its failed jobs) or another app's suite (ask it to run again).
+ */
+export const FAILED_SUITES_QUERY = /* GraphQL */ `
+query ProwlFailedSuites($id: ID!) {
+  node(id: $id) {
+    ... on PullRequest {
+      repository { owner { login } name }
+      commits(last: 1) {
+        nodes {
+          commit {
+            checkSuites(first: 50) {
+              nodes { databaseId conclusion workflowRun { databaseId } }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+interface FailedSuitesData {
+  node: {
+    repository?: { owner: { login: string }; name: string };
+    commits?: {
+      nodes: Array<{
+        commit: {
+          checkSuites: {
+            nodes: Array<{
+              databaseId: number;
+              conclusion: string | null;
+              workflowRun: { databaseId: number } | null;
+            } | null>;
+          } | null;
+        };
+      } | null>;
+    };
+  } | null;
+}
+
+/** Suite conclusions worth a re-run. Cancelled and skipped suites are left alone. */
+const RERUNNABLE = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE']);
+
+/**
+ * Re-runs what failed on the head commit: the failed jobs of each failed Actions run
+ * (`rerun-failed-jobs`), and every other failed suite (`rerequest`). Resolves to the number of
+ * runs and suites restarted. When some restarts fail, it throws with how many worked.
+ */
+export async function rerunFailedChecks(client: GitHubClient, prId: string): Promise<number> {
+  const { node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, { id: prId });
+  if (!node?.repository)
+    throw new GitHubError('not_found', 'GitHub did not find the pull request.');
+  const repo = `/repos/${encodeURIComponent(node.repository.owner.login)}/${encodeURIComponent(node.repository.name)}`;
+  const suites = node.commits?.nodes[0]?.commit.checkSuites?.nodes ?? [];
+  const paths = new Set<string>();
+  for (const suite of suites) {
+    if (!suite || !RERUNNABLE.has(suite.conclusion ?? '')) continue;
+    paths.add(
+      suite.workflowRun
+        ? `${repo}/actions/runs/${suite.workflowRun.databaseId}/rerun-failed-jobs`
+        : `${repo}/check-suites/${suite.databaseId}/rerequest`,
+    );
+  }
+  if (paths.size === 0) throw new GitHubError('validation', 'No failed checks to re-run.');
+
+  const results = await Promise.allSettled([...paths].map((path) => client.rest('POST', path)));
+  const failure = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+  if (failure) {
+    const reason =
+      failure.reason instanceof GitHubError
+        ? failure.reason
+        : new GitHubError('server', 'Something went wrong.');
+    const worked = results.length - results.filter((r) => r.status === 'rejected').length;
+    throw worked === 0
+      ? reason
+      : new GitHubError(reason.kind, `Re-ran ${worked} of ${results.length}. ${reason.message}`);
+  }
+  return paths.size;
+}
+
+export const MARK_READY_MUTATION = /* GraphQL */ `
+mutation ProwlMarkReady($id: ID!) {
+  markPullRequestReadyForReview(input: { pullRequestId: $id }) { pullRequest { isDraft } }
+}`;
+
+export const CONVERT_TO_DRAFT_MUTATION = /* GraphQL */ `
+mutation ProwlConvertToDraft($id: ID!) {
+  convertPullRequestToDraft(input: { pullRequestId: $id }) { pullRequest { isDraft } }
+}`;
+
+type DraftPayload = { pullRequest: { isDraft: boolean } | null } | null;
+
+/** Converts the pull request to a draft (`draft: true`) or marks it ready for review. */
+export async function setDraft(client: GitHubClient, prId: string, draft: boolean): Promise<void> {
+  const data = await client.graphql<{
+    markPullRequestReadyForReview?: DraftPayload;
+    convertPullRequestToDraft?: DraftPayload;
+  }>(draft ? CONVERT_TO_DRAFT_MUTATION : MARK_READY_MUTATION, { id: prId });
+  const payload = draft ? data.convertPullRequestToDraft : data.markPullRequestReadyForReview;
+  if (payload?.pullRequest?.isDraft !== draft) {
+    throw new GitHubError('server', 'GitHub did not confirm the change.');
+  }
+}

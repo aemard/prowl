@@ -68,7 +68,11 @@ describe('PullRequestCard', () => {
     // Never nested: each is its own tab stop, and the title link is not inside the button.
     expect(button.contains(link)).toBe(false);
     expect(link.closest('button')).toBeNull();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // The expand button and the "More actions" menu.
+    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
+      expect.stringMatching(/^More actions for /),
+      expect.stringMatching(/^Details for /),
+    ]);
     expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 

@@ -640,3 +640,21 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   page, resolved once it is done); assert on `github.requests` and on
   `chrome.notifications.getAll()` in the worker.
 - Every screen gets an axe check; screenshot specs write to `docs/screenshots/`.
+
+## Re-run, draft toggle and local actions
+
+- **Re-run failed checks** (`rerunFailedChecks`, `src/lib/github/actions.ts`): `query
+  ProwlFailedSuites` lists the head commit's check suites; failed suites (FAILURE, TIMED_OUT,
+  STARTUP_FAILURE) that belong to an Actions run get `POST /repos/{o}/{r}/actions/runs/{id}/
+  rerun-failed-jobs` (one per run), other apps' suites `POST .../check-suites/{id}/rerequest`.
+  Partial failures report "Re-ran N of M". Offered when the PR has failed checks and the viewer
+  has write access.
+- **Draft toggle** (`setDraft`): `mutation ProwlMarkReady` / `ProwlConvertToDraft`, for the
+  author or a writer.
+- **Card menu** (`PrMenu`, the "More actions" kebab beside the expand button): open in GitHub,
+  copy branch name, snooze (1 h, 4 h, tomorrow 09:00, next Monday 09:00, local time;
+  `src/lib/time/snooze.ts`) or unsnooze, mute or unmute, plus re-run and the draft toggle. The
+  expanded card's Actions row also has re-run and the draft toggle (`MaintenanceActions`).
+- **Snoozed PRs** leave the tabs, their counts and the badge until the snooze ends; the list
+  keeps them behind a "Snoozed (n)" disclosure at the end of the section. Muted PRs show a
+  bell-off flag and produce no notifications. Both are `prLocal` only.

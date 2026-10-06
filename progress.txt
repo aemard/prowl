@@ -256,3 +256,12 @@ Started: 2026-10-06
 - docs/security/threat-model.md (STRIDE), docs/security/review.md, SECURITY.md, manifest surface test.
 - Audit: no sinks, URL allowlist everywhere, token masked, sender checks, pinned workflows, no vulnerable deps.
 ---
+## 2026-10-06 - US-017 Re-run failed checks and toggle draft (main agent)
+- actions.ts: rerunFailedChecks, setDraft; MaintenanceActions in the Actions row.
+- E2E tests/e2e/maintenance.spec.ts asserts the exact REST paths and mutations.
+---
+## 2026-10-06 - US-018 Local actions (main agent)
+- PrMenu on each card; src/lib/time/snooze.ts; List splits snoozed PRs behind "Snoozed (n)".
+- Learning: axe scans move focus and close an open Menu; reopen it before clicking an item.
+- Learning: inside `{ has: ... }` use a page-level locator (`page.getByRole`), not one chained from the scope.
+---

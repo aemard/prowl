@@ -16,6 +16,7 @@ import {
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
+import { MaintenanceActions } from './MaintenanceActions';
 import { MergeAction } from './MergeAction';
 import { type MergeLine, mergeReadiness } from './mergeReadiness';
 import { ReviewActions } from './ReviewActions';
@@ -228,10 +229,10 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
         <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
       </Group>
       <Group id={`${id}-actions`} label="Actions">
-        {/* One row of small buttons; later actions (re-run, draft) join it. */}
         <div class="pr-actions">
           <ReviewActions pr={pr} />
           <MergeAction pr={pr} />
+          <MaintenanceActions pr={pr} />
         </div>
       </Group>
       {entry?.error && (
