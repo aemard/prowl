@@ -61,10 +61,11 @@ test behaviour, not every function. Keep reports short: what changed, what was s
 
 Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`, `perf:`),
 scope optional, story id in the subject when working a PRD story, e.g.
-`feat(github): US-005 fetch pull requests with check rollup`. End every commit message with:
+`feat(github): US-005 fetch pull requests with check rollup`. End every commit message with
+these trailers, naming the model you actually run as (`Claude Opus 5.5`, `Claude Sonnet 5.5`...):
 
 ```
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <Model> <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01JeYEyGSNpL2hJRVh3LUrtD
 ```
 
