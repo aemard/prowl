@@ -31,7 +31,7 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
 - Run `pnpm lint:fix` then `pnpm verify`. Iterate until it is fully green.
 - Never weaken a gate: do not lower coverage thresholds or budgets, skip/`.only`/delete tests,
   or add ignores to get green. A test that fails once without a code change is a bug: fix it.
-- For UI work, run the relevant E2E screenshot specs, open the PNGs in `docs/screenshots/`
+- For UI work, run `pnpm screenshots` (writes docs/screenshots/), open the PNGs in `docs/screenshots/`
   with the Read tool and fix anything that looks wrong (alignment, contrast, truncation,
   dark mode).
 - Re-read your own diff (`git diff`) as a reviewer would before committing.

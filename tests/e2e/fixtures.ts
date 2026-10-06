@@ -158,9 +158,14 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 
 export const expect = test.expect;
 
-/** Saves a screenshot to docs/screenshots/<name>.png for the README and the site. */
+/**
+ * Saves a screenshot to docs/screenshots/<name>.png for the README and the site.
+ * Only writes when PROWL_SCREENSHOTS=1 (`pnpm screenshots`), so routine E2E runs don't churn
+ * the committed images; the page is still captured so rendering errors surface either way.
+ */
 export async function saveScreenshot(page: Page, name: string): Promise<void> {
-  await page.screenshot({
-    path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`),
-  });
+  const write = process.env.PROWL_SCREENSHOTS === '1';
+  await page.screenshot(
+    write ? { path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`) } : {},
+  );
 }

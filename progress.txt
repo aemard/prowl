@@ -3,6 +3,7 @@ Started: 2026-10-06
 
 ## Codebase patterns
 (Reusable learnings. Keep this section short and current; newest knowledge wins.)
+- Screenshots in docs/screenshots/ are only written by `pnpm screenshots` (PROWL_SCREENSHOTS=1); plain `pnpm e2e`/`pnpm verify` capture but don't write, so they never churn the repo. Regenerate and look at them when a story changes UI.
 - `pnpm verify` is the gate. `pnpm verify:fast` for the inner loop.
 - Unit tests get a fresh `chrome` fake (src/test/chrome.ts) before each test; use `fakeChrome().__state` to inspect alarms, notifications, badge, created tabs, granted origins, and `.emit()` on fake events to simulate Chrome.
 - E2E: tests/e2e/fixtures.ts gives `serviceWorker`, `extensionId`, `openPanel(hash)`, `expectNoA11yViolations(page)`, `github` (mock server: `onGraphQL(operationName, fn)`, `on(method, path, fn)`, `requests`), `saveScreenshot(page, name)`.

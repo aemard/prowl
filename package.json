@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "e2e": "pnpm build:e2e && playwright test",
+    "screenshots": "PROWL_SCREENSHOTS=1 pnpm e2e",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm test",
     "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
   },
