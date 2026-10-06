@@ -22,6 +22,9 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
   and `docs/architecture.md` in the same commit.
 - Match the surrounding code style. No new runtime dependency without a `docs/decisions.md`
   entry and a perf-budget check.
+- Follow "Write the least code that works" in CLAUDE.md: reuse before writing, platform
+  before code, shortest correct diff. Keep tool output small (filter with grep/tail, use
+  `--reporter=dot` or quiet flags) to save tokens.
 
 ## 3. Prove it
 

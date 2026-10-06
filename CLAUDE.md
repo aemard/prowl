@@ -39,6 +39,24 @@ Load the built extension: `chrome://extensions` → Developer mode → Load unpa
 - Accessibility: every interactive element is reachable by keyboard and labelled; dialogs trap
   focus and restore it; color is never the only signal. axe must report zero violations.
 
+## Write the least code that works
+
+Adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT). Read the task and
+the code it touches first, then stop at the first rung that holds:
+
+1. Does it need to exist? Speculative need: skip it and say so in one line.
+2. Already in this codebase (helper, type, pattern)? Reuse it.
+3. Does the platform cover it (Web APIs, CSS, native `<dialog>`, `chrome.*`)? Use it.
+4. Does an installed dependency solve it? Use it; never add one for a few lines.
+5. Only then write the minimum code that works.
+
+No single-implementation interfaces, no factories, no config for constants, no scaffolding
+"for later", fewest files, shortest diff in the right place. Bug fixes fix the root cause in
+the shared function. Mark deliberate shortcuts with a `ponytail:` comment naming the ceiling.
+Never simplify away validation at trust boundaries, security, accessibility, error handling,
+or anything the story asks for. This project's coverage gates are an explicit requirement:
+test behaviour, not every function. Keep reports short: what changed, what was skipped.
+
 ## Commits
 
 Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`, `perf:`),
