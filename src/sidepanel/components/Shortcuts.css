@@ -1,0 +1,31 @@
+.shortcuts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.shortcuts__row {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.shortcuts__row dt {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.shortcuts__row dd {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.shortcuts kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1px var(--space-1-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+}

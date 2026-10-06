@@ -3,6 +3,7 @@ import type { JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Theme } from '../lib/model';
 import { Header } from './components/Header';
+import { RefreshAnnouncer, ShortcutsDialog, useShortcuts } from './components/Shortcuts';
 import { StatusBanner } from './components/StatusBanner';
 import { Skeleton } from './components/ui/Skeleton';
 import { ToastRegion } from './components/ui/Toast';
@@ -69,6 +70,8 @@ function Shell() {
     else mainRef.current?.focus();
   }, [current]);
 
+  useShortcuts(current === 'list');
+
   return (
     <>
       <Header />
@@ -76,6 +79,8 @@ function Shell() {
         {current !== 'onboarding' && <StatusBanner />}
         <View />
       </main>
+      <ShortcutsDialog />
+      <RefreshAnnouncer />
     </>
   );
 }

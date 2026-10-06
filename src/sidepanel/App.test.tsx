@@ -36,7 +36,8 @@ describe('App', () => {
     await act(async () => {
       stop = await pending;
     });
-    expect(screen.queryByRole('status')).toBeNull();
+    // The loading status is gone; only the (empty) refresh announcer remains.
+    expect(screen.queryAllByRole('status').map((s) => s.textContent)).toEqual(['']);
     expect(screen.getByRole('main', { name: 'Sign in' })).toBeTruthy();
   });
 

@@ -2,11 +2,19 @@ import { useState } from 'preact/hooks';
 import { env } from '../../lib/env';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { openGitHubUrl } from '../openUrl';
-import { sendToBackground } from '../state/background';
 import { navigate, route } from '../state/router';
+import { requestRefresh } from '../state/shortcuts';
 import { auth, pollState, snapshot } from '../state/store';
-import { ArrowLeftIcon, GearIcon, LinkExternalIcon, SignOutIcon, SyncIcon } from './icons';
+import {
+  ArrowLeftIcon,
+  GearIcon,
+  InfoIcon,
+  LinkExternalIcon,
+  SignOutIcon,
+  SyncIcon,
+} from './icons';
 import { ProwlMark } from './icons/ProwlMark';
+import { shortcutsOpen } from './Shortcuts';
 import { SignOutDialog } from './SignOutDialog';
 import { IconButton } from './ui/IconButton';
 import { Menu } from './ui/Menu';
@@ -45,11 +53,7 @@ export function Header() {
       </div>
       {viewer && (
         <div class="header__actions">
-          <IconButton
-            label="Refresh"
-            loading={pollState.value?.inFlight}
-            onClick={() => void sendToBackground({ type: 'poll', force: true })}
-          >
+          <IconButton label="Refresh" loading={pollState.value?.inFlight} onClick={requestRefresh}>
             <SyncIcon />
           </IconButton>
           <IconButton
@@ -67,6 +71,15 @@ export function Header() {
                 icon: <LinkExternalIcon />,
                 onSelect: () =>
                   void openGitHubUrl(`${env.webUrl}/${encodeURIComponent(viewer.login)}`),
+              },
+              {
+                id: 'shortcuts',
+                label: 'Keyboard shortcuts',
+                hint: '?',
+                icon: <InfoIcon />,
+                onSelect: () => {
+                  shortcutsOpen.value = true;
+                },
               },
               'separator',
               {

@@ -378,8 +378,8 @@
       ],
       "priority": 20,
       "dependsOn": ["US-016", "US-017", "US-018", "US-019"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "j/k/arrows, Enter/Space, o, r, /, ?, Esc (src/sidepanel/state/shortcuts.ts + components/Shortcuts.tsx); refresh outcome announced; shortcuts dialog (also in account menu); axe light+dark sweep in tests/e2e/keyboard.spec.ts; docs/accessibility.md."
     },
     {
       "id": "US-021",

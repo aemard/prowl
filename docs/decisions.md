@@ -173,3 +173,4 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-10-06 — Snooze presets use local time (1 h, 4 h, tomorrow 09:00, next Monday 09:00; "Monday" on a Monday means next week): they map to a working day, and an exact time picker adds UI for little gain.
 - 2026-10-06 — Re-run targets suites concluded FAILURE, TIMED_OUT or STARTUP_FAILURE, and needs write access (`viewerCanMerge`): cancelled or skipped suites were stopped on purpose, and GitHub refuses re-runs without write access.
 - 2026-10-06 — Row actions live in one "More actions" menu per card rather than inline buttons: the card stays scannable at 400 px, and the menu is keyboard-navigable (arrows, Esc).
+- 2026-10-06 — j/k move focus between cards' expand buttons (not a strict roving tabindex): Tab order stays natural and every card remains reachable with Tab.

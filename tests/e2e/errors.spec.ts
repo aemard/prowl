@@ -191,7 +191,8 @@ test('data that stopped updating without an error is marked with its age', async
 }) => {
   const panel = await openPanel();
   await expect(card(panel)).toBeVisible();
-  await expect(panel.getByRole('status')).toHaveCount(0);
+  // No banner yet (the refresh announcer's live region is always there, and empty).
+  await expect(panel.getByRole('status').filter({ hasText: /./ })).toHaveCount(0);
 
   await serviceWorker.evaluate(async () => {
     const old = new Date(Date.now() - 3 * 3_600_000).toISOString();
