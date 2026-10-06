@@ -2,7 +2,9 @@
  * A tiny, deterministic stand-in for api.github.com and the github.com OAuth endpoints.
  *
  * Tests register handlers per GraphQL operation name or REST route, mutate state between
- * polls, and assert on the request log. Add reusable builders in ./fixtures.ts.
+ * polls, and assert on the request log. GitHub-shaped bodies come from the builders in
+ * tests/fixtures/ (shared with unit tests), e.g.
+ * `github.onGraphQL('ProwlSearch', (vars) => searchResponse([prNode()], vars))`.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
@@ -27,7 +29,7 @@ export interface MockResponse {
 export type GraphQLHandler = (
   variables: Record<string, unknown>,
   req: LoggedRequest,
-) => MockResponse | Record<string, unknown> | Promise<MockResponse | Record<string, unknown>>;
+) => MockResponse | object | Promise<MockResponse | object>;
 
 export type RestHandler = (
   req: LoggedRequest,
@@ -62,6 +64,14 @@ export class MockGitHub {
       this.server?.once('error', fail);
       this.server?.listen(port, '127.0.0.1', () => done());
     });
+  }
+
+  /** Where the server listens: `MOCK_ORIGIN`, or the port picked by `start(0)`. */
+  get origin(): string {
+    const address = this.server?.address();
+    return typeof address === 'object' && address
+      ? `http://127.0.0.1:${address.port}`
+      : MOCK_ORIGIN;
   }
 
   async stop(): Promise<void> {

@@ -53,12 +53,14 @@ in-memory updates that the next snapshot replaces.
 2. The poller skips if no auth, if a poll is in flight (single-flight), or if
    `pollState.nextAllowedAt` is in the future (backoff or rate limit), unless forced and not
    rate-limited.
-3. For each enabled section, build a search query (`src/lib/github/search.ts`) and fetch with
-   one GraphQL search query per section (paginated up to `maxPerSection`), selecting
+3. `fetchPullRequests` (see [Fetching pull requests](#fetching-pull-requests)) builds each
+   enabled section's search query (`src/lib/github/search.ts`) and fetches it with
+   `query ProwlSearch` (pages of 50, cursor-paginated up to `maxPerSection`), selecting
    `rateLimit { limit remaining resetAt cost }`.
-4. PRs present in the previous snapshot but missing now are fetched by id (`nodes(ids:)`) to
-   learn whether they were merged or closed, and by whom.
-5. Apply repo include/exclude filters, build the new `Snapshot`, persist it.
+4. Open PRs present in the previous snapshot but missing now are fetched by id
+   (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
+5. Repo include/exclude filters are applied; the poller adds `fetchedAt` and the viewer (from
+   `auth`) to build the new `Snapshot` and persists it.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm).
 7. Notifier filters events (per-event toggles, mute, snooze, quiet hours) and creates
@@ -129,6 +131,8 @@ never qualifiers.
 | `assigned` | `is:pr is:open assignee:@me archived:false` |
 | `custom` | `is:pr <the user's query>` (open or closed as the query says) |
 
+`fetchPullRequests` appends `sort:updated-desc` unless a custom query has its own `sort:`.
+
 - `buildSearchQuery(section, settings)` appends the repo filters: `repoInclude` becomes
   `repo:owner/name` or `user:owner` (`user:` also matches organizations), `repoExclude` becomes
   `-repo:owner/name` or `-user:owner`. Positive scopes are OR-ed by GitHub; a custom query that
@@ -142,6 +146,54 @@ never qualifiers.
   search limits: at most 5 AND / OR / NOT operators and 256 characters of search words,
   qualifiers not counted (verified against the search API, which answers 422 otherwise).
   Callers (settings screen, poller) skip a custom section that fails validation.
+
+## Fetching pull requests
+
+`fetchPullRequests(client, settings, previous)` (`src/lib/github/fetchPullRequests.ts`) is all of
+a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It returns
+`{ pullRequests, sections, sectionErrors, rateLimit }`:
+
+- Each enabled section runs `query ProwlSearch` (`queries.ts`) with its search string plus
+  `sort:updated-desc` (unless a custom query has its own `sort:`), so the `maxPerSection` PRs
+  kept are the most recently updated. A custom section that fails `validateCustomQuery` is not
+  sent, and one GitHub refuses (`validation`, `not_found`, `forbidden`, `graphql`) is reported
+  in `sectionErrors` (section id -> message) while the other sections load. Any other failure,
+  and any failure of a preset section, throws the `GitHubError` for the poller.
+- Nodes are mapped (`mapPullRequest.ts`), filtered with `filterByRepo` and deduped:
+  `pullRequests` by id, `sections` as ordered ids (a PR may be in several).
+- Open PRs of `previous` that are in no section now (and pass the repo filters) go through
+  `query ProwlNodes($ids)`, 100 ids per query. Merged or closed ones stay in `pullRequests`,
+  in no section, with `state`, `updatedAt` and `closedBy` (`mergedBy`, else the actor of the
+  latest `ClosedEvent`), so the diff can emit `merged` / `closed`. Still-open ones only
+  stopped matching and are dropped; merged or closed ones are never looked up again.
+- Both queries pass `{ partial: true }`: an org that requires SAML or a deleted PR leaves a
+  null node, which is skipped. `search` is non-null in the schema, so a search that fails as a
+  whole nulls `data` and still throws.
+
+Mapping (`mapPullRequest`):
+
+| Field | Rule |
+|---|---|
+| `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
+| enums | Lower-cased when the model knows the value; otherwise `none` (`reviewDecision`, also when null), `unknown` (`mergeable`, `mergeStateStatus`), `open` (`state`). |
+| `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. |
+| `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
+| `labels` | Color lower-cased when it is six hex digits, else `NEUTRAL_LABEL_COLOR` (`ededed`). |
+| `unresolvedThreads` | Unresolved among the first 100 review threads. |
+| `lastComment` | Latest issue comment. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
+| `closedBy` | `mergedBy` in search results; `ProwlNodes` adds the `ClosedEvent` actor. |
+| `allowedMergeMethods` | Repository `mergeCommitAllowed`, `squashMergeAllowed`, `rebaseMergeAllowed`. |
+
+Estimated cost (GitHub counts the requests every connection could need, divides by 100 and
+rounds; `rateLimit.cost` in each response gives the real figure):
+
+| Query | Requests | Points |
+|---|---|---|
+| `ProwlSearch`, page of 50 | 1 + 50 x 7 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts) = 351 | about 4 |
+| `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
+
+The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour of
+the 5,000; four sections of 100 PRs every minute stay under 2,000.
 
 ## Storage
 

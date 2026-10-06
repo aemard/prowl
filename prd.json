@@ -105,8 +105,8 @@
       ],
       "priority": 5,
       "dependsOn": ["US-003", "US-004"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "queries.ts (ProwlSearch, ProwlNodes; validated against the public schema), mapPullRequest.ts, fetchPullRequests.ts, tests/fixtures/github.ts (also drives the mock server in tests/unit/mockGitHub.test.ts); 100% coverage; team reviewers omitted (read:org), per-section errors in sectionErrors for US-007 to persist."
     },
     {
       "id": "US-006",
