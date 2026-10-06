@@ -51,6 +51,9 @@ jobs:
       - name: Package
         run: pnpm zip
 
+      - name: Website
+        run: pnpm --filter site build
+
       - name: Resolve Playwright version
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
