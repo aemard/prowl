@@ -24,7 +24,7 @@
     "coverage": "vitest run --coverage",
     "e2e": "pnpm build:e2e && playwright test",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm test",
-    "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm size && pnpm e2e"
+    "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

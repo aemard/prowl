@@ -51,6 +51,15 @@
   },
   "overrides": [
     {
+      "includes": ["site/**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": { "noUnusedImports": "off", "noUnusedVariables": "off" },
+          "style": { "useImportType": "off" }
+        }
+      }
+    },
+    {
       "includes": ["scripts/**", "tests/e2e/**", "site/**"],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     }

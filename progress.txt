@@ -173,4 +173,14 @@ Started: 2026-10-06
   - The auto-opened verification tab sits in front of the panel page in E2E: call `panel.bringToFront()` before asserting focus or taking the screenshot.
   - Not verified against live GitHub (no github.com access from the sandbox): the 404 for an unknown client id, CORS-free POSTs rely on the host permission, and CI status with an OAuth token. The flow lives in the panel: closing it ends the poll.
   - A future "revoke on sign-out" needs the client secret or Basic auth with it, so it is not possible for a public client; `docs/auth.md` points users to GitHub's authorized apps page.
+## 2026-10-06 - US-024 Website: Astro site and landing page
+- site/ is a pnpm workspace package (pnpm-workspace.yaml lists only `site`; the root stays the extension). Astro 7.3.6 + sharp 0.35.5 pinned, static output, `site` https://aemard.github.io, `base` /prowl/, `trailingSlash: 'always'`, CSS inlined, no client JS, system fonts.
+- Landing (src/pages/index.astro): hero with the real list screenshots (`<picture>`, dark source by `prefers-color-scheme`, converted to WebP at build, 40 KB each), 4 feature blocks, 3 install steps, Install button -> releases/latest, footer (GitHub, Docs, Privacy). Privacy is a short accurate placeholder for US-025. Shared at build time by relative import: src/styles/tokens.css, src/assets/logo.svg, docs/screenshots/list-{light,dark}.png.
+- .github/workflows/pages.yml (build + deploy, pinned SHAs, pages/id-token write only on deploy), docs/releasing.md (Pages source must be "GitHub Actions"), `pnpm verify` now runs `pnpm --filter site build` after `pnpm build`.
+- Files: site/**, pnpm-workspace.yaml, package.json, pnpm-lock.yaml, biome.json, .github/workflows/pages.yml, docs/{releasing,architecture,decisions}.md.
+- Learnings:
+  - Astro 7 images need `sharp` as a direct dependency of site/ (pnpm does not hoist it); without it the build fails at "generating optimized images".
+  - Biome only parses .astro frontmatter, so imports used in the template look unused; `biome.json` turns off `noUnusedImports`/`noUnusedVariables`/`useImportType` for `site/**/*.astro`. Biome JSON has no comments.
+  - `pnpm install --frozen-lockfile --filter site` installs only the site (used in pages.yml). Set `ASTRO_TELEMETRY_DISABLED=1` in CI. Preview: `pnpm --filter site preview` (port 4321); axe and 390/1280 px screenshots were checked with Playwright against it.
+  - ci.yml does not build the site on pull requests (outside this story's files); a follow-up could add `pnpm --filter site build` there. US-025 adds pages under site/src/pages and should reuse `Base.astro`, `links.ts` (`page()` for base-aware hrefs) and the `.prose` class.
 ---

@@ -49,6 +49,7 @@ in-memory updates that the next snapshot replaces.
 | `src/test/` | `chrome.ts` fake used by every unit test | excluded |
 | `tests/fixtures/` | Builders for GitHub-shaped GraphQL nodes, shared by unit tests and the E2E mock | n/a |
 | `tests/e2e/` | Playwright specs, fixtures, `mock-github/` server | n/a |
+| `site/` | Astro website for GitHub Pages (`pnpm --filter site build`, base `/prowl/`). Imports `src/styles/tokens.css`, `src/assets/logo.svg` and `docs/screenshots/` at build time; ships no JS | n/a |
 
 ## Data flow of a poll
 

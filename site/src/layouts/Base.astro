@@ -1,0 +1,59 @@
+---
+import logo from '../../../src/assets/logo.svg';
+import '../../../src/styles/tokens.css';
+import '../styles/site.css';
+import { DOCS, page, REPO } from '../links';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={logo.src} type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Prowl" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href={page()}>
+          <img src={logo.src} alt="" width="32" height="32" />
+          Prowl
+        </a>
+        <nav aria-label="Main">
+          <a href={DOCS}>Docs</a>
+          <a href={REPO}>GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap bar">
+        <p>Open source under the MIT License. Not affiliated with GitHub.</p>
+        <nav aria-label="Footer">
+          <a href={REPO}>GitHub</a>
+          <a href={DOCS}>Docs</a>
+          <a href={page('privacy/')}>Privacy</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

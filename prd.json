@@ -444,8 +444,8 @@
       ],
       "priority": 24,
       "dependsOn": ["US-013"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "site/ (Astro 7.3.6, base /prowl/) with landing page and privacy placeholder, pages.yml, docs/releasing.md; pnpm verify green; axe clean in light/dark at 1280 and 360 px; Lighthouse not run (not installed offline)."
     },
     {
       "id": "US-025",

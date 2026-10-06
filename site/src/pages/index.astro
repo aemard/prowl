@@ -1,0 +1,114 @@
+---
+import { getImage } from 'astro:assets';
+import dark from '../../../docs/screenshots/list-dark.png';
+import light from '../../../docs/screenshots/list-light.png';
+import Icon from '../components/Icon.astro';
+import Base from '../layouts/Base.astro';
+import { INSTALL, REPO } from '../links';
+
+// The real side panel screenshots, converted to WebP at build time.
+const [lightImage, darkImage] = await Promise.all(
+  [light, dark].map((src) => getImage({ src, format: 'webp', quality: 90 })),
+);
+
+const features = [
+  {
+    icon: 'pullRequest',
+    title: 'See every pull request at a glance',
+    text: 'Live CI, review and merge state on each card: failing checks, requested changes, conflicts, ready to merge. Tabs for what you opened, what needs your review and where you are mentioned.',
+  },
+  {
+    icon: 'bell',
+    title: 'Know the moment something changes',
+    text: 'Choose the events that notify you, set quiet hours, and read the toolbar badge to see how many pull requests need you.',
+  },
+  {
+    icon: 'merge',
+    title: 'Act without switching tabs',
+    text: 'Approve, request changes, comment, merge or re-run failed checks from the panel. Snooze or mute the noisy ones.',
+  },
+  {
+    icon: 'key',
+    title: 'Private by design',
+    text: 'Prowl runs in your browser. Your token stays on your device, GitHub is the only server it talks to, and there is no telemetry.',
+  },
+] as const;
+---
+
+<Base
+  title="Prowl: your GitHub pull requests in a Chrome side panel"
+  description="Prowl is a free, open source Chrome side panel that follows your GitHub pull requests: live CI, review and merge state, notifications and one-click actions. No backend, no telemetry."
+>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>Your pull requests, at a glance</h1>
+        <p class="lead">
+          Prowl is a Chrome side panel that follows your GitHub pull requests. See CI, reviews
+          and merge state live, get a notification when something changes, and act without
+          leaving your tab.
+        </p>
+        <p class="actions">
+          <a class="button" data-variant="primary" href={INSTALL}>Install Prowl</a>
+          <a class="button" href={REPO}>View on GitHub</a>
+        </p>
+        <p class="note">Free and open source. No Prowl account, no backend, no telemetry.</p>
+      </div>
+      <picture class="shot">
+        <source media="(prefers-color-scheme: dark)" srcset={darkImage.src} />
+        <img
+          src={lightImage.src}
+          width={lightImage.attributes.width}
+          height={lightImage.attributes.height}
+          alt="The Prowl side panel listing pull requests with their CI, review and merge status."
+          fetchpriority="high"
+        />
+      </picture>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="features">
+    <div class="wrap">
+      <h2 id="features" class="section-title">Stay on top of every pull request</h2>
+      <ul class="features">
+        {
+          features.map((feature) => (
+            <li>
+              <span class="feature-icon">
+                <Icon name={feature.icon} />
+              </span>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section band" aria-labelledby="install">
+    <div class="wrap">
+      <h2 id="install" class="section-title">Install in under five minutes</h2>
+      <ol class="steps">
+        <li>
+          <h3>Download</h3>
+          <p>Get the latest zip from the releases page and unzip it.</p>
+        </li>
+        <li>
+          <h3>Load it in Chrome</h3>
+          <p>
+            Open <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked
+            and pick the unzipped folder.
+          </p>
+        </li>
+        <li>
+          <h3>Sign in</h3>
+          <p>Click the Prowl icon to open the side panel, then sign in with a GitHub token.</p>
+        </li>
+      </ol>
+      <p class="actions">
+        <a class="button" data-variant="primary" href={INSTALL}>Install Prowl</a>
+      </p>
+    </div>
+  </section>
+</Base>
