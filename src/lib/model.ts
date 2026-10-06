@@ -20,6 +20,19 @@ export interface CheckSummary {
   neutral: number;
 }
 
+/** How a check run or commit status counts: SUCCESS passed; FAILURE and its kin failed. */
+export type CheckItemState = 'passed' | 'failed' | 'pending' | 'neutral';
+
+/** One check run or commit status of the head commit, as the expanded card lists it. */
+export interface CheckItem {
+  name: string;
+  state: CheckItemState;
+  /** The check's own page; null when GitHub has none. Not yet checked against the allowlist. */
+  url: string | null;
+  /** The base branch's protection requires it to pass before merging. */
+  required: boolean;
+}
+
 export type ReviewDecision = 'approved' | 'changes_requested' | 'review_required' | 'none';
 
 export type ReviewState = 'approved' | 'changes_requested' | 'commented' | 'dismissed';
@@ -30,6 +43,14 @@ export interface Review {
   author: string;
   state: ReviewState;
   submittedAt: string;
+}
+
+export interface Reviewer {
+  login: string;
+  /** Empty for a deleted account. */
+  avatarUrl: string;
+  /** `requested`: asked to review and has not reviewed yet. */
+  state: ReviewState | 'requested';
 }
 
 /** GitHub's `mergeable` field. `unknown` while GitHub computes it. */
@@ -100,6 +121,23 @@ export interface PullRequest {
   /** Merge methods the repository allows. */
   allowedMergeMethods: MergeMethod[];
   viewerCanUpdate: boolean;
+}
+
+/**
+ * What the expanded card shows beyond `PullRequest`. Fetched when a card is expanded (never
+ * polled, never stored): the head commit's checks, who reviewed, and the base branch's rules.
+ */
+export interface PullRequestDetail {
+  /** Failed first, then pending, passed and neutral; GitHub's order within each. */
+  checks: CheckItem[];
+  /** Checks GitHub counts on the head commit; more than `checks.length` when a cap cut the list. */
+  checksTotal: number;
+  /** Changes requested first, then requested, approved, commented, dismissed. */
+  reviewers: Reviewer[];
+  /** Approvals the base branch's protection asks for; null when none, or not visible to the token. */
+  requiredApprovals: number | null;
+  /** The base branch needs every review conversation resolved before merging. */
+  requiresConversationResolution: boolean;
 }
 
 export type SectionKind = 'authored' | 'review_requested' | 'mentioned' | 'assigned' | 'custom';

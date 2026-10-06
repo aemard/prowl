@@ -1,5 +1,5 @@
 /** Builders for the stored values the side panel reads. Used by the panel's unit tests. */
-import type { AuthState, PollState, PullRequest, Snapshot } from '../lib/model';
+import type { AuthState, PollState, PullRequest, PullRequestDetail, Snapshot } from '../lib/model';
 
 export function buildAuth(login = 'octocat'): AuthState {
   return {
@@ -76,4 +76,16 @@ export function buildSnapshotOf(
     for (const pr of prs) snapshot.pullRequests[pr.id] = pr;
   }
   return { ...snapshot, ...overrides };
+}
+
+/** A detail with no checks or reviewers and a base branch that asks for one approval. */
+export function buildDetail(overrides: Partial<PullRequestDetail> = {}): PullRequestDetail {
+  return {
+    checks: [],
+    checksTotal: 0,
+    reviewers: [],
+    requiredApprovals: 1,
+    requiresConversationResolution: false,
+    ...overrides,
+  };
 }

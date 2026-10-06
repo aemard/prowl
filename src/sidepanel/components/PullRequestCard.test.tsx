@@ -1,24 +1,48 @@
-import { fireEvent, render, screen, within } from '@testing-library/preact';
-import { describe, expect, it } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/preact';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
-import { buildPullRequest } from '../../test/panel';
+import { stubDetailFetch } from '../../test/githubFetch';
+import { buildAuth, buildPullRequest } from '../../test/panel';
+import { details, expandedIds } from '../state/prDetail';
+import { auth } from '../state/store';
 import { PullRequestCard } from './PullRequestCard';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
+const pr42 = (overrides: Partial<PullRequest> = {}) =>
+  buildPullRequest({ title: 'Fix the flaky test', number: 42, ...overrides });
+
 function renderCard(overrides: Partial<PullRequest> = {}, unseen = false) {
-  const pr = buildPullRequest({ title: 'Fix the flaky test', number: 42, ...overrides });
   render(
     <ul>
-      <PullRequestCard pr={pr} unseen={unseen} now={NOW} />
+      <PullRequestCard pr={pr42(overrides)} unseen={unseen} now={NOW} />
     </ul>,
   );
   return document.querySelector('a') as HTMLAnchorElement;
 }
 
+/** What a screen reader gets from the expand button: its name and description. */
+function toggleOf() {
+  const button = screen.getByRole('button', { name: /^Details for / });
+  const description = document.getElementById(button.getAttribute('aria-describedby') ?? '');
+  return { button, description: description?.textContent ?? '' };
+}
+
+beforeEach(() => {
+  auth.value = buildAuth();
+  stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
+});
+
+afterEach(() => {
+  auth.value = undefined;
+  expandedIds.value = [];
+  details.value = {};
+});
+
 describe('PullRequestCard', () => {
-  it('is one link to the PR whose name starts with the title and holds the rest', () => {
+  it('has a title link and a separate expand button, each named, and describes the rest', () => {
     const link = renderCard({
       author: { login: 'bob', avatarUrl: 'https://avatars.githubusercontent.com/bob' },
       checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
@@ -27,15 +51,25 @@ describe('PullRequestCard', () => {
       unresolvedThreads: 2,
     });
     expect(link.getAttribute('href')).toBe('https://github.com/acme/widgets/pull/42');
-    const name = link.getAttribute('aria-label') ?? '';
-    expect(name.startsWith('Fix the flaky test, acme/widgets#42, by bob.')).toBe(true);
+    expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBe(link);
+
+    const { button, description } = toggleOf();
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(button.getAttribute('aria-controls')).toBeNull();
+    expect(description.startsWith('acme/widgets#42, by bob. ')).toBe(true);
     for (const fact of [
       'Checks failing',
       'Changes requested',
       '2 unresolved threads',
       '4 comments',
     ])
-      expect(name).toContain(fact);
+      expect(description).toContain(fact);
+
+    // Never nested: each is its own tab stop, and the title link is not inside the button.
+    expect(button.contains(link)).toBe(false);
+    expect(link.closest('button')).toBeNull();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 
   it('shows repo, number, author, times, chips and counts as text', () => {
@@ -60,16 +94,17 @@ describe('PullRequestCard', () => {
     expect(screen.getByTitle('Fix the flaky test').textContent).toBe('Fix the flaky test');
   });
 
-  it('marks unseen changes with a dot and in the name', () => {
-    const seen = renderCard();
+  it('marks unseen changes with a dot and in the description', () => {
+    renderCard();
     expect(screen.queryByTitle('Unseen changes')).toBeNull();
-    expect(seen.getAttribute('aria-label')).not.toContain('Unseen changes');
+    expect(toggleOf().description).not.toContain('Unseen changes');
+    expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBeNull();
     document.body.innerHTML = '';
 
-    const unseen = renderCard({}, true);
+    renderCard({}, true);
     expect(screen.getByTitle('Unseen changes')).toBeTruthy();
-    expect(unseen.getAttribute('aria-label')).toContain('Unseen changes');
-    expect(unseen.closest('li')?.getAttribute('data-unseen')).toBe('true');
+    expect(toggleOf().description).toContain('Unseen changes');
+    expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBe('true');
   });
 
   it('colors labels from their own color with readable text, and collapses extras', () => {
@@ -88,18 +123,16 @@ describe('PullRequestCard', () => {
     expect(style('needs design')).toContain('--label-fg: #000000');
     expect(screen.queryByText('p1')).toBeNull();
     expect(screen.getByText('+2').getAttribute('title')).toBe('p1, p2');
-    expect(screen.getByRole('link').getAttribute('aria-label')).toContain(
-      'Labels: bug, needs design, ui, p1, p2',
-    );
+    expect(toggleOf().description).toContain('Labels: bug, needs design, ui, p1, p2');
   });
 
   it('omits what the PR does not have', () => {
     renderCard({ mergeable: 'unknown', author: null });
-    const link = screen.getByRole('link');
-    expect(link.querySelector('.pr-card__chips')).toBeNull();
-    expect(link.querySelector('.pr-card__labels')).toBeNull();
-    expect(link.querySelector('.pr-card__stat')).toBeNull();
-    expect(link.querySelector('img')).toBeNull();
+    const card = document.querySelector('.pr-card__summary') as HTMLElement;
+    expect(card.querySelector('.pr-card__chips')).toBeNull();
+    expect(card.querySelector('.pr-card__labels')).toBeNull();
+    expect(card.querySelector('.pr-card__stat')).toBeNull();
+    expect(card.querySelector('img')).toBeNull();
   });
 
   it('opens the PR in a new tab instead of navigating the panel', () => {
@@ -122,6 +155,86 @@ describe('PullRequestCard', () => {
     renderCard({ title: '<img src=x onerror=alert(1)>' });
     const link = screen.getByRole('link');
     expect(within(link).getByText('<img src=x onerror=alert(1)>')).toBeTruthy();
-    expect(link.querySelector('img[src="x"]')).toBeNull();
+    expect(document.querySelector('img[src="x"]')).toBeNull();
+  });
+
+  it('opens the PR from the title without expanding the card', () => {
+    renderCard();
+    fireEvent.click(screen.getByRole('link'));
+    expect(fakeChrome().__state.createdTabs).toHaveLength(1);
+    expect(expandedIds.value).toEqual([]);
+  });
+});
+
+describe('expanding', () => {
+  const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
+
+  it('opens the details with the button, which then points at them', async () => {
+    renderCard();
+    expect(screen.queryByRole('list', { name: 'Merge' })).toBeNull();
+
+    fireEvent.click(toggleOf().button);
+    expect(expanded()).toBe(true);
+    const detail = document.getElementById(toggleOf().button.getAttribute('aria-controls') ?? '');
+    expect(detail?.classList.contains('pr-detail')).toBe(true);
+    expect(within(detail as HTMLElement).getByRole('list', { name: 'Merge' })).toBeTruthy();
+    await screen.findByRole('link', { name: 'lint' });
+    expect(document.querySelectorAll('.pr-card__summary')).toHaveLength(1);
+
+    fireEvent.click(toggleOf().button);
+    expect(expanded()).toBe(false);
+    expect(document.querySelector('.pr-detail')).toBeNull();
+    expect(toggleOf().button.getAttribute('aria-controls')).toBeNull();
+  });
+
+  it('opens on a click anywhere on the card but its link, button or a selection', () => {
+    renderCard();
+    fireEvent.click(screen.getByText('acme/widgets'));
+    expect(expanded()).toBe(true);
+    fireEvent.click(screen.getByText('acme/widgets'));
+    expect(expanded()).toBe(false);
+
+    vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => 'Fix the' } as Selection);
+    fireEvent.click(screen.getByText('acme/widgets'));
+    expect(expanded()).toBe(false);
+  });
+
+  it('does not react to clicks inside the details', async () => {
+    renderCard();
+    fireEvent.click(toggleOf().button);
+    await screen.findByRole('link', { name: 'lint' });
+    fireEvent.click(screen.getByText('Merge'));
+    expect(expanded()).toBe(true);
+  });
+
+  it('folds back on Escape and keeps focus on the card’s button', async () => {
+    renderCard();
+    fireEvent.click(toggleOf().button);
+    const link = await screen.findByRole('link', { name: 'lint' });
+    link.focus();
+
+    fireEvent.keyDown(link, { key: 'Enter' });
+    expect(expanded()).toBe(true);
+    fireEvent.keyDown(link, { key: 'Escape' });
+    expect(expanded()).toBe(false);
+    expect(document.activeElement).toBe(toggleOf().button);
+
+    // Nothing to fold: Escape is left alone for whoever else wants it.
+    const ignored = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => void toggleOf().button.dispatchEvent(ignored));
+    expect(expanded()).toBe(false);
+  });
+
+  it('leaves an Escape that something inside already handled', async () => {
+    renderCard();
+    fireEvent.click(toggleOf().button);
+    const link = await screen.findByRole('link', { name: 'lint' });
+    link.addEventListener('keydown', (event) => event.preventDefault());
+    fireEvent.keyDown(link, { key: 'Escape' });
+    expect(expanded()).toBe(true);
   });
 });

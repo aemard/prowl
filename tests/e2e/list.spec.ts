@@ -1,4 +1,4 @@
-import type { Page, Worker } from '@playwright/test';
+import type { Locator, Page, Worker } from '@playwright/test';
 import type { PrLocalState, Section } from '../../src/lib/model';
 import { defaultSettings } from '../../src/lib/storage/settings';
 import { prId, searchResponse } from '../fixtures/github';
@@ -21,7 +21,10 @@ const AUTHORED = {
 };
 
 const tabNames = (panel: Page) => panel.getByRole('tab').allTextContents();
-const cardFor = (panel: Page, title: RegExp) => panel.getByRole('link', { name: title });
+const linkFor = (panel: Page, title: RegExp) => panel.getByRole('link', { name: title });
+/** The card (`li`) of the pull request whose title link matches. */
+const cardFor = (panel: Page, title: RegExp) =>
+  panel.locator('.pr-card', { has: linkFor(panel, title) });
 const stored = (worker: Worker) =>
   worker.evaluate(() => chrome.storage.local.get('prLocal') as Promise<{ prLocal?: PrLocalState }>);
 
@@ -76,13 +79,60 @@ test.describe('with a rich set of pull requests', () => {
     await expect(cardFor(panel, /^Spike: edge-render/)).toBeVisible();
   });
 
+  test('four sections scroll sideways with an edge cue, and every tab is reachable by keyboard', async ({
+    openPanel,
+  }) => {
+    const panel = await openPanel();
+    const tablist = panel.getByRole('tablist');
+    const overflow = () => tablist.evaluate((el) => el.scrollWidth - el.clientWidth);
+    const inView = (tab: Locator) =>
+      tab.evaluate((el) => {
+        const [t, l] = [el, el.closest('[role="tablist"]')].map((e) => e?.getBoundingClientRect());
+        return !!t && !!l && t.left >= l.left && t.right <= l.right;
+      });
+
+    expect(await overflow()).toBeGreaterThan(0);
+    // A chevron at the edge says there are more tabs that way.
+    const more = (side: string) => panel.locator(`.section-tabs__more[data-side="${side}"]`);
+    await expect(more('end')).toBeVisible();
+    await expect(more('start')).toHaveCount(0);
+
+    await panel.getByRole('tab', { selected: true }).press('End');
+    const last = panel.getByRole('tab', { name: /Assigned to me/ });
+    await expect(last).toBeFocused();
+    await expect.poll(() => inView(last)).toBe(true);
+    expect(await tablist.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+    await expect(more('end')).toHaveCount(0);
+    await expect(more('start')).toBeVisible();
+
+    await last.press('Home');
+    await expect(panel.getByRole('tab', { name: /Created by me/ })).toBeFocused();
+    await expect.poll(() => tablist.evaluate((el) => el.scrollLeft)).toBe(0);
+    await expect(more('end')).toBeVisible();
+    await panel.screenshot({ path: test.info().outputPath('tabs-four.png') });
+  });
+
+  test('three sections fit the panel without scrolling', async ({ openPanel, seedStorage }) => {
+    const sections = allSections().map((section) => ({
+      ...section,
+      enabled: section.id !== 'assigned',
+    }));
+    await seedStorage({ settings: { sections } });
+    const panel = await openPanel();
+    const tablist = panel.getByRole('tablist');
+    await expect(panel.getByRole('tab')).toHaveCount(3);
+    expect(await tablist.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+    await panel.screenshot({ path: test.info().outputPath('tabs-three.png') });
+  });
+
   test('a card says everything about its pull request, and not by color alone', async ({
     openPanel,
   }) => {
     const panel = await openPanel();
 
     const checkout = cardFor(panel, /^Refactor checkout flow/);
-    await expect(checkout).toHaveAttribute('href', `${MOCK_ORIGIN}/acme/web/pull/2481`);
+    const title = linkFor(panel, /^Refactor checkout flow/);
+    await expect(title).toHaveAttribute('href', `${MOCK_ORIGIN}/acme/web/pull/2481`);
     await expect(checkout).toContainText('acme/web');
     await expect(checkout).toContainText('#2481');
     await expect(checkout).toContainText('2 failing');
@@ -92,11 +142,18 @@ test.describe('with a rich set of pull requests', () => {
     await expect(checkout).toContainText('bug');
     await expect(checkout).toContainText('+1');
     await expect(checkout).toContainText(/\d+ min ago/);
-    const name = (await checkout.getAttribute('aria-label')) ?? '';
-    expect(name).toMatch(/^Refactor checkout flow .* acme\/web#2481, by octocat\. /);
-    expect(name).toContain('Checks failing: 2 failed, 11 passed, 1 skipped (14 checks)');
-    expect(name).toContain('4 unresolved threads. 12 comments');
-    expect(name).toContain('Labels: bug, needs-design, area/checkout, regression');
+    // The link is named by the title and where it lives; the expand button describes the rest.
+    expect(await title.getAttribute('aria-label')).toMatch(
+      /^Refactor checkout flow .*, acme\/web#2481$/,
+    );
+    const toggle = checkout.getByRole('button', { name: /^Details for Refactor checkout flow/ });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const describedBy = (await toggle.getAttribute('aria-describedby')) ?? '';
+    const facts = (await panel.locator(`[id="${describedBy}"]`).textContent()) ?? '';
+    expect(facts).toMatch(/^acme\/web#2481, by octocat\. /);
+    expect(facts).toContain('Checks failing: 2 failed, 11 passed, 1 skipped (14 checks)');
+    expect(facts).toContain('4 unresolved threads. 12 comments');
+    expect(facts).toContain('Labels: bug, needs-design, area/checkout, regression');
 
     await expect(cardFor(panel, /^WIP: migrate/)).toContainText('Draft');
     await expect(cardFor(panel, /^WIP: migrate/)).toContainText('3 pending');
@@ -139,9 +196,11 @@ test.describe('with a rich set of pull requests', () => {
   test('opens the pull request on GitHub in a new tab', async ({ context, openPanel }) => {
     const panel = await openPanel();
     const opened = context.waitForEvent('page');
-    await cardFor(panel, /^Add rate limiting/).click();
+    await linkFor(panel, /^Add rate limiting/).click();
     expect((await opened).url()).toBe(`${MOCK_ORIGIN}/acme/api/pull/912`);
     expect(panel.url()).toContain('/sidepanel/index.html');
+    // The title opens GitHub; it does not also expand the card.
+    await expect(panel.locator('.pr-detail')).toHaveCount(0);
   });
 
   test('the quick filter narrows cards and counts, and says when nothing matches', async ({

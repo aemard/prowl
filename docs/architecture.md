@@ -89,7 +89,8 @@ in-memory updates that the next snapshot replaces.
   20 s timeout, `cache: 'no-store'`. Errors never include the token.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
   `statusContextCountsByState` so the list query stays cheap; individual check runs are
-  fetched only when a PR is expanded.
+  fetched only when a PR is expanded (`query ProwlPullRequestDetail`, see
+  [Pull request detail](#pull-request-detail)).
 
 ## GitHub client
 
@@ -199,9 +200,40 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 |---|---|---|
 | `ProwlSearch`, page of 50 | 1 + 50 x 7 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts) = 351 | about 4 |
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
+| `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
 
 The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour of
 the 5,000; four sections of 100 PRs every minute stay under 2,000.
+
+## Pull request detail
+
+`fetchPullRequestDetail(client, id)` (`src/lib/github/fetchPullRequestDetail.ts`) is the one read
+behind an expanded card. It is never polled and never stored: the panel calls it when a card is
+expanded and keeps the answer in memory (see [Side panel](#side-panel)). `query
+ProwlPullRequestDetail($id, $after)` is `node(id:) { ... on PullRequest }` with:
+
+- `commits(last: 1)` -> `statusCheckRollup.contexts(first: 100, after: $after)`: every check run
+  (`name status conclusion detailsUrl`) and commit status (`context state targetUrl`) with
+  `isRequired(pullRequestId: $id)`, plus `totalCount` and `pageInfo`. The fetch follows the cursor
+  for up to 5 pages (500 checks) so a failed check is never hidden behind 100 passing ones;
+  `checksTotal` keeps GitHub's count so the panel can say "N more checks on GitHub".
+- `latestReviews` (with avatars) and `reviewRequests` (users, bots and mannequins; teams stay out
+  because every `Team` field needs `read:org`, as in the list query).
+- `baseRef.branchProtectionRule { requiredApprovingReviewCount requiresConversationResolution }`,
+  which is how "1 approval required" is known. It is null for a branch without a rule, for rules
+  that live in rulesets, and where the token cannot see rules; the panel then says "review
+  required" without a count.
+
+The read is `partial`: a hole (check runs a fine-grained token cannot read) leaves that part
+empty instead of failing reviewers and rules; a PR that is gone or hidden throws `not_found`.
+`mapPullRequestDetail` (in `mapPullRequest.ts`) maps to `PullRequestDetail`:
+
+| Field | Rule |
+|---|---|
+| `checks` | Check run state is its `conclusion` once `COMPLETED`, else its `status`; commit statuses use `state`; the same buckets as the list counts (`passed`, `failed`, `pending`, anything else `neutral`). Failed first, then pending, passed, neutral, GitHub's order inside each. `url` only for http(s) links; `required` from `isRequired`. |
+| `reviewers` | One entry per login: the latest review (PENDING and unknown states dropped; a deleted account is `ghost` with no avatar), else `requested`. A reviewer asked again keeps the review state, which is what blocks or allows the merge. Changes requested first, then requested, approved, commented, dismissed. |
+| `requiredApprovals` | The rule's `requiredApprovingReviewCount`, null when 0 or no rule is visible. |
+| `requiresConversationResolution` | The rule's flag, false without a rule. |
 
 ## Diff engine
 
@@ -438,10 +470,37 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   unseen cards have stayed on screen for 1.5 s while `document.visibilityState` is visible, sends
   one `{ type: 'markSeen', prIds }`; a scroll, a hidden panel or a new snapshot restarts the wait.
   The worker stores `seen`, and the dot disappears through the storage subscription.
-- `PullRequestCard` is one `<a>`: `href` only for URLs on `env.webUrl`, click opens through
-  `openGitHubUrl`. Chips and the accessible name come from `components/prStatus.ts` (pure,
-  table-tested; ready-to-merge reuses `isReadyToMerge` from the diff engine). Relative times take
-  `now` from `useNow` in the list, so they refresh every 30 s.
+- `PullRequestCard` is a summary plus, when expanded, `PullRequestDetails`. The title is the
+  link (`GitHubLink`: `href` only for URLs on `env.webUrl`, click opens through `openGitHubUrl`,
+  named "Title, owner/name#n"); the chevron `IconButton` ("Details for Title", `aria-expanded`,
+  `aria-controls` while open) is its sibling, never nested in it, and `aria-describedby` points
+  to a hidden sentence with every fact the card shows. Row actions (US-018) go beside them in the
+  summary: a click on the summary toggles unless it lands on a link or button or ends a text
+  selection, and the card's `keydown` handler folds an expanded card on Escape and focuses its
+  chevron. Both are native listeners on the `li`, because the card itself is not a control. Chips
+  and the sentence come from `components/prStatus.ts` (pure, table-tested; ready-to-merge reuses
+  `isReadyToMerge` from the diff engine). The unseen dot comes from `isSeen`, like the badge, and
+  `data-pr-id` / `data-unseen` sit on the summary, which is what the seen observer watches (an
+  expanded card is as tall as it likes). Relative times take `now` from `useNow` in the list.
+- Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
+  signals, so a card stays open through background refreshes, tab switches and Settings. They
+  reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`
+  mounts and whenever `detailKey(pr)` changes (activity, check counts, merge facts: a finished
+  check does not always touch `updatedAt`); a poll that changes none of them costs nothing. The
+  previous detail stays on screen while a newer one loads, an answer overtaken by a newer request
+  is dropped, and a failure shows GitHub's message with "Try again" above whatever is cached.
+- Merge readiness (`components/mergeReadiness.ts`, pure, table-tested) turns `PullRequest` plus
+  the optional `PullRequestDetail` into one line per blocker: draft, "Conflicts with main",
+  "Blocked: branch is behind main", "Blocked: changes requested by alice", "Blocked: 1 approval
+  required" (or "1 more", or "review required" when the rule is not visible), "Blocked: 2
+  required checks failing" (failing checks that are not required only inform), "Waiting for 1
+  required check to finish", "Blocked: 3 conversations to resolve", and "Ready to merge" when
+  nothing blocks; `blocked` without a known reason says "Blocked by the base branch's rules". It
+  works from the list's data alone (generic counts) and sharpens once the detail has loaded, so
+  the Merge group shows at once.
+- Section tabs scroll sideways when they do not fit; a fade and a chevron at an edge with more
+  tabs behind it say so (measured on scroll and resize), and a tab brought into view by the arrow
+  keys stays clear of them.
 
 ## Testing
 

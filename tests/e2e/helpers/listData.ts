@@ -31,7 +31,7 @@ const PEOPLE = {
   erin: avatar('erin', '#bc4c00'),
   frank: avatar('frank', '#57606a'),
 };
-const by = (login: keyof typeof PEOPLE) => ({ login, avatarUrl: PEOPLE[login] });
+export const by = (login: keyof typeof PEOPLE) => ({ login, avatarUrl: PEOPLE[login] });
 const labels = (...pairs: [string, string][]) => ({
   nodes: pairs.map(([name, color]) => ({ name, color })),
 });

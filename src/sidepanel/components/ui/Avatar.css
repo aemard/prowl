@@ -1,0 +1,11 @@
+.ui-avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-active);
+  color: var(--color-fg-muted);
+  object-fit: cover;
+}

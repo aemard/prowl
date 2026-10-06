@@ -272,8 +272,8 @@
       ],
       "priority": 14,
       "dependsOn": ["US-013"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Card split into title link + chevron button; expanding lazily runs ProwlPullRequestDetail (checks paged to 500, reviewers, branch rules) and shows merge readiness lines, failed checks first with links, reviewers with avatars and states; stays open across polls, Escape collapses with focus kept; tabs fit three sections at 400 px and scroll with an edge chevron; detail.png, axe clean."
     },
     {
       "id": "US-015",

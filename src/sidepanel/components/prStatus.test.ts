@@ -99,7 +99,7 @@ describe('pullRequestStatuses', () => {
 });
 
 describe('describePullRequest', () => {
-  it('starts with the title and names every fact the card shows', () => {
+  it('names every fact the card shows', () => {
     const pr = buildPullRequest({
       number: 42,
       title: 'Fix the flaky test',
@@ -115,7 +115,7 @@ describe('describePullRequest', () => {
       createdAt: '2026-10-03T12:00:00.000Z',
     });
     expect(describePullRequest(pr, pullRequestStatuses(pr), true, NOW)).toBe(
-      'Fix the flaky test, acme/widgets#42, by bob. Checks failing: 1 failed, 2 passed (3 checks). ' +
+      'acme/widgets#42, by bob. Checks failing: 1 failed, 2 passed (3 checks). ' +
         '2 unresolved threads. 1 comment. Labels: bug, ui. Updated 5 min ago. Opened 3 d ago. Unseen changes',
     );
   });
@@ -123,7 +123,7 @@ describe('describePullRequest', () => {
   it('leaves out what is absent', () => {
     const pr = buildPullRequest({ author: null });
     expect(describePullRequest(pr, [], false, NOW)).toBe(
-      'Improve widget 1, acme/widgets#1. Updated 2 h ago. Opened 5 d ago',
+      'acme/widgets#1. Updated 2 h ago. Opened 5 d ago',
     );
   });
 });

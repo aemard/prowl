@@ -1,9 +1,18 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { computeBadge } from '../../lib/badge/computeBadge';
 import type { PullRequest, Settings, SortOrder } from '../../lib/model';
 import { defaultSettings } from '../../lib/storage/settings';
-import { buildPollState, buildPullRequest, buildSnapshot, buildSnapshotOf } from '../../test/panel';
-import { pollState, prLocal, settings, snapshot } from '../state/store';
+import { stubDetailFetch } from '../../test/githubFetch';
+import {
+  buildAuth,
+  buildPollState,
+  buildPullRequest,
+  buildSnapshot,
+  buildSnapshotOf,
+} from '../../test/panel';
+import { details, expandedIds } from '../state/prDetail';
+import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import { activeSectionId, filterQuery, ListView } from './List';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
@@ -70,6 +79,9 @@ afterEach(() => {
   activeSectionId.value = undefined;
   filterQuery.value = '';
   location.hash = '';
+  auth.value = undefined;
+  expandedIds.value = [];
+  details.value = {};
   Reflect.deleteProperty(document, 'visibilityState');
 });
 
@@ -263,12 +275,14 @@ describe('unseen changes', () => {
     };
   });
 
-  it('puts a dot on cards changed since they were seen', () => {
+  it('puts a dot on cards changed since they were seen, as many as the unseen badge counts', () => {
     render(<ListView />);
-    const dots = [...document.querySelectorAll('.pr-card')].map((card) =>
+    const dots = [...document.querySelectorAll('.pr-card__summary')].map((card) =>
       card.getAttribute('data-unseen'),
     );
     expect(dots).toEqual(['true', null, 'true']);
+    const badge = computeBadge(snapshot.value, prLocal.value, 'unseen', NOW);
+    expect(badge.text).toBe(String(dots.filter(Boolean).length));
   });
 
   it('marks the unseen cards that stayed on screen for 1.5 s, once', () => {
@@ -341,5 +355,62 @@ describe('a snapshot with a PR missing', () => {
     render(<ListView />);
     expect(titles()).toEqual([]);
     expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
+  });
+});
+
+describe('expanded cards', () => {
+  const a = pr(1);
+  const b = pr(2);
+  const toggle = (n: number) => screen.getByRole('button', { name: `Details for PR number ${n}` });
+
+  beforeEach(() => {
+    auth.value = buildAuth();
+    stubDetailFetch();
+    withSections(['authored', 'review_requested']);
+    snapshot.value = buildSnapshotOf({ authored: [a, b], review_requested: [pr(3)] });
+  });
+
+  it('stay open through a background refresh, a tab switch and a visit to Settings', async () => {
+    const { unmount } = render(<ListView />);
+    fireEvent.click(toggle(2));
+    await screen.findByRole('list', { name: 'Merge' });
+
+    // A new poll: same PRs in new objects, one of them updated.
+    act(() => {
+      snapshot.value = buildSnapshotOf(
+        {
+          authored: [a, { ...b, updatedAt: '2026-10-06T11:00:00.000Z' }],
+          review_requested: [pr(3)],
+        },
+        { fetchedAt: '2026-10-06T12:00:00.000Z' },
+      );
+    });
+    expect(toggle(2).getAttribute('aria-expanded')).toBe('true');
+    expect(toggle(1).getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getAllByRole('list', { name: 'Merge' })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Review requested/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /Created by me/ }));
+    expect(toggle(2).getAttribute('aria-expanded')).toBe('true');
+
+    unmount();
+    render(<ListView />);
+    expect(toggle(2).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('collapses on Escape without losing the place in the list', async () => {
+    render(<ListView />);
+    fireEvent.click(toggle(1));
+    await screen.findByRole('list', { name: 'Merge' });
+    fireEvent.keyDown(screen.getByRole('list', { name: 'Merge' }), { key: 'Escape' });
+    expect(toggle(1).getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(toggle(1));
+    expect(cardTitles()).toEqual(['PR number 1', 'PR number 2']);
+  });
+
+  it('does not count a card as seen by its expanded height', () => {
+    // The observer watches the summary, whose size does not change when the details open.
+    render(<ListView />);
+    expect(observer().targets.every((el) => el.classList.contains('pr-card__summary'))).toBe(true);
   });
 });

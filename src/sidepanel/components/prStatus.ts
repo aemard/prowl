@@ -129,7 +129,7 @@ export function pullRequestStatuses(pr: PullRequest): Status[] {
   return chips.filter((chip): chip is Status => chip !== null);
 }
 
-/** One sentence per fact, for the card's accessible name: the title first (label in name). */
+/** One sentence per fact, for the card's accessible description (its name is the title). */
 export function describePullRequest(
   pr: PullRequest,
   statuses: Status[],
@@ -146,5 +146,5 @@ export function describePullRequest(
     `Opened ${formatRelativeTime(pr.createdAt, now)}`,
     unseen && 'Unseen changes',
   ].filter(Boolean);
-  return `${pr.title}, ${pr.repo.nameWithOwner}#${pr.number}${by}. ${facts.join('. ')}`;
+  return `${pr.repo.nameWithOwner}#${pr.number}${by}. ${facts.join('. ')}`;
 }

@@ -2,10 +2,19 @@
 /** The E2E mock speaks the operations of src/lib/github, fed by the shared fixture builders. */
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createGitHubClient } from '../../src/lib/github/client';
+import { fetchPullRequestDetail } from '../../src/lib/github/fetchPullRequestDetail';
 import { fetchPullRequests } from '../../src/lib/github/fetchPullRequests';
 import { mapPullRequest } from '../../src/lib/github/mapPullRequest';
 import { MockGitHub } from '../e2e/mock-github/server';
-import { closedNode, nodesResponse, prNode, searchResponse } from '../fixtures/github';
+import {
+  checkRunNode,
+  closedNode,
+  detailNode,
+  detailResponse,
+  nodesResponse,
+  prNode,
+  searchResponse,
+} from '../fixtures/github';
 
 const github = new MockGitHub();
 beforeAll(() => github.start(0));
@@ -35,4 +44,24 @@ it('serves ProwlSearch and ProwlNodes over HTTP', async () => {
   expect(second.pullRequests[merged.id]).toMatchObject({ state: 'merged', closedBy: 'octocat' });
   expect(github.requests.map((r) => r.operationName)).toEqual(['ProwlSearch', 'ProwlNodes']);
   expect(github.requests[0]?.headers.authorization).toBe('Bearer e2e-token');
+});
+
+it('serves ProwlPullRequestDetail over HTTP, paged like GitHub', async () => {
+  const checks = Array.from({ length: 130 }, (_, i) => checkRunNode(`job-${i}`));
+  github.onGraphQL('ProwlPullRequestDetail', ({ after }) =>
+    detailResponse(detailNode({ checks, after })),
+  );
+  const client = createGitHubClient({ token: 'e2e-token', apiUrl: github.origin });
+
+  const detail = await fetchPullRequestDetail(client, 'PR_1');
+
+  expect(detail.checks).toHaveLength(130);
+  expect(detail.requiredApprovals).toBe(1);
+  const sent = github
+    .requestsFor('ProwlPullRequestDetail')
+    .map((request) => (request.body as { variables: unknown }).variables);
+  expect(sent).toEqual([
+    { id: 'PR_1', after: null },
+    { id: 'PR_1', after: '100' },
+  ]);
 });

@@ -1,33 +1,25 @@
 .pr-card {
-  position: relative;
   list-style: none;
   border-bottom: var(--border-width) solid var(--color-border-subtle);
 }
 
-.pr-card__link {
+/* The whole summary is a click target for expanding (the chevron button does the same for the
+   keyboard); the title link and any row actions are siblings inside it, never nested. */
+.pr-card__summary {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-1-5);
   padding: var(--space-3) var(--space-4);
-  color: var(--color-fg);
-  text-decoration: none;
+  cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.pr-card__link:hover {
+.pr-card__summary:hover {
   background: var(--color-bg-hover);
 }
 
-.pr-card__link:active {
-  background: var(--color-bg-active);
-}
-
-/* The card spans the panel edge to edge, so the focus ring sits inside it. */
-.pr-card__link:focus-visible {
-  outline-offset: calc(var(--focus-width) * -1);
-}
-
-/* Unseen changes: a dot in the left gutter (the accessible name says it too). */
+/* Unseen changes: a dot in the left gutter (the toggle's description says it too). */
 .pr-card__dot {
   position: absolute;
   top: var(--space-4);
@@ -46,18 +38,6 @@
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   color: var(--color-fg-muted);
-}
-
-.pr-card__avatar {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: var(--icon-lg);
-  height: var(--icon-lg);
-  border-radius: var(--radius-full);
-  background: var(--color-bg-active);
-  color: var(--color-fg-muted);
-  object-fit: cover;
 }
 
 /* The repository name gives way first; the number always stays. */
@@ -85,15 +65,30 @@
   white-space: nowrap;
 }
 
+/* A link that is only as wide as its text, so the space beside a short title still expands. */
 .pr-card__title {
   display: -webkit-box;
+  align-self: flex-start;
+  max-width: 100%;
   overflow: hidden;
+  color: var(--color-fg);
   font-weight: var(--weight-medium);
   overflow-wrap: anywhere;
+  text-decoration: none;
   text-wrap: pretty;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+.pr-card__title[href]:hover {
+  text-decoration: underline;
+}
+
+/* The button is taller than the 20 px row: pull it out so the card keeps its density and the
+   chevron lines up with the right gutter. */
+.pr-card__toggle {
+  margin: calc(var(--space-1) * -1) calc(var(--space-1-5) * -1) calc(var(--space-1) * -1) 0;
 }
 
 .pr-card__chips,

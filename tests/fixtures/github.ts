@@ -4,11 +4,15 @@
  * searchResponse(prs, vars))`. Defaults describe one open, mergeable PR with passing checks.
  */
 import type {
+  CheckRunNode,
   ClosedPullRequestNode,
+  DetailData,
+  DetailPullRequestNode,
   NodesData,
   PullRequestNode,
   SearchData,
   StateCount,
+  StatusContextNode,
 } from '../../src/lib/github/queries';
 import type { Viewer } from '../../src/lib/model';
 import { graphqlRateLimit } from './http';
@@ -162,4 +166,104 @@ export function nodesResponse(
     nodes: (Array.isArray(ids) ? ids : []).map((id) => byId.get(id) ?? null),
     rateLimit,
   };
+}
+
+/** States of a check run that is still going; any other `CheckRunState` is a conclusion. */
+const RUNNING = ['PENDING', 'QUEUED', 'IN_PROGRESS', 'WAITING', 'REQUESTED'];
+
+/** A check run as `ProwlPullRequestDetail` returns it, from a `CheckRunState` name. */
+export function checkRunNode(
+  name: string,
+  state = 'SUCCESS',
+  overrides: Partial<CheckRunNode> = {},
+): CheckRunNode {
+  const running = RUNNING.includes(state);
+  return {
+    __typename: 'CheckRun',
+    name,
+    status: running ? state : 'COMPLETED',
+    conclusion: running ? null : state,
+    detailsUrl: `${WEB}/acme/widgets/actions/runs/1/job/${encodeURIComponent(name)}`,
+    isRequired: false,
+    ...overrides,
+  };
+}
+
+/** A commit status (a third-party CI) as `ProwlPullRequestDetail` returns it. */
+export function statusContextNode(
+  context: string,
+  state = 'SUCCESS',
+  overrides: Partial<StatusContextNode> = {},
+): StatusContextNode {
+  return {
+    __typename: 'StatusContext',
+    context,
+    state,
+    targetUrl: `${WEB}/acme/widgets/status/${encodeURIComponent(context)}`,
+    isRequired: false,
+    ...overrides,
+  };
+}
+
+/** `latestReviews` entry with the avatar the detail query selects. */
+export function detailReview(login: string | null, state = 'APPROVED') {
+  return { state, author: login === null ? null : { login, avatarUrl: AVATAR } };
+}
+
+/** `reviewRequests` entry for a user (`{}` instead for a team, which is not selected). */
+export function requestedReviewer(login: string | null) {
+  return { requestedReviewer: login === null ? {} : { login, avatarUrl: AVATAR } };
+}
+
+/**
+ * The PR node of `ProwlPullRequestDetail`: one page of `checks` (`pageSize` per page from the
+ * `after` cursor, the index of the next one, like `searchResponse`) and any field overridden.
+ * Defaults: a protected base branch asking for one approval, nobody reviewing yet.
+ */
+export function detailNode({
+  checks = [],
+  after = null,
+  pageSize = 100,
+  ...fields
+}: Partial<DetailPullRequestNode> & {
+  checks?: (CheckRunNode | StatusContextNode | null)[];
+  after?: unknown;
+  pageSize?: number;
+} = {}): DetailPullRequestNode {
+  const start = typeof after === 'string' ? Number(after) : 0;
+  const end = start + pageSize;
+  return {
+    latestReviews: { nodes: [] },
+    reviewRequests: { nodes: [] },
+    baseRef: {
+      branchProtectionRule: {
+        requiredApprovingReviewCount: 1,
+        requiresConversationResolution: false,
+      },
+    },
+    commits: {
+      nodes: [
+        {
+          commit: {
+            statusCheckRollup: {
+              contexts: {
+                totalCount: checks.length,
+                pageInfo: { hasNextPage: end < checks.length, endCursor: String(end) },
+                nodes: checks.slice(start, end),
+              },
+            },
+          },
+        },
+      ],
+    },
+    ...fields,
+  };
+}
+
+/** The `data` of `ProwlPullRequestDetail`; null node = a PR that is gone. */
+export function detailResponse(
+  node: DetailData['node'],
+  rateLimit = graphqlRateLimit(),
+): DetailData {
+  return { node, rateLimit };
 }

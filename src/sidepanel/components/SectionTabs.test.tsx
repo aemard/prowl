@@ -75,4 +75,41 @@ describe('SectionTabs', () => {
     expect(list.scrollLeft).toBe(40);
     expect(fireEvent.wheel(list, { deltaX: 10, deltaY: 40 })).toBe(true);
   });
+
+  it('shows a chevron on each side that has more tabs behind it, and none when all fit', () => {
+    const { container } = render(<Harness />);
+    const list = screen.getByRole('tablist');
+    const cues = () =>
+      [...container.querySelectorAll<HTMLElement>('.section-tabs__more')].map(
+        (cue) => cue.dataset.side,
+      );
+    const scrolled = (left: number, width: number) => {
+      for (const [name, value] of Object.entries({
+        scrollLeft: left,
+        scrollWidth: width,
+        clientWidth: 300,
+      }))
+        Object.defineProperty(list, name, { configurable: true, value });
+      fireEvent.scroll(list);
+    };
+
+    expect(cues()).toEqual([]);
+    scrolled(0, 500);
+    expect(cues()).toEqual(['end']);
+    scrolled(100, 500);
+    expect(cues()).toEqual(['start', 'end']);
+    scrolled(200, 500);
+    expect(cues()).toEqual(['start']);
+    scrolled(0, 300);
+    expect(cues()).toEqual([]);
+
+    // A resized panel changes what fits.
+    Object.defineProperty(list, 'scrollWidth', { configurable: true, value: 400 });
+    fireEvent(window, new Event('resize'));
+    expect(cues()).toEqual(['end']);
+    // Decorative: never announced.
+    expect(container.querySelector('.section-tabs__more')?.getAttribute('aria-hidden')).toBe(
+      'true',
+    );
+  });
 });

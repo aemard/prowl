@@ -3,17 +3,29 @@
  * PR JSON. Enum values GitHub may add later map to safe defaults instead of leaking through.
  */
 import type {
+  CheckItem,
+  CheckItemState,
   CheckSummary,
   Label,
   Mergeable,
   MergeMethod,
   MergeStateStatus,
   PullRequest,
+  PullRequestDetail,
   PullRequestState,
   ReviewDecision,
+  Reviewer,
   ReviewState,
 } from '../model';
-import type { ClosedPullRequestNode, Nodes, PullRequestNode, StateCount } from './queries';
+import type {
+  CheckRunNode,
+  ClosedPullRequestNode,
+  DetailPullRequestNode,
+  Nodes,
+  PullRequestNode,
+  StateCount,
+  StatusContextNode,
+} from './queries';
 
 /** GitHub's name for a deleted account. */
 const GHOST = 'ghost';
@@ -59,13 +71,12 @@ function pick<T extends string, F>(
 const present = <T>(connection: Nodes<T> | null): T[] =>
   (connection?.nodes ?? []).filter((node): node is T => node !== null);
 
-type Bucket = 'passed' | 'failed' | 'pending' | 'neutral';
-
 /**
- * `CheckRunState` and `StatusState` (which share SUCCESS / FAILURE / PENDING) -> bucket.
- * Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED and new values.
+ * `CheckRunState`, `CheckStatusState` and `StatusState` (which share SUCCESS / FAILURE /
+ * PENDING) -> bucket. Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED
+ * and new values.
  */
-const BUCKET: Record<string, Bucket> = {
+const BUCKET: Record<string, CheckItemState> = {
   SUCCESS: 'passed',
   FAILURE: 'failed',
   ERROR: 'failed',
@@ -77,6 +88,7 @@ const BUCKET: Record<string, Bucket> = {
   QUEUED: 'pending',
   IN_PROGRESS: 'pending',
   WAITING: 'pending',
+  REQUESTED: 'pending',
 };
 
 /**
@@ -177,5 +189,76 @@ export function mapClosedState(pr: PullRequest, node: ClosedPullRequestNode): Pu
     state,
     updatedAt: node.updatedAt,
     closedBy: node.mergedBy?.login ?? closer ?? null,
+  };
+}
+
+const CHECK_ORDER: Record<CheckItemState, number> = {
+  failed: 0,
+  pending: 1,
+  passed: 2,
+  neutral: 3,
+};
+const REVIEWER_ORDER: Record<Reviewer['state'], number> = {
+  changes_requested: 0,
+  requested: 1,
+  approved: 2,
+  commented: 3,
+  dismissed: 4,
+};
+const HTTP_URL = /^https?:\/\//i;
+
+/** A check run's state is its conclusion once it completed, else where it is in its run. */
+function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
+  const run = node.__typename === 'CheckRun';
+  const state = run
+    ? node.status === 'COMPLETED'
+      ? (node.conclusion ?? '')
+      : node.status
+    : node.state;
+  const url = run ? node.detailsUrl : node.targetUrl;
+  return {
+    name: run ? node.name : node.context,
+    state: BUCKET[state] ?? 'neutral',
+    // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
+    url: url !== null && HTTP_URL.test(url) ? url : null,
+    required: node.isRequired === true,
+  };
+}
+
+/**
+ * Detail of an expanded card (`ProwlPullRequestDetail`). `pages` are the PR node of each page of
+ * check contexts, first page first: reviewers and branch rules come from the first, the checks
+ * from all. A reviewer who reviewed shows that review even when asked to review again.
+ */
+export function mapPullRequestDetail(
+  pages: [DetailPullRequestNode, ...DetailPullRequestNode[]],
+): PullRequestDetail {
+  const [node] = pages;
+  const rollups = pages.flatMap(
+    (page) => page.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts ?? [],
+  );
+  const rule = node.baseRef?.branchProtectionRule;
+  const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
+    const mapped = pick(REVIEW_STATES, state, null);
+    return mapped
+      ? [{ login: author?.login ?? GHOST, avatarUrl: author?.avatarUrl ?? '', state: mapped }]
+      : [];
+  });
+  const requested: Reviewer[] = present(node.reviewRequests).flatMap(
+    ({ requestedReviewer: who }) =>
+      who?.login && !reviewed.some(({ login }) => login === who.login)
+        ? [{ login: who.login, avatarUrl: who.avatarUrl ?? '', state: 'requested' as const }]
+        : [],
+  );
+  return {
+    checks: rollups
+      .flatMap(({ nodes }) => (nodes ?? []).flatMap((check) => (check ? [mapContext(check)] : [])))
+      .sort((a, b) => CHECK_ORDER[a.state] - CHECK_ORDER[b.state]),
+    checksTotal: rollups[0]?.totalCount ?? 0,
+    reviewers: [...reviewed, ...requested].sort(
+      (a, b) => REVIEWER_ORDER[a.state] - REVIEWER_ORDER[b.state],
+    ),
+    requiredApprovals: rule?.requiredApprovingReviewCount || null,
+    requiresConversationResolution: rule?.requiresConversationResolution ?? false,
   };
 }

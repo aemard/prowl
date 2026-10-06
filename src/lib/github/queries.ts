@@ -96,6 +96,50 @@ query ProwlNodes($ids: [ID!]!) {
   ${RATE_LIMIT}
 }`;
 
+/**
+ * What the expanded card needs about one PR: its head commit's check runs and status contexts
+ * (100 per page, `$after` pages through more), who reviewed or was asked to, and the base
+ * branch's rules. `isRequired(pullRequestId:)` says which checks block the merge. Teams are left
+ * out of the requested reviewers like in `ProwlSearch` (`read:org`). Not polled: one request per
+ * page when a card is expanded, about 1 point (1 + 4 connections = 5 requests).
+ */
+export const DETAIL_QUERY = /* GraphQL */ `
+query ProwlPullRequestDetail($id: ID!, $after: String) {
+  node(id: $id) {
+    ... on PullRequest {
+      latestReviews(first: 20) { nodes { state author { login avatarUrl(size: 64) } } }
+      reviewRequests(first: 20) {
+        nodes {
+          requestedReviewer {
+            ... on User { login avatarUrl(size: 64) }
+            ... on Bot { login avatarUrl(size: 64) }
+            ... on Mannequin { login avatarUrl(size: 64) }
+          }
+        }
+      }
+      baseRef { branchProtectionRule { requiredApprovingReviewCount requiresConversationResolution } }
+      commits(last: 1) {
+        nodes {
+          commit {
+            statusCheckRollup {
+              contexts(first: 100, after: $after) {
+                totalCount
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  __typename
+                  ... on CheckRun { name status conclusion detailsUrl isRequired(pullRequestId: $id) }
+                  ... on StatusContext { context state targetUrl isRequired(pullRequestId: $id) }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${RATE_LIMIT}
+}`;
+
 /** A connection as selected here: only `nodes`, whose entries are null where a read failed. */
 export interface Nodes<T> {
   nodes: (T | null)[] | null;
@@ -188,5 +232,59 @@ export interface ClosedPullRequestNode {
 export interface NodesData {
   /** Same order as the ids; null for a deleted or inaccessible PR. */
   nodes: (ClosedPullRequestNode | Record<string, never> | null)[];
+  rateLimit: GraphQLRateLimit | null;
+}
+
+export interface CheckRunNode {
+  __typename: 'CheckRun';
+  name: string;
+  /** `CheckStatusState`; `COMPLETED` means `conclusion` is set. */
+  status: string;
+  conclusion: string | null;
+  detailsUrl: string | null;
+  isRequired: boolean;
+}
+
+export interface StatusContextNode {
+  __typename: 'StatusContext';
+  context: string;
+  state: string;
+  targetUrl: string | null;
+  isRequired: boolean;
+}
+
+export interface DetailPullRequestNode {
+  latestReviews: Nodes<{
+    state: string;
+    author: (Login & { avatarUrl: string }) | null;
+  }> | null;
+  /** `{}` for a team (not selected, see `DETAIL_QUERY`). */
+  reviewRequests: Nodes<{
+    requestedReviewer: Partial<Login & { avatarUrl: string }> | null;
+  }> | null;
+  /** Null for a base branch without a rule, or when the token cannot see rules. */
+  baseRef: {
+    branchProtectionRule: {
+      requiredApprovingReviewCount: number | null;
+      requiresConversationResolution: boolean;
+    } | null;
+  } | null;
+  commits: Nodes<{
+    commit: {
+      statusCheckRollup: {
+        contexts: {
+          totalCount: number;
+          pageInfo: { hasNextPage: boolean; endCursor: string | null };
+          /** Null where a read failed (e.g. a token without access to check runs). */
+          nodes: (CheckRunNode | StatusContextNode | null)[] | null;
+        };
+      } | null;
+    };
+  }>;
+}
+
+export interface DetailData {
+  /** `{}` when the id is not a pull request, null when it is gone or hidden. */
+  node: DetailPullRequestNode | Record<string, never> | null;
   rateLimit: GraphQLRateLimit | null;
 }
