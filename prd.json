@@ -290,8 +290,8 @@
       ],
       "priority": 15,
       "dependsOn": ["US-014"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ReviewActions in a new Actions row of the expanded card: Approve is one click (no Undo, GitHub has none), Request changes and Comment open a Dialog with a required message; own PRs lose Approve/Request changes; named mutations ProwlApprove / ProwlRequestChanges / ProwlComment in src/lib/github/actions.ts (100% covered); success toast + forced poll, failures show GitHub's message; review.spec.ts asserts the exact mutations, axe clean, review-dialog.png."
     },
     {
       "id": "US-016",

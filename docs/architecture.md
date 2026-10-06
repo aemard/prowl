@@ -236,6 +236,31 @@ empty instead of failing reviewers and rules; a PR that is gone or hidden throws
 | `requiredApprovals` | The rule's `requiredApprovingReviewCount`, null when 0 or no rule is visible. |
 | `requiresConversationResolution` | The rule's flag, false without a rule. |
 
+## Actions
+
+`src/lib/github/actions.ts` holds what the panel changes on GitHub, as named operations so the E2E
+mock can dispatch on them and each request's variables say what it does. Each function takes the
+client and a PR node id, resolves once GitHub confirmed and throws `GitHubError` otherwise.
+
+| Function | Operation | GitHub call |
+|---|---|---|
+| `approve(client, prId, body?)` | `mutation ProwlApprove` | `addPullRequestReview`, variable `event: APPROVE`, optional note |
+| `requestChanges(client, prId, body)` | `mutation ProwlRequestChanges` | `addPullRequestReview`, `event: REQUEST_CHANGES`, message required |
+| `comment(client, prId, body)` | `mutation ProwlComment` | `addComment` on the PR's node id: a conversation comment, not a review |
+
+Messages are trimmed; an empty one (and one over GitHub's 65,536 characters) fails as `validation`
+before any request is sent. A payload without the new review or comment (no `errors`, but nothing
+created) is a `server` error, so it never reads as done. Mutations use strict GraphQL: a failure
+throws with GitHub's message, with the token masked by the client. Merge, re-run and the draft
+toggle (US-016, US-017) add their functions here.
+
+The panel runs them through `runPrAction(pr, name, done, run)` (`src/sidepanel/state/prActions.ts`):
+it builds a client for the signed-in token, marks `pendingActions[pr.id] = name` (the signal that
+disables the PR's other action buttons; one action per PR at a time), and shows a success toast
+(`<done> owner/name#n`) followed by `{ type: 'poll', force: true }`, or a danger toast `<name>
+failed: <GitHub's message>` (any error that is not a `GitHubError` becomes "Something went
+wrong."). It resolves to whether it worked and never rejects.
+
 ## Diff engine
 
 `diffSnapshots(prev, next, viewerLogin)` (`src/lib/diff/diffSnapshots.ts`) compares the PRs
@@ -506,6 +531,17 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   `isReadyToMerge` from the diff engine). The unseen dot comes from `isSeen`, like the badge, and
   `data-pr-id` / `data-unseen` sit on the summary, which is what the seen observer watches (an
   expanded card is as tall as it likes). Relative times take `now` from `useNow` in the list.
+- Actions (`components/PullRequestDetails.tsx`, `ReviewActions.tsx`): an expanded card has an
+  **Actions** group right after Merge (so it does not move when the detail loads): one wrapping row
+  `.pr-actions` of small buttons, to which later actions are added. `ReviewActions` renders
+  Approve, Request changes and Comment, each named with the PR ("Approve acme/web#12"). Approve
+  is one click (no dialog; GitHub cannot take an approval back, so the toast offers no Undo). The
+  other two open a `Dialog` with a required message; a failure closes it, shows the reason in a
+  toast (a modal would cover one) and keeps the text for the next try until the card is folded.
+  Approve and Request changes are hidden on the viewer's own PRs (GitHub refuses them) and on PRs
+  that are not open; Comment is always there. While one action of a PR runs its other buttons are
+  disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
+  contains it (the card folds on Esc).
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
   reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`

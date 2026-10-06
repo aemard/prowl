@@ -70,6 +70,9 @@ function OpenDialog({
   }, []);
 
   const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDialogElement>) => {
+    // Esc belongs to the dialog (the `cancel` event closes it): a handler of whatever contains
+    // the dialog in the DOM, such as a card that folds on Esc, must not see it as its own.
+    if (event.key === 'Escape') event.stopPropagation();
     if (event.key !== 'Tab') return;
     const items = focusableIn(event.currentTarget);
     const first = items[0];

@@ -56,12 +56,31 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 
   context: async ({ github }, use) => {
     github.reset();
-    const context = await chromium.launchPersistentContext('', {
-      channel: 'chromium',
-      headless: !process.env.HEADED,
-      viewport: { width: 400, height: 760 },
-      args: [`--disable-extensions-except=${EXTENSION_PATH}`, `--load-extension=${EXTENSION_PATH}`],
-    });
+    const launch = () =>
+      chromium.launchPersistentContext('', {
+        channel: 'chromium',
+        headless: !process.env.HEADED,
+        viewport: { width: 400, height: 760 },
+        args: [
+          `--disable-extensions-except=${EXTENSION_PATH}`,
+          `--load-extension=${EXTENSION_PATH}`,
+        ],
+      });
+    // On a machine under heavy load Chrome sometimes never starts the extension's service worker
+    // (seen twice in a few hundred launches, both while other builds ran). A new profile fixes it,
+    // so start over after a few seconds instead of waiting out the whole test timeout.
+    const hasWorker = (browser: BrowserContext) =>
+      browser.serviceWorkers().length > 0
+        ? true
+        : browser.waitForEvent('serviceworker', { timeout: 8_000 }).then(
+            () => true,
+            () => false,
+          );
+    let context = await launch();
+    for (let retry = 0; retry < 2 && !(await hasWorker(context)); retry++) {
+      await context.close();
+      context = await launch();
+    }
     await use(context);
     await context.close();
   },

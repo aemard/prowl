@@ -89,6 +89,21 @@ describe('Dialog', () => {
     expect(document.activeElement).toBe(opener());
   });
 
+  it('keeps Esc to itself: what contains the dialog in the DOM never sees the key', () => {
+    const outside = vi.fn();
+    const { container } = render(
+      <Dialog open title="Message" onClose={() => {}}>
+        <input aria-label="Message" />
+      </Dialog>,
+    );
+    container.addEventListener('keydown', outside);
+    const input = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(outside).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: 'a' });
+    expect(outside).toHaveBeenCalledOnce();
+  });
+
   it('closes from the close button and footer actions', () => {
     const onClose = vi.fn();
     openDialog({ onClose });

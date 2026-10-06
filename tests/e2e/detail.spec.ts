@@ -173,9 +173,11 @@ test.describe('expanding a card', () => {
     await expect(checkout.getByRole('list', { name: 'Checks' })).toBeVisible();
     await expect(button).toBeFocused();
 
-    // Tab: the title link, then into the details (the first failed check).
+    // Tab: the title link, then into the details (the actions, then the first failed check).
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: /^Refactor checkout flow/ })).toBeFocused();
+    await panel.keyboard.press('Tab');
+    await expect(checkout.getByRole('button', { name: /^Comment on / })).toBeFocused();
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: 'build' })).toBeFocused();
 

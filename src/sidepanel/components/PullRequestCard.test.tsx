@@ -229,6 +229,19 @@ describe('expanding', () => {
     expect(expanded()).toBe(false);
   });
 
+  it('leaves Escape to a dialog opened from the details: closing it keeps the card open', async () => {
+    renderCard();
+    fireEvent.click(toggleOf().button);
+    fireEvent.click(await screen.findByRole('button', { name: 'Comment on acme/widgets#42' }));
+    const dialog = screen.getByRole('dialog', { name: 'Comment' });
+    fireEvent.keyDown(within(dialog).getByRole('textbox'), { key: 'Escape' });
+    act(() => {
+      dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(expanded()).toBe(true);
+  });
+
   it('leaves an Escape that something inside already handled', async () => {
     renderCard();
     fireEvent.click(toggleOf().button);
