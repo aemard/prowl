@@ -15,7 +15,9 @@
       "!**/.astro",
       "!**/playwright-report",
       "!**/test-results",
-      "!pnpm-lock.yaml"
+      "!pnpm-lock.yaml",
+      "!.release-please-manifest.json",
+      "!CHANGELOG.md"
     ]
   },
   "formatter": {
@@ -30,7 +32,12 @@
       "preset": "recommended",
       "a11y": "error",
       "suspicious": {
-        "noConsole": { "level": "error", "options": { "allow": ["warn", "error"] } }
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": ["warn", "error"]
+          }
+        }
       },
       "style": {
         "useImportType": "error",
@@ -54,14 +61,25 @@
       "includes": ["site/**/*.astro"],
       "linter": {
         "rules": {
-          "correctness": { "noUnusedImports": "off", "noUnusedVariables": "off" },
-          "style": { "useImportType": "off" }
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          },
+          "style": {
+            "useImportType": "off"
+          }
         }
       }
     },
     {
       "includes": ["scripts/**", "tests/e2e/**", "site/**"],
-      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {
