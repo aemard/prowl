@@ -610,7 +610,8 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
     `validateCustomQuery` (errors shown with the field, focus on the first invalid one), get the
     id `custom-<8 hex>`, and are removed with an Undo toast. `RepoFilter` (include / exclude) takes
     chips validated by `normalizeRepoPattern`, rejects duplicates case-insensitively and announces
-    adds and removals in a live region.
+    adds and removals in a live region. It reports changes as updaters applied to the stored list,
+    so two quick additions both survive.
   - `refresh: true` (sections, repository lists, results per section) sends one forced poll 800 ms
     after the last change, so the list does not wait for the next alarm. An interval change
     sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`

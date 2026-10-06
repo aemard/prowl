@@ -227,6 +227,23 @@ describe('SettingsView', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Remove acme/legacy' }));
       await waitFor(async () => expect((await saved()).repoExclude).toEqual([]));
     });
+
+    it('keeps every pattern added before the previous save came back', async () => {
+      await open();
+      const include = within(screen.getByRole('group', { name: 'Include' }));
+      // Two quick additions, like typing fast: the list on screen has not caught up in between.
+      for (const text of ['acme', 'octo/docs']) {
+        act(() => {
+          fireEvent.input(include.getByLabelText('Include repository'), {
+            target: { value: text },
+          });
+        });
+        act(() => {
+          fireEvent.click(include.getByRole('button', { name: 'Add to include list' }));
+        });
+      }
+      await waitFor(async () => expect((await saved()).repoInclude).toEqual(['acme', 'octo/docs']));
+    });
   });
 
   describe('refresh', () => {

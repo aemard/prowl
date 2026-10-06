@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { RepoFilter } from './RepoFilter';
 
 function setup(patterns: string[] = []) {
-  const onChange = vi.fn();
+  const onChange = vi.fn<(update: (current: readonly string[]) => string[]) => void>();
   render(<RepoFilter name="Include" hint="Only these." patterns={patterns} onChange={onChange} />);
   const input = screen.getByLabelText('Include repository') as HTMLInputElement;
   const add = (text: string) => {
@@ -12,6 +12,10 @@ function setup(patterns: string[] = []) {
   };
   return { input, onChange, add };
 }
+
+/** What the list becomes when the change is applied to `stored`. */
+const applied = (onChange: ReturnType<typeof setup>['onChange'], stored: string[]) =>
+  onChange.mock.calls[0]?.[0](stored);
 
 describe('RepoFilter', () => {
   it('lists the patterns as chips under a named group', () => {
@@ -28,7 +32,8 @@ describe('RepoFilter', () => {
   it('adds a trimmed owner or owner/name and clears the field', () => {
     const { input, onChange, add } = setup(['acme']);
     add('  octo-org/repo.name ');
-    expect(onChange).toHaveBeenCalledWith(['acme', 'octo-org/repo.name']);
+    // Applied to what is stored, which can be ahead of the list on screen.
+    expect(applied(onChange, ['acme', 'newer'])).toEqual(['acme', 'newer', 'octo-org/repo.name']);
     expect(input.value).toBe('');
     expect(screen.getByRole('status').textContent).toBe(
       'Added octo-org/repo.name to the include list.',
@@ -61,7 +66,7 @@ describe('RepoFilter', () => {
   it('removes a chip, announces it and keeps the keyboard in the field', () => {
     const { input, onChange } = setup(['acme', 'octo/hello']);
     fireEvent.click(screen.getByRole('button', { name: 'Remove acme' }));
-    expect(onChange).toHaveBeenCalledWith(['octo/hello']);
+    expect(applied(onChange, ['acme', 'octo/hello', 'newer'])).toEqual(['octo/hello', 'newer']);
     expect(screen.getByRole('status').textContent).toBe('Removed acme from the include list.');
     expect(document.activeElement).toBe(input);
   });

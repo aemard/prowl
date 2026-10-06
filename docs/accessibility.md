@@ -44,5 +44,7 @@ trap focus and return it to the control that opened them.
 - Every screen and dialog runs axe (`expectNoA11yViolations`) in E2E, in light and dark:
   onboarding, device flow, list, expanded card, review and merge dialogs, sign-out, settings,
   banners and the shortcuts dialog (`tests/e2e/*.spec.ts`, see `tests/e2e/keyboard.spec.ts`).
+  The helper first lets running transitions and animations end: axe reads the colors it finds, so
+  a scan during a theme switch can report contrast that is gone 120 ms later.
 - Component tests query by role and accessible name, not by class.
 - The website is checked with axe and Lighthouse (accessibility 100) on every page.

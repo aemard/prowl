@@ -12,7 +12,8 @@ export interface RepoFilterProps {
   hint: string;
   /** `owner` or `owner/name` patterns, already valid. */
   patterns: readonly string[];
-  onChange: (patterns: string[]) => void;
+  /** Gets a change to apply to the stored list: `patterns` can be stale when edits come quickly. */
+  onChange: (update: (current: readonly string[]) => string[]) => void;
 }
 
 /** A list of repository patterns shown as removable chips, with a field that validates new ones. */
@@ -32,7 +33,7 @@ export function RepoFilter({ name, hint, patterns, onChange }: RepoFilterProps) 
     } else if (patterns.some((known) => known.toLowerCase() === pattern.toLowerCase())) {
       setError(`${pattern} is already in the ${list} list.`);
     } else {
-      onChange([...patterns, pattern]);
+      onChange((current) => [...current, pattern]);
       setText('');
       setError(undefined);
       setStatus(`Added ${pattern} to the ${list} list.`);
@@ -41,7 +42,7 @@ export function RepoFilter({ name, hint, patterns, onChange }: RepoFilterProps) 
   }
 
   function remove(pattern: string) {
-    onChange(patterns.filter((known) => known !== pattern));
+    onChange((current) => current.filter((known) => known !== pattern));
     setStatus(`Removed ${pattern} from the ${list} list.`);
     // The button that had focus is gone: keep the keyboard where the user is working.
     input.current?.focus();

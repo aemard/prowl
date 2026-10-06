@@ -18,7 +18,7 @@ export interface ExtensionFixtures {
   extensionId: string;
   /** Opens the side panel document in a tab sized like a side panel. */
   openPanel: (hash?: string) => Promise<Page>;
-  /** Runs axe on the page and fails on any violation. */
+  /** Lets running transitions end, runs axe on the page and fails on any violation. */
   expectNoA11yViolations: (page: Page) => Promise<void>;
   /** Writes keys to `chrome.storage.local` from the service worker, as the poller would. */
   seedStorage: (items: Record<string, unknown>) => Promise<void>;
@@ -146,6 +146,18 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
   // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture signature.
   expectNoA11yViolations: async ({}, use) => {
     await use(async (page) => {
+      // A theme switch or a new dialog starts transitions and animations (colors, opacity), and
+      // axe computes contrast from whatever it finds mid-flight, so a slow runner reports
+      // violations that are gone 120 ms later. Scan the settled page. Endless animations (spinner,
+      // skeleton shimmer) never settle and do not change colors.
+      await page.evaluate(() =>
+        Promise.all(
+          document
+            .getAnimations()
+            .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+            .map((animation) => animation.finished.catch(() => undefined)),
+        ),
+      );
       const results = await new AxeBuilder({ page }).analyze();
       const summary = results.violations.map(
         (v) =>

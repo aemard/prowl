@@ -154,6 +154,14 @@ function CustomActions({ section, onEdit }: { section: Section; onEdit: () => vo
   );
 }
 
+/** Changes a repository list from what is stored, not from the copy on screen (see `RepoFilter`). */
+function changeRepos(
+  key: 'repoInclude' | 'repoExclude',
+  update: (current: readonly string[]) => string[],
+) {
+  void saveSettings((current) => ({ ...current, [key]: update(current[key]) }), { refresh: true });
+}
+
 /** Which pull requests Prowl follows: preset and custom sections, and the repository filters. */
 export function ScopeSettings() {
   const { sections, repoInclude, repoExclude } = settings.value;
@@ -199,13 +207,13 @@ export function ScopeSettings() {
         name="Include"
         hint="Only follow pull requests in these. Leave empty to follow every repository."
         patterns={repoInclude}
-        onChange={(patterns) => void saveSettings({ repoInclude: patterns }, { refresh: true })}
+        onChange={(update) => changeRepos('repoInclude', update)}
       />
       <RepoFilter
         name="Exclude"
         hint="Hide pull requests in these, even when they match an include."
         patterns={repoExclude}
-        onChange={(patterns) => void saveSettings({ repoExclude: patterns }, { refresh: true })}
+        onChange={(update) => changeRepos('repoExclude', update)}
       />
 
       {editing !== undefined && (
