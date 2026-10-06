@@ -1,0 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.app {
+  padding: var(--space-3) var(--space-4);
+}
+
+.app-title {
+  font-size: 16px;
+  margin: 0;
+}
+
+.app-empty {
+  color: var(--color-muted);
+}

@@ -1,0 +1,17 @@
+# Chrome Web Store publishing is out of scope for v1. This stub documents the intended job;
+# see docs/chrome-web-store.md. It only runs on manual dispatch and is disabled by `if: false`.
+name: Chrome Web Store (disabled)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Chrome Web Store
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Not enabled. See docs/chrome-web-store.md."

@@ -1,0 +1,533 @@
+{
+  "project": "Prowl",
+  "branchName": "main",
+  "description": "Minimalist, modern Chrome MV3 side panel to follow GitHub pull requests: live state, notifications, actions. 100% client-side.",
+  "userStories": [
+    {
+      "id": "US-000",
+      "title": "Bootstrap: tooling, build, CI, E2E harness",
+      "agent": "release-engineer",
+      "description": "Repository foundation laid by the orchestrator.",
+      "acceptanceCriteria": ["pnpm verify green", "CI workflows present"],
+      "priority": 0,
+      "dependsOn": [],
+      "passes": true,
+      "notes": "Done by the orchestrator before the loop."
+    },
+    {
+      "id": "US-001",
+      "title": "Design language, brand and base UI components",
+      "agent": "product-designer",
+      "description": "As a user I want a calm, modern, minimalist UI that feels native to Chrome's side panel, in light and dark.",
+      "acceptanceCriteria": [
+        "Name re-checked against the Chrome Web Store; result recorded in docs/decisions.md (rename everywhere if it clashes)",
+        "src/assets/logo.svg refined: legible at 16 px, works on light and dark toolbars; `pnpm icons` regenerated public/icons/*.png",
+        "src/styles/tokens.css defines neutral scale, accent, success, danger, warning, attention, done (merged), focus ring, typography scale, spacing, radius, shadow and motion tokens for light and dark, plus `[data-theme=light|dark]` overrides of the system preference",
+        "Every text/background token pair meets WCAG AA (4.5:1 body, 3:1 large/UI); the contrast table is in docs/design.md",
+        "Icon set as small inline-SVG Preact components in src/sidepanel/components/icons/ (license noted in docs/design.md if derived from Octicons)",
+        "UI components in src/sidepanel/components/ui/ with unit tests: Button (primary/secondary/danger/ghost, sm/md, loading), IconButton (requires aria-label), Badge/Pill, Spinner, Skeleton, Dialog (native <dialog>, focus trap, Esc, restores focus), Menu (keyboard: arrows, Home/End, Esc), Switch, TextField, Select, Toast region (aria-live polite), EmptyState",
+        "prefers-reduced-motion disables non-essential animation",
+        "docs/design.md documents principles, palette, typography, spacing and the component inventory",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 1,
+      "dependsOn": [],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Settings and local storage layer",
+      "agent": "extension-engineer",
+      "description": "As a developer I need typed, validated persistence so every part of Prowl reads the same settings and local PR state.",
+      "acceptanceCriteria": [
+        "src/lib/storage/storage.ts: typed get/set/remove/subscribe over chrome.storage.local for STORAGE_KEYS (src/lib/model.ts)",
+        "src/lib/storage/settings.ts: DEFAULT_SETTINGS (authored section enabled; review requested, mentioned, assigned present but disabled; poll 2 min; maxPerSection 50; all notification events on; quiet hours off 22:00-08:00; badge attention; theme system; sort updated)",
+        "normalizeSettings() repairs any stored value: poll interval integer >= 1, maxPerSection 1-100, valid HH:MM, unknown keys dropped, missing keys defaulted; versioned migrations entry point",
+        "src/lib/storage/prLocal.ts: snooze(id, until), unsnooze, mute, unmute, markSeen(id, updatedAt), isSnoozed(now), pruneExpired(now, knownIds)",
+        "Unit tests cover defaults, normalization edge cases, migrations, subscriptions and pruning (>= 90% for src/lib/storage)",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 2,
+      "dependsOn": [],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "GitHub HTTP client, errors and rate limits",
+      "agent": "github-api-engineer",
+      "description": "As a developer I need one robust client for GitHub GraphQL and REST so failures are classified consistently.",
+      "acceptanceCriteria": [
+        "src/lib/github/client.ts: createGitHubClient({ token, apiUrl, fetch? }) with graphql<T>(query, variables) and rest<T>(method, path, body?)",
+        "Sends Authorization: Bearer, Accept, X-GitHub-Api-Version (REST); 20 s timeout via AbortSignal",
+        "GitHubError with kind (ErrorKind in model.ts), status, message, resetAt, retryAfterSeconds; GraphQL `errors` arrays map to graphql/not_found/forbidden kinds; 401 -> unauthorized; 403/429 with x-ratelimit-remaining: 0 or retry-after -> rate_limited; secondary rate limits handled; 5xx -> server; fetch failure/abort -> network",
+        "parseRateLimit from headers and from the GraphQL rateLimit object",
+        "The token never appears in error messages, causes or toString() output (tested)",
+        "Coverage >= 95% for src/lib/github",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 3,
+      "dependsOn": [],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "PR scope: search query builder and repo filters",
+      "agent": "github-api-engineer",
+      "description": "As a user I want to choose which PRs Prowl follows: mine by default, plus review requested, mentioned, assigned, a custom search, and repo include/exclude.",
+      "acceptanceCriteria": [
+        "src/lib/github/search.ts buildSearchQuery(section, settings): authored -> `is:pr is:open author:@me archived:false`; review_requested -> `review-requested:@me`; mentioned -> `mentions:@me`; assigned -> `assignee:@me`; custom -> user query with `is:pr` enforced",
+        "repoInclude adds repo:/org:/user: qualifiers; repoExclude adds -repo: qualifiers and is also enforced client-side by filterByRepo()",
+        "validateCustomQuery() returns readable errors for empty queries, `is:issue`, and over-long queries (GitHub limit 256 chars/5 operators documented)",
+        "Unit tests for every preset and filter combination",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 4,
+      "dependsOn": [],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Fetch pull requests with full state",
+      "agent": "github-api-engineer",
+      "description": "As a user I want each PR's live state: checks rollup, review decision, mergeable/conflicts, draft, labels, last activity, age and unresolved comments.",
+      "acceptanceCriteria": [
+        "src/lib/github/queries.ts: `query ProwlSearch` (search type ISSUE, first <= 100, cursor pagination up to maxPerSection) selecting everything PullRequest in model.ts needs, plus `rateLimit { limit remaining resetAt cost }`; check counts via statusCheckRollup contexts checkRunCountsByState/statusContextCountsByState; reviewThreads isResolved for unresolved count; latestReviews; reviewRequests; repository merge settings",
+        "`query ProwlNodes($ids)` returns state, merged, mergedBy and the actor of the latest ClosedEvent for PRs that left the result set",
+        "src/lib/github/mapPullRequest.ts maps nodes to PullRequest; label colors validated (fallback neutral); unknown enum values map safely",
+        "src/lib/github/fetchPullRequests.ts runs all enabled sections, dedupes PRs across sections, applies filters, returns { snapshot parts, rateLimit }",
+        "tests/fixtures/github.ts: builders for GraphQL-shaped PR nodes, search responses and viewer, used by unit tests and the E2E mock server",
+        "Estimated query cost documented in docs/architecture.md; coverage >= 95% for src/lib/github",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 5,
+      "dependsOn": ["US-003", "US-004"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Diff engine: detect what changed between polls",
+      "agent": "extension-engineer",
+      "description": "As a user I want to be told exactly what changed: CI failed, CI passed after failure, new review, approved, changes requested, new comment, ready to merge, merged/closed by someone else.",
+      "acceptanceCriteria": [
+        "src/lib/diff/diffSnapshots.ts: diffSnapshots(prev | null, next, viewerLogin) -> PrEvent[] (types in model.ts); prev null -> []",
+        "ci_failed on transition to failure (also after a new head commit); ci_passed only when the previous state was failure",
+        "review_new/approved/changes_requested per new review id by someone other than the viewer",
+        "comment_new when commentCount increases and the last comment author is not the viewer",
+        "ready_to_merge on transition into ready (not draft, mergeStateStatus clean, or approved/no review required + checks success/none + mergeable)",
+        "merged/closed only when the actor is not the viewer; PRs that simply left the search scope produce nothing",
+        "Event ids are deterministic (dedupe across repeated polls); events sorted by time",
+        "Table-driven unit tests; coverage >= 95% for src/lib/diff",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 6,
+      "dependsOn": ["US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Background poller with alarms, backoff and rate-limit awareness",
+      "agent": "extension-engineer",
+      "description": "As a user I want Prowl to stay up to date in the background without burning my GitHub rate limit.",
+      "acceptanceCriteria": [
+        "src/background/poller.ts: schedules alarm `poll` every settings.pollIntervalMinutes (min 1, default 2); reschedules when settings change; runs on install/startup when signed in",
+        "Single-flight: concurrent triggers share one in-flight poll",
+        "Exponential backoff with jitter on errors (interval x 2^n, max 30 min); rate_limited or remaining < 100 waits until resetAt; unauthorized stops polling and surfaces the error",
+        "Persists snapshot + pollState (model.ts) and prunes local state for PRs that no longer exist",
+        "src/background/messages.ts routes BackgroundRequest messages ({type:'poll', force}, markSeen, signedOut)",
+        "src/lib/time/backoff.ts pure + tested; poller unit tests use fake timers and the chrome fake",
+        "E2E: with auth seeded through the service worker, a forced poll fetches from the mock and stores a snapshot; tests/e2e/fixtures.ts gains signIn() and poll() helpers",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 7,
+      "dependsOn": ["US-002", "US-005", "US-006"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Notifications with per-event toggles and quiet hours",
+      "agent": "extension-engineer",
+      "description": "As a user I want desktop notifications for the events I care about, never during quiet hours, never for muted or snoozed PRs.",
+      "acceptanceCriteria": [
+        "src/lib/notify/filterEvents.ts (pure): drops disabled event types, muted and snoozed PRs, everything during quiet hours (src/lib/time/quietHours.ts handles windows across midnight)",
+        "src/background/notifier.ts creates chrome.notifications with a clear title/message per event type and the PR as context; more than 3 events in one poll collapse into one summary notification",
+        "Clicking a notification opens the PR (only URLs under env.webUrl) and clears it; ids map to URLs via chrome.storage.session",
+        "Unit tests for every filter rule and message template",
+        "E2E: a mock scenario change (CI pending -> failure) produces a notification visible via chrome.notifications.getAll() in the worker; a muted PR produces none",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 8,
+      "dependsOn": ["US-007"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Action icon badge",
+      "agent": "extension-engineer",
+      "description": "As a user I want the toolbar icon to tell me at a glance how many PRs need me.",
+      "acceptanceCriteria": [
+        "src/background/badge.ts computes the count per settings.badge: attention (failing CI, changes requested, conflicts, ready to merge), unseen (updatedAt > seen), off; snoozed PRs excluded",
+        "Badge color: danger when any PR has failing CI or changes requested, accent otherwise; empty text when 0; title tooltip summarises counts",
+        "Badge updates after every poll and when local state changes (seen, snooze, mute); cleared on sign-out",
+        "Unit tests; E2E reads the badge via chrome.action.getBadgeText in the worker",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 9,
+      "dependsOn": ["US-007"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Side panel shell, store and routing",
+      "agent": "frontend-engineer",
+      "description": "As a user I want the side panel to open instantly with my last known data and stay in sync with the background.",
+      "acceptanceCriteria": [
+        "src/sidepanel/state/store.ts: signals for settings, auth, snapshot, pollState, prLocal hydrated from storage before first render and kept in sync via chrome.storage.onChanged",
+        "Hash router: #/ (list), #/settings, #/onboarding; unauthenticated users land on onboarding",
+        "Header: account avatar/menu, refresh button (sends {type:'poll', force:true}, shows spinner while pollState.inFlight), 'Updated 2 min ago', settings button",
+        "Theme applied from settings.theme via data-theme on <html>; loading skeleton before hydration",
+        "sendToBackground() helper with typed BackgroundRequest; unit tests for store and router",
+        "E2E: panel shows onboarding when signed out and the shell when signed in; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 10,
+      "dependsOn": ["US-001", "US-002"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Sign in with a personal access token",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to paste a classic or fine-grained PAT and be signed in, with clear guidance on scopes.",
+      "acceptanceCriteria": [
+        "Onboarding screen explains both sign-in options with links to the token creation pages pre-filled with the right scopes",
+        "src/lib/github/auth/pat.ts validates the token (viewer query + GET /user for x-oauth-scopes), detects token type by prefix, warns when classic scopes lack `repo`",
+        "Stores AuthState, triggers the first poll, navigates to the list; invalid token shows an inline error (no token echo)",
+        "Sign out (account menu) removes auth, snapshot, pollState, clears badge/alarms/notifications after a confirmation",
+        "Unit tests (95% for src/lib/github/auth); E2E for success, invalid token and sign-out; screenshot docs/screenshots/onboarding.png; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 11,
+      "dependsOn": ["US-010", "US-003"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Sign in with GitHub OAuth device flow",
+      "agent": "github-api-engineer",
+      "description": "As a user I want to sign in with GitHub without creating a token.",
+      "acceptanceCriteria": [
+        "src/lib/github/auth/deviceFlow.ts: requestDeviceCode and pollForToken (honours interval, slow_down +5 s, expired_token, access_denied, unsupported/incorrect client) with AbortSignal",
+        "Requests the optional https://github.com/* host permission right before starting; explains why if denied",
+        "UI shows the user code (copy button), opens the verification URL, a countdown, cancel; success stores AuthState (method oauth)",
+        "Builds without a client id show the option as unavailable with a link to docs (no broken button)",
+        "Unit tests (95%); E2E against mock device endpoints for success and denial; screenshot docs/screenshots/device-flow.png; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 12,
+      "dependsOn": ["US-011"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "PR list and card",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to scan all my PRs at a glance.",
+      "acceptanceCriteria": [
+        "Sections from settings as tabs (single section = no tabs) with counts; sort by settings.sort; quick filter (title, repo, author, label)",
+        "Card shows: title, repo#number, author avatar, CI rollup icon + counts, review decision chip, mergeable/conflict indicator, draft pill, labels (accessible contrast computed from label color), last activity relative time, age, unresolved threads count, comment count; unseen-change dot",
+        "Cards are buttons/links with descriptive accessible names; status is never color-only",
+        "Visible cards are marked seen (markSeen message) after the panel has been visible for 1.5 s",
+        "Empty states: no PRs, all filtered, no sections enabled; skeleton while first poll runs",
+        "Component tests; E2E with a rich mock dataset; screenshots docs/screenshots/list-light.png and list-dark.png; axe clean in both themes",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 13,
+      "dependsOn": ["US-010", "US-007"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "PR details on expand",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to see why a PR is blocked without leaving the panel.",
+      "acceptanceCriteria": [
+        "Expanding a card lazily fetches `query ProwlPullRequestDetail` (check runs and status contexts with name, state, link; reviewers with state; merge blockers)",
+        "Failed checks listed first with links; reviewer list with avatars and states; plain-language merge readiness ('Blocked: 1 approval required', 'Conflicts with main')",
+        "Expanded state survives background refreshes; Escape collapses; focus stays on the card",
+        "Unit + E2E tests; screenshot docs/screenshots/detail.png; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 14,
+      "dependsOn": ["US-013"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Review actions: approve, request changes, comment",
+      "agent": "frontend-engineer",
+      "description": "As a reviewer I want to approve, request changes or comment from the panel.",
+      "acceptanceCriteria": [
+        "src/lib/github/actions.ts: approve(prId, body?), requestChanges(prId, body), comment(prId, body) via GraphQL mutations",
+        "Request changes opens a confirm dialog requiring a message; comment uses a small composer; approve is one click with undo-safe toast",
+        "Approve/request changes hidden on the viewer's own PRs; buttons disabled while pending; errors shown in a toast with the GitHub message (no token)",
+        "Successful actions trigger a forced poll",
+        "Unit tests (95% for src/lib/github); E2E asserts the exact mutations sent to the mock; axe clean on the dialog",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 15,
+      "dependsOn": ["US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Merge with a method picker and confirmation",
+      "agent": "frontend-engineer",
+      "description": "As an author I want to merge from the panel using only the methods my repository allows.",
+      "acceptanceCriteria": [
+        "Merge button shown when the viewer can merge; method picker lists only allowedMergeMethods (repo settings), defaulting to the repo default/last used",
+        "Confirm dialog shows the PR, target branch and method; optional commit title; mergePullRequest uses expectedHeadOid to avoid merging unseen commits",
+        "Blocked/conflicting/failed merges show the reason; success shows a toast and the PR leaves the list after the forced poll",
+        "Unit tests; E2E covering method filtering, confirm, cancel and an error; screenshot docs/screenshots/merge-dialog.png; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 16,
+      "dependsOn": ["US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Re-run failed checks and toggle draft",
+      "agent": "frontend-engineer",
+      "description": "As an author I want to re-run failed CI and switch between draft and ready for review.",
+      "acceptanceCriteria": [
+        "rerunFailedChecks(pr): Actions runs -> POST /repos/{o}/{r}/actions/runs/{id}/rerun-failed-jobs (deduped); other failed check suites -> POST /repos/{o}/{r}/check-suites/{id}/rerequest; partial failures reported",
+        "markReadyForReview / convertToDraft via GraphQL; button label reflects current state",
+        "Actions available from the card's overflow menu and the expanded view",
+        "Unit tests (95% for src/lib/github); E2E asserting REST/GraphQL calls on the mock",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 17,
+      "dependsOn": ["US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Local actions: snooze, mute, open, copy branch",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to hide a PR for a while, silence it, open it, or grab its branch name.",
+      "acceptanceCriteria": [
+        "Snooze presets: 1 hour, 4 hours, tomorrow 9:00, next Monday 9:00; snoozed PRs hidden from the list and badge until expiry, reachable via 'Snoozed (n)' with unsnooze",
+        "Mute/unmute toggles notifications for a PR; muted PRs show a bell-off indicator",
+        "Open in GitHub (new tab, URL allowlisted) and Copy branch name (clipboard, toast confirmation)",
+        "All local state stays on the device (prLocal) and is pruned when PRs disappear",
+        "Unit + E2E tests; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 18,
+      "dependsOn": ["US-013"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Settings screen",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to configure scope, polling, notifications, badge and appearance.",
+      "acceptanceCriteria": [
+        "Scope: enable/disable presets, add/edit/remove custom search sections (validated), repo include/exclude chips (owner or owner/name validated)",
+        "Polling interval (minimum 1 minute, default 2) with an explanation of rate-limit cost",
+        "Notifications: master switch, per-event toggles, quiet hours (start/end, crossing midnight), test notification button",
+        "Badge mode, theme (system/light/dark), default sort; account section (signed-in user, token type, scopes, sign out); about (version, links to docs/privacy/source)",
+        "Changes persist immediately; the service worker reschedules polling on interval change",
+        "Component tests; E2E for each group; screenshot docs/screenshots/settings.png; axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 19,
+      "dependsOn": ["US-010", "US-007"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Keyboard navigation and accessibility pass",
+      "agent": "frontend-engineer",
+      "description": "As a keyboard or screen-reader user I want to use every feature of Prowl.",
+      "acceptanceCriteria": [
+        "Roving focus in the list (j/k and arrows), Enter/Space expand, o open in GitHub, r refresh, / focus filter, ? shortcuts dialog, Esc closes",
+        "aria-live announcements for refresh results and action outcomes; visible focus ring everywhere",
+        "Every screen and dialog passes axe with zero violations in light and dark themes (E2E)",
+        "docs/accessibility.md lists shortcuts and the test approach",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 20,
+      "dependsOn": ["US-016", "US-017", "US-018", "US-019"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Error, offline and rate-limit states",
+      "agent": "frontend-engineer",
+      "description": "As a user I want to understand when Prowl cannot update and what to do.",
+      "acceptanceCriteria": [
+        "Banners for: token expired/revoked (re-authenticate action), rate limited (resets at HH:MM), offline (retrying in N min), GitHub errors; stale data marked with its age",
+        "Errors never block reading the last snapshot",
+        "E2E drives each state through mock responses (401, 403 rate limit with reset headers, 502, network refusal); axe clean",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 21,
+      "dependsOn": ["US-013", "US-007"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Performance budget and fast first render",
+      "agent": "frontend-engineer",
+      "description": "As a user I want the panel to feel instant.",
+      "acceptanceCriteria": [
+        "The list renders from the cached snapshot before any network call; E2E asserts first list render <= 150 ms after navigation start (performance mark) on CI hardware",
+        "Settings, dialogs and detail views are lazy-loaded chunks in the side panel (never in the service worker)",
+        "perf-budget.json budgets hold; docs/performance.md records measured numbers and how to measure",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 22,
+      "dependsOn": ["US-020"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Security hardening and threat model",
+      "agent": "security-reviewer",
+      "description": "As a user I trust Prowl with a GitHub token only if it is demonstrably safe.",
+      "acceptanceCriteria": [
+        "docs/security/threat-model.md (STRIDE): assets, trust boundaries, data flows, threats, mitigations, residual risks",
+        "Audit and fix: CSP, minimal permissions, URL allowlist for tabs.create, untrusted text rendering, label color sanitization, token redaction (errors, logs), storage areas, clipboard, dependency audit (`pnpm audit --prod`), no remote code",
+        "Security regression tests for the above (unit and/or E2E)",
+        "SECURITY.md with private reporting instructions; docs/security/review.md with findings and verdict",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 23,
+      "dependsOn": ["US-021"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Website: Astro site and landing page",
+      "agent": "docs-site-engineer",
+      "description": "As a visitor I want a clear landing page that shows Prowl and lets me install it.",
+      "acceptanceCriteria": [
+        "site/ is an Astro workspace package (pnpm-workspace.yaml) sharing src/styles/tokens.css; base path /prowl/",
+        "Landing: hero with a real screenshot from docs/screenshots, 3-4 feature blocks, install button to https://github.com/aemard/prowl/releases/latest, footer links",
+        ".github/workflows/pages.yml builds and deploys on changes to site/** or docs/** (actions/configure-pages, upload-pages-artifact, deploy-pages; pinned SHAs)",
+        "`pnpm --filter site build` passes and is included in `pnpm verify`",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 24,
+      "dependsOn": ["US-013"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Website: guides, privacy, changelog, contributing, Lighthouse",
+      "agent": "docs-site-engineer",
+      "description": "As a visitor I want to install, authenticate and trust Prowl without reading code.",
+      "acceptanceCriteria": [
+        "Pages: install guide (load unpacked from the release zip, with screenshots), auth guide (OAuth App vs PAT, exact scopes for classic and fine-grained tokens), privacy policy (no data leaves the browser except to GitHub), changelog (rendered from CHANGELOG.md), contributing",
+        "Lighthouse >= 95 in all four categories on every page, checked by a script (`pnpm --filter site lighthouse`) run in CI",
+        "Site uses the same design language as the extension, light and dark",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 25,
+      "dependsOn": ["US-024"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "README and repository docs",
+      "agent": "docs-site-engineer",
+      "description": "As a stranger I want to install and use Prowl in under 5 minutes from the README.",
+      "acceptanceCriteria": [
+        "README: what/why, screenshot, features, install (release zip -> Load unpacked) in <= 5 steps, sign-in (PAT scopes, OAuth), privacy, development commands, project structure, links to site and docs",
+        "CONTRIBUTING.md, CODE_OF_CONDUCT.md (Contributor Covenant 2.1), issue and PR templates, docs/chrome-web-store.md (manual publishing plan for later)",
+        "A fresh-reader walkthrough of the README is timed and recorded in docs/status or the PR notes",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 26,
+      "dependsOn": ["US-025"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Full-spec E2E audit and screenshots",
+      "agent": "test-engineer",
+      "description": "As the maintainer I want proof that every part of the spec works in the real extension.",
+      "acceptanceCriteria": [
+        "docs/e2e-coverage.md maps every row of the brief's Decisions table (scope presets, each PR state field, each notification event + toggles + quiet hours + badge, polling/backoff/rate limit, every action incl. confirm dialogs, both auth methods) to an E2E test; gaps are filled",
+        "Screenshots in docs/screenshots/ regenerated from E2E for every screen (light and dark where relevant)",
+        "E2E suite run 3 times consecutively without a failure (flake check); any flaky test fixed",
+        "Coverage gates (80% global, 95% diff/github) met with margin",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 27,
+      "dependsOn": ["US-022", "US-023"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Final security review",
+      "agent": "security-reviewer",
+      "description": "As the maintainer I need an explicit security sign-off before v1.0.0.",
+      "acceptanceCriteria": [
+        "Full review of the codebase, manifest, workflows (permissions, pinned actions, injection) and threat model",
+        "Verdict recorded in docs/security/review.md as APPROVE, or new stories added to prd.json for every blocking finding",
+        "CodeQL and Scorecard workflows green on main",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 28,
+      "dependsOn": ["US-027"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "v1.0.0 release readiness",
+      "agent": "release-engineer",
+      "description": "As a user I want a signed, reproducible v1.0.0 release.",
+      "acceptanceCriteria": [
+        "Release workflows verified end to end (release-please PR builds, asset job attaches zip + SBOM + provenance); docs/releasing.md explains the process and the tag fallback",
+        "Chrome Web Store job present but disabled, documented",
+        "package.json, manifest and CHANGELOG consistent for 1.0.0; docs/status.md lists anything left",
+        "README install steps verified against the actual release asset names",
+        "`pnpm verify` passes (lint, types, coverage gates, build, size budget, E2E)"
+      ],
+      "priority": 29,
+      "dependsOn": ["US-028"],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

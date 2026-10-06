@@ -1,0 +1,19 @@
+# Ralph progress log — Prowl
+Started: 2026-10-06
+
+## Codebase patterns
+(Reusable learnings. Keep this section short and current; newest knowledge wins.)
+- `pnpm verify` is the gate. `pnpm verify:fast` for the inner loop.
+- Unit tests get a fresh `chrome` fake (src/test/chrome.ts) before each test; use `fakeChrome().__state` to inspect alarms, notifications, badge, created tabs, granted origins, and `.emit()` on fake events to simulate Chrome.
+- E2E: tests/e2e/fixtures.ts gives `serviceWorker`, `extensionId`, `openPanel(hash)`, `expectNoA11yViolations(page)`, `github` (mock server: `onGraphQL(operationName, fn)`, `on(method, path, fn)`, `requests`), `saveScreenshot(page, name)`.
+- The e2e build (`vite build --mode e2e` -> dist-e2e/) points env.apiUrl and env.webUrl at http://127.0.0.1:4010 and has a fixed client id `e2e-client-id`.
+- Biome formats with single quotes, 2 spaces, width 100. Run `pnpm lint:fix` before verify.
+- Vite 8 config uses `build.rolldownOptions`; the side panel entry is src/sidepanel/index.html, the worker is src/background/index.ts -> background.js.
+
+---
+## 2026-10-06 - US-000 Bootstrap (orchestrator)
+- Tooling: pnpm 10, TypeScript 6, Vite 8, Preact 10 + signals, Vitest 5 + happy-dom, Biome 2.5, Playwright 1.56.1 + axe.
+- Generated manifest (src/manifest.ts), minimal worker + side panel, chrome fake, mock GitHub server, smoke E2E, size budget, zip, icons script.
+- Workflows: ci, codeql, dependency-review, scorecard, release-please (+ release-assets reusable), release-tag fallback, disabled Chrome Web Store stub.
+- Contracts: src/lib/model.ts, docs/architecture.md, CLAUDE.md, docs/decisions.md.
+---
