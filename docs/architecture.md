@@ -39,7 +39,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
-| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours, backoff (`backoff.ts`) | 80% |
+| `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
+| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
 | `src/styles/` | `tokens.css` (design tokens, light/dark), `base.css` | n/a |
@@ -66,8 +67,9 @@ in-memory updates that the next snapshot replaces.
    with `pollState` in one write. Local PR state of PRs no longer in the snapshot is pruned.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm).
-7. Notifier filters events (per-event toggles, mute, snooze, quiet hours) and creates
-   `chrome.notifications`. Clicking opens the PR.
+7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
+   rest (per-event toggles, mute, snooze, quiet hours) and creates `chrome.notifications`.
+   Clicking opens the PR.
 8. Badge recomputes from the snapshot + local state.
 9. On error: classify (`ErrorKind`), store in `pollState.lastError`, exponential backoff with
    jitter (`interval × 2^failures`, capped at 30 min). On `rate_limited` or low remaining
@@ -241,8 +243,8 @@ signed out or stopped).
 
 - `poll({ force })` runs at most one poll at a time (an in-memory promise; concurrent callers
   share it) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
-  stored a snapshot, null otherwise. Notifications (US-008) and the badge (US-009) hook in at
-  the end of the poll itself, once per poll, not in its callers.
+  stored a snapshot, null otherwise. Notifications and the badge (US-009) hook in at the end of
+  the poll itself, once per poll, not in its callers.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
   with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
@@ -271,8 +273,31 @@ signed out or stopped).
 `messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
 their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
 a forced poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
-`signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text and every
-notification.
+`signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
+notification and the memory of what was reported.
+
+### Notifications
+
+`notifyEvents(events, settings.notifications, prLocal)` (`src/background/notifier.ts`) runs at
+the end of every poll that ran (never rejects: a failure is logged and the poll result stands).
+
+1. Events whose `id` is already in `notified` are dropped.
+2. `filterEvents` (`src/lib/notify/filterEvents.ts`, pure) drops everything when notifications are
+   off or `isQuietNow` (`src/lib/time/quietHours.ts`: local time, `start` inclusive, `end`
+   exclusive, a window may wrap past midnight, `start === end` is empty), then the events whose
+   type is switched off and those of a muted or snoozed PR. Dropped events are not retried
+   later and not marked as reported.
+3. Up to 3 events become one `basic` notification each (`src/lib/notify/messages.ts`: title says what happened
+   and who did it, message is the PR title, context is `owner/name#number`); more than 3 become
+   one summary ("5 pull request updates", the first PRs listed). The notification id of a
+   single event is its event id; a summary's is `summary:<time>`.
+4. Every reported event id is stored in `chrome.storage.session` under `notified` (event id ->
+   PR URL, newest 300, cleared with the browser session and on sign-out). That is the dedupe
+   (ids repeat for a re-run that fails again on the same commit) and how a click finds its PR.
+
+A click (`notifications.onClicked`, registered in `register.ts`) clears the notification and
+opens the stored URL in a tab when it is on the `env.webUrl` origin; a summary has no URL, so
+a click only clears it.
 
 ## Storage
 

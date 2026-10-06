@@ -164,8 +164,8 @@
       ],
       "priority": 8,
       "dependsOn": ["US-007"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Pure filterEvents, quietHours and message templates; notifier dedupes on event ids in storage.session and opens only env.webUrl URLs on click; unit + 5 E2E specs."
     },
     {
       "id": "US-009",

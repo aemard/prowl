@@ -28,6 +28,7 @@ Started: 2026-10-06
 - Snapshot has optional `sectionErrors` (custom section id -> message) and `settledChecks` (built by `carrySettledChecks`); readers treat absent as empty.
 - Auth: `validatePat(token)` -> `{ auth, warning }` and `signInErrorMessage(error)` (src/lib/github/auth/pat.ts); the panel stores the result with `completeSignIn(auth)` and forgets it with `signOut()` (src/sidepanel/state/session.ts). `client.restResponse(method, path)` is `rest` plus the response headers. E2E for sign-in: `github.onGraphQL('ProwlViewer', () => ({ viewer }))` and `github.on('GET', '/user', () => ({ headers: { 'x-oauth-scopes': 'repo' }, body }))`.
 - axe: a `<header>`/`<footer>` inside a `<dialog>` counts as a nested banner/contentinfo landmark; use `<div>` inside dialogs and other sectioning content you cannot label. Headings in views must not contain "Prowl" (smoke.spec matches the h1 by substring).
+- Notifications: `notifyEvents(events, settings.notifications, prLocal)` (src/background/notifier.ts) runs at the end of `runPoll`; pure rules are `filterEvents` (src/lib/notify) and `isQuietNow` (src/lib/time/quietHours.ts). Reported event ids live in `chrome.storage.session` key `notified` (event id -> PR url): the dedupe and the click lookup; `forgetNotified()` runs on sign-out. Unit-test events with `prEvent()` from tests/fixtures/events.ts; E2E asserts on `chrome.notifications.getAll()` ids (event id, or `summary:<time>` for more than 3 events).
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -117,4 +118,13 @@ Started: 2026-10-06
   - GitHub's template URLs pre-fill fine-grained tokens (`name`, `description`, `pull_requests=write`, `contents=write`, `actions=write`, `statuses=read`; `target_name`, `expires_in` also exist) and classic tokens (`scopes=repo&description=Prowl`).
   - US-007: handle `{ type: 'signedOut' }` by clearing alarms, badge and notifications, and make a poll that was in flight when the user signed out drop its result (the panel has already removed `snapshot` and `pollState`, a late write would resurrect them). `{ type: 'poll', force: true }` right after sign-in has no baseline: it must not notify.
   - The Dialog had a latent axe violation (header/footer landmarks) that only showed once a real page opened one; fixed in the component.
+---
+## 2026-10-06 - US-008 Notifications with per-event toggles and quiet hours
+- `filterEvents` (notifications off / quiet hours, then per-type toggle, muted, snoozed), `isQuietNow` (local time, wraps midnight, start === end is empty), `notificationContent` / `summaryContent` (title = what happened and who, message = PR title, context = owner/name#n), `notifier.ts` (dedupe on event id in storage.session, <= 3 events separately, more become one summary, click opens the stored URL when it is on env.webUrl and clears), hooked at the end of `runPoll` (never rejects) and in `register.ts`; sign-out also forgets `notified`.
+- Files: src/lib/notify/*, src/lib/time/quietHours.ts, src/background/{notifier,poller,register}.ts (+ tests), tests/fixtures/events.ts, tests/e2e/notifications.spec.ts, docs/{architecture,decisions}.md.
+- Learnings:
+  - `chrome.notifications.getAll()` works in the Playwright Chromium worker (ids only; options are not readable), so E2E asserts on ids. A click cannot be triggered from Playwright: the click path is unit tested with the fake's `onClicked.emit`.
+  - Dropped events (muted, quiet, toggled off) are neither deferred nor marked reported. Re-run failing again on the same commit has the same event id, so it notifies once (documented price of the diff's ids).
+  - A summary click only clears it (no `sidePanel.open`: needs a window id from an async call, so the user gesture may be lost; not verified in Chrome). US-009/US-020 may revisit.
+  - `isGitHubUrl` now exists twice (src/sidepanel/openUrl.ts and a private one in notifier.ts) because the panel was off limits in this iteration; extract to src/lib when convenient.
 ---

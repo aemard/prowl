@@ -39,6 +39,18 @@ describe('registerBackground', () => {
     expect(fakeChrome().runtime.onMessage.hasListeners()).toBe(true);
   });
 
+  it('opens the pull request of a clicked notification', async () => {
+    registerBackground();
+    await chrome.storage.session.set({
+      notified: { n1: 'https://github.com/acme/widgets/pull/1' },
+    });
+    fakeChrome().notifications.onClicked.emit('n1');
+    await settle();
+    expect(fakeChrome().__state.createdTabs).toEqual([
+      { url: 'https://github.com/acme/widgets/pull/1' },
+    ]);
+  });
+
   it('applies a new interval to a running schedule only', async () => {
     registerBackground();
     await setItem('settings', { ...defaultSettings(), pollIntervalMinutes: 5 });

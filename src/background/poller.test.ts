@@ -143,6 +143,58 @@ describe('poll', () => {
     expect(await poll()).toMatchObject({ events: [] });
   });
 
+  it('notifies about what changed, once, unless the PR is muted', async () => {
+    let checks: CheckState = 'pending';
+    github(() => searchWith(checks)());
+    await signIn();
+    await poll();
+    expect(fakeChrome().__state.notifications.size).toBe(0);
+
+    checks = 'failure';
+    later(2 * MINUTE);
+    await poll();
+    const { notifications } = fakeChrome().__state;
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
+    expect([...notifications.values()][0]?.options).toMatchObject({ title: 'CI failed' });
+
+    // Back to pending and failing again on the same commit: the id is the same.
+    notifications.clear();
+    for (const next of ['pending', 'failure'] as const) {
+      checks = next;
+      later(2 * MINUTE);
+      await poll();
+    }
+    expect(notifications.size).toBe(0);
+
+    // A muted PR is silent, and so is a type switched off.
+    await setItem('prLocal', { snoozed: {}, muted: { [PR]: true }, seen: {} });
+    await setItem('settings', {
+      ...defaultSettings(),
+      notifications: {
+        ...defaultSettings().notifications,
+        events: { ...defaultSettings().notifications.events, ci_passed: false },
+      },
+    });
+    for (const next of ['success', 'pending', 'failure'] as const) {
+      checks = next;
+      later(2 * MINUTE);
+      await poll();
+    }
+    expect(notifications.size).toBe(0);
+  });
+
+  it('keeps the poll result when notifying fails', async () => {
+    let checks: CheckState = 'pending';
+    github(() => searchWith(checks)());
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(chrome.notifications, 'create').mockRejectedValue(new Error('no display'));
+    await signIn();
+    await poll();
+    checks = 'failure';
+    later(2 * MINUTE);
+    expect((await poll())?.events).toHaveLength(1);
+  });
+
   it('takes no baseline from a snapshot of another account', async () => {
     const gone = prNode({ number: 2 });
     github(() => searchResponse([prNode({ commits: headCommit(CHECKS.failure) }), gone]));
@@ -415,6 +467,9 @@ describe('clearSignedOut', () => {
     await scheduleAlarm(2);
     await setItems({ auth: buildAuth(), pollState: buildPollState() });
     await chrome.action.setBadgeText({ text: '3' });
+    await chrome.storage.session.set({
+      notified: { 'PR_1:ci_failed:a': 'https://github.com/a/b/pull/1' },
+    });
     await chrome.notifications.create('PR_1:ci_failed:a', {
       type: 'basic',
       title: 'x',
@@ -426,5 +481,6 @@ describe('clearSignedOut', () => {
     expect(await getItems(['auth', 'pollState'])).toEqual({ auth: buildAuth() });
     expect(fakeChrome().__state.badge.text).toBe('');
     expect(fakeChrome().__state.notifications.size).toBe(0);
+    expect(await chrome.storage.session.get('notified')).toEqual({});
   });
 });
