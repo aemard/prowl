@@ -77,10 +77,43 @@ in-memory updates that the next snapshot replaces.
   `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
   (`GET /user`, header `x-oauth-scopes`).
 - Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version: 2022-11-28` for REST,
-  20 s timeout. Errors never include the token.
+  20 s timeout, `cache: 'no-store'`. Errors never include the token.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
   `statusContextCountsByState` so the list query stays cheap; individual check runs are
   fetched only when a PR is expanded.
+
+## GitHub client
+
+`src/lib/github/client.ts`: `createGitHubClient({ token, apiUrl, fetch? })` returns
+`graphql<T>(query, variables?, { partial? })` and `rest<T>(method, path, body?)`. It runs in the
+service worker and the side panel (global `fetch`, `AbortController`, nothing else), does not
+retry (the poller owns backoff) and throws only `GitHubError` (`errors.ts`): `kind`
+(`ErrorKind`), `status` (null without a response), `resetAt` (ISO, exhausted primary limit) and
+`retryAfterSeconds`. Messages come from GitHub's `message`, truncated to 300 characters with the
+token masked; network errors carry no `cause`, so nothing fetch threw can leak the token.
+
+| Response | Kind |
+|---|---|
+| 401 | `unauthorized` |
+| 429; 403 with `x-ratelimit-remaining: 0`, a `retry-after` header or a "rate limit" / "abuse detection" message | `rate_limited` |
+| other 403, 451 | `forbidden` |
+| 404, 410 | `not_found` |
+| other 4xx (400, 409, 422) | `validation` |
+| 5xx, unusable 2xx body, non-2xx below 400 | `server` |
+| fetch rejects, body fails to download, 20 s timeout | `network` |
+
+For a rate limit, `resetAt` is set only when the primary budget is exhausted and
+`retryAfterSeconds` is GitHub's `retry-after`, or 60 when GitHub gave neither (its guidance for
+secondary limits). The poller waits until the later of the two.
+
+GraphQL answers 200 even when a field failed. `graphql` throws on the first entry of `errors`
+(`RATE_LIMITED` -> `rate_limited`, `FORBIDDEN` / `INSUFFICIENT_SCOPES` -> `forbidden`,
+`NOT_FOUND` -> `not_found`, `UNPROCESSABLE` -> `validation`, anything else -> `graphql`), with the
+reset taken from the response headers. Reads that tolerate holes (`nodes(ids:)` with a deleted
+PR, a search over an org that needs SAML) pass `{ partial: true }` to get the data that did come
+back; mutations stay strict because their payload is null when they fail.
+`parseRateLimit(headers | rateLimit object)` (`rateLimit.ts`) normalizes both sources to the
+model's `RateLimit`.
 
 ## Storage
 

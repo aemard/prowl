@@ -32,3 +32,9 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-10-06 — Ralph iterations use Sonnet 5.5 by default and Opus 5.5 only for the GitHub fetch/mapping, diff engine, poller and security reviews, to spend the usage budget where mistakes are costly (maintainer asked whether every subagent needs Opus).
 - 2026-10-06 — Dependabot ignores @playwright/test (pinned to the sandbox Chromium) and major bumps of TypeScript, Preact and @types/node (see entries above).
 - 2026-10-06 — Ponytail's minimal-code ladder (MIT) is adopted in CLAUDE.md and the Ralph prompt to cut code and tokens; RTK output compression could not be installed in this sandbox (auto mode blocks downloading external binaries).
+- 2026-10-06 — The GitHub client never retries or backs off: the poller owns pacing (`pollState.nextAllowedAt`), and a hidden retry would spend rate limit the poller cannot see.
+- 2026-10-06 — GraphQL `errors` throw by default and `{ partial: true }` opts in to partial data: mutations return `data` with a null payload on failure, so lenient-by-default would silently swallow failed merges and reviews.
+- 2026-10-06 — A rate-limited response with neither `retry-after` nor an exhausted budget gets `retryAfterSeconds: 60`, following GitHub's secondary-rate-limit guidance ("wait at least one minute").
+- 2026-10-06 — Other 4xx statuses (400, 409, 422) map to `validation`, 410 to `not_found` and 451 to `forbidden`, so every HTTP failure fits the existing `ErrorKind`s without widening the model.
+- 2026-10-06 — Network errors drop the thrown error instead of attaching it as `cause`: what `fetch` throws can echo request details, and "Could not reach GitHub" is all a person can act on.
+- 2026-10-06 — Requests use `cache: 'no-store'`: GitHub sends `Cache-Control: max-age=60` on REST GETs, and a stale answer after a user action or a poll is worse than the extra request.

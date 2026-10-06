@@ -11,6 +11,7 @@ Started: 2026-10-06
 - Vite 8 config uses `build.rolldownOptions`; the side panel entry is src/sidepanel/index.html, the worker is src/background/index.ts -> background.js.
 - Storage: never call chrome.storage.local directly; use src/lib/storage (getItem/setItem/subscribe, loadSettings/updateSettings/subscribeSettings, updatePrLocal((s) => snooze(s, id, until))). Settings and prLocal reads are always normalized; read-modify-write goes through updateItem (Web Lock shared by panel and worker, no-op writes skipped).
 - The chrome fake, like real Chrome, fires storage onChanged only for values that actually changed and omits oldValue for new keys.
+- GitHub: all HTTP goes through `createGitHubClient({ token, apiUrl, fetch? })` (src/lib/github/client.ts); it only throws `GitHubError` (`kind`, `status`, `resetAt`, `retryAfterSeconds`). `graphql` is strict (any `errors` entry throws), pass `{ partial: true }` for reads that tolerate holes; read the rate limit with `parseRateLimit(data.rateLimit)`. HTTP-level test builders live in tests/fixtures/http.ts (`jsonResponse`, `rateLimitHeaders`, `graphqlRateLimit`, `graphqlError`).
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -27,4 +28,13 @@ Started: 2026-10-06
   - Nothing imports src/lib/storage yet, so the bundles did not grow; the whole API is about 3.2 KB gzip. US-007 should call ensureSettings() from runtime.onInstalled (persists defaults and migrations) and subscribeSettings() to reschedule the alarm; prune with updatePrLocal((s) => pruneExpired(s, now, Object.keys(snapshot.pullRequests))).
   - Presets always exist once with id === kind and a fixed label; settings UIs toggle them, they cannot delete or rename them. Custom sections need a query.
   - src/lib/storage is at 100% coverage; vitest.config.ts still gates it at the global 80% (the story asks for >= 90%).
+---
+## 2026-10-06 - US-003 GitHub HTTP client, errors and rate limits
+- Implemented src/lib/github: client.ts (`createGitHubClient` with `graphql<T>(query, variables?, { partial? })` and `rest<T>(method, path, body?)`, 20 s timeout via AbortController, `cache: 'no-store'`), errors.ts (`GitHubError`, `classifyHttpStatus`, `classifyGraphQLType`), rateLimit.ts (`parseRateLimit` for headers and the GraphQL object, `headerCount`, `resetAtFromHeaders`).
+- Files: src/lib/github/{client,errors,rateLimit}.ts (+ tests), tests/fixtures/http.ts, docs/architecture.md (GitHub client section), docs/decisions.md, prd.json.
+- Learnings:
+  - GitHub signals rate limits as 403 or 429; a 403 is a rate limit only with `x-ratelimit-remaining: 0`, a `retry-after` header or a rate-limit message, otherwise it is `forbidden` (permissions, SAML). Primary GraphQL limit arrives as HTTP 200 with `errors[].type === 'RATE_LIMITED'` and exhausted `x-ratelimit-*` headers.
+  - Mutations return 200 with `data: { mergePullRequest: null }` plus `errors`, so `data` being present does not mean success: keep `graphql` strict unless the read tolerates holes.
+  - For a rate limit, wait until the later of `resetAt` and now + `retryAfterSeconds` (US-007). No retries inside the client.
+  - Skipped as speculative: a `restResponse` that returns headers (US-011 needs `x-oauth-scopes` from `GET /user` and should add it), a `retryAt` helper, per-error GraphQL details, token-shape scrubbing. Happy-dom provides `Response`/`Headers`/`AbortController`, so unit tests build real `Response` objects; use `vi.useFakeTimers()` + `advanceTimersByTimeAsync` for the timeout.
 ---

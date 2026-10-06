@@ -69,8 +69,8 @@
       ],
       "priority": 3,
       "dependsOn": [],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "client.ts (graphql with opt-in partial, rest), errors.ts (GitHubError, status and GraphQL type classification), rateLimit.ts (parseRateLimit); 100% coverage; no cause on network errors, token masked in server messages; restResponse (headers, e.g. x-oauth-scopes) is left to US-011."
     },
     {
       "id": "US-004",
