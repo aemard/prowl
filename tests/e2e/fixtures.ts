@@ -19,6 +19,8 @@ export interface ExtensionFixtures {
   openPanel: (hash?: string) => Promise<Page>;
   /** Runs axe on the page and fails on any violation. */
   expectNoA11yViolations: (page: Page) => Promise<void>;
+  /** Writes keys to `chrome.storage.local` from the service worker, as the poller would. */
+  seedStorage: (items: Record<string, unknown>) => Promise<void>;
 }
 
 export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
@@ -73,6 +75,12 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
       });
       return page;
     });
+  },
+
+  seedStorage: async ({ serviceWorker }, use) => {
+    await use((items) =>
+      serviceWorker.evaluate((stored) => chrome.storage.local.set(stored), items),
+    );
   },
 
   // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture signature.

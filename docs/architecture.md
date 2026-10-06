@@ -39,7 +39,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
-| `src/lib/time/` | Relative time, quiet hours, backoff | 80% |
+| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours, backoff | 80% |
 | `src/background/` | Service worker wiring: poller, notifier, badge, message router | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
 | `src/styles/` | `tokens.css` (design tokens, light/dark), `base.css` | n/a |
@@ -268,9 +268,26 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 
 ## Side panel
 
-- Preact 10 + `@preact/signals`. `src/sidepanel/state/store.ts` mirrors storage keys into
-  signals and subscribes to `chrome.storage.onChanged`.
-- Hash routes: `#/` list, `#/settings`, `#/onboarding`. Expanded PR state is local UI state.
+- Preact 10 + `@preact/signals`. `src/sidepanel/state/store.ts` has one signal per storage key
+  (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`) plus `hydrated`. `main.tsx` calls
+  `hydrateStore()` before the first render: it subscribes to every key, reads them in one call
+  (a change that lands during that read wins over it), normalizes `settings` and `prLocal`, and
+  flips `hydrated`. `App` shows a skeleton (`main[aria-busy]`) until then. Signals are never
+  written by the panel; the service worker's storage writes arrive through `onChanged`.
+- Hash routes (`state/router.ts`): `#/` list, `#/settings`, `#/onboarding`. `route` is derived
+  from the hash and `auth`: signed out is always `onboarding`; signed in shows `onboarding` only
+  when the hash asks for it (re-authentication), unknown hashes mean the list. `navigate(route)`
+  updates the hash and the signal synchronously. After a route change `<main>` takes focus
+  (labelled with the view's name), but not on first load. Expanded PR state is local UI state.
+- `Header`: brand, "Updated 2 min ago" (`snapshot.fetchedAt`, ticks every 15 s), refresh
+  (`sendToBackground({ type: 'poll', force: true })`, spinner while `pollState.inFlight`),
+  settings / back toggle and the account menu (avatar; sign-out joins it in US-011). Signed out
+  or before hydration it is the brand alone.
+- `state/background.ts`: `sendToBackground(BackgroundRequest)` resolves even when the worker has
+  no receiver. `openUrl.ts`: `openGitHubUrl(url)` is the only way the panel opens a URL, and it
+  refuses anything outside the `env.webUrl` origin.
+- Theme: `settings.theme` becomes `data-theme` on `<html>` (`system` removes it, so
+  `prefers-color-scheme` applies); `<ToastRegion />` is mounted once in `App`.
 - Components in `src/sidepanel/components/ui/` are the design system; feature components
   compose them. One CSS file per component, tokens only (no raw colors).
 
@@ -278,7 +295,8 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 
 - Unit: Vitest + happy-dom + `src/test/chrome.ts`. Colocated `*.test.ts(x)`.
 - E2E: Playwright loads `dist-e2e/` (`vite build --mode e2e`) whose API and web URLs point to
-  the mock server on `http://127.0.0.1:4010`. Seed auth/settings via
-  `serviceWorker.evaluate(...)`; drive polls with `{ type: 'poll', force: true }`; assert on
-  `github.requests` and on `chrome.notifications.getAll()` in the worker.
+  the mock server on `http://127.0.0.1:4010`. Seed auth/settings with the `seedStorage(items)`
+  fixture (it writes `chrome.storage.local` from the service worker, so an open panel updates
+  live); drive polls with `{ type: 'poll', force: true }`; assert on `github.requests` and on
+  `chrome.notifications.getAll()` in the worker.
 - Every screen gets an axe check; screenshot specs write to `docs/screenshots/`.

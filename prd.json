@@ -200,8 +200,8 @@
       ],
       "priority": 10,
       "dependsOn": ["US-001", "US-002"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Store, hash router, header, theme, skeleton, sendToBackground and openGitHubUrl done; unit and E2E (axe in light and dark) green; onboarding, list and settings views are placeholders for US-011, US-013 and US-019."
     },
     {
       "id": "US-011",

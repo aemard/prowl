@@ -77,17 +77,3 @@ kbd {
   white-space: nowrap;
   border: 0;
 }
-
-.app {
-  padding: var(--space-3) var(--space-4);
-}
-
-.app-title {
-  font-size: var(--text-lg);
-  line-height: var(--leading-lg);
-  font-weight: var(--weight-semibold);
-}
-
-.app-empty {
-  color: var(--color-fg-muted);
-}

@@ -19,6 +19,10 @@ Started: 2026-10-06
 - CSS uses semantic tokens only (`--color-*`, `--space-*`, `--text-*`, `--duration-*`); src/styles/tokens.test.ts fails on raw colors in any other .css and when the contrast table in docs/design.md is stale (it prints the new table). Theme = `document.documentElement.dataset.theme` ('light' | 'dark', absent = system).
 - Mount `<ToastRegion />` once and call `showToast({ message, tone })`. Dialog is controlled (`open`/`onClose`) and restores focus itself.
 - Preact tests: wrap raw `dispatchEvent` calls and fake-timer advances in `act()`. happy-dom has `dialog.showModal()` but no Esc handling: dispatch `new Event('cancel', { cancelable: true })`.
+- Panel state: import the signals from `src/sidepanel/state/store.ts` (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`, `hydrated`; read `.value` in render and the component subscribes), `route` / `navigate()` from `state/router.ts`, `sendToBackground()` from `state/background.ts` and `openGitHubUrl()` from `openUrl.ts` (the only way to open a URL). Views live in `src/sidepanel/views/` (`ListView`, `SettingsView`, `OnboardingView` are placeholders to replace); `App` mounts the shell, theme and `ToastRegion`.
+- Signals gotcha: a component that reads signals only re-renders when those signals or its props change, so a parent's timer re-render does not reach a child; put `useTicker` (relative times) in the component that shows the time.
+- Panel unit tests: build stored values with `src/test/panel.ts` (`buildAuth`, `buildSnapshot`, `buildPollState`), seed `chrome.storage.local`, `await hydrateStore()` inside `act`, and reset `auth.value` / `location.hash` in `afterEach` (module signals outlive a test).
+- Panel E2E: `seedStorage({ auth, snapshot, pollState })` writes from the service worker and an open panel follows live; seed before `openPanel()` for the first render. Spy on messages with `chrome.runtime.onMessage.addListener` in `serviceWorker.evaluate`.
 
 ---
 ## 2026-10-06 - US-000 Bootstrap (orchestrator)
@@ -81,4 +85,13 @@ Started: 2026-10-06
   - US-007: `ci_passed` needs `failure` in the previous poll, so failure -> pending -> success is silent. Fix it in the poller by passing a `prev` whose pending PRs carry their last settled check state (kept e.g. in pollState or storage.session), not by changing the diff.
   - US-009: reuse `isReadyToMerge` for the badge's "ready to merge".
   - Model-level test PRs: `{ ...mapPullRequest(prNode()), ...overrides }` (see diffSnapshots.test.ts); a shared builder in tests/fixtures is worth adding once a second module needs it.
+## 2026-10-06 - US-010 Side panel shell, store and routing
+- Implemented the panel shell: `state/store.ts` (signals per storage key, `hydrateStore()` subscribes first, reads once and lets changes during the read win), `state/router.ts` (hash routes, onboarding forced while signed out), `state/background.ts` (`sendToBackground`), `openUrl.ts` (origin-checked `openGitHubUrl`), `components/Header.tsx` (brand, "Updated 2 min ago", refresh with spinner on `pollState.inFlight`, settings/back toggle, account menu), `App.tsx` (skeleton until hydrated, theme via `data-theme`, focus moves to `<main>` on route change, `ToastRegion`), placeholder views, `src/lib/time/relative.ts`.
+- Files: src/sidepanel/{App,main}.tsx, state/*, components/Header.*, views/*, openUrl.ts, src/lib/time/relative.ts, src/test/panel.ts, tests/e2e/{shell.spec,fixtures}.ts, docs/{architecture,decisions}.md.
+- Learnings:
+  - `@preact/signals` makes components skip re-rendering unless their signals or props changed: the first version of the "Updated" ticker lived in `Header` and never refreshed the child that renders the time (caught by a unit test).
+  - `location.hash = x` dispatches `hashchange` as a later task (also in happy-dom), so `navigate()` sets the hash signal itself.
+  - Sign-out (US-011) only has to remove `auth`, `snapshot` and `pollState` from storage: the panel switches to onboarding on its own because the route derives from `auth`. Add the item to the account menu in `Header.tsx`.
+  - Side panel bundle is now 16.5 KB JS / 3.6 KB CSS gzip (budget 60 / 12 KB) now that the design-system components are imported.
+  - Bundled views are placeholders; US-022 should lazy-load Settings.
 ---
