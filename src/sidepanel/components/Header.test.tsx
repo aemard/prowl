@@ -1,10 +1,11 @@
-import { act, fireEvent, render, screen } from '@testing-library/preact';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../test/chrome';
 import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
 import { navigate } from '../state/router';
 import { auth, pollState, snapshot } from '../state/store';
 import { Header } from './Header';
+import { toasts } from './ui/Toast';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
@@ -18,6 +19,7 @@ afterEach(() => {
   snapshot.value = undefined;
   pollState.value = undefined;
   location.hash = '';
+  toasts.value = [];
 });
 
 const signIn = () => {
@@ -102,5 +104,73 @@ describe('Header', () => {
     render(<Header />);
     await act(() => navigate('settings'));
     expect(screen.getByRole('button', { name: 'Back to pull requests' })).toBeTruthy();
+  });
+
+  describe('sign out', () => {
+    const openConfirmation = () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Account: octocat' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    };
+    const store = () =>
+      chrome.storage.local.set({
+        auth: buildAuth(),
+        snapshot: buildSnapshot(),
+        pollState: buildPollState(),
+      });
+
+    it('asks first, and cancelling keeps everything', async () => {
+      signIn();
+      await store();
+      const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
+      render(<Header />);
+      openConfirmation();
+
+      const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
+      expect(dialog.textContent).toMatch(/forgets your token/);
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(Object.keys(await chrome.storage.local.get(null))).toEqual([
+        'auth',
+        'snapshot',
+        'pollState',
+      ]);
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('removes the account data and tells the worker once confirmed', async () => {
+      signIn();
+      await store();
+      const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
+      render(<Header />);
+      openConfirmation();
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+      });
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(await chrome.storage.local.get(null)).toEqual({});
+      expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
+    });
+
+    it('reports a failure and stays signed in', async () => {
+      signIn();
+      vi.spyOn(chrome.storage.local, 'remove').mockRejectedValue(new Error('storage'));
+      render(<Header />);
+      openConfirmation();
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+      });
+
+      await waitFor(() =>
+        expect(toasts.value.map((toast) => toast.message)).toEqual([
+          'Could not sign out. Try again.',
+        ]),
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 });

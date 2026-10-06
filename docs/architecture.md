@@ -90,7 +90,8 @@ in-memory updates that the next snapshot replaces.
 ## GitHub client
 
 `src/lib/github/client.ts`: `createGitHubClient({ token, apiUrl, fetch? })` returns
-`graphql<T>(query, variables?, { partial? })` and `rest<T>(method, path, body?)`. It runs in the
+`graphql<T>(query, variables?, { partial? })`, `rest<T>(method, path, body?)` and
+`restResponse<T>(method, path, body?)` (`rest` plus the response headers). It runs in the
 service worker and the side panel (global `fetch`, `AbortController`, nothing else), does not
 retry (the poller owns backoff) and throws only `GitHubError` (`errors.ts`): `kind`
 (`ErrorKind`), `status` (null without a response), `resetAt` (ISO, exhausted primary limit) and
@@ -306,10 +307,38 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 
 ## Auth
 
-- **PAT** (classic or fine-grained): pasted in onboarding, validated with `viewer { login }`
-  and `GET /user` (scopes header). Required: classic `repo` (or `public_repo` for public-only);
-  fine-grained: Pull requests R/W, Contents R/W (merge), Checks R, Actions R/W (re-run),
-  Commit statuses R, Metadata R.
+- **PAT** (classic or fine-grained), pasted in onboarding: `validatePat(token)`
+  (`src/lib/github/auth/pat.ts`) trims it, refuses anything but letters, digits and `_` (so
+  nothing odd reaches a header), then runs `query ProwlViewer` (`viewer { login avatarUrl name }`)
+  and `GET /user` in parallel (`client.restResponse` returns the headers; `x-oauth-scopes` is
+  the only place GitHub reports a classic token's scopes). The token type comes from the prefix
+  (`ghp_` classic, `github_pat_` fine-grained, `gho_` oauth, else `unknown`); `scopes` is empty
+  for tokens whose response carries no scopes header (fine-grained). It returns the `AuthState`
+  plus an optional warning, and throws only `GitHubError`; `signInErrorMessage(error)` turns it
+  into the text onboarding shows inline (never the token: the client masks it in GitHub's
+  messages and our own messages do not contain it).
+- **After validation** (`src/sidepanel/state/session.ts`): `completeSignIn(auth)` stores `auth`,
+  sends `{ type: 'poll', force: true }` and navigates to the list; a warning is shown as a toast
+  ("Signed in as octocat. ..."). `signOut()` (account menu, after a confirmation dialog) removes
+  `auth`, `snapshot` and `pollState` and sends `{ type: 'signedOut' }`; the worker clears alarms,
+  badge and notifications. `settings` and `prLocal` stay (they hold no secrets and no account
+  data beyond PR ids).
+- **Which token** (the onboarding copy says the same, with links to creation pages whose forms
+  are pre-filled through GitHub's template URLs, `TOKEN_URLS`):
+
+| | Classic (recommended) | Fine-grained |
+|---|---|---|
+| Needs | `repo` (or `public_repo` for public repositories only) | Pull requests R/W, Contents R/W (merge), Actions R/W (re-run failed jobs), Commit statuses R, Metadata R (always granted). Read-only (Pull requests R, Commit statuses R) is enough to follow PRs. |
+| Scope of access | Every repository the account can access | **One** resource owner (a user or one organization) and the repositories chosen; not repositories the user only collaborates on from outside an organization |
+| Check runs (CI) | Yes | **No**: GitHub has no Checks permission for fine-grained tokens (documented limitation; GitHub support, March 2025: only GitHub Apps get it). Reading a check run through GraphQL answers "Resource not accessible by personal access token"; Prowl's `partial` reads should turn those holes into `checks.state: 'none'` (not verified with a live fine-grained token). Legacy commit statuses work with Commit statuses R. |
+| Re-run | Failed jobs and check suites | Failed jobs of GitHub Actions runs (Actions R/W); `check-suites/{id}/rerequest` needs the unavailable Checks permission |
+
+  Sign-in succeeds either way; a classic token without `repo` gets a warning (public
+  repositories only) and any fine-grained token a note about CI status. The scopes are stored
+  in `AuthState.scopes` so settings can show them. Sources: GitHub Docs "Managing your personal
+  access tokens" (limitations list "Using fine-grained personal access token to call the Checks
+  API"), "Permissions required for fine-grained personal access tokens" (no Checks section),
+  community discussion 129512.
 - **OAuth device flow**: needs an OAuth App client id (`PROWL_GITHUB_CLIENT_ID` at build time).
   `github.com` is an optional host permission requested right before the flow starts. Scope
   `repo`. Without a client id the UI explains how to use a PAT instead.
@@ -332,8 +361,8 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   (labelled with the view's name), but not on first load. Expanded PR state is local UI state.
 - `Header`: brand, "Updated 2 min ago" (`snapshot.fetchedAt`, ticks every 15 s), refresh
   (`sendToBackground({ type: 'poll', force: true })`, spinner while `pollState.inFlight`),
-  settings / back toggle and the account menu (avatar; sign-out joins it in US-011). Signed out
-  or before hydration it is the brand alone.
+  settings / back toggle and the account menu (avatar: GitHub profile, Sign out behind a
+  confirmation dialog). Signed out or before hydration it is the brand alone.
 - `state/background.ts`: `sendToBackground(BackgroundRequest)` resolves even when the worker has
   no receiver. `openUrl.ts`: `openGitHubUrl(url)` is the only way the panel opens a URL, and it
   refuses anything outside the `env.webUrl` origin.

@@ -213,6 +213,15 @@ describe('rest', () => {
     const { client } = setup(new Response('<html>', { status: 200 }));
     expect(fields(await failure(client.rest('GET', '/user')))).toEqual(['server', 200, null, null]);
   });
+
+  it('restResponse also returns the response headers', async () => {
+    const { client } = setup(
+      jsonResponse({ login: 'octocat' }, { headers: { 'x-oauth-scopes': 'repo, read:org' } }),
+    );
+    const { data, headers } = await client.restResponse<{ login: string }>('GET', '/user');
+    expect(data).toEqual({ login: 'octocat' });
+    expect(headers.get('x-oauth-scopes')).toBe('repo, read:org');
+  });
 });
 
 describe('HTTP failures', () => {

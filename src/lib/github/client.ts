@@ -31,6 +31,12 @@ export interface GitHubClient {
   ): Promise<T>;
   /** Calls a REST endpoint (`path` starts with `/`). Resolves to `undefined` for empty bodies. */
   rest<T = void>(method: HttpMethod, path: string, body?: unknown): Promise<T>;
+  /** Like `rest`, plus the response headers (e.g. `x-oauth-scopes` of `GET /user`). */
+  restResponse<T = void>(
+    method: HttpMethod,
+    path: string,
+    body?: unknown,
+  ): Promise<{ data: T; headers: Headers }>;
 }
 
 const TIMEOUT_MS = 20_000;
@@ -125,6 +131,13 @@ export function createGitHubClient({
     return { response, payload };
   }
 
+  async function restResponse<T = void>(method: HttpMethod, path: string, body?: unknown) {
+    const { response, payload } = await send(method, path, body, true);
+    if (payload === UNPARSEABLE)
+      throw fail('server', UNEXPECTED, response.status, response.headers);
+    return { data: payload as T, headers: response.headers };
+  }
+
   return {
     async graphql<T>(
       query: string,
@@ -150,10 +163,9 @@ export function createGitHubClient({
     },
 
     async rest<T = void>(method: HttpMethod, path: string, body?: unknown) {
-      const { response, payload } = await send(method, path, body, true);
-      if (payload === UNPARSEABLE)
-        throw fail('server', UNEXPECTED, response.status, response.headers);
-      return payload as T;
+      return (await restResponse<T>(method, path, body)).data;
     },
+
+    restResponse,
   };
 }

@@ -218,8 +218,8 @@
       ],
       "priority": 11,
       "dependsOn": ["US-010", "US-003"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "PAT sign-in (classic and fine-grained) with inline errors, scope and Checks-permission warnings, pre-filled token links, confirmed sign-out; the worker side of poll/signedOut is US-007."
     },
     {
       "id": "US-012",

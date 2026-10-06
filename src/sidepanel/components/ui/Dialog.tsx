@@ -111,21 +111,21 @@ function OpenDialog({
       }}
     >
       <div class="ui-dialog__panel">
-        <header class="ui-dialog__header">
+        <div class="ui-dialog__header">
           <h2 id={titleId} class="ui-dialog__title">
             {title}
           </h2>
           <IconButton label="Close" size="sm" class="ui-dialog__close" onClick={requestClose}>
             <XIcon />
           </IconButton>
-        </header>
+        </div>
         {description && (
           <p id={descriptionId} class="ui-dialog__description">
             {description}
           </p>
         )}
         {children && <div class="ui-dialog__body">{children}</div>}
-        {footer && <footer class="ui-dialog__footer">{footer}</footer>}
+        {footer && <div class="ui-dialog__footer">{footer}</div>}
       </div>
     </dialog>
   );
