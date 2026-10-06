@@ -1,15 +1,10 @@
 ---
-import { getImage } from 'astro:assets';
 import dark from '../../../docs/screenshots/list-dark.png';
 import light from '../../../docs/screenshots/list-light.png';
 import Icon from '../components/Icon.astro';
+import Screenshot from '../components/Screenshot.astro';
 import Base from '../layouts/Base.astro';
-import { INSTALL, REPO } from '../links';
-
-// The real side panel screenshots, converted to WebP at build time.
-const [lightImage, darkImage] = await Promise.all(
-  [light, dark].map((src) => getImage({ src, format: 'webp', quality: 90 })),
-);
+import { INSTALL, page, REPO } from '../links';
 
 const features = [
   {
@@ -31,6 +26,7 @@ const features = [
     icon: 'key',
     title: 'Private by design',
     text: 'Prowl runs in your browser. Your token stays on your device, GitHub is the only server it talks to, and there is no telemetry.',
+    link: ['Read the privacy policy', 'privacy/'],
   },
 ] as const;
 ---
@@ -54,16 +50,12 @@ const features = [
         </p>
         <p class="note">Free and open source. No Prowl account, no backend, no telemetry.</p>
       </div>
-      <picture class="shot">
-        <source media="(prefers-color-scheme: dark)" srcset={darkImage.src} />
-        <img
-          src={lightImage.src}
-          width={lightImage.attributes.width}
-          height={lightImage.attributes.height}
-          alt="The Prowl side panel listing pull requests with their CI, review and merge status."
-          fetchpriority="high"
-        />
-      </picture>
+      <Screenshot
+        light={light}
+        dark={dark}
+        alt="The Prowl side panel listing pull requests with their CI, review and merge status."
+        priority
+      />
     </div>
   </section>
 
@@ -79,6 +71,7 @@ const features = [
               </span>
               <h3>{feature.title}</h3>
               <p>{feature.text}</p>
+              {'link' in feature && <a href={page(feature.link[1])}>{feature.link[0]}</a>}
             </li>
           ))
         }
@@ -92,7 +85,7 @@ const features = [
       <ol class="steps">
         <li>
           <h3>Download</h3>
-          <p>Get the latest zip from the releases page and unzip it.</p>
+          <p>Get the latest zip from the releases page and unzip it into a new folder.</p>
         </li>
         <li>
           <h3>Load it in Chrome</h3>
@@ -103,11 +96,15 @@ const features = [
         </li>
         <li>
           <h3>Sign in</h3>
-          <p>Click the Prowl icon to open the side panel, then sign in with a GitHub token.</p>
+          <p>
+            Click the Prowl icon to open the side panel, then <a href={page('auth/')}>sign in with GitHub
+            or a token</a>.
+          </p>
         </li>
       </ol>
       <p class="actions">
         <a class="button" data-variant="primary" href={INSTALL}>Install Prowl</a>
+        <a class="button" href={page('install/')}>Read the install guide</a>
       </p>
     </div>
   </section>

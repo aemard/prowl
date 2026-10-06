@@ -49,7 +49,7 @@ in-memory updates that the next snapshot replaces.
 | `src/test/` | `chrome.ts` fake used by every unit test | excluded |
 | `tests/fixtures/` | Builders for GitHub-shaped GraphQL nodes, shared by unit tests and the E2E mock | n/a |
 | `tests/e2e/` | Playwright specs, fixtures, `mock-github/` server | n/a |
-| `site/` | Astro website for GitHub Pages (`pnpm --filter site build`, base `/prowl/`). Imports `src/styles/tokens.css`, `src/assets/logo.svg` and `docs/screenshots/` at build time; ships no JS | n/a |
+| `site/` | Astro website for GitHub Pages (`pnpm --filter site build`, base `/prowl/`). Imports `src/styles/tokens.css`, `src/assets/logo.svg` and `docs/screenshots/` at build time and renders `docs/auth.md`, `docs/privacy.md`, `CHANGELOG.md` and `CONTRIBUTING.md` as pages; ships no JS. `pnpm --filter site lighthouse` (also in CI) fails below 95 in any Lighthouse category on any page | n/a |
 
 ## Data flow of a poll
 

@@ -76,6 +76,16 @@ jobs:
       - name: E2E
         run: pnpm e2e
 
+      # Builds the site and fails below 95 in any Lighthouse category on any page. It runs in the
+      # Chromium that the steps above installed for Playwright.
+      - name: Lighthouse
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+          export CHROME_PATH
+          pnpm --filter site lighthouse
+
       - name: Upload extension zip
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

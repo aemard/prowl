@@ -146,7 +146,8 @@ code {
 
 nav {
   display: flex;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
 }
 
 nav a {
@@ -160,7 +161,8 @@ nav a {
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-nav a:hover {
+nav a:hover,
+nav a[aria-current="page"] {
   background: var(--color-bg-hover);
   color: var(--color-fg);
 }
@@ -214,7 +216,8 @@ nav a:hover {
 
 .shot img {
   width: 100%;
-  max-width: 25rem;
+  /* The screenshots are 400 px wide: shown larger on a phone they would be soft. */
+  max-width: 22rem;
   margin-inline: auto;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -232,6 +235,7 @@ nav a:hover {
   }
 
   .shot img {
+    max-width: 25rem;
     margin-inline: 0;
   }
 }
@@ -364,7 +368,7 @@ nav a:hover {
   }
 }
 
-/* Text pages */
+/* Text pages: hand-written guides and rendered Markdown (auth, privacy, changelog, contributing) */
 .prose {
   max-width: 46rem;
   margin-inline: auto;
@@ -380,6 +384,138 @@ nav a:hover {
 }
 
 .prose h2 {
-  margin-top: var(--space-8);
+  margin-top: var(--space-10);
   font-size: 1.375rem;
+}
+
+.prose h3 {
+  margin-top: var(--space-6);
+}
+
+.prose h2 + *,
+.prose h3 + * {
+  margin-top: var(--space-3);
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: var(--space-6);
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-top: var(--space-2);
+}
+
+.prose li::marker {
+  color: var(--color-fg-muted);
+}
+
+.prose em {
+  color: var(--color-fg-muted);
+}
+
+.prose .lead {
+  max-width: none;
+}
+
+/* Commands wrap instead of scrolling: nothing to reach by keyboard, nothing cut off. */
+.prose pre {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.prose th,
+.prose td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  overflow-wrap: break-word;
+  text-align: start;
+  vertical-align: top;
+}
+
+.prose td code {
+  white-space: nowrap;
+}
+
+.prose th {
+  background: var(--color-bg-subtle);
+  font-weight: var(--weight-semibold);
+}
+
+.prose img {
+  width: 100%;
+  max-width: 22rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* Numbered steps with the step number in a badge, like the landing page. */
+.guide-steps {
+  display: grid;
+  gap: var(--space-8);
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.prose .guide-steps > li {
+  position: relative;
+  min-width: 0;
+  min-height: 2rem;
+  margin: 0;
+  padding-inline-start: var(--space-12);
+  counter-increment: step;
+}
+
+.guide-steps > li::before {
+  content: counter(step);
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-solid);
+  color: var(--color-fg-on-solid);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.prose .guide-steps h3 {
+  margin-top: 0;
+  line-height: 2rem;
+}
+
+.prose .shot {
+  display: block;
+}
+
+.guide-steps .shot {
+  margin-top: var(--space-4);
 }

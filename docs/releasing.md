@@ -13,7 +13,7 @@ button points to `releases/latest`, so the newest release is what visitors downl
 
 The site in `site/` is built with Astro and deployed by `.github/workflows/pages.yml` to
 <https://aemard.github.io/prowl/>. The workflow runs on every push to `main` that touches
-`site/**`, `docs/**`, `pnpm-lock.yaml` or the workflow itself, and by hand from the Actions tab
+`site/**`, `docs/**`, `CHANGELOG.md`, `CONTRIBUTING.md`, `pnpm-lock.yaml` or the workflow itself, and by hand from the Actions tab
 (workflow dispatch).
 
 One-time repository setup (needs admin rights):
@@ -31,6 +31,15 @@ pnpm --filter site build     # writes site/dist/
 pnpm --filter site preview   # serves it at http://localhost:4321/prowl/
 ```
 
+`pnpm --filter site lighthouse` builds the site, serves it like GitHub Pages and runs Lighthouse
+(mobile profile) on every page. It fails when a page scores below 95 in performance,
+accessibility, best practices or SEO. It needs Chrome: `CHROME_PATH=/path/to/chrome` if none is
+found (CI uses the Chromium that Playwright installed). Use it after you add a page or an image.
+
 The site shares files with the extension, so a change there shows up on the site on the next
 build: `src/styles/tokens.css` (colors, spacing), `src/assets/logo.svg` (mark and favicon) and
-`docs/screenshots/list-light.png` / `list-dark.png` (the hero). `pnpm verify` also builds the site.
+`docs/screenshots/*.png` (the hero and the guides). Four pages render Markdown files at build time,
+so edit those, not the site: `/auth/` is `docs/auth.md`, `/privacy/` is `docs/privacy.md`,
+`/changelog/` is `CHANGELOG.md` (release-please keeps it current) and `/contributing/` is
+`CONTRIBUTING.md`. `/install/` is written in `site/src/pages/install.astro`. `pnpm verify` also
+builds the site.

@@ -2,7 +2,7 @@
 import logo from '../../../src/assets/logo.svg';
 import '../../../src/styles/tokens.css';
 import '../styles/site.css';
-import { DOCS, page, REPO } from '../links';
+import { page, REPO } from '../links';
 
 interface Props {
   title: string;
@@ -11,6 +11,13 @@ interface Props {
 
 const { title, description } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const nav = [
+  ['Install', 'install/'],
+  ['Sign in', 'auth/'],
+  ['Changelog', 'changelog/'],
+  ['Contribute', 'contributing/'],
+] as const;
+const current = (path: string) => (Astro.url.pathname === page(path) ? 'page' : undefined);
 ---
 
 <!doctype html>
@@ -37,7 +44,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
           Prowl
         </a>
         <nav aria-label="Main">
-          <a href={DOCS}>Docs</a>
+          {
+            nav.map(([label, path]) => (
+              <a href={page(path)} aria-current={current(path)}>{label}</a>
+            ))
+          }
           <a href={REPO}>GitHub</a>
         </nav>
       </div>
@@ -49,9 +60,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       <div class="wrap bar">
         <p>Open source under the MIT License. Not affiliated with GitHub.</p>
         <nav aria-label="Footer">
+          <a href={page('privacy/')} aria-current={current('privacy/')}>Privacy</a>
+          <a href={`${REPO}/issues`}>Issues</a>
           <a href={REPO}>GitHub</a>
-          <a href={DOCS}>Docs</a>
-          <a href={page('privacy/')}>Privacy</a>
         </nav>
       </div>
     </footer>

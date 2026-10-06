@@ -8,6 +8,8 @@ on:
     paths:
       - site/**
       - docs/**
+      - CHANGELOG.md
+      - CONTRIBUTING.md
       - pnpm-lock.yaml
       - .github/workflows/pages.yml
   workflow_dispatch:

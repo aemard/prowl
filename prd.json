@@ -460,8 +460,8 @@
       ],
       "priority": 25,
       "dependsOn": ["US-024"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Pages /install/, /auth/ (renders docs/auth.md), /privacy/ (docs/privacy.md), /changelog/ (CHANGELOG.md), /contributing/ (new CONTRIBUTING.md); `pnpm --filter site lighthouse` scores 100/100/100/100 on all 6 pages (gate 95) and runs in ci.yml after E2E; axe clean in light/dark at 390 and 1280 px; pnpm verify green."
     },
     {
       "id": "US-026",

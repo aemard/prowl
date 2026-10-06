@@ -1,0 +1,141 @@
+---
+import dark from '../../../docs/screenshots/list-dark.png';
+import light from '../../../docs/screenshots/list-light.png';
+import onboarding from '../../../docs/screenshots/onboarding.png';
+import Screenshot from '../components/Screenshot.astro';
+import Base from '../layouts/Base.astro';
+import { INSTALL, page, REPO } from '../links';
+---
+
+<Base
+  title="Install: Prowl"
+  description="Install Prowl in under five minutes: download the zip from the latest release, unzip it, load it in Chrome as an unpacked extension, pin it and open the side panel."
+>
+  <article class="section wrap prose guide">
+    <h1>Install Prowl</h1>
+    <p class="lead">
+      Prowl is installed from a release zip: download it, unzip it and load it in Chrome. It takes
+      under five minutes and you need no account besides GitHub.
+    </p>
+    <p class="actions">
+      <a class="button" data-variant="primary" href={INSTALL}>Download the latest release</a>
+    </p>
+
+    <h2>Before you start</h2>
+    <ul>
+      <li>Chrome 116 or newer. Prowl is built for and tested on Chrome.</li>
+      <li>A GitHub account.</li>
+    </ul>
+
+    <h2>Steps</h2>
+    <ol class="guide-steps">
+      <li>
+        <h3>Download the zip</h3>
+        <p>
+          Open <a href={INSTALL}>the latest release</a> and download
+          <code>prowl-vX.Y.Z.zip</code> from the Assets list. Do not pick the "Source code"
+          archives.
+        </p>
+      </li>
+      <li>
+        <h3>Unzip it into a new folder</h3>
+        <p>
+          Choose a place you will keep. Chrome reads the extension from this folder every time it
+          starts, so do not move or delete it. On macOS and Linux, run this where you saved the zip:
+        </p>
+        <pre><code>unzip prowl-v*.zip -d ~/prowl-extension</code></pre>
+        <p>
+          On Windows, right-click the zip and choose Extract All. The folder must contain
+          <code>manifest.json</code> directly, not inside another folder.
+        </p>
+      </li>
+      <li>
+        <h3>Open the extensions page</h3>
+        <p>
+          Type <code>chrome://extensions</code> in the address bar. Turn on <strong>Developer
+          mode</strong>, the switch at the top right.
+        </p>
+      </li>
+      <li>
+        <h3>Load Prowl</h3>
+        <p>
+          Choose <strong>Load unpacked</strong> and select the folder from step 2. Prowl appears in
+          your list of extensions.
+        </p>
+      </li>
+      <li>
+        <h3>Pin it</h3>
+        <p>
+          Click the puzzle-piece Extensions button in the toolbar, then the pin next to Prowl, so
+          its icon stays in reach.
+        </p>
+      </li>
+      <li>
+        <h3>Open the side panel and sign in</h3>
+        <p>
+          Click the Prowl icon. The side panel opens on the sign-in screen. Choose
+          <strong>Continue with GitHub</strong>, or paste a token. The
+          <a href={page('auth/')}>sign-in guide</a> explains both and the exact scopes.
+        </p>
+        <Screenshot
+          light={onboarding}
+          alt="Prowl's sign-in screen with the Continue with GitHub button and a field for a personal access token."
+        />
+      </li>
+    </ol>
+
+    <p>
+      That is all. Prowl lists your pull requests and keeps them up to date, with the panel open or
+      closed.
+    </p>
+    <Screenshot
+      light={light}
+      dark={dark}
+      alt="The Prowl side panel listing pull requests with their CI, review and merge status."
+    />
+
+    <h2>Update</h2>
+    <p>
+      Prowl does not update itself yet. When a new release comes out, download its zip and unzip it
+      over the same folder. Then open <code>chrome://extensions</code> and select the reload
+      button on Prowl's card. Use the same folder every time: Chrome ties your settings and your
+      sign-in to its location, and a new location starts as a fresh install.
+    </p>
+
+    <h2>If something does not work</h2>
+    <ul>
+      <li>
+        <strong>"Manifest file is missing or unreadable"</strong>: you selected the wrong folder.
+        Pick the one that holds <code>manifest.json</code>.
+      </li>
+      <li>
+        <strong>Clicking the icon does nothing</strong>: check that Chrome is version 116 or newer
+        (<code>chrome://settings/help</code>), and that Prowl is switched on.
+      </li>
+      <li>
+        <strong>Sign-in problems</strong>: see the <a href={page('auth/')}>sign-in guide</a>.
+      </li>
+    </ul>
+
+    <h2>Check the download</h2>
+    <p>
+      Every release zip comes with a build provenance attestation and an SBOM. To check that a zip
+      was built from this repository by its release workflow, use the
+      <a href="https://cli.github.com/">GitHub CLI</a>:
+    </p>
+    <pre><code>gh attestation verify prowl-v*.zip --repo aemard/prowl</code></pre>
+
+    <h2>Uninstall</h2>
+    <p>
+      Remove Prowl on <code>chrome://extensions</code>; Chrome deletes everything it stored. To end
+      its access to GitHub as well, revoke the token (see
+      <a href={page('auth/#signing-out-and-revoking-access')}>Signing out and revoking access</a>).
+    </p>
+
+    <h2>Build it yourself</h2>
+    <p>
+      Prefer to build from source? Follow <a href={page('contributing/')}>Contributing</a> and load
+      the <code>dist</code> folder in step 4. The code is on <a href={REPO}>GitHub</a>.
+    </p>
+  </article>
+</Base>

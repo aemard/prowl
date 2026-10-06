@@ -1,36 +1,13 @@
 ---
+import { Content } from '../../../docs/privacy.md';
 import Base from '../layouts/Base.astro';
-import { REPO } from '../links';
 ---
 
 <Base
   title="Privacy: Prowl"
-  description="What Prowl stores, who it talks to, and what it never does. Prowl runs in your browser and only contacts GitHub."
+  description="What Prowl stores, who it talks to and what it never does. Prowl runs in your browser and only contacts GitHub."
 >
   <article class="section wrap prose">
-    <h1>Privacy</h1>
-    <p>
-      Prowl is a browser extension that runs on your device. It has no backend and collects no
-      data.
-    </p>
-    <h2>What stays on your device</h2>
-    <p>
-      Your GitHub token, your settings and the last pull request data Prowl fetched are stored in
-      the browser's extension storage (<code>chrome.storage.local</code>). Your token is sent only
-      to GitHub, to authenticate its API requests. Settings and pull request data are not sent anywhere.
-      Signing out removes your token and the fetched data; uninstalling Prowl removes everything.
-    </p>
-    <h2>Who Prowl talks to</h2>
-    <p>
-      Only GitHub: the GitHub API, with your token, to read and act on your pull requests, and
-      GitHub's avatar images. There are no analytics, no telemetry, no ads and no other servers.
-    </p>
-    <h2>This website</h2>
-    <p>
-      The site is static. It sets no cookies, runs no scripts and loads no third-party resources.
-      GitHub Pages hosts it and may keep its own server logs.
-    </p>
-    <h2>Questions</h2>
-    <p>Prowl is open source. Read the code or open an issue in <a href={REPO}>the repository</a>.</p>
+    <Content />
   </article>
 </Base>
