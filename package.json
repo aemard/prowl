@@ -26,6 +26,7 @@
     "e2e": "pnpm build && pnpm build:e2e && playwright test",
     "screenshots": "PROWL_SCREENSHOTS=1 pnpm e2e",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm test",
+    "verify:changed": "pnpm verify:fast && pnpm build && pnpm size && pnpm build:e2e && playwright test --only-changed --pass-with-no-tests --reporter=dot",
     "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
   },
   "devDependencies": {

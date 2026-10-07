@@ -10,7 +10,8 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 
 | Command | What |
 |---|---|
-| `pnpm verify` | Everything CI runs: Biome, types, unit + coverage gates, build, size budget, E2E. Must be green before every commit. |
+| `pnpm verify` | Everything CI runs: Biome, types, unit + coverage gates, build, size budget, all E2E. CI runs it on every push; it must be green before merging. |
+| `pnpm verify:changed` | Before every commit: `verify:fast`, build, size budget, and only the E2E specs changed since the last commit (`--only-changed`). Run the full `pnpm verify` locally only to chase a CI failure. |
 | `pnpm verify:fast` | Lint + types + unit tests (inner loop) |
 | `pnpm test` / `pnpm coverage` | Vitest (coverage gates: 80% global, 95% `src/lib/diff` and `src/lib/github`) |
 | `pnpm e2e` | Builds `dist-e2e/` then runs Playwright against the mock GitHub server |
