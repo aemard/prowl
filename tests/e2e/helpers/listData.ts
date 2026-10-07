@@ -1,7 +1,8 @@
 /**
  * A realistic set of pull requests for the list E2E: several repositories, a draft, conflicts,
  * failing / pending / passing / no CI, approvals, requested changes, label colors from near
- * white to near black, and titles and names that are too long for the panel.
+ * white to near black, titles and names that are too long for the panel, and one authored PR
+ * with no commit for 34 days, which the default settings hide. Dates are relative to now.
  */
 import { headCommit, prNode as node, reviewNode } from '../../fixtures/github';
 import { MOCK_ORIGIN } from '../mock-github/server';
@@ -52,7 +53,7 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(9 * 24),
     updatedAt: ago(0.2),
-    commits: headCommit({ FAILURE: 2, SUCCESS: 11, SKIPPED: 1 }),
+    commits: headCommit({ FAILURE: 2, SUCCESS: 11, SKIPPED: 1 }, {}, ago(0.5)),
     reviewDecision: 'CHANGES_REQUESTED',
     latestReviews: { nodes: [reviewNode('alice', 'CHANGES_REQUESTED')] },
     labels: labels(
@@ -71,7 +72,7 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(3 * 24),
     updatedAt: ago(1),
-    commits: headCommit({ SUCCESS: 8 }),
+    commits: headCommit({ SUCCESS: 8 }, {}, ago(20)),
     reviewDecision: 'APPROVED',
     mergeStateStatus: 'CLEAN',
     labels: labels(['feature', '0e8a16'], ['backend', '1d76db']),
@@ -85,7 +86,7 @@ export const authored = [
     isDraft: true,
     createdAt: ago(2 * 24),
     updatedAt: ago(3),
-    commits: headCommit({ PENDING: 3, SUCCESS: 4 }),
+    commits: headCommit({ PENDING: 3, SUCCESS: 4 }, {}, ago(3)),
     reviewDecision: null,
     mergeStateStatus: 'DRAFT',
     labels: labels(['infra', '5319e7']),
@@ -97,7 +98,7 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(6 * 24),
     updatedAt: ago(26),
-    commits: headCommit({ SUCCESS: 5 }),
+    commits: headCommit({ SUCCESS: 5 }, {}, ago(4 * 24)),
     mergeable: 'CONFLICTING',
     mergeStateStatus: 'DIRTY',
     labels: labels(['platform:ios', 'c5def5'], ['crash', 'e99695']),
@@ -111,7 +112,7 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(3 * 24),
     updatedAt: ago(2 * 24),
-    commits: headCommit(null),
+    commits: headCommit(null, {}, ago(3 * 24)),
     reviewDecision: null,
     mergeStateStatus: 'CLEAN',
   }),
@@ -123,7 +124,7 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(4 * 24),
     updatedAt: ago(4 * 24),
-    commits: headCommit({ PENDING: 6 }),
+    commits: headCommit({ PENDING: 6 }, {}, ago(4 * 24)),
     labels: labels(
       ['dependencies', '0366d6'],
       ['a-very-long-label-name-that-should-truncate-nicely', 'ffffff'],
@@ -137,10 +138,21 @@ export const authored = [
     author: by('octocat'),
     createdAt: ago(8 * 24),
     updatedAt: ago(6 * 24),
-    commits: headCommit({ PENDING: 1, SUCCESS: 11 }),
+    commits: headCommit({ PENDING: 1, SUCCESS: 11 }, {}, ago(7 * 24)),
     reviewDecision: 'APPROVED',
     labels: labels(['design', '0b1f3a'], ['a11y', '1d76db']),
     totalCommentsCount: 7,
+  }),
+  prNode({
+    repository: 'acme/web',
+    number: 2311,
+    title: 'Experiment: lazy-load the analytics bundle',
+    author: by('octocat'),
+    createdAt: ago(52 * 24),
+    updatedAt: ago(9 * 24),
+    commits: headCommit({ SUCCESS: 11 }, {}, ago(34 * 24 + 5)),
+    labels: labels(['performance', 'f9d0c4']),
+    totalCommentsCount: 4,
   }),
 ];
 
@@ -152,7 +164,7 @@ export const reviewRequested = [
     author: by('alice'),
     createdAt: ago(24),
     updatedAt: ago(0.3),
-    commits: headCommit({ SUCCESS: 9 }),
+    commits: headCommit({ SUCCESS: 9 }, {}, ago(0.4)),
     labels: labels(['feature', '0e8a16']),
   }),
   prNode({
@@ -162,7 +174,7 @@ export const reviewRequested = [
     author: by('bob'),
     createdAt: ago(2 * 24),
     updatedAt: ago(5),
-    commits: headCommit({ FAILURE: 1, SUCCESS: 7 }),
+    commits: headCommit({ FAILURE: 1, SUCCESS: 7 }, {}, ago(6)),
     labels: labels(['bug', 'd73a4a']),
     reviewThreads: threads(1),
     totalCommentsCount: 5,
@@ -174,7 +186,7 @@ export const reviewRequested = [
     author: by('carol'),
     createdAt: ago(3 * 24),
     updatedAt: ago(2 * 24),
-    commits: headCommit(null),
+    commits: headCommit(null, {}, ago(3 * 24)),
   }),
 ];
 
@@ -186,7 +198,7 @@ export const mentioned = [
     author: by('erin'),
     createdAt: ago(5 * 24),
     updatedAt: ago(3 * 24),
-    commits: headCommit({ PENDING: 2 }),
+    commits: headCommit({ PENDING: 2 }, {}, ago(5 * 24)),
     totalCommentsCount: 9,
   }),
 ];
@@ -199,7 +211,7 @@ export const assigned = [
     author: by('frank'),
     createdAt: ago(9 * 24),
     updatedAt: ago(5 * 24),
-    commits: headCommit({ SUCCESS: 10 }),
+    commits: headCommit({ SUCCESS: 10 }, {}, ago(8 * 24)),
     reviewDecision: 'APPROVED',
     mergeStateStatus: 'CLEAN',
     labels: labels(['dependencies', '0366d6']),

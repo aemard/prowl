@@ -615,8 +615,8 @@
       ],
       "priority": 34,
       "dependsOn": ["US-033"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "lastCommitAt = head commit committedDate; hideStaleAfterDays 0-365 (default 20, Appearance); hiddenReasons(pr, hide, now) in src/lib/hidden.ts (HiddenReason union, describeHiddenReasons) feeds splitSection (ListModel) and computeBadge(snapshot, local, mode, hide, now); \"Show N hidden\" / \"Hide again\" reveal for the panel session; hidden PRs still notify."
     },
     {
       "id": "US-035",

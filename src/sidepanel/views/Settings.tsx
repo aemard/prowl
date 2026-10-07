@@ -1,7 +1,9 @@
 import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
 import {
+  MAX_HIDE_STALE_DAYS,
   MAX_PER_SECTION,
   MAX_POLL_INTERVAL_MINUTES,
+  MIN_HIDE_STALE_DAYS,
   MIN_PER_SECTION,
   MIN_POLL_INTERVAL_MINUTES,
 } from '../../lib/storage/settings';
@@ -68,7 +70,7 @@ function PollingSettings() {
 }
 
 function AppearanceSettings() {
-  const { theme, sort, badge } = settings.value;
+  const { theme, sort, badge, hideStaleAfterDays } = settings.value;
   return (
     <SettingsGroup title="Appearance">
       <Select
@@ -82,6 +84,14 @@ function AppearanceSettings() {
         value={sort}
         options={SORTS}
         onValueChange={(value) => void saveSettings({ sort: value })}
+      />
+      <NumberField
+        label="Hide PRs with no commit for (days)"
+        value={hideStaleAfterDays}
+        min={MIN_HIDE_STALE_DAYS}
+        max={MAX_HIDE_STALE_DAYS}
+        hint="They stay out of the list, the counts and the badge until you choose “Show hidden”, and still notify you. 0 never hides."
+        onCommit={(value) => void saveSettings({ hideStaleAfterDays: value })}
       />
       <Select
         label="Toolbar badge"

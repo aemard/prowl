@@ -29,6 +29,7 @@ describe('mapPullRequest', () => {
       reviewThreads: { nodes: [{ isResolved: false }, { isResolved: true }] },
       totalCommentsCount: 4,
       comments: { nodes: [{ createdAt: '2026-10-05T11:00:00Z', author: { login: 'hubot' } }] },
+      commits: headCommit({ SUCCESS: 2 }, {}, '2026-10-04T16:20:00Z'),
     });
     expect(mapPullRequest(node)).toEqual({
       id: 'PR_acme_api_7',
@@ -47,6 +48,7 @@ describe('mapPullRequest', () => {
       headSha: 'a'.repeat(40),
       createdAt: '2026-10-01T09:00:00Z',
       updatedAt: '2026-10-05T12:00:00Z',
+      lastCommitAt: '2026-10-04T16:20:00Z',
       checks: { state: 'success', total: 2, passed: 2, failed: 0, pending: 0, neutral: 0 },
       reviewDecision: 'review_required',
       reviews: [
@@ -115,9 +117,27 @@ describe('mapPullRequest', () => {
       const rollup = {
         contexts: { checkRunCountsByState: null, statusContextCountsByState: null },
       };
-      expect(checks({ nodes: [{ commit: { statusCheckRollup: rollup } }] }).state).toBe('none');
+      const commit = { committedDate: '2026-10-04T16:20:00Z', statusCheckRollup: rollup };
+      expect(checks({ nodes: [{ commit }] }).state).toBe('none');
       expect(checks({ nodes: null }).state).toBe('none');
       expect(checks({ nodes: [] }).state).toBe('none');
+    });
+  });
+
+  describe('lastCommitAt', () => {
+    const lastCommitAt = (commits: ReturnType<typeof headCommit>) =>
+      mapPullRequest(prNode({ commits, updatedAt: '2026-10-05T12:00:00Z' })).lastCommitAt;
+
+    it("is the head commit's committedDate, however recent the other activity", () => {
+      expect(lastCommitAt(headCommit(null, {}, '2026-08-30T07:15:00Z'))).toBe(
+        '2026-08-30T07:15:00Z',
+      );
+    });
+
+    it('falls back to the last activity when the head commit did not load', () => {
+      expect(lastCommitAt({ nodes: [null] })).toBe('2026-10-05T12:00:00Z');
+      expect(lastCommitAt({ nodes: [] })).toBe('2026-10-05T12:00:00Z');
+      expect(lastCommitAt({ nodes: null })).toBe('2026-10-05T12:00:00Z');
     });
   });
 

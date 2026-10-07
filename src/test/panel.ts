@@ -29,6 +29,9 @@ export function buildPollState(overrides: Partial<PollState> = {}): PollState {
   };
 }
 
+/** When the tests started: a default `lastCommitAt` that the 20-day rule never hides. */
+const RECENT_COMMIT = new Date().toISOString();
+
 /** An open, mergeable PR with no checks, reviews or labels; override what a test cares about. */
 export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequest {
   const number = overrides.number ?? 1;
@@ -48,6 +51,7 @@ export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequ
     headSha: 'a'.repeat(40),
     createdAt: '2026-10-01T09:00:00.000Z',
     updatedAt: '2026-10-06T10:00:00.000Z',
+    lastCommitAt: RECENT_COMMIT,
     checks: { state: 'none', total: 0, passed: 0, failed: 0, pending: 0, neutral: 0 },
     reviewDecision: 'none',
     reviews: [],

@@ -1,10 +1,12 @@
 import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { describeHiddenReasons } from '../../lib/hidden';
 import type { Section, SectionKind, Snapshot } from '../../lib/model';
-import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
+import { isMuted, isSeen } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
   ClockIcon,
+  EyeClosedIcon,
   EyeIcon,
   FilterIcon,
   GitPullRequestIcon,
@@ -24,18 +26,22 @@ import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { filterPullRequests, sortPullRequests } from './ListModel';
+import { filterPullRequests, type SectionParts, sortPullRequests, splitSection } from './ListModel';
 import './List.css';
 
 /** How long a card must stay on screen before it counts as seen. */
 const SEEN_DELAY_MS = 1500;
 
 /**
- * Selected tab and quick filter live outside the view, so they survive a visit to Settings.
- * Exported for tests, which reset them.
+ * Selected tab, quick filter and whether hidden PRs are revealed live outside the view, so they
+ * survive a visit to Settings and last until the panel closes. Exported for tests, which reset
+ * them.
  */
 export const activeSectionId = signal<string | undefined>(undefined);
 export const filterQuery = signal('');
+export const showHidden = signal(false);
+
+const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
 
 /**
  * Per section kind: its icon and short name in the section bar (a custom section shows its own
@@ -160,10 +166,11 @@ let listRendered = false;
 export function ListView() {
   const now = useNow(30_000);
   const idPrefix = useId();
-  const list = useRef<HTMLUListElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const filterInput = useRef<HTMLElement>(null);
 
-  const { sections, sort } = settings.value;
+  const current = settings.value;
+  const { sections, sort } = current;
   // A snapshot left by another account (sign-out raced a poll) is never shown.
   const viewer = auth.value?.viewer.login.toLowerCase();
   const raw = snapshot.value;
@@ -173,34 +180,35 @@ export function ListView() {
   const enabled = sections.filter((section) => section.enabled);
   const selected = enabled.find((section) => section.id === activeSectionId.value) ?? enabled[0];
 
-  // Per section, the PRs that pass the filter in the chosen order; snoozed ones are set aside.
+  // Per section, the PRs that pass the filter in the chosen order: cards (counted), hidden ones
+  // and snoozed ones, each set aside behind a button at the end.
   const clock = Date.now();
-  const snoozed = (id: string) => isSnoozed(local, id, clock);
-  const filtered = new Map(
+  const parts = new Map(
     enabled.map((section) => [
       section.id,
       snap
-        ? sortPullRequests(filterPullRequests(pullRequestsOf(snap, section.id), query), sort)
-        : [],
+        ? splitSection(
+            sortPullRequests(filterPullRequests(pullRequestsOf(snap, section.id), query), sort),
+            local,
+            current,
+            clock,
+          )
+        : NOTHING,
     ]),
   );
-  const matching = new Map(
-    [...filtered].map(([id, prs]) => [id, prs.filter((pr) => !snoozed(pr.id))]),
-  );
-  const shown = (selected && matching.get(selected.id)) || [];
-  const shownSnoozed = ((selected && filtered.get(selected.id)) || []).filter((pr) =>
-    snoozed(pr.id),
-  );
+  const { shown, hidden, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
+  const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
   const [snoozedOpen, setSnoozedOpen] = useState(false);
   useEffect(() => {
     if (listRendered || shown.length === 0) return;
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
+  const seeable = [...shown, ...revealed];
   useMarkSeen(
-    list,
-    [enabled.length > 1, ...shown.map((pr) => pr.id)].join('\n'),
-    shown.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
+    panel,
+    [enabled.length > 1, ...seeable.map((pr) => pr.id)].join('\n'),
+    seeable.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
   );
 
   if (!selected) {
@@ -229,9 +237,9 @@ export function ListView() {
   }
 
   const error = snap.sectionErrors?.[selected.id];
+  const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
-  const filteredOut =
-    shown.length === 0 && shownSnoozed.length === 0 && pullRequestsOf(snap, selected.id).length > 0;
+  const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
   const tabs = enabled.map((section) => {
     const { icon: Icon, short } = KINDS[section.kind];
@@ -240,7 +248,7 @@ export function ListView() {
       label: short ?? section.label,
       fullLabel: section.label,
       icon: <Icon />,
-      count: matching.get(section.id)?.length ?? 0,
+      count: parts.get(section.id)?.shown.length ?? 0,
       failed: snap.sectionErrors?.[section.id] !== undefined,
     };
   });
@@ -282,10 +290,10 @@ export function ListView() {
           idPrefix={idPrefix}
         />
       )}
-      <div id={panelId(idPrefix)} {...panelProps}>
+      <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
         {error !== undefined && <SectionNotice section={selected} message={error} />}
         {shown.length > 0 && (
-          <ul class="pr-list" ref={list} aria-label={`${selected.label} pull requests`}>
+          <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
             {shown.map((pr) => (
               <PullRequestCard
                 key={pr.id}
@@ -297,20 +305,21 @@ export function ListView() {
             ))}
           </ul>
         )}
-        {shownSnoozed.length > 0 && (
-          <div class="list__snoozed">
+        {snoozed.length > 0 && (
+          <div class="list__aside">
             <Button
+              class="list__aside-toggle"
               size="sm"
               variant="ghost"
               icon={<ClockIcon size={12} />}
               aria-expanded={snoozedOpen}
               onClick={() => setSnoozedOpen(!snoozedOpen)}
             >
-              Snoozed ({shownSnoozed.length})
+              Snoozed ({snoozed.length})
             </Button>
             {snoozedOpen && (
               <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
-                {shownSnoozed.map((pr) => (
+                {snoozed.map((pr) => (
                   <PullRequestCard
                     key={pr.id}
                     pr={pr}
@@ -324,7 +333,37 @@ export function ListView() {
             )}
           </div>
         )}
-        {shown.length === 0 && shownSnoozed.length === 0 && error === undefined && (
+        {hidden.length > 0 && (
+          <div class="list__aside">
+            <Button
+              class="list__aside-toggle"
+              size="sm"
+              variant="ghost"
+              icon={showHidden.value ? <EyeClosedIcon size={12} /> : <EyeIcon size={12} />}
+              aria-expanded={showHidden.value}
+              onClick={() => {
+                showHidden.value = !showHidden.value;
+              }}
+            >
+              {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
+            </Button>
+            {showHidden.value && (
+              <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
+                {hidden.map(({ pr, reasons }) => (
+                  <PullRequestCard
+                    key={pr.id}
+                    pr={pr}
+                    now={now}
+                    unseen={!isSeen(local, pr.id, pr.updatedAt)}
+                    muted={isMuted(local, pr.id)}
+                    hiddenBecause={describeHiddenReasons(reasons)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {empty && error === undefined && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
             title={filteredOut ? 'No matches' : 'No pull requests'}

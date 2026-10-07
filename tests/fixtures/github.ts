@@ -19,6 +19,11 @@ import { graphqlRateLimit } from './http';
 
 const WEB = 'https://github.com';
 const AVATAR = 'https://avatars.githubusercontent.com/u/583231?s=64&v=4';
+/**
+ * Default `committedDate`: when the tests started, in GitHub's format. Fixed dates would make
+ * every default PR "no commit for 20 days" (hidden) on later runs; set it to test staleness.
+ */
+export const RECENT_COMMIT = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
 /** `viewer { login avatarUrl name }`. */
 export function viewerNode(overrides: Partial<Viewer> = {}): Viewer {
@@ -44,10 +49,14 @@ export function repositoryNode(nameWithOwner = 'acme/widgets', overrides = {}) {
   };
 }
 
-/** `commits(last: 1)` whose head commit has these check-run and status counts (null: none). */
+/**
+ * `commits(last: 1)` whose head commit has these check-run and status counts (null: none) and
+ * was committed at `committedDate`.
+ */
 export function headCommit(
   checkRuns: Record<string, number> | null = { SUCCESS: 2 },
   statuses: Record<string, number> = {},
+  committedDate = RECENT_COMMIT,
 ): PullRequestNode['commits'] {
   const counts = (byState: Record<string, number>): StateCount[] =>
     Object.entries(byState).map(([state, count]) => ({ state, count }));
@@ -55,6 +64,7 @@ export function headCommit(
     nodes: [
       {
         commit: {
+          committedDate,
           statusCheckRollup: checkRuns && {
             contexts: {
               checkRunCountsByState: counts(checkRuns),

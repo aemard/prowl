@@ -18,6 +18,8 @@ const AUTHORED = {
   badges: prId(58, 'octo/docs'),
   deps: prId(1042, 'northwind-engineering/internal-platform-services-monorepo'),
   contrast: prId(2470, 'acme/web'),
+  /** No commit for 34 days: hidden by default. */
+  stale: prId(2311, 'acme/web'),
 };
 
 const tabNames = (panel: Page) => panel.getByRole('tab').allTextContents();
@@ -334,6 +336,81 @@ test.describe('with a rich set of pull requests', () => {
       await expect(panel.getByRole('listitem')).toHaveCount(1);
       await expect(cardFor(panel, title)).toBeVisible();
     }
+  });
+
+  test('hides pull requests with no commit for 20 days behind a button at the end', async ({
+    openPanel,
+    expectNoA11yViolations,
+  }) => {
+    const panel = await openPanel();
+    const stale = /^Experiment: lazy-load/;
+    await expect(panel.getByRole('listitem')).toHaveCount(7);
+    await expect(cardFor(panel, stale)).toHaveCount(0);
+    expect(await tabNames(panel)).toEqual(['Mine7', 'Review3', 'Mentions1', 'Assigned1']);
+
+    // After the last card, above the bar.
+    const show = panel.getByRole('button', { name: 'Show 1 hidden' });
+    await show.scrollIntoViewIfNeeded();
+    const last = await box(panel.locator('.pr-card').last());
+    expect((await box(show)).y).toBeGreaterThanOrEqual(last.y + last.height);
+    expect((await box(show)).y + (await box(show)).height).toBeLessThanOrEqual(await barTop(panel));
+
+    await show.click();
+    const again = panel.getByRole('button', { name: 'Hide again' });
+    await expect(again).toBeFocused();
+    await expect(again).toHaveAttribute('aria-expanded', 'true');
+    const revealed = panel.getByRole('list', { name: 'Hidden Created by me pull requests' });
+    await expect(revealed.getByRole('listitem')).toHaveCount(1);
+    await expect(cardFor(panel, stale)).toContainText('No commit for 34 d');
+    await expect(cardFor(panel, stale).locator('[data-pr-id]')).toHaveAttribute(
+      'data-pr-id',
+      AUTHORED.stale,
+    );
+    // Not counted, even when shown.
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    await revealed.scrollIntoViewIfNeeded();
+    await panel.emulateMedia({ colorScheme: 'light' });
+    await expectNoA11yViolations(panel);
+    await panel.screenshot({ path: test.info().outputPath('hidden-light.png') });
+    await panel.emulateMedia({ colorScheme: 'dark' });
+    await expectNoA11yViolations(panel);
+    await panel.screenshot({ path: test.info().outputPath('hidden-dark.png') });
+
+    // Revealed for the session: still there after a visit to Settings.
+    await panel.getByRole('button', { name: 'Settings', exact: true }).click();
+    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+    await expect(cardFor(panel, stale)).toBeVisible();
+
+    await panel.getByRole('button', { name: 'Hide again' }).click();
+    await expect(cardFor(panel, stale)).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: 'Show 1 hidden' })).toBeFocused();
+  });
+
+  test('a new number of days in Settings applies at once, and 0 hides nothing', async ({
+    openPanel,
+  }) => {
+    const panel = await openPanel();
+    const days = async (value: string) => {
+      await panel.getByRole('button', { name: 'Settings', exact: true }).click();
+      await panel.getByLabel('Hide PRs with no commit for (days)').fill(value);
+      await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+    };
+
+    // Commits 7 and 34 days old in Mine, 8 days in Assigned; Mentions' is 5 days old.
+    await days('6');
+    await expect
+      .poll(() => tabNames(panel))
+      .toEqual(['Mine6', 'Review3', 'Mentions1', 'Assigned0']);
+    await expect(panel.getByRole('button', { name: 'Show 2 hidden' })).toBeAttached();
+    await expect(cardFor(panel, /^Dark mode: fix contrast/)).toHaveCount(0);
+
+    await days('0');
+    await expect
+      .poll(() => tabNames(panel))
+      .toEqual(['Mine8', 'Review3', 'Mentions1', 'Assigned1']);
+    await expect(panel.getByRole('listitem')).toHaveCount(8);
+    await expect(panel.getByRole('button', { name: /hidden/ })).toHaveCount(0);
+    await expect(cardFor(panel, /^Experiment: lazy-load/)).not.toContainText('No commit');
   });
 
   test('marks the cards on screen as seen after 1.5 s, and the others once scrolled to', async ({

@@ -102,6 +102,11 @@ export interface PullRequest {
   headSha: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * When the head commit was committed (`committedDate`). A rebase, an amend or "Update branch"
+   * renews it; comments, reviews and labels do not. What hides a PR with no recent commit.
+   */
+  lastCommitAt: string;
   checks: CheckSummary;
   reviewDecision: ReviewDecision;
   /** Latest review per reviewer, newest first. */
@@ -291,6 +296,11 @@ export interface Settings {
   badge: BadgeMode;
   theme: Theme;
   sort: SortOrder;
+  /**
+   * PRs whose last commit is older than this many days are left out of the list, the section
+   * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.
+   */
+  hideStaleAfterDays: number;
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */

@@ -1,7 +1,8 @@
 /**
  * The toolbar icon badge. It is derived entirely from storage (`snapshot`, `prLocal` and
- * `settings.badge`), so any context may change those and the badge follows: `watchBadge()`
- * repaints on every change, and the poller repaints at the end of each poll.
+ * `settings`: the badge mode and what the list hides), so any context may change those and the
+ * badge follows: `watchBadge()` repaints on every change, and the poller repaints at the end of
+ * each poll.
  */
 import { type BadgeView, computeBadge, NO_BADGE } from '../lib/badge/computeBadge';
 import { normalizePrLocal } from '../lib/storage/prLocal';
@@ -37,11 +38,13 @@ function paint(view: () => Promise<BadgeView>): Promise<void> {
 /** Repaints the badge from what is stored now. */
 export function updateBadge(): Promise<void> {
   return paint(async () => {
-    const { snapshot, settings, prLocal } = await getItems(['snapshot', 'settings', 'prLocal']);
+    const stored = await getItems(['snapshot', 'settings', 'prLocal']);
+    const settings = normalizeSettings(stored.settings);
     return computeBadge(
-      snapshot,
-      normalizePrLocal(prLocal),
-      normalizeSettings(settings).badge,
+      stored.snapshot,
+      normalizePrLocal(stored.prLocal),
+      settings.badge,
+      settings,
       Date.now(),
     );
   });

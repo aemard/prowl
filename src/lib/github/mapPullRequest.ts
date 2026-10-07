@@ -125,7 +125,8 @@ const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
 
 export function mapPullRequest(node: PullRequestNode): PullRequest {
   const { repository: repo } = node;
-  const contexts = node.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts;
+  const head = node.commits.nodes?.at(-1)?.commit;
+  const contexts = head?.statusCheckRollup?.contexts;
   const lastComment = present(node.comments).at(-1);
   const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
   return {
@@ -142,6 +143,9 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     headSha: node.headRefOid,
     createdAt: node.createdAt,
     updatedAt: node.updatedAt,
+    // A head commit that failed to load counts as the last activity: a read error alone never
+    // hides a PR that something recently happened on.
+    lastCommitAt: head?.committedDate ?? node.updatedAt,
     checks: mapChecks([
       ...(contexts?.checkRunCountsByState ?? []),
       ...(contexts?.statusContextCountsByState ?? []),

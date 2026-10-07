@@ -14,6 +14,7 @@ import {
   CommentDiscussionIcon,
   CommentIcon,
   DotFillIcon,
+  EyeClosedIcon,
   EyeIcon,
   FileDiffIcon,
   GitMergeIcon,
@@ -60,6 +61,8 @@ export interface PullRequestCardProps {
   muted?: boolean;
   /** ISO time the snooze ends, when the PR is snoozed. */
   snoozedUntil?: string | null;
+  /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
+  hiddenBecause?: string;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -71,7 +74,14 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
  * opens and describes the card with every fact it shows, so a screen reader gets the whole card
  * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
  */
-export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRequestCardProps) {
+export function PullRequestCard({
+  pr,
+  unseen,
+  now,
+  muted,
+  snoozedUntil,
+  hiddenBecause,
+}: PullRequestCardProps) {
   const detailId = useId();
   const card = useRef<HTMLLIElement>(null);
   const expanded = expandedIds.value.includes(pr.id);
@@ -160,8 +170,17 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
         >
           {pr.title}
         </GitHubLink>
-        {statuses.length > 0 && (
+        {(hiddenBecause || statuses.length > 0) && (
           <span class="pr-card__chips">
+            {hiddenBecause && (
+              <Badge
+                variant="plain"
+                icon={<EyeClosedIcon size={12} />}
+                title="Why it is hidden from the list"
+              >
+                {hiddenBecause}
+              </Badge>
+            )}
             {statuses.map(({ id, tone, icon, label, detail }) => {
               const Icon = STATUS_ICONS[icon];
               return (
@@ -222,6 +241,7 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
         </span>
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
+          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
         </span>
       </div>
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}

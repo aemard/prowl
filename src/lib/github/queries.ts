@@ -65,6 +65,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         commits(last: 1) {
           nodes {
             commit {
+              committedDate
               statusCheckRollup {
                 contexts {
                   checkRunCountsByState { state count }
@@ -200,6 +201,8 @@ export interface PullRequestNode {
   comments: Nodes<{ createdAt: string; author: Login | null }>;
   commits: Nodes<{
     commit: {
+      /** Committer date (set by git, renewed by a rebase or amend). */
+      committedDate: string;
       statusCheckRollup: {
         contexts: {
           checkRunCountsByState: StateCount[] | null;

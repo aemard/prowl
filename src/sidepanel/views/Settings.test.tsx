@@ -392,6 +392,19 @@ describe('SettingsView', () => {
       );
     });
 
+    it('hides pull requests after the number of days without a commit, 0 for never', async () => {
+      await open();
+      const field = group('Appearance').getByLabelText('Hide PRs with no commit for (days)');
+      expect((field as HTMLInputElement).value).toBe('20');
+      expect(group('Appearance').getByText(/still notify you\. 0 never hides\./)).toBeTruthy();
+
+      fireEvent.input(field, { target: { value: '366' } });
+      expect(screen.getByText('Enter a whole number from 0 to 365.')).toBeTruthy();
+      expect((await saved()).hideStaleAfterDays).toBe(20);
+      fireEvent.input(field, { target: { value: '0' } });
+      await waitFor(async () => expect((await saved()).hideStaleAfterDays).toBe(0));
+    });
+
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>

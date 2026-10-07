@@ -3,6 +3,7 @@ import { headCommit, prNode, viewerNode } from '../../../tests/fixtures/github';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
 import { emptyPrLocal, markSeen, mute, snooze } from '../storage/prLocal';
+import { DEFAULT_SETTINGS } from '../storage/settings';
 import { BADGE_TITLE, computeBadge, NO_BADGE } from './computeBadge';
 
 const NOW = Date.parse('2026-10-06T12:00:00Z');
@@ -28,7 +29,7 @@ function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) =>
 }
 
 const badge = (prs: PullRequest[], mode: BadgeMode = 'attention', local = emptyPrLocal()) =>
-  computeBadge(snapshot(prs), local, mode, NOW);
+  computeBadge(snapshot(prs), local, mode, DEFAULT_SETTINGS, NOW);
 
 describe('computeBadge: attention', () => {
   it('counts failing CI, requested changes, conflicts and ready to merge, not quiet PRs', () => {
@@ -84,7 +85,13 @@ describe('computeBadge: attention', () => {
       PullRequest,
     ];
     const sections = { authored: [a.id, b.id], assigned: [b.id], custom: ['PR_gone'] };
-    const view = computeBadge(snapshot([a, b, c], sections), emptyPrLocal(), 'attention', NOW);
+    const view = computeBadge(
+      snapshot([a, b, c], sections),
+      emptyPrLocal(),
+      'attention',
+      DEFAULT_SETTINGS,
+      NOW,
+    );
     expect(view.text).toBe('2');
   });
 
@@ -93,7 +100,23 @@ describe('computeBadge: attention', () => {
     let local: PrLocalState = snooze(emptyPrLocal(), a.id, NOW + HOUR);
     local = mute(local, b.id);
     expect(badge([a, b], 'attention', local).text).toBe('1');
-    expect(computeBadge(snapshot([a, b]), local, 'attention', NOW + 2 * HOUR).text).toBe('2');
+    expect(
+      computeBadge(snapshot([a, b]), local, 'attention', DEFAULT_SETTINGS, NOW + 2 * HOUR).text,
+    ).toBe('2');
+  });
+
+  it('leaves out PRs the list hides, under the same setting', () => {
+    const stale = quiet(1, { commits: headCommit({ FAILURE: 1 }, {}, '2026-09-10T12:00:00Z') });
+    const [old, recent] = [stale, failing(2)] as [PullRequest, PullRequest];
+    expect(badge([old, recent])).toMatchObject({
+      text: '1',
+      title: 'Prowl: 1 pull request needing attention (1 CI failing)',
+    });
+    expect(badge([old], 'unseen')).toEqual(NO_BADGE);
+    const never = { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 };
+    expect(
+      computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', never, NOW).text,
+    ).toBe('2');
   });
 
   it('shows 99+ above 99', () => {
@@ -138,6 +161,8 @@ describe('computeBadge: unseen', () => {
 describe('computeBadge: off and signed out', () => {
   it('shows nothing', () => {
     expect(badge([failing(1)], 'off')).toEqual(NO_BADGE);
-    expect(computeBadge(undefined, emptyPrLocal(), 'attention', NOW)).toEqual(NO_BADGE);
+    expect(computeBadge(undefined, emptyPrLocal(), 'attention', DEFAULT_SETTINGS, NOW)).toEqual(
+      NO_BADGE,
+    );
   });
 });

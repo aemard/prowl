@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { emptyPrLocal, snooze } from '../../lib/storage/prLocal';
+import { DEFAULT_SETTINGS } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
-import { filterPullRequests, sortPullRequests } from './ListModel';
+import { filterPullRequests, sortPullRequests, splitSection } from './ListModel';
 
 const prs = [
   buildPullRequest({
@@ -61,5 +63,32 @@ describe('sortPullRequests', () => {
     const copy = [...prs];
     sortPullRequests(copy, 'created');
     expect(copy).toEqual(prs);
+  });
+});
+
+describe('splitSection', () => {
+  const NOW = Date.parse('2026-10-27T12:00:00.000Z');
+  const recent = buildPullRequest({ number: 1, lastCommitAt: '2026-10-20T00:00:00.000Z' });
+  const stale = buildPullRequest({ number: 2, lastCommitAt: '2026-09-20T00:00:00.000Z' });
+  const staleSnoozed = buildPullRequest({ number: 3, lastCommitAt: '2026-09-01T00:00:00.000Z' });
+  const snoozed = buildPullRequest({ number: 4, lastCommitAt: '2026-10-26T00:00:00.000Z' });
+  const local = [staleSnoozed, snoozed].reduce(
+    (state, pr) => snooze(state, pr.id, NOW + 3_600_000),
+    emptyPrLocal(),
+  );
+  const all = [stale, recent, staleSnoozed, snoozed];
+
+  it('shows recent PRs, hides stale ones with the reason, and keeps snoozed ones apart', () => {
+    const parts = splitSection(all, local, DEFAULT_SETTINGS, NOW);
+    expect(numbers(parts.shown)).toEqual([1]);
+    expect(parts.hidden).toEqual([{ pr: stale, reasons: [{ kind: 'stale', days: 37 }] }]);
+    expect(numbers(parts.snoozed)).toEqual([3, 4]);
+  });
+
+  it('hides nothing with 0, and lets ended snoozes back in, in the given order', () => {
+    const parts = splitSection(all, local, { hideStaleAfterDays: 0 }, NOW + 7_200_000);
+    expect(numbers(parts.shown)).toEqual([2, 1, 3, 4]);
+    expect(parts.hidden).toEqual([]);
+    expect(parts.snoozed).toEqual([]);
   });
 });

@@ -35,6 +35,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Errors, offline, revoked token | `errors` (401, 403 rate limit, 502, refused connection, stale data) |
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |
 | Section bar at the bottom (US-033) | `list` › sections in a bar at the bottom (position, names, arrows / Home / End); fits 320 to 600 px wide panels, with the sections past the fourth under "More" (truncation, menu, selected More, Tab order, axe light/dark); keeps menus, toasts and keyboard focus clear of the bar |
+| Hide PRs with no recent commit (US-034) | `list` › hides pull requests with no commit for 20 days behind a button at the end (not counted, reveal with the reason, survives Settings, Hide again, axe light/dark); a new number of days in Settings applies at once, and 0 hides nothing |
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
 | Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 

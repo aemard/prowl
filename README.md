@@ -44,7 +44,8 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
 ## Features
 
 - **Scope**: PRs you authored by default; add review requested, mentioned, assigned, custom
-  GitHub searches, and repository include/exclude filters. Each scope is a tab.
+  GitHub searches, and repository include/exclude filters. Each scope is a tab. PRs with no
+  commit for 20 days (you choose) step aside behind a "Show hidden" button and still notify.
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.

@@ -205,6 +205,20 @@ describe('poll', () => {
     expect(notifications.size).toBe(0);
   });
 
+  it('still notifies about a PR the list hides for its old last commit, kept off the badge', async () => {
+    let checks: CheckState = 'pending';
+    const lastCommit = new Date(NOW - 35 * 24 * 60 * MINUTE).toISOString();
+    github(() => searchResponse([prNode({ commits: headCommit(CHECKS[checks], {}, lastCommit) })]));
+    await signIn();
+    await poll();
+    checks = 'failure';
+    later(2 * MINUTE);
+    await poll();
+    const { notifications, badge } = fakeChrome().__state;
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
+    expect(badge.text).toBe('');
+  });
+
   it('keeps the poll result when notifying fails', async () => {
     let checks: CheckState = 'pending';
     github(() => searchWith(checks)());

@@ -67,6 +67,7 @@ describe('DEFAULT_SETTINGS', () => {
       badge: 'attention',
       theme: 'system',
       sort: 'updated',
+      hideStaleAfterDays: 20,
     } satisfies Settings);
   });
 
@@ -124,6 +125,7 @@ describe('normalizeSettings', () => {
       badge: 'unseen',
       theme: 'dark',
       sort: 'repo',
+      hideStaleAfterDays: 0,
     };
     expect(normalizeSettings(custom)).toEqual(custom);
     expect(normalizeSettings(normalizeSettings(custom))).toEqual(custom);
@@ -196,6 +198,19 @@ describe('normalizeSettings', () => {
     [undefined, 50],
   ])('repairs maxPerSection %j to %j', (value, expected) => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
+  });
+
+  it.each([
+    [0, 0],
+    [-1, 0],
+    [7.4, 7],
+    [365, 365],
+    [366, 365],
+    [Number.POSITIVE_INFINITY, 20],
+    ['30', 20],
+    [null, 20],
+  ])('repairs hideStaleAfterDays %j to %j', (value, expected) => {
+    expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
   });
 
   it('repairs notification switches and quiet hours', () => {

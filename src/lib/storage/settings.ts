@@ -22,6 +22,9 @@ export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
 export const MAX_SECTION_LABEL_LENGTH = 60;
+/** `hideStaleAfterDays` range; 0 never hides. */
+export const MIN_HIDE_STALE_DAYS = 0;
+export const MAX_HIDE_STALE_DAYS = 365;
 
 export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 
@@ -85,6 +88,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   badge: 'attention',
   theme: 'system',
   sort: 'updated',
+  hideStaleAfterDays: 20,
 });
 
 export function defaultSettings(): Settings {
@@ -282,6 +286,12 @@ export function normalizeSettings(value: unknown): Settings {
     badge: oneOf(raw.badge, BADGE_MODES, DEFAULT_SETTINGS.badge),
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
+    hideStaleAfterDays: clampInt(
+      raw.hideStaleAfterDays,
+      MIN_HIDE_STALE_DAYS,
+      MAX_HIDE_STALE_DAYS,
+      DEFAULT_SETTINGS.hideStaleAfterDays,
+    ),
   };
 }
 
