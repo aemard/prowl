@@ -6,6 +6,7 @@ import {
   detailReview,
   headCommit,
   prNode,
+  repositoryNode,
   requestedReviewer,
   reviewNode,
   statusContextNode,
@@ -19,6 +20,27 @@ import {
 } from './mapPullRequest';
 
 describe('mapPullRequest', () => {
+  it('maps auto-merge: whether the repository allows it, and the method and who turned it on', () => {
+    const on = mapPullRequest(
+      prNode({
+        repository: 'acme/widgets',
+        autoMergeRequest: { mergeMethod: 'SQUASH', enabledBy: { login: 'alice' } },
+      }),
+    );
+    expect(on.autoMerge).toEqual({ method: 'squash', enabledBy: 'alice' });
+    const ghost = mapPullRequest(
+      prNode({ autoMergeRequest: { mergeMethod: 'BOGUS', enabledBy: null } }),
+    );
+    expect(ghost.autoMerge).toEqual({ method: 'merge', enabledBy: null });
+    expect(mapPullRequest(prNode()).autoMerge).toBeNull();
+    expect(mapPullRequest(prNode()).autoMergeAllowed).toBe(false);
+    const allowed = {
+      ...prNode(),
+      repository: repositoryNode('acme/widgets', { autoMergeAllowed: true }),
+    };
+    expect(mapPullRequest(allowed).autoMergeAllowed).toBe(true);
+  });
+
   it('maps a search node to the model', () => {
     const node = prNode({
       number: 7,
@@ -72,6 +94,8 @@ describe('mapPullRequest', () => {
       defaultMergeMethod: 'merge',
       viewerCanUpdate: true,
       viewerCanMerge: true,
+      autoMergeAllowed: false,
+      autoMerge: null,
     } satisfies PullRequest);
   });
 

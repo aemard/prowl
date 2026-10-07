@@ -703,8 +703,8 @@
       ],
       "priority": 39,
       "dependsOn": ["US-033"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Update branch menu (merge/rebase, behind + viewerCanUpdate), auto-merge from the merge dialog (method + title, only when not ready) and Disable auto-merge, Auto-merge chip; all with expectedHeadOid; automerge.spec.ts."
     },
     {
       "id": "US-040",

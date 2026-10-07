@@ -71,6 +71,8 @@ export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequ
     defaultMergeMethod: 'merge',
     viewerCanUpdate: true,
     viewerCanMerge: true,
+    autoMergeAllowed: false,
+    autoMerge: null,
     ...overrides,
   };
 }

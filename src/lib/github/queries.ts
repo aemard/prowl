@@ -43,7 +43,9 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           rebaseMergeAllowed
           viewerDefaultMergeMethod
           viewerPermission
+          autoMergeAllowed
         }
+        autoMergeRequest { mergeMethod enabledBy { login } }
         reviewDecision
         mergeable
         mergeStateStatus
@@ -182,7 +184,10 @@ export interface PullRequestNode {
     viewerDefaultMergeMethod: string;
     /** `RepositoryPermission`; null for a GitHub App. */
     viewerPermission: string | null;
+    autoMergeAllowed: boolean;
   };
+  /** Null while auto-merge is off. */
+  autoMergeRequest: { mergeMethod: string; enabledBy: Login | null } | null;
   reviewDecision: string | null;
   mergeable: string;
   mergeStateStatus: string;

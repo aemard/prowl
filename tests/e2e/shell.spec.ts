@@ -81,7 +81,7 @@ test.describe('signed in', () => {
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('heading', { level: 1, name: 'Prowl' })).toBeVisible();
-    await expect(panel.getByText('Updated 2 min ago')).toBeVisible();
+    await expect(panel.getByText('Updated 2 min ago', { exact: true })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Refresh' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();

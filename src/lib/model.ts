@@ -135,6 +135,10 @@ export interface PullRequest {
   viewerCanUpdate: boolean;
   /** The viewer has write access to the repository (GraphQL has no `viewerCanMerge`). */
   viewerCanMerge: boolean;
+  /** The repository lets pull requests merge themselves once their requirements pass. */
+  autoMergeAllowed: boolean;
+  /** Auto-merge is on: GitHub merges with `method` once the requirements pass. */
+  autoMerge: { method: MergeMethod; enabledBy: string | null } | null;
 }
 
 /**

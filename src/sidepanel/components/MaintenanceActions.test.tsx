@@ -87,4 +87,31 @@ describe('MaintenanceActions', () => {
       ),
     );
   });
+
+  it('offers to update a branch that is behind, to whoever may push to it', () => {
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
+    expect(screen.getByRole('button', { name: /^Update branch of / })).toBeTruthy();
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: false });
+    show({ mergeStateStatus: 'clean', viewerCanUpdate: true });
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true, state: 'closed' });
+    expect(screen.getAllByRole('button', { name: /^Update branch/ })).toHaveLength(1);
+  });
+
+  it('updates the branch with a merge commit or a rebase, pinned to the head', async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit) => {
+        bodies.push(JSON.parse(String(init.body)).variables);
+        return jsonResponse({
+          data: { updatePullRequestBranch: { pullRequest: { headRefOid: 'new' } } },
+        });
+      }),
+    );
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
+    fireEvent.click(screen.getByRole('button', { name: /^Update branch of / }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Update with a rebase' }));
+    await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Updated the branch of /));
+    expect(bodies).toEqual([{ id: base.id, oid: base.headSha, method: 'REBASE' }]);
+  });
 });

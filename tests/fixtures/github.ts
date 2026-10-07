@@ -45,6 +45,7 @@ export function repositoryNode(nameWithOwner = 'acme/widgets', overrides = {}) {
     rebaseMergeAllowed: false,
     viewerDefaultMergeMethod: 'MERGE',
     viewerPermission: 'WRITE',
+    autoMergeAllowed: false,
     ...overrides,
   };
 }
@@ -115,6 +116,7 @@ export function prNode(
     mergeable: 'MERGEABLE',
     mergeStateStatus: 'BLOCKED',
     viewerCanUpdate: true,
+    autoMergeRequest: null,
     totalCommentsCount: 0,
     labels: { nodes: [] },
     latestReviews: { nodes: [] },

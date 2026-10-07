@@ -127,3 +127,19 @@ describe('describePullRequest', () => {
     );
   });
 });
+
+describe('auto-merge', () => {
+  it('says auto-merge is on, with the method and who turned it on, after conflicts', () => {
+    const on = buildPullRequest({ autoMerge: { method: 'squash', enabledBy: 'alice' } });
+    expect(pullRequestStatuses(on).find((s) => s.id === 'merge')).toMatchObject({
+      label: 'Auto-merge',
+      detail: 'Auto-merge on (squash), by alice',
+    });
+    const conflicting = { ...on, mergeable: 'conflicting' as const };
+    expect(pullRequestStatuses(conflicting).find((s) => s.id === 'merge')?.label).toBe('Conflicts');
+    const anonymous = buildPullRequest({ autoMerge: { method: 'merge', enabledBy: null } });
+    expect(pullRequestStatuses(anonymous).find((s) => s.id === 'merge')?.detail).toBe(
+      'Auto-merge on (merge commit)',
+    );
+  });
+});

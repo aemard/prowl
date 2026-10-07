@@ -184,6 +184,13 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     defaultMergeMethod: pick(MERGE_METHODS, repo.viewerDefaultMergeMethod, 'merge'),
     viewerCanUpdate: node.viewerCanUpdate,
     viewerCanMerge: CAN_MERGE.includes(repo.viewerPermission ?? ''),
+    autoMergeAllowed: repo.autoMergeAllowed === true,
+    autoMerge: node.autoMergeRequest
+      ? {
+          method: pick(MERGE_METHODS, node.autoMergeRequest.mergeMethod, 'merge'),
+          enabledBy: node.autoMergeRequest.enabledBy?.login ?? null,
+        }
+      : null,
   };
 }
 

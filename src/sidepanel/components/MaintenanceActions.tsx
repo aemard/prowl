@@ -1,9 +1,10 @@
-import { rerunFailedChecks, setDraft } from '../../lib/github/actions';
+import { rerunFailedChecks, setDraft, updateBranch } from '../../lib/github/actions';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { auth } from '../state/store';
 import { GitPullRequestDraftIcon, GitPullRequestIcon, SyncIcon } from './icons';
 import { Button } from './ui/Button';
+import { Menu } from './ui/Menu';
 
 export const RERUN = 'Re-run failed checks';
 
@@ -15,6 +16,17 @@ export const canRerun = (pr: PullRequest) =>
 export const canToggleDraft = (pr: PullRequest, viewer: string) =>
   pr.state === 'open' &&
   (pr.viewerCanMerge || pr.author?.login.toLowerCase() === viewer.toLowerCase());
+
+export const UPDATE_BRANCH = 'Update branch';
+
+/** The base branch moved on: whoever may push to the PR can bring it in (GitHub's "behind"). */
+export const canUpdateBranch = (pr: PullRequest) =>
+  pr.state === 'open' && pr.mergeStateStatus === 'behind' && pr.viewerCanUpdate;
+
+export const updateBranchWith = (pr: PullRequest, method: 'merge' | 'rebase') =>
+  runPrAction(pr, UPDATE_BRANCH, 'Updated the branch of', (client) =>
+    updateBranch(client, pr.id, pr.headSha, method),
+  );
 
 export const draftActionName = (pr: PullRequest) =>
   pr.isDraft ? 'Ready for review' : 'Convert to draft';
@@ -41,6 +53,35 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
   const ref = prRef(pr);
   return (
     <>
+      {canUpdateBranch(pr) && (
+        <Menu
+          label={`${UPDATE_BRANCH} of ${ref}`}
+          items={[
+            {
+              id: 'merge',
+              label: 'Update with a merge commit',
+              onSelect: () => void updateBranchWith(pr, 'merge'),
+            },
+            {
+              id: 'rebase',
+              label: 'Update with a rebase',
+              onSelect: () => void updateBranchWith(pr, 'rebase'),
+            },
+          ]}
+          trigger={(props) => (
+            <Button
+              {...props}
+              size="sm"
+              icon={<SyncIcon size={12} />}
+              aria-label={`${UPDATE_BRANCH} of ${ref}`}
+              loading={pending === UPDATE_BRANCH}
+              disabled={pending !== undefined && pending !== UPDATE_BRANCH}
+            >
+              {UPDATE_BRANCH}
+            </Button>
+          )}
+        />
+      )}
       {canRerun(pr) && (
         <Button
           size="sm"

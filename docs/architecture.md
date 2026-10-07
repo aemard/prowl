@@ -86,7 +86,9 @@ in-memory updates that the next snapshot replaces.
 
 - GraphQL for reads (search, PR state, repo merge settings) and most writes
   (`addPullRequestReview`, `addComment`, `mergePullRequest`, `markPullRequestReadyForReview`,
-  `convertPullRequestToDraft`).
+  `convertPullRequestToDraft`, `updatePullRequestBranch`, `enablePullRequestAutoMerge`,
+  `disablePullRequestAutoMerge`; the branch update, merge and auto-merge pass the polled head as
+  `expectedHeadOid`, so GitHub refuses them if the branch moved since).
 - REST for re-running checks (`POST /repos/{o}/{r}/actions/runs/{id}/rerun-failed-jobs`,
   `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
   (`GET /user`, header `x-oauth-scopes`), and listing the viewer's teams (`GET /user/teams`:
