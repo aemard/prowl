@@ -219,6 +219,25 @@ describe('poll', () => {
     expect(badge.text).toBe('');
   });
 
+  it('still notifies about a draft opened by a bot when the list hides both', async () => {
+    await setItem('settings', { ...defaultSettings(), hideDrafts: true, hideBots: true });
+    let checks: CheckState = 'pending';
+    const dependabot = { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' };
+    github(() =>
+      searchResponse([
+        prNode({ isDraft: true, author: dependabot, commits: headCommit(CHECKS[checks]) }),
+      ]),
+    );
+    await signIn();
+    await poll();
+    checks = 'failure';
+    later(2 * MINUTE);
+    await poll();
+    const { notifications, badge } = fakeChrome().__state;
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
+    expect(badge.text).toBe('');
+  });
+
   it('keeps the poll result when notifying fails', async () => {
     let checks: CheckState = 'pending';
     github(() => searchWith(checks)());

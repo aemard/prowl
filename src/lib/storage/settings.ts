@@ -89,6 +89,8 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   theme: 'system',
   sort: 'updated',
   hideStaleAfterDays: 20,
+  hideDrafts: false,
+  hideBots: false,
 });
 
 export function defaultSettings(): Settings {
@@ -292,6 +294,8 @@ export function normalizeSettings(value: unknown): Settings {
       MAX_HIDE_STALE_DAYS,
       DEFAULT_SETTINGS.hideStaleAfterDays,
     ),
+    hideDrafts: bool(raw.hideDrafts, DEFAULT_SETTINGS.hideDrafts),
+    hideBots: bool(raw.hideBots, DEFAULT_SETTINGS.hideBots),
   };
 }
 

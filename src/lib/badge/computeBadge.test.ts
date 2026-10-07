@@ -119,6 +119,23 @@ describe('computeBadge: attention', () => {
     ).toBe('2');
   });
 
+  it('leaves out drafts and bots when the list does, and counts them otherwise', () => {
+    const draft = quiet(1, { isDraft: true, commits: headCommit({ FAILURE: 1 }) });
+    const bot = quiet(2, {
+      author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
+      commits: headCommit({ FAILURE: 1 }),
+    });
+    const prs = [draft, bot, failing(3)];
+    const count = (hide: Partial<typeof DEFAULT_SETTINGS>, mode: BadgeMode = 'attention') =>
+      computeBadge(snapshot(prs), emptyPrLocal(), mode, { ...DEFAULT_SETTINGS, ...hide }, NOW).text;
+
+    expect(count({})).toBe('3');
+    expect(count({ hideDrafts: true })).toBe('2');
+    expect(count({ hideBots: true })).toBe('2');
+    expect(count({ hideDrafts: true, hideBots: true })).toBe('1');
+    expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('1');
+  });
+
   it('shows 99+ above 99', () => {
     const many = Array.from({ length: 100 }, (_, i) => failing(i + 1));
     expect(badge(many.slice(0, 99)).text).toBe('99');

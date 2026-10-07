@@ -80,6 +80,11 @@ export interface Label {
 export interface Actor {
   login: string;
   avatarUrl: string;
+  /**
+   * An app account (Dependabot, Renovate...): GraphQL `__typename` is `Bot`, or the login ends
+   * with `[bot]` (REST spells bot logins that way, GraphQL leaves the suffix off).
+   */
+  isBot: boolean;
 }
 
 export interface PullRequest {
@@ -301,6 +306,10 @@ export interface Settings {
    * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.
    */
   hideStaleAfterDays: number;
+  /** Draft PRs are left out of the list, the counts and the badge too (they still notify). */
+  hideDrafts: boolean;
+  /** So are PRs opened by a bot (`Actor.isBot`). */
+  hideBots: boolean;
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */

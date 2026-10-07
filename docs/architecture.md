@@ -41,7 +41,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
@@ -191,6 +191,7 @@ Mapping (`mapPullRequest`):
 | `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
 | `labels` | Color lower-cased when it is six hex digits, else `NEUTRAL_LABEL_COLOR` (`ededed`). |
 | `unresolvedThreads` | Unresolved among the first 100 review threads. |
+| `author` | `{ login, avatarUrl, isBot }`, null for a deleted account. `isBot`: `author.__typename` is `Bot` (GraphQL gives a bot's login without a suffix), or the login ends with `[bot]` (REST's spelling), so a `Mannequin` or a person called "bot" is not one. Cost: none (`__typename` is free). |
 | `lastComment` | Latest issue comment. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
 | `closedBy` | `mergedBy` in search results; `ProwlNodes` adds the `ClosedEvent` actor. |
 | `lastCommitAt` | Head commit (`commits(last: 1)`) `committedDate`: the committer date, which a rebase, an amend or "Update branch" renews and comments do not. `updatedAt` when the commit did not load (a hole in a partial read), so such a PR is never hidden for it. |
@@ -418,7 +419,8 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     with `id === kind` and a fixed label; they are enabled or disabled, never deleted. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
   - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, `hideStaleAfterDays`
-    in 0-365 (default 20, 0 never hides), quiet hours are `HH:MM`, repo filters are `owner` or
+    in 0-365 (default 20, 0 never hides), `hideDrafts` and `hideBots` are booleans (default
+    off), quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive). A field added later needs no migration: a
     stored value without it gets the default.
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
@@ -629,6 +631,8 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
     Appearance "Hide PRs with no commit for (days)" 0-365) and shows an error for the rest; blur
     shows the saved value again. The Refresh note shows the estimated
     cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
+    Appearance also has the "Hide draft PRs" and "Hide PRs opened by bots" switches (the list,
+    counts and badge follow at once; nothing is fetched again).
   - Notifications: master switch (greys out the event switches, quiet hours and the test button),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
@@ -691,11 +695,13 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
 - **Snoozed PRs** leave the cards, the section counts and the badge until the snooze ends; the list
   keeps them behind a "Snoozed (n)" disclosure at the end of the section. Muted PRs show a
   bell-off flag and produce no notifications. Both are `prLocal` only.
-- **Hidden PRs** (no commit for `settings.hideStaleAfterDays` days, default 20; 0 never hides)
-  leave the cards, the section counts and the badge, but are still fetched, diffed and notified.
+- **Hidden PRs** (drafts with `settings.hideDrafts`, PRs opened by a bot with `settings.hideBots`,
+  both off by default; no commit for `settings.hideStaleAfterDays` days, default 20, 0 never
+  hides) leave the cards, the section counts and the badge, but are still fetched, diffed and notified.
   "Show N hidden" at the end of the section (after "Snoozed") reveals them for the rest of the
   panel's life, in every section, as full cards under the button with the reason as their first
-  chip ("No commit for 34 d", also in the card's description); they are marked seen like any
-  card, and "Hide again" folds them. The setting applies at once (the list and the badge follow
-  the settings in storage; nothing is fetched again). `HiddenReason` is a union so more reasons
-  (drafts, bots) can join one button and one count.
+  chip ("Bot, No commit for 34 d", also in the card's description; a draft says nothing more
+  than the card's own "Draft" chip); they are marked seen like any card, and "Hide again" folds
+  them. The setting applies at once (the list and the badge follow
+  the settings in storage; nothing is fetched again). `HiddenReason` is a union (`draft`, `bot`,
+  `stale`), so one more reason joins the same button and count.

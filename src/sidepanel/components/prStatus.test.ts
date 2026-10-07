@@ -103,7 +103,7 @@ describe('describePullRequest', () => {
     const pr = buildPullRequest({
       number: 42,
       title: 'Fix the flaky test',
-      author: { login: 'bob', avatarUrl: '' },
+      author: { login: 'bob', avatarUrl: '', isBot: false },
       checks: checks({ state: 'failure', total: 3, failed: 1, passed: 2 }),
       unresolvedThreads: 2,
       commentCount: 1,

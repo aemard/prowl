@@ -2,7 +2,8 @@
  * A realistic set of pull requests for the list E2E: several repositories, a draft, conflicts,
  * failing / pending / passing / no CI, approvals, requested changes, label colors from near
  * white to near black, titles and names that are too long for the panel, and one authored PR
- * with no commit for 34 days, which the default settings hide. Dates are relative to now.
+ * with no commit for 34 days, which the default settings hide, and two Dependabot PRs (one of
+ * them hidden for the same reason). Dates are relative to now.
  */
 import { headCommit, prNode as node, reviewNode } from '../../fixtures/github';
 import { MOCK_ORIGIN } from '../mock-github/server';
@@ -31,8 +32,14 @@ const PEOPLE = {
   carol: avatar('carol', '#1a7f37'),
   erin: avatar('erin', '#bc4c00'),
   frank: avatar('frank', '#57606a'),
+  dependabot: avatar('dependabot', '#6e7781'),
 };
-export const by = (login: keyof typeof PEOPLE) => ({ login, avatarUrl: PEOPLE[login] });
+/** The author of a PR: a user, or an app (GraphQL gives a bot's login without `[bot]`). */
+export const by = (login: keyof typeof PEOPLE) => ({
+  __typename: login === 'dependabot' ? 'Bot' : 'User',
+  login,
+  avatarUrl: PEOPLE[login],
+});
 const labels = (...pairs: [string, string][]) => ({
   nodes: pairs.map(([name, color]) => ({ name, color })),
 });
@@ -214,6 +221,28 @@ export const assigned = [
     commits: headCommit({ SUCCESS: 10 }, {}, ago(8 * 24)),
     reviewDecision: 'APPROVED',
     mergeStateStatus: 'CLEAN',
+    labels: labels(['dependencies', '0366d6']),
+  }),
+  // Opened by Dependabot (a bot: the default settings still show it). The second has had no
+  // commit for 41 days, so it is hidden by default and says both "Bot" and "No commit".
+  prNode({
+    repository: 'acme/web',
+    number: 2493,
+    title: 'Bump vite from 7.1.8 to 7.1.9',
+    author: by('dependabot'),
+    createdAt: ago(26),
+    updatedAt: ago(26),
+    commits: headCommit({ SUCCESS: 9 }, {}, ago(26)),
+    labels: labels(['dependencies', '0366d6']),
+  }),
+  prNode({
+    repository: 'acme/api',
+    number: 871,
+    title: 'Bump eslint from 9.1.0 to 9.2.0',
+    author: by('dependabot'),
+    createdAt: ago(41 * 24),
+    updatedAt: ago(41 * 24),
+    commits: headCommit({ SUCCESS: 6 }, {}, ago(41 * 24)),
     labels: labels(['dependencies', '0366d6']),
   }),
 ];

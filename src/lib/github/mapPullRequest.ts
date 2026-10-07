@@ -29,6 +29,8 @@ import type {
 
 /** GitHub's name for a deleted account. */
 const GHOST = 'ghost';
+/** REST spells a bot's login `dependabot[bot]`; GraphQL gives `dependabot` and `__typename: Bot`. */
+const BOT_SUFFIX = '[bot]';
 /** Used when a label color is not six hex digits. */
 export const NEUTRAL_LABEL_COLOR = 'ededed';
 const HEX_COLOR = /^[0-9a-f]{6}$/i;
@@ -135,7 +137,11 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     title: node.title,
     url: node.url,
     repo: { owner: repo.owner.login, name: repo.name, nameWithOwner: repo.nameWithOwner },
-    author: node.author && { login: node.author.login, avatarUrl: node.author.avatarUrl },
+    author: node.author && {
+      login: node.author.login,
+      avatarUrl: node.author.avatarUrl,
+      isBot: node.author.__typename === 'Bot' || node.author.login.endsWith(BOT_SUFFIX),
+    },
     state: pick(PR_STATES, node.state, 'open'),
     isDraft: node.isDraft,
     headRefName: node.headRefName,

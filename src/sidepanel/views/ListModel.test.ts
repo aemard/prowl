@@ -9,7 +9,7 @@ const prs = [
     number: 1,
     title: 'Fix login redirect',
     repo: { owner: 'acme', name: 'web', nameWithOwner: 'acme/web' },
-    author: { login: 'alice', avatarUrl: '' },
+    author: { login: 'alice', avatarUrl: '', isBot: false },
     labels: [{ name: 'bug', color: 'd73a4a' }],
     createdAt: '2026-10-01T00:00:00.000Z',
     updatedAt: '2026-10-05T00:00:00.000Z',
@@ -18,7 +18,7 @@ const prs = [
     number: 22,
     title: 'Add dark mode',
     repo: { owner: 'acme', name: 'api', nameWithOwner: 'acme/api' },
-    author: { login: 'bob', avatarUrl: '' },
+    author: { login: 'bob', avatarUrl: '', isBot: false },
     labels: [{ name: 'feature', color: '0e8a16' }],
     createdAt: '2026-10-03T00:00:00.000Z',
     updatedAt: '2026-10-04T00:00:00.000Z',
@@ -86,9 +86,63 @@ describe('splitSection', () => {
   });
 
   it('hides nothing with 0, and lets ended snoozes back in, in the given order', () => {
-    const parts = splitSection(all, local, { hideStaleAfterDays: 0 }, NOW + 7_200_000);
+    const parts = splitSection(
+      all,
+      local,
+      { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 },
+      NOW + 7_200_000,
+    );
     expect(numbers(parts.shown)).toEqual([2, 1, 3, 4]);
     expect(parts.hidden).toEqual([]);
     expect(parts.snoozed).toEqual([]);
+  });
+
+  it('hides drafts and bots on request, with every reason, in the given order', () => {
+    const draft = buildPullRequest({ number: 5, isDraft: true });
+    const bot = buildPullRequest({
+      number: 6,
+      author: { login: 'dependabot', avatarUrl: '', isBot: true },
+    });
+    const both = buildPullRequest({
+      number: 7,
+      isDraft: true,
+      author: { login: 'renovate', avatarUrl: '', isBot: true },
+      lastCommitAt: '2026-09-20T00:00:00.000Z',
+    });
+    const prs = [draft, recent, bot, both];
+
+    const none = splitSection(prs, emptyPrLocal(), DEFAULT_SETTINGS, NOW);
+    expect(numbers(none.shown)).toEqual([5, 1, 6]);
+    expect(none.hidden.map(({ reasons }) => reasons)).toEqual([[{ kind: 'stale', days: 37 }]]);
+
+    const drafts = splitSection(
+      prs,
+      emptyPrLocal(),
+      { ...DEFAULT_SETTINGS, hideDrafts: true },
+      NOW,
+    );
+    expect(numbers(drafts.shown)).toEqual([1, 6]);
+    expect(drafts.hidden.map(({ pr }) => pr.number)).toEqual([5, 7]);
+
+    const all = splitSection(
+      prs,
+      emptyPrLocal(),
+      { hideDrafts: true, hideBots: true, hideStaleAfterDays: 20 },
+      NOW,
+    );
+    expect(numbers(all.shown)).toEqual([1]);
+    expect(all.hidden).toEqual([
+      { pr: draft, reasons: [{ kind: 'draft' }] },
+      { pr: bot, reasons: [{ kind: 'bot' }] },
+      { pr: both, reasons: [{ kind: 'draft' }, { kind: 'bot' }, { kind: 'stale', days: 37 }] },
+    ]);
+  });
+
+  it('keeps a snoozed draft under Snoozed', () => {
+    const draft = buildPullRequest({ number: 5, isDraft: true });
+    const local = snooze(emptyPrLocal(), draft.id, NOW + 3_600_000);
+    const parts = splitSection([draft], local, { ...DEFAULT_SETTINGS, hideDrafts: true }, NOW);
+    expect(numbers(parts.snoozed)).toEqual([5]);
+    expect(parts.hidden).toEqual([]);
   });
 });

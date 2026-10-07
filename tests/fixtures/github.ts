@@ -108,7 +108,7 @@ export function prNode(
     headRefOid: 'a'.repeat(40),
     createdAt: '2026-10-01T09:00:00Z',
     updatedAt: '2026-10-05T12:00:00Z',
-    author: { login: 'octocat', avatarUrl: AVATAR },
+    author: { __typename: 'User', login: 'octocat', avatarUrl: AVATAR },
     mergedBy: null,
     repository: repositoryNode(repository),
     reviewDecision: 'REVIEW_REQUIRED',

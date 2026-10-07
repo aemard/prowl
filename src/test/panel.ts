@@ -43,7 +43,11 @@ export function buildPullRequest(overrides: Partial<PullRequest> = {}): PullRequ
     title: `Improve widget ${number}`,
     url: `https://github.com/${nameWithOwner}/pull/${number}`,
     repo: { owner, name, nameWithOwner },
-    author: { login: 'alice', avatarUrl: 'https://avatars.githubusercontent.com/alice' },
+    author: {
+      login: 'alice',
+      avatarUrl: 'https://avatars.githubusercontent.com/alice',
+      isBot: false,
+    },
     state: 'open',
     isDraft: false,
     headRefName: `feature-${number}`,

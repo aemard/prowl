@@ -68,6 +68,8 @@ describe('DEFAULT_SETTINGS', () => {
       theme: 'system',
       sort: 'updated',
       hideStaleAfterDays: 20,
+      hideDrafts: false,
+      hideBots: false,
     } satisfies Settings);
   });
 
@@ -126,6 +128,8 @@ describe('normalizeSettings', () => {
       theme: 'dark',
       sort: 'repo',
       hideStaleAfterDays: 0,
+      hideDrafts: true,
+      hideBots: true,
     };
     expect(normalizeSettings(custom)).toEqual(custom);
     expect(normalizeSettings(normalizeSettings(custom))).toEqual(custom);
@@ -211,6 +215,16 @@ describe('normalizeSettings', () => {
     [null, 20],
   ])('repairs hideStaleAfterDays %j to %j', (value, expected) => {
     expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
+  });
+
+  it.each(['hideDrafts', 'hideBots'] as const)('repairs %s: a boolean, else off', (key) => {
+    expect(normalizeSettings({ [key]: true })[key]).toBe(true);
+    expect(normalizeSettings({ [key]: false })[key]).toBe(false);
+    for (const value of ['yes', 1, null, undefined]) {
+      expect(normalizeSettings({ [key]: value })[key]).toBe(false);
+    }
+    // Settings stored before the switches existed.
+    expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(false);
   });
 
   it('repairs notification switches and quiet hours', () => {

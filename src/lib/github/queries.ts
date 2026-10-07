@@ -32,7 +32,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         headRefOid
         createdAt
         updatedAt
-        author { login avatarUrl(size: 64) }
+        author { __typename login avatarUrl(size: 64) }
         mergedBy { login }
         repository {
           name
@@ -169,7 +169,7 @@ export interface PullRequestNode {
   headRefOid: string;
   createdAt: string;
   updatedAt: string;
-  author: (Login & { avatarUrl: string }) | null;
+  author: (Login & { __typename: string; avatarUrl: string }) | null;
   mergedBy: Login | null;
   repository: {
     name: string;

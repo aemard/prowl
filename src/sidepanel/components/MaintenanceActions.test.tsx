@@ -29,18 +29,30 @@ describe('MaintenanceActions', () => {
   it('offers a re-run only for failed checks on an open PR the viewer can write to', () => {
     show({ checks: failing, viewerCanMerge: true });
     expect(screen.getByRole('button', { name: /^Re-run failed checks of / })).toBeTruthy();
-    show({ checks: failing, viewerCanMerge: false, author: { login: 'someone', avatarUrl: '' } });
+    show({
+      checks: failing,
+      viewerCanMerge: false,
+      author: { login: 'someone', avatarUrl: '', isBot: false },
+    });
     show({ checks: failing, viewerCanMerge: true, state: 'merged' });
     show({ viewerCanMerge: true });
     expect(screen.getAllByRole('button', { name: /^Re-run/ })).toHaveLength(1);
   });
 
   it('labels the draft toggle by state, for the author or a writer', () => {
-    show({ isDraft: true, viewerCanMerge: false, author: { login: 'OctoCat', avatarUrl: '' } });
+    show({
+      isDraft: true,
+      viewerCanMerge: false,
+      author: { login: 'OctoCat', avatarUrl: '', isBot: false },
+    });
     expect(screen.getByRole('button', { name: /^Ready for review: / })).toBeTruthy();
-    show({ isDraft: false, viewerCanMerge: true, author: { login: 'someone', avatarUrl: '' } });
+    show({
+      isDraft: false,
+      viewerCanMerge: true,
+      author: { login: 'someone', avatarUrl: '', isBot: false },
+    });
     expect(screen.getByRole('button', { name: /^Convert to draft: / })).toBeTruthy();
-    show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '' } });
+    show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '', isBot: false } });
     expect(screen.getAllByRole('button', { name: /draft|review/ })).toHaveLength(2);
   });
 

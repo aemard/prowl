@@ -102,7 +102,7 @@ describe('PrMenu', () => {
   it('hides re-run and draft for read-only viewers of others’ PRs', () => {
     open({
       viewerCanMerge: false,
-      author: { login: 'someone', avatarUrl: '' },
+      author: { login: 'someone', avatarUrl: '', isBot: false },
       checks: { ...base.checks, state: 'failure', failed: 1 },
     });
     expect(labels()).not.toContain('Re-run failed checks');

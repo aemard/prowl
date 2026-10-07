@@ -59,7 +59,7 @@ describe('when the button shows', () => {
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
-    show({ author: { login: 'octocat', avatarUrl: '' } });
+    show({ author: { login: 'octocat', avatarUrl: '', isBot: false } });
     expect(screen.getAllByRole('button')).toHaveLength(2);
   });
 

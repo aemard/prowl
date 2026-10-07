@@ -632,8 +632,8 @@
       ],
       "priority": 35,
       "dependsOn": ["US-034"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Actor.isBot (__typename Bot or [bot] login); hideDrafts/hideBots (default off, Appearance switches) are two more HiddenReason variants ('draft', 'bot') of US-034's hiddenReasons, so list, counts, badge and the one 'Show N hidden' button follow; a revealed draft shows only its own Draft chip; notifications unchanged."
     },
     {
       "id": "US-036",

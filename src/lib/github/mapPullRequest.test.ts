@@ -40,6 +40,7 @@ describe('mapPullRequest', () => {
       author: {
         login: 'octocat',
         avatarUrl: 'https://avatars.githubusercontent.com/u/583231?s=64&v=4',
+        isBot: false,
       },
       state: 'open',
       isDraft: false,
@@ -121,6 +122,30 @@ describe('mapPullRequest', () => {
       expect(checks({ nodes: [{ commit }] }).state).toBe('none');
       expect(checks({ nodes: null }).state).toBe('none');
       expect(checks({ nodes: [] }).state).toBe('none');
+    });
+  });
+
+  describe('author.isBot', () => {
+    const author = (login: string, __typename: string) =>
+      mapPullRequest(prNode({ author: { __typename, login, avatarUrl: 'a' } })).author;
+
+    it.each([
+      // GraphQL: the type says it, the login has no suffix.
+      ['Bot', 'dependabot', true],
+      // The suffix says it on its own, as REST spells bot logins.
+      ['User', 'renovate[bot]', true],
+      ['Bot', 'renovate[bot]', true],
+      ['User', 'octocat', false],
+      // A person who happens to be called like a bot is not one.
+      ['User', 'bot', false],
+      ['Mannequin', 'dependabot-fan', false],
+      ['Organization', 'acme', false],
+    ])('is %s %s -> %s', (typename, login, isBot) => {
+      expect(author(login, typename)).toEqual({ login, avatarUrl: 'a', isBot });
+    });
+
+    it('is absent with the author of a deleted account', () => {
+      expect(mapPullRequest(prNode({ author: null })).author).toBeNull();
     });
   });
 

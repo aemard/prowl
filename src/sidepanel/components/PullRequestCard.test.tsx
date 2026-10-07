@@ -44,7 +44,11 @@ afterEach(() => {
 describe('PullRequestCard', () => {
   it('has a title link and a separate expand button, each named, and describes the rest', () => {
     const link = renderCard({
-      author: { login: 'bob', avatarUrl: 'https://avatars.githubusercontent.com/bob' },
+      author: {
+        login: 'bob',
+        avatarUrl: 'https://avatars.githubusercontent.com/bob',
+        isBot: false,
+      },
       checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
       reviewDecision: 'changes_requested',
       commentCount: 4,

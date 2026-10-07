@@ -405,6 +405,26 @@ describe('SettingsView', () => {
       await waitFor(async () => expect((await saved()).hideStaleAfterDays).toBe(0));
     });
 
+    it('hides drafts and bot PRs with one switch each, off by default', async () => {
+      await open();
+      const appearance = group('Appearance');
+      const drafts = toggle('Hide draft PRs', appearance);
+      const bots = toggle('Hide PRs opened by bots', appearance);
+      expect(drafts.getAttribute('aria-checked')).toBe('false');
+      expect(bots.getAttribute('aria-checked')).toBe('false');
+      expect(bots.getAttribute('aria-describedby')).toBeTruthy();
+      expect(appearance.getByText(/Dependabot, Renovate and other apps/)).toBeTruthy();
+
+      fireEvent.click(drafts);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: true }));
+      expect((await saved()).hideBots).toBe(false);
+      fireEvent.click(bots);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideBots: true }));
+      expect(drafts.getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(drafts);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: false }));
+    });
+
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>
