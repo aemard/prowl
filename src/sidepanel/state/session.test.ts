@@ -13,10 +13,13 @@ describe('completeSignIn', () => {
   it('stores the auth, asks for the first poll and shows the list', async () => {
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
     location.hash = '#/onboarding';
+    // The same account with a new token: its teams are discovered again by that poll.
+    await chrome.storage.local.set({ teams: { login: 'octocat', teams: [] } });
 
     await completeSignIn(buildAuth('octocat'));
 
     expect((await chrome.storage.local.get('auth')).auth).toEqual(buildAuth('octocat'));
+    expect(await getItems(['teams'])).toEqual({});
     expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
     expect(location.hash).toBe('#/');
   });
@@ -48,12 +51,15 @@ describe('signOut', () => {
       pollState: buildPollState(),
       settings: { version: 1 },
       prLocal: { snoozed: {}, muted: {}, seen: {} },
+      teams: { login: 'octocat', teams: [] },
     });
 
     await signOut();
 
     expect(
-      Object.keys(await getItems(['auth', 'snapshot', 'pollState', 'settings', 'prLocal'])),
+      Object.keys(
+        await getItems(['auth', 'snapshot', 'pollState', 'settings', 'prLocal', 'teams']),
+      ),
     ).toEqual(['settings', 'prLocal']);
     expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
   });

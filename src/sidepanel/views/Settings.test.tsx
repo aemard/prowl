@@ -70,7 +70,13 @@ describe('SettingsView', () => {
       const scope = group('Pull requests');
       expect(toggle('Created by me', scope).getAttribute('aria-checked')).toBe('true');
       expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('false');
-      expect(scope.getByText('Pull requests waiting for your review')).toBeTruthy();
+      expect(
+        scope.getByText(
+          'Pull requests that ask you for a review (your teams have their own section)',
+        ),
+      ).toBeTruthy();
+      expect(toggle('Team reviews', scope).getAttribute('aria-checked')).toBe('false');
+      expect(scope.getByText('Pull requests that ask one of your teams for a review')).toBeTruthy();
 
       fireEvent.click(toggle('Review requested', scope));
       await waitFor(() =>
@@ -79,6 +85,7 @@ describe('SettingsView', () => {
       expect((await saved()).sections.map((s) => [s.id, s.enabled])).toEqual([
         ['authored', true],
         ['review_requested', true],
+        ['team_review_requested', false],
         ['mentioned', false],
         ['assigned', false],
       ]);
@@ -146,7 +153,7 @@ describe('SettingsView', () => {
       expect(dialog.getByText(/follows pull requests only/)).toBeTruthy();
       fireEvent.click(dialog.getByRole('button', { name: 'Save' }));
       expect(document.activeElement).toBe(dialog.getByLabelText('Search query'));
-      expect((await saved()).sections).toHaveLength(4);
+      expect((await saved()).sections).toHaveLength(5);
     });
 
     it('rejects queries GitHub would answer with an error', async () => {
@@ -182,7 +189,7 @@ describe('SettingsView', () => {
       fill(dialog, 'Bugs', 'label:bug');
       fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));
       expect(screen.queryByRole('dialog')).toBeNull();
-      expect((await saved()).sections).toHaveLength(4);
+      expect((await saved()).sections).toHaveLength(5);
     });
 
     it('removes a section and puts it back where it was on undo', async () => {
@@ -206,6 +213,7 @@ describe('SettingsView', () => {
           'authored',
           'review_requested',
           'custom-1',
+          'team_review_requested',
           'mentioned',
           'assigned',
         ]),
@@ -281,7 +289,7 @@ describe('SettingsView', () => {
         maxPerSection: 100,
         pollIntervalMinutes: 1,
       });
-      expect(group('Refresh').getByText(/about 1,920 points an hour/)).toBeTruthy();
+      expect(group('Refresh').getByText(/about 2,400 points an hour/)).toBeTruthy();
     });
   });
 

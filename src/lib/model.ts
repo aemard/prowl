@@ -154,7 +154,17 @@ export interface PullRequestDetail {
   requiresConversationResolution: boolean;
 }
 
-export type SectionKind = 'authored' | 'review_requested' | 'mentioned' | 'assigned' | 'custom';
+/**
+ * `review_requested`: review asked of the viewer directly; `team_review_requested`: asked of a
+ * team the viewer belongs to (one search per followed team, see `Settings.unfollowedTeams`).
+ */
+export type SectionKind =
+  | 'authored'
+  | 'review_requested'
+  | 'team_review_requested'
+  | 'mentioned'
+  | 'assigned'
+  | 'custom';
 
 export interface Section {
   id: string;
@@ -163,6 +173,29 @@ export interface Section {
   enabled: boolean;
   /** Only for `custom`: a GitHub search query. `is:pr` is enforced. */
   query?: string;
+}
+
+/** A team the viewer belongs to, as `GET /user/teams` lists it. */
+export interface Team {
+  /** Organization login. */
+  org: string;
+  slug: string;
+  name: string;
+}
+
+/** Why team discovery failed: a `GitHubError` kind, or `missing_scope` (no `read:org`). */
+export type TeamsErrorKind = ErrorKind | 'missing_scope';
+
+/** The viewer's teams, stored under `teams` by the service worker. */
+export interface TeamsState {
+  /** Whose teams these are: another account's are discovered again. */
+  login: string;
+  /** Last discovery attempt; the poller retries after 24 h (1 h after a failure). */
+  fetchedAt: string;
+  /** Sorted by key. The last list GitHub returned: a failed refresh keeps it. */
+  teams: Team[];
+  /** Why the last attempt failed (`message` can be shown as is); null when it worked. */
+  error: { kind: TeamsErrorKind; message: string } | null;
 }
 
 export interface Viewer {
@@ -179,10 +212,16 @@ export interface Snapshot {
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
   /**
-   * Custom section id -> why it could not be loaded in this poll (invalid query, or GitHub
-   * refused it); such a section has no entry in `sections`. Absent means none.
+   * Section id -> why it could not be loaded in this poll: a custom section's invalid or refused
+   * query (such a section has no entry in `sections`), or the team section's missing scope, no
+   * team, or refused team searches (it keeps the PRs of the teams that loaded). Absent means none.
    */
   sectionErrors?: Record<string, string>;
+  /**
+   * PR id -> keys (`teamKey`) of the followed teams whose search returned it, for the PRs of the
+   * `team_review_requested` section. Absent means none.
+   */
+  teamRequests?: Record<string, string[]>;
   /**
    * PR id -> check state of its last poll that was not `pending`, for the PRs whose checks are
    * pending now, so failure -> pending -> success still reports `ci_passed`. Absent means none.
@@ -312,6 +351,11 @@ export interface Settings {
   hideDrafts: boolean;
   /** So are PRs opened by a bot (`Actor.isBot`). */
   hideBots: boolean;
+  /**
+   * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
+   * team is followed, and so is any team discovered later.
+   */
+  unfollowedTeams: string[];
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
@@ -321,6 +365,7 @@ export const STORAGE_KEYS = {
   snapshot: 'snapshot',
   pollState: 'pollState',
   prLocal: 'prLocal',
+  teams: 'teams',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -329,4 +374,6 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean }
   | { type: 'markSeen'; prIds: string[] }
-  | { type: 'signedOut' };
+  | { type: 'signedOut' }
+  /** Discover the viewer's teams again now, then poll; answered once that poll is done. */
+  | { type: 'refreshTeams' };

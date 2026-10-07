@@ -9,8 +9,11 @@ import { env } from '../../env';
 import type { FetchLike } from '../client';
 import { type PatValidation, validatePat } from './pat';
 
-/** What Prowl asks for: `repo` reads private repositories and lets it approve and merge. */
-export const DEVICE_SCOPE = 'repo';
+/**
+ * What Prowl asks for: `repo` reads private repositories and lets it approve and merge;
+ * `read:org` lists the viewer's teams for team review requests.
+ */
+export const DEVICE_SCOPE = 'repo read:org';
 
 /** Where the auth docs live; opened from builds that cannot offer the device flow. */
 export const AUTH_DOCS_URL = `${env.webUrl}/aemard/prowl/blob/main/docs/auth.md`;

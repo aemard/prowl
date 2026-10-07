@@ -12,6 +12,7 @@ import {
   GitPullRequestIcon,
   InboxIcon,
   MentionIcon,
+  PeopleIcon,
   PersonIcon,
   SearchIcon,
 } from '../components/icons';
@@ -70,7 +71,12 @@ const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: s
   review_requested: {
     icon: EyeIcon,
     short: 'Review',
-    empty: 'When someone asks for your review, it will show up here.',
+    empty: 'When someone asks you for a review, it will show up here.',
+  },
+  team_review_requested: {
+    icon: PeopleIcon,
+    short: 'Teams',
+    empty: 'When someone asks one of your teams for a review, it will show up here.',
   },
   mentioned: {
     icon: MentionIcon,

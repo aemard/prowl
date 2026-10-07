@@ -20,11 +20,18 @@ const custom = (query?: string): Section => ({
 describe('buildSearchQuery', () => {
   it.each([
     ['authored', 'is:pr is:open author:@me archived:false'],
-    ['review_requested', 'is:pr is:open review-requested:@me archived:false'],
+    ['review_requested', 'is:pr is:open user-review-requested:@me archived:false'],
     ['mentioned', 'is:pr is:open mentions:@me archived:false'],
     ['assigned', 'is:pr is:open assignee:@me archived:false'],
   ] as const)('builds the %s preset', (kind, expected) => {
     expect(buildSearchQuery(preset(kind), none)).toBe(expected);
+  });
+
+  it('builds one team search with the repo filters', () => {
+    const settings = { repoInclude: ['acme'], repoExclude: ['acme/old'] };
+    expect(buildSearchQuery(preset('team_review_requested'), settings, 'acme/core')).toBe(
+      'is:pr is:open team-review-requested:acme/core archived:false user:acme -repo:acme/old',
+    );
   });
 
   it('adds repo: for owner/name and user: for a bare owner', () => {

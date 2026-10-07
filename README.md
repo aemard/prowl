@@ -35,7 +35,7 @@ attestation (`gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl --signe
 | Way | What you need | CI status |
 |---|---|---|
 | Continue with GitHub | One click (device flow; available when the build has an OAuth client id) | Yes |
-| Classic token | [Create one with the `repo` scope](https://github.com/settings/tokens/new?scopes=repo&description=Prowl) | Yes |
+| Classic token | [Create one with the `repo` and `read:org` scopes](https://github.com/settings/tokens/new?scopes=repo,read:org&description=Prowl) | Yes |
 | Fine-grained token | Pull requests, Contents, Actions (read and write), Commit statuses and Metadata (read) | Can be missing |
 
 Fine-grained tokens cannot read check runs (GitHub only grants the Checks permission to Apps), so
@@ -43,8 +43,9 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
 
 ## Features
 
-- **Scope**: PRs you authored by default; add review requested, mentioned, assigned, custom
-  GitHub searches, and repository include/exclude filters. Each scope is a tab. PRs with no
+- **Scope**: PRs you authored by default; add review requested (from you), team reviews
+  (requests to your teams, found with `read:org`), mentioned, assigned, custom GitHub
+  searches, and repository include/exclude filters. Each scope is a tab. PRs with no
   commit for 20 days (you choose) step aside behind a "Show hidden" button and still notify;
   so can drafts and PRs opened by bots (Dependabot, Renovate), one switch each in Settings.
   A further switch groups each tab's PRs under their repository, in collapsible groups.

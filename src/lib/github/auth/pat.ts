@@ -7,6 +7,7 @@ import { env } from '../../env';
 import type { AuthState, Viewer } from '../../model';
 import { createGitHubClient, type FetchLike } from '../client';
 import { GitHubError } from '../errors';
+import { hasReadOrg } from '../teams';
 
 const VIEWER_QUERY = 'query ProwlViewer { viewer { login avatarUrl name } }';
 
@@ -19,12 +20,13 @@ const TOKEN_SHAPE = /^[A-Za-z0-9_]+$/;
 
 /**
  * Token creation pages with the form filled in (GitHub's template URLs). Classic: the `repo`
- * scope. Fine-grained: write access to what approving, merging and re-running need, read access
- * to commit statuses; Metadata read is always granted. GitHub has no Checks permission for
- * fine-grained tokens, so there is nothing to pre-fill for it.
+ * and `read:org` (team review requests) scopes. Fine-grained: write access to what approving,
+ * merging and re-running need, read access to commit statuses; Metadata read is always
+ * granted. GitHub has no Checks permission for fine-grained tokens, so there is nothing to
+ * pre-fill for it.
  */
 export const TOKEN_URLS = {
-  classic: `${env.webUrl}/settings/tokens/new?scopes=repo&description=Prowl`,
+  classic: `${env.webUrl}/settings/tokens/new?scopes=repo,read:org&description=Prowl`,
   fineGrained: `${env.webUrl}/settings/personal-access-tokens/new?name=Prowl&description=Prowl+side+panel&pull_requests=write&contents=write&actions=write&statuses=read`,
 } as const;
 
@@ -50,13 +52,20 @@ function parseScopes(header: string | null): string[] | null {
 
 const NO_REPO_SCOPE =
   'This token has no repo scope, so Prowl can only see public repositories. Create a token with the repo scope to follow private ones.';
+const NO_READ_ORG_SCOPE =
+  'Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.';
 const NO_CHECKS_PERMISSION =
   'GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing. A classic token with the repo scope shows it in full.';
 
 /** Why the token works but not fully; null when nothing is known to be missing. */
 function warningFor(tokenType: TokenType, scopes: string[] | null): string | null {
   if (tokenType === 'fine_grained') return NO_CHECKS_PERMISSION;
-  return scopes && !scopes.includes('repo') ? NO_REPO_SCOPE : null;
+  if (scopes === null) return null;
+  const warnings = [
+    scopes.includes('repo') ? '' : NO_REPO_SCOPE,
+    hasReadOrg(scopes) ? '' : NO_READ_ORG_SCOPE,
+  ];
+  return warnings.filter(Boolean).join(' ') || null;
 }
 
 function toViewer(node: unknown): Viewer {

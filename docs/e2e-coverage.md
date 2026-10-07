@@ -8,7 +8,8 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 |---|---|
 | **Surface**: MV3, native side panel | `smoke` loads the extension, checks MV3 and `side_panel`; `shell` |
 | **Scope**: authored by default | `poller` (default query), `list` › sections in a bar at the bottom |
-| Scope presets: review requested, mentioned, assigned, custom search | `scope` (every preset and a custom query reach `ProwlSearch`), `settings` › scope |
+| Scope presets: review requested (direct), mentioned, assigned, custom search | `scope` (every preset and a custom query reach `ProwlSearch`), `settings` › scope |
+| Team review requests: teams discovered with `GET /user/teams`, one search per team, merged; missing `read:org` shown in the section; refresh on request | `teams` (discovery, searches, counts with a hidden draft, badge, axe; missing scope, then `refreshTeams`), `scope` (the team preset reaches `ProwlSearch`) |
 | Repo include / exclude | `scope` (`user:`/`-repo:` qualifiers and client-side exclusion), `settings` › include and exclude lists |
 | **PR state**: CI rollup, review decision, mergeable/conflicts, draft, labels, last activity, age, unresolved comments | `list` › a card says everything about its pull request, label text is readable; `detail` › why it is blocked |
 | **Notifications**: CI failed | `notifications` › CI going from pending to failed notifies once per commit |

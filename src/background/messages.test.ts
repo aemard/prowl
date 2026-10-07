@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { prId } from '../../tests/fixtures/github';
+import { prId, searchResponse, teamJson } from '../../tests/fixtures/github';
+import { jsonResponse } from '../../tests/fixtures/http';
 import type { PullRequest } from '../lib/model';
 import { getItem, getItems, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
@@ -49,6 +50,24 @@ describe('handleMessage', () => {
 
     expect(await send({ type: 'poll' })).toBe(true);
     expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it('discovers the teams again on request, then polls', async () => {
+    const fetch = vi.fn(async (url: string) =>
+      url.includes('/user/teams?')
+        ? jsonResponse([teamJson('acme/core', 'Core')])
+        : jsonResponse({ data: searchResponse([]) }),
+    );
+    vi.stubGlobal('fetch', fetch);
+    const fresh = { login: 'octocat', fetchedAt: new Date().toISOString(), teams: [], error: null };
+    await setItems({ auth: buildAuth(), teams: fresh });
+
+    expect(await send({ type: 'refreshTeams' })).toBe(true);
+    expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual([
+      '/user/teams',
+      '/graphql',
+    ]);
+    expect((await getItem('teams'))?.teams).toEqual([{ org: 'acme', slug: 'core', name: 'Core' }]);
   });
 
   it('marks the snapshot version of PRs seen', async () => {

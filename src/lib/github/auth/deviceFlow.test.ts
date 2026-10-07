@@ -72,7 +72,7 @@ describe('requestDeviceCode', () => {
     expect(init?.headers).toEqual({ Accept: 'application/json' });
     expect(Object.fromEntries(init?.body as URLSearchParams)).toEqual({
       client_id: 'client-1',
-      scope: 'repo',
+      scope: 'repo read:org',
     });
   });
 
@@ -291,7 +291,7 @@ describe('validateDeviceToken', () => {
   }
 
   it('checks the token like a pasted one and records an oauth sign-in', async () => {
-    const fetch = github('repo');
+    const fetch = github('read:org, repo');
 
     const { auth, warning } = await validateDeviceToken(TOKEN, { fetch });
 
@@ -299,7 +299,7 @@ describe('validateDeviceToken', () => {
       method: 'oauth',
       token: TOKEN,
       tokenType: 'oauth',
-      scopes: ['repo'],
+      scopes: ['read:org', 'repo'],
       viewer: viewerNode(),
       createdAt: new Date(NOW).toISOString(),
     });

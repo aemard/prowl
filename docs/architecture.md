@@ -5,7 +5,7 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 
 ```
             ┌──────────────────────── chrome.storage.local ────────────────────────┐
-            │ settings · auth · snapshot · pollState · prLocal                     │
+            │ settings · auth · snapshot · pollState · prLocal · teams             │
             └───────▲───────────────────────────────▲──────────────────────────────┘
                     │ write                          │ read + onChanged
 ┌───────────────────┴───────────┐        ┌───────────┴───────────────────────────┐
@@ -37,7 +37,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/model.ts` | Domain types (the contract). Change with care. | n/a |
 | `src/lib/env.ts` | Build-time config (API URL, web URL, OAuth client id) | 80% |
 | `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
-| `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, actions, auth (PAT validation, device flow) | **95%** |
+| `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, team discovery (`teams.ts`), actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
@@ -60,15 +60,18 @@ in-memory updates that the next snapshot replaces.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
    forced), or if `pollState.nextAllowedAt` is in the future: a forced poll skips a backoff
    but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight).
-3. `fetchPullRequests` (see [Fetching pull requests](#fetching-pull-requests)) builds each
+3. The viewer's teams are discovered first when due (see [Teams](#teams)): stored teams of
+   another account or none, older than 24 h (1 h after a failed attempt), or a
+   `{ type: 'refreshTeams' }` from the panel. `fetchPullRequests` (see
+   [Fetching pull requests](#fetching-pull-requests)) builds each
    enabled section's search query (`src/lib/github/search.ts`) and fetches it with
    `query ProwlSearch` (pages of 50, cursor-paginated up to `maxPerSection`), selecting
    `rateLimit { limit remaining resetAt cost }`.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors` and `settledChecks` to build the new `Snapshot`, and persists it
-   with `pollState` in one write. Local PR state of PRs no longer in the snapshot is pruned.
+   `auth`), `sectionErrors`, `teamRequests` and `settledChecks` to build the new `Snapshot`, and
+   persists it with `pollState` (and the teams, when discovered) in one write. Local PR state of PRs no longer in the snapshot is pruned.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm).
 7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
@@ -86,7 +89,8 @@ in-memory updates that the next snapshot replaces.
   `convertPullRequestToDraft`).
 - REST for re-running checks (`POST /repos/{o}/{r}/actions/runs/{id}/rerun-failed-jobs`,
   `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
-  (`GET /user`, header `x-oauth-scopes`).
+  (`GET /user`, header `x-oauth-scopes`), and listing the viewer's teams (`GET /user/teams`:
+  GraphQL has no "my teams" across organizations, and any `Team` field there needs `read:org`).
 - Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version: 2022-11-28` for REST,
   20 s timeout, `cache: 'no-store'`. Errors never include the token.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
@@ -137,14 +141,15 @@ never qualifiers.
 | Section | Query |
 |---|---|
 | `authored` | `is:pr is:open author:@me archived:false` |
-| `review_requested` | `is:pr is:open review-requested:@me archived:false` (includes your teams) |
+| `review_requested` | `is:pr is:open user-review-requested:@me archived:false` (asked of you directly; your teams' requests are in `team_review_requested`) |
+| `team_review_requested` | `is:pr is:open team-review-requested:<org>/<slug> archived:false`, one search per followed team (see [Teams](#teams)) |
 | `mentioned` | `is:pr is:open mentions:@me archived:false` |
 | `assigned` | `is:pr is:open assignee:@me archived:false` |
 | `custom` | `is:pr <the user's query>` (open or closed as the query says) |
 
 `fetchPullRequests` appends `sort:updated-desc` unless a custom query has its own `sort:`.
 
-- `buildSearchQuery(section, settings)` appends the repo filters: `repoInclude` becomes
+- `buildSearchQuery(section, settings, team?)` appends the repo filters: `repoInclude` becomes
   `repo:owner/name` or `user:owner` (`user:` also matches organizations), `repoExclude` becomes
   `-repo:owner/name` or `-user:owner`. Positive scopes are OR-ed by GitHub; a custom query that
   brings its own `repo:` / `org:` / `user:` keeps it and the include list is applied client-side
@@ -160,9 +165,9 @@ never qualifiers.
 
 ## Fetching pull requests
 
-`fetchPullRequests(client, settings, previous)` (`src/lib/github/fetchPullRequests.ts`) is all of
-a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It returns
-`{ pullRequests, sections, sectionErrors, rateLimit }`:
+`fetchPullRequests(client, settings, previous, teams)` (`src/lib/github/fetchPullRequests.ts`) is
+all of a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It
+returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
 
 - Each enabled section runs `query ProwlSearch` (`queries.ts`) with its search string plus
   `sort:updated-desc` (unless a custom query has its own `sort:`), so the `maxPerSection` PRs
@@ -170,6 +175,15 @@ a poll's reads, sent one at a time (GitHub's advice against secondary rate limit
   sent, and one GitHub refuses (`validation`, `not_found`, `forbidden`, `graphql`) is reported
   in `sectionErrors` (section id -> message) while the other sections load. Any other failure,
   and any failure of a preset section, throws the `GitHubError` for the poller.
+- The `team_review_requested` section runs one search per followed team (`teams.teams` minus
+  `settings.unfollowedTeams`, the first `MAX_TEAM_SEARCHES` = 10 in key order), merges them,
+  dedupes by id, sorts by `updatedAt` (newest first) and keeps `maxPerSection`.
+  `teamRequests` maps each kept PR to the keys of the teams whose search returned it. No team
+  to search (none discovered, every one unfollowed, or the discovery failed with no earlier
+  list: its message, e.g. the missing `read:org`), a team search GitHub refuses, and teams
+  past the cap are reported in `sectionErrors` (the section keeps the PRs of the teams that
+  loaded); only the failures that fail any search (`unauthorized`, `rate_limited`,
+  `network`, `server`) are thrown.
 - Nodes are mapped (`mapPullRequest.ts`), filtered with `filterByRepo` and deduped:
   `pullRequests` by id, `sections` as ordered ids (a PR may be in several).
 - Open PRs of `previous` that are in no section now (and pass the repo filters) go through
@@ -208,6 +222,8 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
 | `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
 
+Team reviews run one `ProwlSearch` per followed team (at most 10), so each team costs what a
+section does; `GET /user/teams` is REST (the core budget, not GraphQL points), once a day.
 The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour of
 the 5,000; four sections of 100 PRs every minute stay under 2,000.
 
@@ -312,8 +328,9 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `poller.ts`:
 
-- `poll({ force })` runs at most one poll at a time (an in-memory promise; concurrent callers
-  share it) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
+- `poll({ force, refreshTeams })` runs at most one poll at a time (an in-memory promise;
+  concurrent callers share it, except `refreshTeams`, which waits for the poll in flight and
+  then runs its own so the teams are discovered again) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
   stored a snapshot, null otherwise. The badge and notifications hook in at the end of the poll
   itself, once per poll, not in its callers.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
@@ -343,7 +360,8 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
 their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
-a forced poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
+a forced poll is done. `refreshTeams` is `poll({ force: true, refreshTeams: true })`, answered
+once that poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
 notification and the memory of what was reported.
 
@@ -415,13 +433,18 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   stored value (migrations first, then defaults for missing or invalid fields, clamping, unknown
   keys dropped), `loadSettings`, `updateSettings(patch | updater)`, `ensureSettings` (persist
   migrated settings, for `runtime.onInstalled`) and `subscribeSettings`.
-  - Presets (`authored`, `review_requested`, `mentioned`, `assigned`) always exist exactly once
-    with `id === kind` and a fixed label; they are enabled or disabled, never deleted. Custom
+  - Presets (`authored`, `review_requested`, `team_review_requested`, `mentioned`, `assigned`)
+    always exist exactly once with `id === kind` and a fixed label; they are enabled or
+    disabled, never deleted. A missing preset is appended with its default (off), except
+    `team_review_requested`, which takes the state of `review_requested`: before US-037 that
+    section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
   - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, `hideStaleAfterDays`
     in 0-365 (default 20, 0 never hides), `groupByRepo`, `hideDrafts` and `hideBots` are
     booleans (default off), quiet hours are `HH:MM`, repo filters are `owner` or
-    `owner/name` (deduplicated, case-insensitive). A field added later needs no migration: a
+    `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
+    (`org/slug`, lowercased, deduplicated; default empty = follow every team, new ones
+    included). A field added later needs no migration: a
     stored value without it gets the default.
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
     Unversioned data counts as version 1; data from a newer version is normalized best-effort.
@@ -431,7 +454,33 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   locked write. `markSeen` never moves backwards. `pruneExpired(state, now, knownIds)` drops ended snoozes and
   every entry for PRs not in `knownIds` (the snapshot's PR ids).
 
-Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl writes them.
+Readers of `auth`, `snapshot`, `pollState` and `teams` trust the stored shape: only Prowl
+writes them.
+
+### Teams
+
+`teams` (`TeamsState`, written by the poller only) is `{ login, fetchedAt, teams: Team[],
+error }`: whose teams they are, the last discovery attempt, the last list GitHub returned
+(`{ org, slug, name }`, sorted by `teamKey` = `org/slug` lowercase; a failed refresh keeps it)
+and why the last attempt failed (`{ kind: ErrorKind | 'missing_scope', message }`, the message
+can be shown as is) or null. `src/lib/github/teams.ts`:
+
+- `fetchViewerTeams(client)`: REST `GET /user/teams?per_page=100&page=N`, pages until a short
+  page or `MAX_TEAMS` (200). Classic and OAuth tokens need `read:org` (GitHub's docs also accept
+  `repo` or `user`); a fine-grained token must be owned by an organization, with the
+  organization permission Members: read, and lists that organization's teams only.
+- `teamsDue(stored, login, now)`: true for no list or another account's, a list older than 24 h,
+  or a failed attempt older than 1 h (and for a time in the future or junk).
+- `discoverTeams(client, auth, previous, now)`: never throws for a refusal: a 403 or 404 for a
+  token without `read:org` (or fine-grained) becomes `missing_scope` with the fix in its
+  message, any other failure keeps its kind; `unauthorized` and `network` are thrown, since
+  every other request of the poll would fail the same way.
+
+The poller discovers before `fetchPullRequests` when due or asked (`refreshTeams`) and stores
+the result with the snapshot (so a sign-out mid-poll leaves no list behind). Sign-in
+(`completeSignIn`) and sign-out remove `teams`, so a new token (say, one that now has
+`read:org`) is discovered again by its first poll. The side panel reads it from the `teams`
+signal (`state/store.ts`).
 
 ## Auth
 
@@ -447,8 +496,9 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   messages and our own messages do not contain it).
 - **After validation** (`src/sidepanel/state/session.ts`): `completeSignIn(auth, warning)` stores
   `auth`, sends `{ type: 'poll', force: true }` and navigates to the list; a warning is shown as a
-  toast ("Signed in as octocat. ..."), for PAT and device sign-ins alike. `signOut()` (account menu, after a confirmation dialog) removes
-  `auth`, `snapshot` and `pollState` and sends `{ type: 'signedOut' }`; the worker clears alarms,
+  toast ("Signed in as octocat. ..."), for PAT and device sign-ins alike; it also removes `teams`
+  so the first poll discovers them with the new token. `signOut()` (account menu, after a confirmation dialog) removes
+  `auth`, `snapshot`, `pollState` and `teams` and sends `{ type: 'signedOut' }`; the worker clears alarms,
   badge and notifications. `settings` and `prLocal` stay (they hold no secrets and no account
   data beyond PR ids).
 - **Which token** (the onboarding copy says the same, with links to creation pages whose forms
@@ -462,7 +512,8 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 | Re-run | Failed jobs and check suites | Failed jobs of GitHub Actions runs (Actions R/W); `check-suites/{id}/rerequest` needs the unavailable Checks permission |
 
   Sign-in succeeds either way; a classic token without `repo` gets a warning (public
-  repositories only) and any fine-grained token a note about CI status. The scopes are stored
+  repositories only), one without `read:org` (nor `write:org` / `admin:org`) a warning that
+  Team reviews may not find the teams, and any fine-grained token a note about CI status. The scopes are stored
   in `AuthState.scopes` so settings can show them. Sources: GitHub Docs "Managing your personal
   access tokens" (limitations list "Using fine-grained personal access token to call the Checks
   API"), "Permissions required for fine-grained personal access tokens" (no Checks section),
@@ -473,7 +524,7 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   1. The button's click handler first calls `chrome.permissions.request` for `env.webUrl/*`
      (`https://github.com/*`, an optional host permission; granted already in e2e builds), because
      Chrome only prompts during the user gesture. A refusal is explained inline and nothing is sent.
-  2. `requestDeviceCode()` POSTs `client_id` + `scope=repo` (form-encoded, `Accept: application/json`)
+  2. `requestDeviceCode()` POSTs `client_id` + `scope=repo read:org` (form-encoded, `Accept: application/json`)
      to `{webUrl}/login/device/code` and returns `{ deviceCode, userCode, verificationUri,
      expiresAt, interval }`. The panel shows the code (copy button, `Code expires in m:ss`, cancel),
      and opens `verificationUri` in a tab through `openGitHubUrl`.
@@ -494,13 +545,13 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   expire (OAuth Apps), and sign-out only forgets them locally; the user can revoke Prowl under
   GitHub's "Authorized OAuth Apps" (`docs/auth.md`).
 - The token lives only in `chrome.storage.local` under `auth`. Sign-out: the panel deletes
-  `auth`, `snapshot` and `pollState`, then sends `{ type: 'signedOut' }`; the worker clears the
+  `auth`, `snapshot`, `pollState` and `teams`, then sends `{ type: 'signedOut' }`; the worker clears the
   alarm, `pollState`, the badge and notifications, and drops a poll that was in flight.
 
 ## Side panel
 
 - Preact 10 + `@preact/signals`. `src/sidepanel/state/store.ts` has one signal per storage key
-  (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`) plus `hydrated`. `main.tsx` calls
+  (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`, `teams`) plus `hydrated`. `main.tsx` calls
   `hydrateStore()` before the first render: it subscribes to every key, reads them in one call
   (a change that lands during that read wins over it), normalizes `settings` and `prLocal`, and
   flips `hydrated`. `App` shows a skeleton (`main[aria-busy]`) until then. Signals are never

@@ -260,6 +260,22 @@ describe('several sections', () => {
     expect(screen.queryByRole('heading', { name: 'No pull requests' })).toBeNull();
   });
 
+  it('shows Team reviews as "Teams", with the teams that loaded under its notice', () => {
+    withSections(['authored', 'team_review_requested']);
+    snapshot.value = buildSnapshotOf(
+      { authored: [pr(1)], team_review_requested: [pr(4, { title: 'Team PR' })] },
+      { sectionErrors: { team_review_requested: 'GitHub refused the search for acme/gone.' } },
+    );
+    render(<ListView />);
+    const tab = screen.getByRole('tab', { name: /^Teams/ });
+    expect(tab.title).toBe('Team reviews');
+    fireEvent.click(tab);
+    expect(
+      screen.getByText('Could not load “Team reviews”: GitHub refused the search for acme/gone.'),
+    ).toBeTruthy();
+    expect(cardTitles()).toEqual(['Team PR']);
+  });
+
   it('falls back to the first section when the selected one is turned off', () => {
     activeSectionId.value = 'mentioned';
     render(<ListView />);

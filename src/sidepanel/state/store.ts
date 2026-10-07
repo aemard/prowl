@@ -13,6 +13,7 @@ import {
   type Snapshot,
   STORAGE_KEYS,
   type StorageKey,
+  type TeamsState,
 } from '../../lib/model';
 import { emptyPrLocal, normalizePrLocal } from '../../lib/storage/prLocal';
 import { defaultSettings, normalizeSettings } from '../../lib/storage/settings';
@@ -24,11 +25,13 @@ export const auth = signal<AuthState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
 export const prLocal = signal<PrLocalState>(emptyPrLocal());
+/** The viewer's teams as the worker last discovered them; undefined until then. */
+export const teams = signal<TeamsState | undefined>(undefined);
 /** False until the first read of storage has been applied: show a skeleton, not a guess. */
 export const hydrated = signal(false);
 
-// Settings and prLocal are normalized on every read; auth, snapshot and pollState are only
-// written by Prowl, so their stored shape is trusted.
+// Settings and prLocal are normalized on every read; auth, snapshot, pollState and teams are
+// only written by Prowl, so their stored shape is trusted.
 const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   [STORAGE_KEYS.settings]: (raw) => {
     settings.value = normalizeSettings(raw);
@@ -44,6 +47,9 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   },
   [STORAGE_KEYS.prLocal]: (raw) => {
     prLocal.value = normalizePrLocal(raw);
+  },
+  [STORAGE_KEYS.teams]: (raw) => {
+    teams.value = raw as TeamsState | undefined;
   },
 };
 const KEYS = Object.keys(BINDINGS) as StorageKey[];

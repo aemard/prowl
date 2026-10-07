@@ -2,7 +2,16 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { defaultSettings } from '../../lib/storage/settings';
 import { removeItems, setItem, setItems } from '../../lib/storage/storage';
 import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
-import { auth, hydrated, hydrateStore, pollState, prLocal, settings, snapshot } from './store';
+import {
+  auth,
+  hydrated,
+  hydrateStore,
+  pollState,
+  prLocal,
+  settings,
+  snapshot,
+  teams,
+} from './store';
 
 let stop: (() => void) | undefined;
 const hydrate = async () => {
@@ -19,6 +28,7 @@ describe('hydrateStore', () => {
     expect(snapshot.value).toBeUndefined();
     expect(pollState.value).toBeUndefined();
     expect(prLocal.value).toEqual({ snoozed: {}, muted: {}, seen: {} });
+    expect(teams.value).toBeUndefined();
   });
 
   it('loads stored values, normalizing settings and local state', async () => {
@@ -26,8 +36,20 @@ describe('hydrateStore', () => {
       settings: { theme: 'dark', pollIntervalMinutes: 999 },
       prLocal: { muted: { PR_1: true, PR_2: 'yes' } },
     });
-    await setItems({ auth: buildAuth(), snapshot: buildSnapshot(), pollState: buildPollState() });
+    const discovered = {
+      login: 'octocat',
+      fetchedAt: '2026-10-06T11:58:00.000Z',
+      teams: [],
+      error: null,
+    };
+    await setItems({
+      auth: buildAuth(),
+      snapshot: buildSnapshot(),
+      pollState: buildPollState(),
+      teams: discovered,
+    });
     await hydrate();
+    expect(teams.value).toEqual(discovered);
     expect(settings.value.theme).toBe('dark');
     expect(settings.value.pollIntervalMinutes).toBe(60);
     expect(prLocal.value.muted).toEqual({ PR_1: true });

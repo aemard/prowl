@@ -41,7 +41,7 @@ interface GitHubStub {
 function stubGitHub({
   polls = [{ access_token: TOKEN }],
   code,
-  scopes = 'repo',
+  scopes = 'repo, read:org',
   account,
 }: GitHubStub = {}) {
   let poll = 0;
@@ -177,7 +177,7 @@ describe('DeviceFlow', () => {
       method: 'oauth',
       token: TOKEN,
       tokenType: 'oauth',
-      scopes: ['repo'],
+      scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
     expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });

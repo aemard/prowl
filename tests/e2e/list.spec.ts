@@ -6,8 +6,12 @@ import { expect, saveScreenshot, test } from './fixtures';
 import { authored, nodesFor } from './helpers/listData';
 import { MOCK_ORIGIN } from './mock-github/server';
 
+/** Every preset but Team reviews, whose data and tests live in teams.spec.ts. */
 const allSections = (): Section[] =>
-  defaultSettings().sections.map((section) => ({ ...section, enabled: true }));
+  defaultSettings().sections.map((section) => ({
+    ...section,
+    enabled: section.kind !== 'team_review_requested',
+  }));
 
 /** Ids of the authored PRs, newest activity first (the default sort). */
 const AUTHORED = {
@@ -752,11 +756,15 @@ test.describe('with a rich set of pull requests', () => {
 
 test.describe('other states', () => {
   test('shows a skeleton until the first poll has produced a snapshot', async ({
+    github,
     openPanel,
     seedStorage,
     signIn,
     expectNoA11yViolations,
   }) => {
+    // The worker's install-time poll can start once `auth` is stored: keep any poll in flight
+    // (GitHub never answers the search) so it cannot end the skeleton before the checks below.
+    github.onGraphQL('ProwlSearch', () => new Promise<never>(() => undefined));
     await signIn();
     await seedStorage({
       pollState: {

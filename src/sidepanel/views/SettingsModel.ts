@@ -24,7 +24,8 @@ export function estimatedPointsPerHour(
 
 export const PRESET_DESCRIPTIONS: Record<Exclude<SectionKind, 'custom'>, string> = {
   authored: 'Pull requests you opened',
-  review_requested: 'Pull requests waiting for your review',
+  review_requested: 'Pull requests that ask you for a review (your teams have their own section)',
+  team_review_requested: 'Pull requests that ask one of your teams for a review',
   mentioned: 'Pull requests that mention you',
   assigned: 'Pull requests assigned to you',
 };

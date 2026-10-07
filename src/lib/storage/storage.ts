@@ -4,7 +4,15 @@
  * (`settings.ts`, `prLocal.ts`) normalize what they read because stored data may be stale,
  * from an older version, or edited by hand.
  */
-import type { AuthState, PollState, PrLocalState, Settings, Snapshot, StorageKey } from '../model';
+import type {
+  AuthState,
+  PollState,
+  PrLocalState,
+  Settings,
+  Snapshot,
+  StorageKey,
+  TeamsState,
+} from '../model';
 import { jsonEqual } from './guards';
 
 /** The value stored under each key of `STORAGE_KEYS`. */
@@ -14,6 +22,7 @@ export interface StorageSchema {
   snapshot: Snapshot;
   pollState: PollState;
   prLocal: PrLocalState;
+  teams: TeamsState;
 }
 
 /** Called with the new and previous value; `undefined` means the key is absent. */

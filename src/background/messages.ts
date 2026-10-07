@@ -14,6 +14,7 @@ function isRequest(message: unknown): message is BackgroundRequest {
     case 'markSeen':
       return Array.isArray(message.prIds) && message.prIds.every((id) => typeof id === 'string');
     case 'signedOut':
+    case 'refreshTeams':
       return true;
     default:
       return false;
@@ -35,6 +36,9 @@ async function route(request: BackgroundRequest): Promise<void> {
       );
       return;
     }
+    case 'refreshTeams':
+      await poll({ force: true, refreshTeams: true });
+      return;
     case 'signedOut':
       await clearSignedOut();
   }

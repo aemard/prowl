@@ -28,14 +28,16 @@ This signs in with an OAuth App through GitHub's device flow, the same way the G
    learn that you approved it. Nothing else on `github.com` is read. If you decline, Prowl says
    so and you can still use a token.
 3. Prowl shows a code such as `WDJB-MJHT` and opens `github.com/login/device`. Type the code
-   there and approve **Prowl** for the `repo` scope.
+   there and approve **Prowl** for the `repo` and `read:org` scopes.
 4. Prowl notices the approval within a few seconds and signs you in. The code is valid for 15
    minutes, and the panel counts down. Cancel any time, or start again after it expired.
 
 <img src="./screenshots/device-flow.png" width="400" height="760" alt="The side panel showing a one-time code, a button to open GitHub and a countdown">
 
 The sign-in only runs while the side panel is open. The `repo` scope is what GitHub requires to
-read private repositories and to approve, merge and re-run checks.
+read private repositories and to approve, merge and re-run checks. `read:org` lets Prowl list
+the teams you belong to, for **Team reviews** (see [Team review requests](#team-review-requests)).
+It is read-only: Prowl cannot change your organizations or teams.
 
 ### Not available in this build
 
@@ -60,14 +62,17 @@ form filled in.
 
 ### Classic token (recommended)
 
-1. Open [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=repo&description=Prowl)
+1. Open [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=repo,read:org&description=Prowl)
    (Settings, Developer settings, Personal access tokens, Tokens (classic), Generate new token).
-2. Name it, choose an expiry and tick **`repo`**. Nothing else is needed.
+2. Name it, choose an expiry and tick **`repo`** and **`read:org`** (under `admin:org`). Nothing
+   else is needed.
 3. Select **Generate token**, copy it (it starts with `ghp_`) and paste it into Prowl.
 
 `repo` lets Prowl read private repositories, read CI status, and approve, merge and re-run
 checks. To follow public repositories only, `public_repo` is enough. A classic token without
-`repo` still signs in, but it only sees public repositories, and Prowl warns you.
+`repo` still signs in, but it only sees public repositories, and Prowl warns you. `read:org`
+lists your teams for Team reviews; without it Prowl signs you in with a warning, and Team
+reviews may stay empty.
 
 If your organization uses SAML single sign-on, select **Configure SSO** next to the token on
 GitHub and authorize it for the organization, or its repositories will be missing.
@@ -98,6 +103,10 @@ Fine-grained tokens have two limits Prowl cannot work around:
   a classic token. Repositories you only collaborate on from outside an organization are not
   covered either.
 
+For **Team reviews**, the resource owner must be the organization, and under **Organization
+permissions** grant **Members**: read. Prowl then sees that organization's teams only; a token
+owned by your own account sees none.
+
 ## If something goes wrong
 
 - **"GitHub rejected this token"**: the token was copied incompletely, has expired or was
@@ -108,7 +117,20 @@ Fine-grained tokens have two limits Prowl cannot work around:
 - **A private repository is missing**: the token has no `repo` scope, or it is not authorized
   for that organization.
 - **No CI status on a pull request**: you use a fine-grained token (see above).
+- **Team reviews says "GitHub would not list your teams"**: sign in again with the `read:org`
+  scope (Continue with GitHub asks for it; tick it on a classic token), or give a fine-grained
+  token owned by the organization the Members: read permission. Teams of an organization that
+  requires single sign-on or restricts OAuth Apps appear once the token, or Prowl, is approved
+  there.
 - **"Could not reach GitHub"**: check your connection, then try again.
+
+## Team review requests
+
+**Review requested** lists the pull requests that ask *you* for a review. Requests sent to a
+team you belong to are in their own section, **Team reviews**: Prowl finds your teams (with
+`read:org`, once a day and at each sign-in) and searches each one's open review requests, up
+to 10 teams. Turn the section on in Settings. A pull request that asks both you and one of your
+teams shows up in both sections, and counts once in the badge.
 
 ## Signing out and revoking access
 

@@ -8,6 +8,7 @@ import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
 import { GitHubError } from '../lib/github/errors';
 import { fetchPullRequests } from '../lib/github/fetchPullRequests';
+import { discoverTeams, teamsDue } from '../lib/github/teams';
 import type { AuthState, PollState, PrEvent, Snapshot } from '../lib/model';
 import { pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
 import { normalizeSettings } from '../lib/storage/settings';
@@ -63,11 +64,21 @@ let current: Promise<PollResult | null> | null = null;
 /**
  * Polls GitHub unless signed out, stopped by a rejected token, or waiting (backoff, rate
  * limit). `force` (a user action) skips the backoff and retries a rejected token, never a
- * rate-limit wait. Concurrent calls share the poll in flight. Resolves to null when the poll
- * was skipped, failed (see `pollState.lastError`) or was dropped by a sign-out; never rejects.
+ * rate-limit wait; `refreshTeams` discovers the viewer's teams again even when they are not
+ * due. Concurrent calls share the poll in flight, except a team refresh, which waits for it
+ * and runs its own. Resolves to null when the poll was skipped, failed (see
+ * `pollState.lastError`) or was dropped by a sign-out; never rejects.
  */
-export function poll({ force = false }: { force?: boolean } = {}): Promise<PollResult | null> {
-  current ??= runPoll(force)
+export function poll({
+  force = false,
+  refreshTeams = false,
+}: {
+  force?: boolean;
+  refreshTeams?: boolean;
+} = {}): Promise<PollResult | null> {
+  // The poll in flight may have read the teams before this request came in.
+  if (refreshTeams && current) return current.then(() => poll({ force, refreshTeams }));
+  current ??= runPoll(force, refreshTeams)
     .catch((error: unknown) => {
       console.error('Prowl: poll failed', error);
       return null;
@@ -78,8 +89,8 @@ export function poll({ force = false }: { force?: boolean } = {}): Promise<PollR
   return current;
 }
 
-async function runPoll(force: boolean): Promise<PollResult | null> {
-  const stored = await getItems(['auth', 'pollState', 'settings']);
+async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult | null> {
+  const stored = await getItems(['auth', 'pollState', 'settings', 'teams']);
   const { auth } = stored;
   if (!auth) {
     await chrome.alarms.clear(POLL_ALARM);
@@ -109,9 +120,13 @@ async function runPoll(force: boolean): Promise<PollResult | null> {
   let snapshot: Snapshot;
   let sectionErrors: Record<string, string>;
   let rateLimit = state.rateLimit;
+  // Discovered at sign-in (the panel drops the stored teams), when due, or on request.
+  let { teams } = stored;
+  const discover = refreshTeams || teamsDue(teams, auth.viewer.login, now);
   try {
     const client = createGitHubClient({ token: auth.token, apiUrl: env.apiUrl });
-    const fetched = await fetchPullRequests(client, settings, previous);
+    if (discover) teams = await discoverTeams(client, auth, teams, now);
+    const fetched = await fetchPullRequests(client, settings, previous, teams);
     sectionErrors = fetched.sectionErrors;
     rateLimit = fetched.rateLimit ?? rateLimit;
     snapshot = {
@@ -120,6 +135,7 @@ async function runPoll(force: boolean): Promise<PollResult | null> {
       pullRequests: fetched.pullRequests,
       sections: fetched.sections,
       sectionErrors,
+      teamRequests: fetched.teamRequests,
       settledChecks: carrySettledChecks(previous, fetched.pullRequests),
     };
   } catch (error) {
@@ -146,6 +162,8 @@ async function runPoll(force: boolean): Promise<PollResult | null> {
       : null;
   await setItems({
     snapshot,
+    // Stored with the snapshot so a sign-out during the poll leaves no team list behind.
+    teams: discover ? teams : undefined,
     pollState: {
       ...attempt,
       lastSuccessAt: snapshot.fetchedAt,

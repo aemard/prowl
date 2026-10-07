@@ -668,8 +668,8 @@
       ],
       "priority": 37,
       "dependsOn": ["US-033"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Teams from REST GET /user/teams (pages of 100, cap 200) in storage key teams {login,fetchedAt,teams,error}, refreshed by the poller (24 h, 1 h after failure, sign-in, refreshTeams message); section team_review_requested = one search per followed team (first 10), merged/deduped/sorted/capped, Snapshot.teamRequests; review_requested = user-review-requested:@me; read:org asked and warned"
     },
     {
       "id": "US-038",

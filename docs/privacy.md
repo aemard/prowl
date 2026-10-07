@@ -18,11 +18,13 @@ your browser profile can read your token.
   Removed when you sign out.
 - **Pull requests:** the pull requests last fetched, with title, author, labels, branches, CI,
   review and merge state. Removed when you sign out.
+- **Teams:** the organizations and names of the GitHub teams you belong to, for Team reviews.
+  Removed when you sign out.
 - **Poll state:** when Prowl last polled, and any error or rate-limit wait. Removed when you
   sign out.
 - **Notification record:** the ids of events already reported, in `chrome.storage.session`.
   Removed when you sign out or Chrome closes.
-- **Settings:** your sections and search queries, repository filters, poll interval,
+- **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
   notification choices and quiet hours. Removed when you uninstall Prowl.
 - **Local choices:** which pull requests you snoozed, muted or have seen, by pull request id.
   Removed when you uninstall Prowl.

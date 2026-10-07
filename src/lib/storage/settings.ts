@@ -32,6 +32,7 @@ export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: boolean }> = {
   authored: { label: 'Created by me', enabled: true },
   review_requested: { label: 'Review requested', enabled: false },
+  team_review_requested: { label: 'Team reviews', enabled: false },
   mentioned: { label: 'Mentioned', enabled: false },
   assigned: { label: 'Assigned to me', enabled: false },
 };
@@ -92,6 +93,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   hideStaleAfterDays: 20,
   hideDrafts: false,
   hideBots: false,
+  unfollowedTeams: [],
 });
 
 export function defaultSettings(): Settings {
@@ -186,6 +188,17 @@ function normalizeRepoList(value: unknown): string[] {
   return out;
 }
 
+const TEAM_KEY = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9._-]{1,100}$/;
+
+/** Team keys (`org/slug`), lowercased, deduped; anything else is dropped. */
+function normalizeTeamKeys(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const keys = value
+    .filter((item) => typeof item === 'string')
+    .map((item) => item.trim().toLowerCase());
+  return [...new Set(keys.filter((key) => TEAM_KEY.test(key)))];
+}
+
 function isBuiltInKind(value: unknown): value is BuiltInSectionKind {
   return typeof value === 'string' && Object.hasOwn(BUILT_IN_SECTIONS, value);
 }
@@ -238,7 +251,13 @@ function normalizeSections(value: unknown): Section[] {
     sections.push(section);
   }
   for (const kind of BUILT_IN_SECTION_KINDS) {
-    if (!used.has(kind)) sections.push(builtInSection(kind));
+    if (used.has(kind)) continue;
+    // "Review requested" used to include team requests: whoever followed it keeps seeing them.
+    const inherited =
+      kind === 'team_review_requested'
+        ? sections.find((section) => section.id === 'review_requested')?.enabled
+        : undefined;
+    sections.push(builtInSection(kind, inherited));
   }
   return sections;
 }
@@ -298,6 +317,7 @@ export function normalizeSettings(value: unknown): Settings {
     ),
     hideDrafts: bool(raw.hideDrafts, DEFAULT_SETTINGS.hideDrafts),
     hideBots: bool(raw.hideBots, DEFAULT_SETTINGS.hideBots),
+    unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }
 
