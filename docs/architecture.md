@@ -640,7 +640,10 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   live) or `signIn(overrides?)`; drive polls with `poll()` (a forced poll sent from an extension
   page, resolved once it is done); assert on `github.requests` and on
   `chrome.notifications.getAll()` in the worker.
-- Every screen gets an axe check; screenshot specs write to `docs/screenshots/`.
+- Every screen gets an axe check. `saveScreenshot(page, name)` writes `docs/screenshots/<name>.png`
+  only when `PROWL_SCREENSHOTS=1` (`pnpm screenshots`), and that run launches Chromium with
+  `deviceScaleFactor: 2`, so the 400 x 760 panel is saved as 800 x 1520 px; routine runs stay at 1x.
+  Nothing else in the suite writes into `docs/`.
 
 ## Re-run, draft toggle and local actions
 

@@ -216,7 +216,7 @@ nav a[aria-current="page"] {
 
 .shot img {
   width: 100%;
-  /* The screenshots are 400 px wide: shown larger on a phone they would be soft. */
+  /* The screenshots are 400 CSS px wide (800 px files for HiDPI): shown larger they would be soft. */
   max-width: 22rem;
   margin-inline: auto;
   border: var(--border-width) solid var(--color-border);

@@ -14,7 +14,7 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 | `pnpm verify:fast` | Lint + types + unit tests (inner loop) |
 | `pnpm test` / `pnpm coverage` | Vitest (coverage gates: 80% global, 95% `src/lib/diff` and `src/lib/github`) |
 | `pnpm e2e` | Builds `dist-e2e/` then runs Playwright against the mock GitHub server |
-| `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` (only way they change) |
+| `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` at 2x, 800 px wide (only way they change) |
 | `pnpm build` / `pnpm size` / `pnpm zip` | Production build, perf budget (`perf-budget.json`), release zip |
 | `pnpm icons` | Re-rasterize `src/assets/logo.svg` into `public/icons/*.png` |
 | `pnpm lint:fix` | Biome format + safe fixes |

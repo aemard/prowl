@@ -17,7 +17,7 @@ Pick **Continue with GitHub** when the button is there: there is nothing to copy
 is created for you. Otherwise pick a **classic token**. Choose a fine-grained token only when you
 want to limit Prowl to a few repositories and can live without CI status.
 
-![Prowl's sign-in screen with the Continue with GitHub button and the token field](./screenshots/onboarding.png)
+<img src="./screenshots/onboarding.png" width="400" height="760" alt="Prowl's sign-in screen with the Continue with GitHub button and the token field">
 
 ## Continue with GitHub
 
@@ -32,7 +32,7 @@ This signs in with an OAuth App through GitHub's device flow, the same way the G
 4. Prowl notices the approval within a few seconds and signs you in. The code is valid for 15
    minutes, and the panel counts down. Cancel any time, or start again after it expired.
 
-![The side panel showing a one-time code, a button to open GitHub and a countdown](./screenshots/device-flow.png)
+<img src="./screenshots/device-flow.png" width="400" height="760" alt="The side panel showing a one-time code, a button to open GitHub and a countdown">
 
 The sign-in only runs while the side panel is open. The `repo` scope is what GitHub requires to
 read private repositories and to approve, merge and re-run checks.

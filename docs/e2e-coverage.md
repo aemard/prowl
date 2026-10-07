@@ -34,6 +34,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Errors, offline, revoked token | `errors` (401, 403 rate limit, 502, refused connection, stale data) |
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
+| Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 
 Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time (see
 `progress.txt`, US-027).

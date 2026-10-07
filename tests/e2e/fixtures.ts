@@ -11,6 +11,8 @@ import type { AuthState } from '../../src/lib/model';
 import { MockGitHub } from './mock-github/server';
 
 const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
+/** `pnpm screenshots`: the run that writes docs/screenshots/. */
+const WRITE_SCREENSHOTS = process.env.PROWL_SCREENSHOTS === '1';
 
 export interface ExtensionFixtures {
   context: BrowserContext;
@@ -61,6 +63,9 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
         channel: 'chromium',
         headless: !process.env.HEADED,
         viewport: { width: 400, height: 760 },
+        // The images in docs/ are shown on HiDPI screens: capture them at twice the pixel density
+        // (800 x 1520). Routine runs stay at 1x, which renders four times fewer pixels.
+        deviceScaleFactor: WRITE_SCREENSHOTS ? 2 : 1,
         args: [
           `--disable-extensions-except=${EXTENSION_PATH}`,
           `--load-extension=${EXTENSION_PATH}`,
@@ -171,13 +176,20 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 export const expect = test.expect;
 
 /**
- * Saves a screenshot to docs/screenshots/<name>.png for the README and the site.
- * Only writes when PROWL_SCREENSHOTS=1 (`pnpm screenshots`), so routine E2E runs don't churn
- * the committed images; the page is still captured so rendering errors surface either way.
+ * Saves a screenshot to docs/screenshots/<name>.png for the README and the site, at twice the
+ * panel's CSS size (see `deviceScaleFactor` above). Only writes when PROWL_SCREENSHOTS=1
+ * (`pnpm screenshots`), so routine E2E runs don't churn the committed images; the page is still
+ * captured so rendering errors surface either way.
  */
-export async function saveScreenshot(page: Page, name: string): Promise<void> {
-  const write = process.env.PROWL_SCREENSHOTS === '1';
-  await page.screenshot(
-    write ? { path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`) } : {},
-  );
+export async function saveScreenshot(
+  page: Page,
+  name: string,
+  options: { fullPage?: boolean } = {},
+): Promise<void> {
+  await page.screenshot({
+    ...options,
+    ...(WRITE_SCREENSHOTS && {
+      path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`),
+    }),
+  });
 }

@@ -10,7 +10,7 @@ changes, comment, merge, re-run failed checks, toggle draft) without leaving the
 browser and is only ever sent to GitHub.
 
 <p align="center">
-  <img src="docs/screenshots/list-light.png" alt="Prowl's side panel listing pull requests with CI, review and merge status" width="380">
+  <img src="docs/screenshots/list-light.png" alt="Prowl's side panel listing pull requests with CI, review and merge status" width="400" height="760">
 </p>
 
 [Website](https://aemard.github.io/prowl/) ·
@@ -71,7 +71,7 @@ pnpm verify        # Biome, types, unit tests + coverage gates, build, site, siz
 pnpm build         # production build in dist/ (load it unpacked)
 pnpm dev           # rebuild dist/ on change
 pnpm e2e           # Playwright against the real extension and a mock GitHub
-pnpm screenshots   # same, and refresh docs/screenshots/
+pnpm screenshots   # same, and refresh docs/screenshots/ (at 2x)
 pnpm zip           # prowl-v<version>.zip from dist/
 ```
 

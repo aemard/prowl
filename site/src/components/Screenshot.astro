@@ -12,15 +12,22 @@ interface Props {
 }
 
 const { light, dark, alt, priority = false } = Astro.props;
-// The real side panel screenshots, converted to WebP at build time.
-const convert = (src: ImageMetadata) => getImage({ src, format: 'webp', quality: 90 });
+// The real side panel screenshots are captured at 2x (800 x 1520) and shown at their 400 x 760
+// CSS size: a 1x file for standard screens, the 2x file for HiDPI ones, both WebP.
+const convert = (src: ImageMetadata) =>
+  getImage({ src, format: 'webp', quality: 90, width: 400, densities: [1, 2] });
 const [lightImage, darkImage] = await Promise.all([convert(light), dark && convert(dark)]);
 ---
 
 <picture class="shot">
-  {darkImage && <source media="(prefers-color-scheme: dark)" srcset={darkImage.src} />}
+  {
+    darkImage && (
+      <source media="(prefers-color-scheme: dark)" srcset={darkImage.srcSet.attribute} />
+    )
+  }
   <img
     src={lightImage.src}
+    srcset={lightImage.srcSet.attribute}
     width={lightImage.attributes.width}
     height={lightImage.attributes.height}
     alt={alt}

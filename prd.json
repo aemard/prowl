@@ -560,8 +560,8 @@
       ],
       "priority": 31,
       "dependsOn": ["US-030"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Screenshots captured at 2x (800 x 1520) via context deviceScaleFactor only under PROWL_SCREENSHOTS=1; settings.png routed through saveScreenshot; README/docs/site show 400 x 760 CSS px (srcset 1x/2x); store images regenerated at exact sizes; Lighthouse 100 everywhere."
     },
     {
       "id": "US-032",

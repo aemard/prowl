@@ -1,9 +1,8 @@
-import { resolve } from 'node:path';
 import type { Page, Worker } from '@playwright/test';
 import type { Settings } from '../../src/lib/model';
 import { defaultSettings } from '../../src/lib/storage/settings';
 import { headCommit, prNode, searchResponse } from '../fixtures/github';
-import { expect, test } from './fixtures';
+import { expect, saveScreenshot, test } from './fixtures';
 import { nodesFor } from './helpers/listData';
 import { MOCK_ORIGIN } from './mock-github/server';
 
@@ -390,10 +389,7 @@ test.describe('look', () => {
     const panel = await openPanel('#/settings');
     await panel.emulateMedia({ colorScheme: 'light' });
     await expect(panel.getByRole('switch', { name: 'Bugs' })).toBeVisible();
-    await panel.screenshot({
-      path: resolve(import.meta.dirname, '../../docs/screenshots/settings.png'),
-      fullPage: true,
-    });
+    await saveScreenshot(panel, 'settings', { fullPage: true });
     await panel.emulateMedia({ colorScheme: 'dark' });
     await panel.screenshot({ path: test.info().outputPath('settings-dark.png'), fullPage: true });
   });

@@ -1,6 +1,8 @@
 // Renders the Chrome Web Store listing images into docs/store/: five 1280 x 800 screenshots, the
 // 440 x 280 small promo tile and the 1400 x 560 marquee. They frame the real panel from
-// docs/screenshots (drawn at 1:1, so it stays sharp) with the logo and colors from tokens.css.
+// docs/screenshots (captured at 2x, 800 x 1520, and drawn at their 400 x 760 CSS size, so the
+// browser downsamples them 2:1) with the logo and colors from tokens.css. The store wants exact
+// pixel sizes, so these pages render at 1x.
 // Usage: pnpm screenshots, then pnpm store-images (commit the PNGs). Headlines use Inter when
 // it is installed, else the system UI font.
 import { mkdirSync, readFileSync } from 'node:fs';
