@@ -3,7 +3,7 @@ import type { Page, Worker } from '@playwright/test';
 import type { Snapshot, TeamsState } from '../../src/lib/model';
 import { defaultSettings } from '../../src/lib/storage/settings';
 import { headCommit, prNode, searchResponse, teamJson, userTeamsPage } from '../fixtures/github';
-import { expect, test } from './fixtures';
+import { expect, saveScreenshot, test } from './fixtures';
 import { MOCK_ORIGIN, type MockGitHub } from './mock-github/server';
 
 const node = (number: number, title: string, overrides: Parameters<typeof prNode>[0] = {}) =>
@@ -112,8 +112,60 @@ test('finds the teams and lists what they are asked to review in Team reviews', 
   await expect(panel.getByRole('button', { name: 'Show 1 hidden' })).toBeVisible();
   // The badge counts the team PR with failing CI, not the hidden draft.
   await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('1');
+  // Each card says which of the viewer's teams is asked, in the chip and to a screen reader.
+  const sharedCard = panel.locator(`[data-pr-id="${shared.id}"]`);
+  await expect(sharedCard.getByTitle('Review requested from @acme/core, @acme/web')).toHaveText(
+    '@acme/core, @acme/web',
+  );
+  await expect(
+    panel.getByRole('button', { name: 'Details for Share the button styles' }),
+  ).toHaveAccessibleDescription(/Review requested from @acme\/core, @acme\/web/);
   await panel.emulateMedia({ colorScheme: 'light' });
   await expectNoA11yViolations(panel);
+  await panel.mouse.move(0, 0);
+  await saveScreenshot(panel, 'list-teams');
+});
+
+test('follows and unfollows teams from Settings, which changes the searches', async ({
+  github,
+  seedStorage,
+  signIn,
+  poll,
+  openPanel,
+  expectNoA11yViolations,
+}) => {
+  serveTeams(github);
+  serveSearches(github);
+  await seedStorage({ settings: SETTINGS });
+  await signIn();
+  await poll();
+
+  const panel = await openPanel('#/settings');
+  const teams = panel.locator('section', { has: panel.getByRole('heading', { name: 'Teams' }) });
+  await expect(teams.getByRole('group', { name: 'acme' })).toBeVisible();
+  await expect(teams.getByRole('switch', { name: 'Core' })).toBeChecked();
+  await expect(teams.getByText(/Checked just now/)).toBeVisible();
+  await panel.emulateMedia({ colorScheme: 'dark' });
+  await expectNoA11yViolations(panel);
+
+  const before = github.requestsFor('ProwlSearch').length;
+  await teams.getByRole('switch', { name: 'Web' }).click();
+  await expect(teams.getByRole('switch', { name: 'Web' })).not.toBeChecked();
+  // The change asks for a refresh: only acme/core is searched for the team section now.
+  await expect
+    .poll(() =>
+      github
+        .requestsFor('ProwlSearch')
+        .slice(before)
+        .map((request) => (request.body as { variables: { query: string } }).variables.query)
+        .filter((query) => query.includes('team-review-requested')),
+    )
+    .toEqual(['is:pr is:open team-review-requested:acme/core archived:false sort:updated-desc']);
+
+  const discoveries = () => github.requests.filter((r) => r.path.startsWith('/user/teams')).length;
+  const listed = discoveries();
+  await teams.getByRole('button', { name: 'Refresh teams' }).click();
+  await expect.poll(discoveries).toBeGreaterThan(listed);
 });
 
 test('explains a missing read:org scope in the section, then finds the teams on request', async ({
@@ -136,6 +188,14 @@ test('explains a missing read:org scope in the section, then finds the teams on 
   const before = await stored(serviceWorker);
   expect(before.teams?.error?.kind).toBe('missing_scope');
   expect(before.pollState?.lastError).toBeNull();
+  const settings = await openPanel('#/settings');
+  const group = settings.locator('section', {
+    has: settings.getByRole('heading', { name: 'Teams' }),
+  });
+  await expect(group.getByText(/GitHub would not list your teams/)).toBeVisible();
+  await expect(group.getByRole('button', { name: 'Sign in again' })).toBeVisible();
+  await settings.close();
+
   const panel = await openPanel();
   await panel.getByRole('tab', { name: /^Teams/ }).click();
   await expect(

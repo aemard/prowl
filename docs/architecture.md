@@ -708,6 +708,14 @@ signal (`state/store.ts`).
     (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
     no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
     a link to the permission table in `docs/privacy.md`.
+  - Teams (`SettingsTeams.tsx`, after Pull requests): the `teams` signal grouped by organization,
+    one switch per team (unfollowing writes `unfollowedTeams` with an updater and asks for a
+    refresh), "Refresh teams" (`{ type: 'refreshTeams' }`), when the list was checked, a note when
+    Team reviews is off or more than `MAX_TEAM_SEARCHES` teams are followed, and the stored error
+    with "Sign in again" (`navigate('onboarding')`) for `missing_scope`. The Refresh cost counts
+    the team section as one search per followed team (`teamSearches`).
+  - Cards get `teams` (`snapshot.teamRequests[pr.id]`): a people chip "@org/slug, ..." whose title
+    and the card's description say "Review requested from @org/slug".
 - The section bar (`components/SectionTabs.tsx`) is fixed at the bottom of the list: up to five
   sections as tabs, past five the first four and a "More" menu with the rest. While it is shown
   `:root` gets `--app-inset-bottom`, which the shell, toasts and focus scrolling keep clear of;

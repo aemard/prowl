@@ -60,6 +60,18 @@ describe('PullRequestCard', () => {
     expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBeTruthy();
   });
 
+  it('says which of your teams is asked to review, on the card and to a screen reader', () => {
+    render(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} teams={['acme/web', 'acme/api']} />
+      </ul>,
+    );
+    expect(screen.getByTitle('Review requested from @acme/web, @acme/api').textContent).toBe(
+      '@acme/web, @acme/api',
+    );
+    expect(toggleOf().description).toContain('Review requested from @acme/web, @acme/api');
+  });
+
   it('has a title link and a separate expand button, each named, and describes the rest', () => {
     const link = renderCard({
       author: {

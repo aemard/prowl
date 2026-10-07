@@ -176,3 +176,31 @@
 .settings-group > .settings-link {
   align-self: flex-start;
 }
+
+/* Teams: one fieldset per organization, its switches stacked like the rest of the group. */
+.settings-teams__org {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.settings-teams__legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.settings-teams__error,
+.settings-teams__refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}

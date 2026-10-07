@@ -1,6 +1,14 @@
 /** Pure helpers and copy for the settings screen. */
 import { env } from '../../lib/env';
-import type { AuthState, BadgeMode, PrEventType, QuietHours, SectionKind } from '../../lib/model';
+import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
+import type {
+  AuthState,
+  BadgeMode,
+  PrEventType,
+  QuietHours,
+  SectionKind,
+  Team,
+} from '../../lib/model';
 
 /** GitHub's GraphQL budget per hour for one token. */
 export const HOURLY_POINTS = 5000;
@@ -20,6 +28,12 @@ export function estimatedPointsPerHour(
 ): number {
   const perSearch = Math.ceil((1 + perSection * CONNECTIONS_PER_PR) / 100);
   return Math.round((sections * perSearch * 60) / intervalMinutes);
+}
+
+/** Searches the team section runs per poll: one per followed team, capped like the worker. */
+export function teamSearches(list: readonly Team[], unfollowed: readonly string[]): number {
+  const skip = new Set(unfollowed);
+  return Math.min(list.filter((team) => !skip.has(teamKey(team))).length, MAX_TEAM_SEARCHES);
 }
 
 export const PRESET_DESCRIPTIONS: Record<Exclude<SectionKind, 'custom'>, string> = {

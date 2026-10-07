@@ -19,6 +19,7 @@ import {
   FileDiffIcon,
   GitMergeIcon,
   GitPullRequestDraftIcon,
+  PeopleIcon,
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
@@ -65,6 +66,8 @@ export interface PullRequestCardProps {
   hiddenBecause?: string;
   /** The card sits under its repository's header, so its own row shows only `#number`. */
   grouped?: boolean;
+  /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
+  teams?: readonly string[];
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -84,6 +87,7 @@ export function PullRequestCard({
   snoozedUntil,
   hiddenBecause,
   grouped,
+  teams,
 }: PullRequestCardProps) {
   const detailId = useId();
   const card = useRef<HTMLLIElement>(null);
@@ -91,6 +95,8 @@ export function PullRequestCard({
   const statuses = pullRequestStatuses(pr);
   const labels = pr.labels.slice(0, MAX_LABELS);
   const hidden = pr.labels.slice(MAX_LABELS);
+  const teamRequest =
+    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
 
   // Two conveniences on top of the chevron button, which is the keyboard and screen reader path:
   // a click on the card's summary (not on a link or button, nor a selection made to copy text)
@@ -173,7 +179,7 @@ export function PullRequestCard({
         >
           {pr.title}
         </GitHubLink>
-        {(hiddenBecause || statuses.length > 0) && (
+        {(hiddenBecause || teamRequest || statuses.length > 0) && (
           <span class="pr-card__chips">
             {hiddenBecause && (
               <Badge
@@ -182,6 +188,11 @@ export function PullRequestCard({
                 title="Why it is hidden from the list"
               >
                 {hiddenBecause}
+              </Badge>
+            )}
+            {teamRequest && (
+              <Badge variant="plain" icon={<PeopleIcon size={12} />} title={teamRequest}>
+                {teams?.map((t) => `@${t}`).join(', ')}
               </Badge>
             )}
             {statuses.map(({ id, tone, icon, label, detail }) => {
@@ -244,6 +255,7 @@ export function PullRequestCard({
         </span>
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
+          {teamRequest && `. ${teamRequest}`}
           {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
         </span>
       </div>

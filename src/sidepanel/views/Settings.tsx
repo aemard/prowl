@@ -11,13 +11,14 @@ import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
 import { Switch } from '../components/ui/Switch';
 import { saveSettings } from '../state/settings';
-import { settings } from '../state/store';
+import { settings, teams } from '../state/store';
 import { AboutSettings, AccountSettings } from './SettingsAccount';
 import { SettingsGroup } from './SettingsGroup';
-import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS } from './SettingsModel';
+import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
+import { TeamsSettings } from './SettingsTeams';
 
 const THEMES: SelectOption<Theme>[] = [
   { value: 'system', label: 'Match system' },
@@ -39,9 +40,18 @@ const BADGES: SelectOption<BadgeMode>[] = [
 
 /** How often Prowl asks GitHub, and what that costs of the hourly rate limit. */
 function PollingSettings() {
-  const { pollIntervalMinutes, maxPerSection, sections } = settings.value;
-  const followed = sections.filter((section) => section.enabled).length;
-  const points = estimatedPointsPerHour(followed, maxPerSection, pollIntervalMinutes);
+  const { pollIntervalMinutes, maxPerSection, sections, unfollowedTeams } = settings.value;
+  const searches = sections
+    .filter((section) => section.enabled)
+    .reduce(
+      (total, section) =>
+        total +
+        (section.kind === 'team_review_requested'
+          ? teamSearches(teams.value?.teams ?? [], unfollowedTeams)
+          : 1),
+      0,
+    );
+  const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
   return (
     <SettingsGroup title="Refresh">
       <div class="settings-pair">
@@ -130,6 +140,7 @@ export function SettingsView() {
     <div class="settings">
       <h2 class="settings__title">Settings</h2>
       <ScopeSettings />
+      <TeamsSettings />
       <PollingSettings />
       <NotificationsSettings />
       <AppearanceSettings />

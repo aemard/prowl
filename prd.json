@@ -686,8 +686,8 @@
       ],
       "priority": 38,
       "dependsOn": ["US-037"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Settings Teams group (by org, follow switches, refresh, missing-scope sign-in), team chips on cards from snapshot.teamRequests, cost counts team searches, onboarding mentions read:org; list-teams.png."
     },
     {
       "id": "US-039",

@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AuthState, Section, Settings } from '../../lib/model';
+import type { AuthState, Section, Settings, TeamsState } from '../../lib/model';
 import { defaultSettings, normalizeSettings } from '../../lib/storage/settings';
 import { fakeChrome } from '../../test/chrome';
 import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
@@ -19,10 +19,15 @@ afterEach(() => {
 });
 
 /** Stores `settings` (and the account), loads the panel's store from it and renders the screen. */
-async function open(settings: Partial<Settings> = {}, account: AuthState | null = buildAuth()) {
+async function open(
+  settings: Partial<Settings> = {},
+  account: AuthState | null = buildAuth(),
+  stored: Record<string, unknown> = {},
+) {
   await chrome.storage.local.set({
     settings: { ...defaultSettings(), ...settings },
     ...(account ? { auth: account } : {}),
+    ...stored,
   });
   await act(async () => {
     stop = await hydrateStore();
@@ -40,6 +45,17 @@ const group = (title: string) =>
   within(screen.getByRole('heading', { level: 3, name: title }).closest('section') as HTMLElement);
 const toggle = (name: string, scope: Pick<typeof screen, 'getByRole'> = screen) =>
   scope.getByRole('switch', { name });
+const teamsState = (overrides: Partial<TeamsState> = {}): TeamsState => ({
+  login: buildAuth().viewer.login,
+  fetchedAt: new Date().toISOString(),
+  teams: [
+    { org: 'acme', slug: 'ops', name: 'Ops' },
+    { org: 'acme', slug: 'web', name: 'Web' },
+    { org: 'octo', slug: 'docs', name: 'Docs' },
+  ],
+  error: null,
+  ...overrides,
+});
 const custom = (overrides: Partial<Section> = {}): Section => ({
   id: 'custom-1',
   kind: 'custom',
@@ -55,6 +71,7 @@ describe('SettingsView', () => {
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings');
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
       'Pull requests',
+      'Teams',
       'Refresh',
       'Notifications',
       'Appearance',
@@ -289,7 +306,81 @@ describe('SettingsView', () => {
         maxPerSection: 100,
         pollIntervalMinutes: 1,
       });
-      expect(group('Refresh').getByText(/about 2,400 points an hour/)).toBeTruthy();
+      // Four presets at 480 points an hour; Team reviews searches nothing without a team.
+      expect(group('Refresh').getByText(/about 1,920 points an hour/)).toBeTruthy();
+    });
+
+    it('counts a search per followed team', async () => {
+      await open(
+        {
+          sections: defaultSettings().sections.map((s) => ({ ...s, enabled: true })),
+          maxPerSection: 100,
+          pollIntervalMinutes: 1,
+          unfollowedTeams: ['acme/ops'],
+        },
+        buildAuth(),
+        { teams: teamsState() },
+      );
+      expect(group('Refresh').getByText(/about 2,880 points an hour/)).toBeTruthy();
+    });
+  });
+
+  describe('teams', () => {
+    it('lists the teams by organization and follows or unfollows each one', async () => {
+      await open({}, buildAuth(), { teams: teamsState() });
+      const teams = group('Teams');
+      expect(
+        teams.getAllByRole('group').map((g) => g.querySelector('legend')?.textContent),
+      ).toEqual(['acme', 'octo']);
+      expect(toggle('Web', teams).getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(toggle('Ops', teams));
+      await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual(['acme/ops']));
+      fireEvent.click(toggle('Ops', teams));
+      await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual([]));
+    });
+
+    it('says when Team reviews is off, and refreshes the list on demand', async () => {
+      const send = vi.spyOn(chrome.runtime, 'sendMessage');
+      await open({}, buildAuth(), { teams: teamsState() });
+      const teams = group('Teams');
+      expect(teams.getByText(/Turn on Team reviews under Sections/)).toBeTruthy();
+      fireEvent.click(teams.getByRole('button', { name: 'Refresh teams' }));
+      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' }));
+    });
+
+    it('explains a token that cannot list teams and offers to sign in again', async () => {
+      await open({}, buildAuth(), {
+        teams: teamsState({
+          teams: [],
+          error: { kind: 'missing_scope', message: 'GitHub would not list your teams.' },
+        }),
+      });
+      const teams = group('Teams');
+      expect(teams.getByText('GitHub would not list your teams.')).toBeTruthy();
+      fireEvent.click(teams.getByRole('button', { name: 'Sign in again' }));
+      expect(location.hash).toBe('#/onboarding');
+    });
+
+    it('says when GitHub lists no team, and when it has not looked yet', async () => {
+      await open({}, buildAuth(), { teams: teamsState({ teams: [] }) });
+      expect(group('Teams').getByText('GitHub lists no team for your account.')).toBeTruthy();
+      cleanup();
+      stop?.();
+      await chrome.storage.local.remove('teams');
+      await open();
+      expect(group('Teams').getByText('Not checked yet')).toBeTruthy();
+    });
+
+    it('warns when more teams are followed than Prowl searches', async () => {
+      const many = Array.from({ length: 12 }, (_, i) => ({
+        org: 'acme',
+        slug: `t${i}`,
+        name: `T${i}`,
+      }));
+      await open({}, buildAuth(), { teams: teamsState({ teams: many }) });
+      expect(
+        group('Teams').getByText(/You follow 12 teams; Prowl searches the first 10/),
+      ).toBeTruthy();
     });
   });
 

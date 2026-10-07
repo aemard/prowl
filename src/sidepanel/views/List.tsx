@@ -271,6 +271,7 @@ export function ListView() {
       now={now}
       unseen={!isSeen(local, pr.id, pr.updatedAt)}
       muted={isMuted(local, pr.id)}
+      teams={snap.teamRequests?.[pr.id]}
       grouped={grouped}
     />
   );
@@ -368,6 +369,7 @@ export function ListView() {
                     now={now}
                     unseen={false}
                     muted={isMuted(local, pr.id)}
+                    teams={snap.teamRequests?.[pr.id]}
                     snoozedUntil={local.snoozed[pr.id]}
                   />
                 ))}
@@ -398,6 +400,7 @@ export function ListView() {
                     now={now}
                     unseen={!isSeen(local, pr.id, pr.updatedAt)}
                     muted={isMuted(local, pr.id)}
+                    teams={snap.teamRequests?.[pr.id]}
                     hiddenBecause={describeHiddenReasons(reasons)}
                   />
                 ))}
