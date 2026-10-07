@@ -105,6 +105,8 @@ async function post(
       headers: { Accept: 'application/json' },
       body: new URLSearchParams(params),
       cache: 'no-store',
+      // github.com's optional permission would otherwise send your GitHub session cookies.
+      credentials: 'omit',
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
     payload = await response.json().catch(() => undefined);

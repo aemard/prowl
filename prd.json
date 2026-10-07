@@ -768,8 +768,8 @@
       ],
       "priority": 43,
       "dependsOn": ["US-042"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Reviewed v1.2: fixed credentials:'omit' on GitHub requests (F1) and team key validation before search (F2); threat model and review.md updated; verdict APPROVE once Verify is required on main."
     },
     {
       "id": "US-044",

@@ -188,7 +188,8 @@ function normalizeRepoList(value: unknown): string[] {
   return out;
 }
 
-const TEAM_KEY = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9._-]{1,100}$/;
+/** `org/slug`, lowercase: what GitHub allows in an organization login and a team slug. */
+export const TEAM_KEY = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9._-]{1,100}$/;
 
 /** Team keys (`org/slug`), lowercased, deduped; anything else is dropped. */
 function normalizeTeamKeys(value: unknown): string[] {

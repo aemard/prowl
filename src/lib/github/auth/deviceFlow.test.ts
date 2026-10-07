@@ -70,6 +70,7 @@ describe('requestDeviceCode', () => {
     expect(url).toBe('https://github.com/login/device/code');
     expect(init?.method).toBe('POST');
     expect(init?.headers).toEqual({ Accept: 'application/json' });
+    expect(init?.credentials).toBe('omit');
     expect(Object.fromEntries(init?.body as URLSearchParams)).toEqual({
       client_id: 'client-1',
       scope: 'repo read:org',

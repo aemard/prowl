@@ -4,6 +4,7 @@
  * field, and every `Team` field there needs `read:org` (see docs/decisions.md).
  */
 import type { AuthState, ErrorKind, Team, TeamsState } from '../model';
+import { TEAM_KEY } from '../storage/settings';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
 
@@ -36,10 +37,12 @@ const MISSING_SCOPE =
   'GitHub would not list your teams. Sign in again with the read:org scope, or use a ' +
   'fine-grained token owned by the organization with the Members: read permission.';
 
+/** A team as GitHub lists it, or null; its key goes into a search query, so it is validated. */
 function toTeam(json: unknown): Team | null {
   const { slug, name, organization } = (json ?? {}) as Record<string, unknown>;
   const org = (organization ?? {}) as Record<string, unknown>;
   if (typeof slug !== 'string' || typeof org.login !== 'string') return null;
+  if (!TEAM_KEY.test(teamKey({ org: org.login, slug }))) return null;
   return { org: org.login, slug, name: typeof name === 'string' ? name : slug };
 }
 

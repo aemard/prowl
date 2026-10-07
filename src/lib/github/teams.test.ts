@@ -55,6 +55,9 @@ describe('fetchViewerTeams', () => {
         organization: null as unknown as ReturnType<typeof teamJson>['organization'],
       },
       null as unknown as ReturnType<typeof teamJson>,
+      // Never a search qualifier: a slug with a space or a colon is dropped.
+      teamJson('acme/web is:merged'),
+      teamJson('acme/a:b'),
     ]);
     expect(await fetchViewerTeams(client)).toEqual([
       { org: 'Acme', slug: 'core', name: 'Core' },

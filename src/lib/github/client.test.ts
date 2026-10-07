@@ -61,6 +61,7 @@ describe('graphql', () => {
       'Content-Type': 'application/json',
     });
     expect(init?.cache).toBe('no-store');
+    expect(init?.credentials).toBe('omit');
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 

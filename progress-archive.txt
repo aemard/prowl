@@ -340,3 +340,9 @@ Search it with grep when a story touches an area an old entry covers.
 - Tests: Settings (teams describe, cost), PullRequestCard (chip), teams.spec.ts (chip + description, follow/unfollow changes the searches, Refresh teams rediscovers, missing scope in Settings); list-teams.png added, settings.png regenerated.
 - Learnings: `github.requestsFor(path)` matches the exact path, query string included: filter `github.requests` by `path.startsWith` for REST calls with parameters. Never `pkill -f` a pattern that is in your own command line.
 ---
+## 2026-10-07 - US-039 Update branch and auto-merge
+- Built in the main session. Model `autoMergeAllowed` + `autoMerge { method, enabledBy }` (list query: `repository.autoMergeAllowed`, `autoMergeRequest { mergeMethod enabledBy { login } }`, no extra points). Actions `updateBranch(client, id, headSha, 'merge'|'rebase')` (`ProwlUpdateBranch`) and `setAutoMerge(client, id, method|null, headSha, title?)` (`ProwlEnableAutoMerge` / `ProwlDisableAutoMerge`), all with `expectedHeadOid`. UI: "Update branch" menu in `MaintenanceActions` (behind + viewerCanUpdate); the merge dialog offers "Enable auto-merge" (primary) next to Merge when the repo allows it and the PR is not ready; "Disable auto-merge" in the row; "Auto-merge" chip (after Conflicts) in `prStatus`.
+- Every query and mutation validated against the public schema: bundle `src/lib/github/{actions,queries}.ts` with the repo's esbuild and run graphql-js `validate` (scratchpad `validate/`).
+- Fixed a flaky shell.spec locator: "Updated 2 min ago" also matched an error banner's "Last updated 2 min ago." (exact match now).
+- Learnings: never run two E2E suites at once (the mock binds 127.0.0.1:4010). An open Menu closes during an axe scan: scan before opening it.
+---
