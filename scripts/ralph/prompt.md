@@ -25,6 +25,9 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
 - Follow "Write the least code that works" in CLAUDE.md: reuse before writing, platform
   before code, shortest correct diff. Keep tool output small (filter with grep/tail, use
   `--reporter=dot` or quiet flags) to save tokens.
+- Check any Chrome or library API you add or change against current docs with Context7
+  (ToolSearch `select:mcp__Context7__resolve-library-id,mcp__Context7__query-docs`) rather than
+  from memory.
 
 ## 3. Prove it
 
@@ -50,7 +53,7 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
   ---
   ```
   Move learnings that every future iteration needs into "Codebase patterns" at the top.
-- Commit everything in one commit on `main` with a Conventional Commit subject containing the
+- Commit everything in one commit on the current branch with a Conventional Commit subject containing the
   story id (see CLAUDE.md for the trailers). Do not push, amend, rebase or force anything.
 
 ## 5. Finish
