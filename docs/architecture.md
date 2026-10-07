@@ -731,13 +731,6 @@ signal (`state/store.ts`).
   "Snooze 1 h" (`onNotificationButtonClicked`: snoozes the PR, whose id starts the event id, and
   clears it); a summary gets none. About in Settings shows the live shortcut
   (`commands.getAll`).
-- Keyboard and notification actions (US-040): the manifest's `commands` has `open-panel`
-  (`OPEN_PANEL_COMMAND`, suggested Alt+Shift+P); `register.ts` answers `commands.onCommand` by
-  calling `chrome.sidePanel.open({ windowId })` before any await (the shortcut is the user gesture
-  it needs). A notification about one event gets the buttons "Open" (same as a click) and
-  "Snooze 1 h" (`onNotificationButtonClicked`: snoozes the PR, whose id starts the event id, and
-  clears it); a summary gets none. About in Settings shows the live shortcut
-  (`commands.getAll`).
 - The section bar (`components/SectionTabs.tsx`) is fixed at the bottom of the list: up to five
   sections as tabs, past five the first four and a "More" menu with the rest. While it is shown
   `:root` gets `--app-inset-bottom`, which the shell, toasts and focus scrolling keep clear of;

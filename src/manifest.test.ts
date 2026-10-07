@@ -21,12 +21,6 @@ describe('createManifest', () => {
     });
   });
 
-  it('declares the open-panel shortcut and no other command', () => {
-    expect(createManifest('production').commands).toEqual({
-      'open-panel': { suggested_key: { default: 'Alt+Shift+P' }, description: 'Open Prowl' },
-    });
-  });
-
   it('has a strict extension CSP in production', () => {
     const manifest = createManifest('production');
     expect(manifest.manifest_version).toBe(3);

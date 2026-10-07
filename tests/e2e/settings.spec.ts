@@ -317,14 +317,14 @@ test.describe('account and about', () => {
     const panel = await openPanel('#/settings');
     const version = await serviceWorker.evaluate(() => chrome.runtime.getManifest().version);
     await expect(group(panel, 'About')).toContainText(`Version ${version}`);
-    // Chrome registered the manifest's suggested shortcut for the open-panel command.
-    await expect(group(panel, 'About')).toContainText(
-      'Open Prowl from the keyboard with Alt+Shift+P',
-    );
-    // Chrome registered the manifest's suggested shortcut for the open-panel command.
-    await expect(group(panel, 'About')).toContainText(
-      'Open Prowl from the keyboard with Alt+Shift+P',
-    );
+    // Chrome knows the open-panel command. Whether it binds the suggested key depends on how the
+    // extension was installed (an unpacked test load gets none), so About says either way.
+    const commands = await serviceWorker.evaluate(() => chrome.commands.getAll());
+    expect(commands.map(({ name, description }) => ({ name, description }))).toContainEqual({
+      name: 'open-panel',
+      description: 'Open Prowl',
+    });
+    await expect(group(panel, 'About')).toContainText('Change it at chrome://extensions/shortcuts');
 
     for (const [name, path] of [
       ['Documentation', '/aemard/prowl/tree/main/docs'],

@@ -90,10 +90,6 @@ The manifest also declares one keyboard shortcut (`commands`: Alt+Shift+P opens 
 change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no
 warning for it, and it gives Prowl no access to pages or data.
 
-The manifest also declares one keyboard shortcut (`commands`: Alt+Shift+P opens the side panel;
-change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no
-warning for it, and it gives Prowl no access to pages or data.
-
 ### What Prowl can never do
 
 Prowl has none of the permissions that would let it, and the lock above keeps it that way.

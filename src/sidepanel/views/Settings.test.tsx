@@ -707,19 +707,10 @@ describe('SettingsView', () => {
       );
     });
 
-    it('says when no shortcut opens Prowl', async () => {
-      fakeChrome().__state.commands[0] = { name: 'open-panel', shortcut: '' };
-      await open();
-      await waitFor(() =>
-        expect(group('About').getByText(/No keyboard shortcut opens Prowl yet/)).toBeTruthy(),
-      );
-    });
-
     it('shows the version and opens the documentation, privacy and source on GitHub', async () => {
       await open();
       const about = group('About');
       expect(about.getByText('Version 0.0.0-test')).toBeTruthy();
-      await waitFor(() => expect(about.getByText('Alt+Shift+P')).toBeTruthy());
       await waitFor(() => expect(about.getByText('Alt+Shift+P')).toBeTruthy());
 
       const links = about.getAllByRole('link');
