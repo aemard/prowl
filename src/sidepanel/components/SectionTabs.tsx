@@ -1,4 +1,4 @@
-import type { JSX } from 'preact';
+import type { TargetedKeyboardEvent, TargetedWheelEvent } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { AlertIcon, ChevronRightIcon } from './icons';
 import { Badge } from './ui/Badge';
@@ -57,14 +57,14 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
   }, [selectedId]);
 
   // A mouse wheel only scrolls vertically: let it scroll a tab list that overflows sideways.
-  function onWheel(event: JSX.TargetedWheelEvent<HTMLDivElement>) {
+  function onWheel(event: TargetedWheelEvent<HTMLDivElement>) {
     const el = event.currentTarget;
     if (event.deltaX !== 0 || el.scrollWidth <= el.clientWidth) return;
     event.preventDefault();
     el.scrollLeft += event.deltaY;
   }
 
-  function onKeyDown(event: JSX.TargetedKeyboardEvent<HTMLDivElement>) {
+  function onKeyDown(event: TargetedKeyboardEvent<HTMLDivElement>) {
     const at = tabs.findIndex((tab) => tab.id === selectedId);
     const target = {
       ArrowRight: (at + 1) % tabs.length,

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ComponentChildren, JSX } from 'preact';
+import type { ButtonHTMLAttributes, ComponentChildren, MouseEventHandler } from 'preact';
 import { cx } from './cx';
 import { Spinner } from './Spinner';
 import './Button.css';
@@ -27,8 +27,8 @@ export interface ButtonProps extends NativeButtonProps {
 /** Blocks activation (and form submission) while a control is busy. */
 export function busyGuard<T extends EventTarget>(
   loading: boolean,
-  onClick: JSX.MouseEventHandler<T> | undefined,
-): JSX.MouseEventHandler<T> | undefined {
+  onClick: MouseEventHandler<T> | undefined,
+): MouseEventHandler<T> | undefined {
   if (!loading) return onClick;
   return (event) => event.preventDefault();
 }

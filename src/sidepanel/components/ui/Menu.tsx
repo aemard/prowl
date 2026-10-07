@@ -1,4 +1,4 @@
-import type { ComponentChildren, JSX } from 'preact';
+import type { ComponentChildren, TargetedKeyboardEvent, TargetedMouseEvent } from 'preact';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { CheckIcon } from '../icons';
 import { cx } from './cx';
@@ -27,8 +27,8 @@ export interface MenuTriggerProps {
   'aria-haspopup': 'menu';
   'aria-expanded': boolean;
   'aria-controls'?: string;
-  onClick: (event: JSX.TargetedMouseEvent<HTMLElement>) => void;
-  onKeyDown: (event: JSX.TargetedKeyboardEvent<HTMLElement>) => void;
+  onClick: (event: TargetedMouseEvent<HTMLElement>) => void;
+  onKeyDown: (event: TargetedKeyboardEvent<HTMLElement>) => void;
 }
 
 export interface MenuProps {
@@ -136,7 +136,7 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
     setActive(enabled[next] ?? -1);
   };
 
-  const onMenuKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
+  const onMenuKeyDown = (event: TargetedKeyboardEvent<HTMLDivElement>) => {
     const { key } = event;
     if (key === 'ArrowDown' || key === 'ArrowUp') {
       move(key === 'ArrowDown' ? 1 : -1);

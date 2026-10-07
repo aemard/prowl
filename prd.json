@@ -543,8 +543,8 @@
       ],
       "priority": 30,
       "dependsOn": [],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Chrome and Preact checked with Context7 (quota then ended; the rest via installed types, a deprecation scan and build output); 12 deprecated Preact type uses fixed; lockfile refreshed; decisions recorded."
     },
     {
       "id": "US-031",
