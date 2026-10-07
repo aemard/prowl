@@ -419,8 +419,8 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     with `id === kind` and a fixed label; they are enabled or disabled, never deleted. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
   - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, `hideStaleAfterDays`
-    in 0-365 (default 20, 0 never hides), `hideDrafts` and `hideBots` are booleans (default
-    off), quiet hours are `HH:MM`, repo filters are `owner` or
+    in 0-365 (default 20, 0 never hides), `groupByRepo`, `hideDrafts` and `hideBots` are
+    booleans (default off), quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive). A field added later needs no migration: a
     stored value without it gets the default.
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
@@ -528,12 +528,23 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
   split by `splitSection` into cards (what the bar counts), hidden PRs (`hiddenReasons`, for every
-  kind of section alike) and snoozed PRs, which win over hidden. The selected tab, the filter and
-  whether hidden PRs are revealed are module signals, so they survive a visit to Settings and
-  last until the panel closes. States:
+  kind of section alike) and snoozed PRs, which win over hidden. The selected tab, the filter,
+  whether hidden PRs are revealed and the folded repository groups are module signals, so they
+  survive a visit to Settings and last until the panel closes. States:
   skeleton until the first snapshot (or "Could not load pull requests" when the first poll failed;
   the banner has the reason and the retry), no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
   for a section in `snapshot.sectionErrors`.
+- Grouping (US-036): with `settings.groupByRepo` (its own switch, independent of `sort`) the
+  cards of a section are grouped by `groupByRepo(shown)` (`ListModel.ts`, pure: a group sits where
+  its first PR does, so the groups follow the sort and are alphabetical for `repo`, and the PRs
+  inside keep the sort). The section's `ul.pr-list` then holds one `RepoGroup` (`li` > `h2` >
+  `button[aria-expanded]` named "owner/name 3 pull requests", then its own labelled `ul.pr-list`)
+  per repository; its cards drop the repository name (`grouped`) and keep `#number`. Folding
+  removes the group's cards from the DOM, so `j` / `k` (`moveFocus` in `Shortcuts.tsx`, which
+  also steps from a header to the nearest card after or before it) and the seen observer skip
+  them: a folded card is not on screen and is not marked seen. Folds are `foldedGroups`, keyed
+  by section and repository. Counts (bar, headers) are the cards the quick filter matches.
+  Only `shown` is grouped: "Snoozed (N)" and "Show N hidden" keep their own flat lists.
 - Status banner (`components/StatusBanner.tsx`, in `<main>` above every view except onboarding):
   `describeStatus(pollState, snapshot.fetchedAt, interval, now)` (`StatusBannerModel.ts`, pure,
   table-tested) picks at most one banner from what the worker stored, and the list below it is

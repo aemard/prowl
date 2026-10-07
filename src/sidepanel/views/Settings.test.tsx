@@ -425,6 +425,25 @@ describe('SettingsView', () => {
       await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: false }));
     });
 
+    it('groups by repository with its own switch, apart from the sort order', async () => {
+      await open();
+      const appearance = group('Appearance');
+      const grouping = toggle('Group pull requests by repository', appearance);
+      expect(grouping.getAttribute('aria-checked')).toBe('false');
+      expect(grouping.getAttribute('aria-describedby')).toBeTruthy();
+
+      fireEvent.click(grouping);
+      await waitFor(async () => expect(await saved()).toMatchObject({ groupByRepo: true }));
+      expect((await saved()).sort).toBe('updated');
+      fireEvent.change(appearance.getByLabelText('Sort pull requests by'), {
+        target: { value: 'repo' },
+      });
+      await waitFor(async () => expect(await saved()).toMatchObject({ sort: 'repo' }));
+      expect((await saved()).groupByRepo).toBe(true);
+      fireEvent.click(grouping);
+      await waitFor(async () => expect(await saved()).toMatchObject({ groupByRepo: false }));
+    });
+
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>

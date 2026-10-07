@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import { describeHiddenReasons } from '../../lib/hidden';
-import type { Section, SectionKind, Snapshot } from '../../lib/model';
+import type { PullRequest, Section, SectionKind, Snapshot } from '../../lib/model';
 import { isMuted, isSeen } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
@@ -17,6 +17,7 @@ import {
 } from '../components/icons';
 import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
+import { RepoGroup } from '../components/RepoGroup';
 import { panelId, SectionTabs } from '../components/SectionTabs';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -26,20 +27,33 @@ import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { filterPullRequests, type SectionParts, sortPullRequests, splitSection } from './ListModel';
+import {
+  filterPullRequests,
+  groupByRepo,
+  type SectionParts,
+  sortPullRequests,
+  splitSection,
+} from './ListModel';
 import './List.css';
 
 /** How long a card must stay on screen before it counts as seen. */
 const SEEN_DELAY_MS = 1500;
 
 /**
- * Selected tab, quick filter and whether hidden PRs are revealed live outside the view, so they
- * survive a visit to Settings and last until the panel closes. Exported for tests, which reset
- * them.
+ * Selected tab, quick filter, whether hidden PRs are revealed and which repository groups are
+ * folded (a `foldKey` per section and repository) live outside the view, so they survive a
+ * visit to Settings and last until the panel closes. Exported for tests, which reset them.
  */
 export const activeSectionId = signal<string | undefined>(undefined);
 export const filterQuery = signal('');
 export const showHidden = signal(false);
+export const foldedGroups = signal<string[]>([]);
+
+const foldKey = (sectionId: string, repo: string) => `${sectionId}\n${repo}`;
+const toggleFolded = (key: string) => {
+  const folded = foldedGroups.value;
+  foldedGroups.value = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
+};
 
 const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
 
@@ -198,13 +212,21 @@ export function ListView() {
   );
   const { shown, hidden, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
   const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
+  // Grouped, only the cards of open groups are rendered: a folded group is not on screen, so its
+  // cards are not marked seen. Hidden and snoozed PRs stay flat, with their repository on the card.
+  const grouped = current.groupByRepo;
+  const groups = grouped ? groupByRepo(shown) : [];
+  const isFolded = (repo: string) => foldedGroups.value.includes(foldKey(selected?.id ?? '', repo));
+  const rendered = grouped
+    ? groups.filter(({ repo }) => !isFolded(repo)).flatMap((g) => g.prs)
+    : shown;
   const [snoozedOpen, setSnoozedOpen] = useState(false);
   useEffect(() => {
     if (listRendered || shown.length === 0) return;
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
-  const seeable = [...shown, ...revealed];
+  const seeable = [...rendered, ...revealed];
   useMarkSeen(
     panel,
     [enabled.length > 1, ...seeable.map((pr) => pr.id)].join('\n'),
@@ -236,6 +258,16 @@ export function ListView() {
     );
   }
 
+  const card = (pr: PullRequest) => (
+    <PullRequestCard
+      key={pr.id}
+      pr={pr}
+      now={now}
+      unseen={!isSeen(local, pr.id, pr.updatedAt)}
+      muted={isMuted(local, pr.id)}
+      grouped={grouped}
+    />
+  );
   const error = snap.sectionErrors?.[selected.id];
   const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
@@ -294,15 +326,19 @@ export function ListView() {
         {error !== undefined && <SectionNotice section={selected} message={error} />}
         {shown.length > 0 && (
           <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
-            {shown.map((pr) => (
-              <PullRequestCard
-                key={pr.id}
-                pr={pr}
-                now={now}
-                unseen={!isSeen(local, pr.id, pr.updatedAt)}
-                muted={isMuted(local, pr.id)}
-              />
-            ))}
+            {grouped
+              ? groups.map(({ repo, prs }) => (
+                  <RepoGroup
+                    key={repo}
+                    repo={repo}
+                    count={prs.length}
+                    expanded={!isFolded(repo)}
+                    onToggle={() => toggleFolded(foldKey(selected.id, repo))}
+                  >
+                    {prs.map(card)}
+                  </RepoGroup>
+                ))
+              : shown.map(card)}
           </ul>
         )}
         {snoozed.length > 0 && (

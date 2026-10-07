@@ -1,4 +1,4 @@
-/** Pure logic of the pull request list: quick filter, sort order, and the PRs set aside. */
+/** Pure logic of the pull request list: quick filter, sort order, repositories, PRs set aside. */
 import { type HiddenReason, type HideSettings, hiddenReasons } from '../../lib/hidden';
 import type { PrLocalState, PullRequest, SortOrder } from '../../lib/model';
 import { isSnoozed } from '../../lib/storage/prLocal';
@@ -35,6 +35,29 @@ export function sortPullRequests(prs: PullRequest[], order: SortOrder): PullRequ
           a.repo.nameWithOwner.localeCompare(b.repo.nameWithOwner) || newest('updatedAt')(a, b)
       : newest(order === 'created' ? 'createdAt' : 'updatedAt');
   return [...prs].sort(compare);
+}
+
+/** The PRs of one repository in a grouped list. */
+export interface RepoGroup {
+  /** `owner/name`. */
+  repo: string;
+  prs: PullRequest[];
+}
+
+/**
+ * Groups already filtered and sorted PRs by repository. A group sits where its first PR does,
+ * so the groups follow the sort order (alphabetical for `repo`, which sorts by name first) and
+ * the PRs inside a group keep theirs.
+ */
+export function groupByRepo(prs: PullRequest[]): RepoGroup[] {
+  const groups = new Map<string, RepoGroup>();
+  for (const pr of prs) {
+    const repo = pr.repo.nameWithOwner;
+    const group = groups.get(repo) ?? { repo, prs: [] };
+    group.prs.push(pr);
+    groups.set(repo, group);
+  }
+  return [...groups.values()];
 }
 
 /** The PRs of one section, split the way the list shows them. Each part keeps the given order. */

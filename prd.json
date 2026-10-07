@@ -649,8 +649,8 @@
       ],
       "priority": 36,
       "dependsOn": ["US-034"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "settings.groupByRepo (default off, Appearance switch, independent of sort); groupByRepo(shown) in ListModel puts each repo under an h2 + aria-expanded RepoGroup button (repo and count), groups in order of first PR (alphabetical for sort=repo); folds are per section and repo for the session and a folded group renders no cards, so j/k and the seen observer skip it; hidden and snoozed lists stay flat."
     },
     {
       "id": "US-037",

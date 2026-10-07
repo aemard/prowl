@@ -42,6 +42,24 @@ afterEach(() => {
 });
 
 describe('PullRequestCard', () => {
+  it('shows the repository next to the number, unless it sits under its repository header', () => {
+    const { rerender } = render(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} />
+      </ul>,
+    );
+    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('acme/widgets#42');
+
+    rerender(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} grouped />
+      </ul>,
+    );
+    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('#42');
+    // The title link still names the repository for a screen reader that jumps between links.
+    expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBeTruthy();
+  });
+
   it('has a title link and a separate expand button, each named, and describes the rest', () => {
     const link = renderCard({
       author: {

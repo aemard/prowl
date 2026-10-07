@@ -71,7 +71,8 @@ function PollingSettings() {
 }
 
 function AppearanceSettings() {
-  const { theme, sort, badge, hideStaleAfterDays, hideDrafts, hideBots } = settings.value;
+  const { theme, sort, groupByRepo, badge, hideStaleAfterDays, hideDrafts, hideBots } =
+    settings.value;
   return (
     <SettingsGroup title="Appearance">
       <Select
@@ -85,6 +86,12 @@ function AppearanceSettings() {
         value={sort}
         options={SORTS}
         onValueChange={(value) => void saveSettings({ sort: value })}
+      />
+      <Switch
+        label="Group pull requests by repository"
+        description="Lists each repository’s pull requests under a header you can fold, in the order chosen above."
+        checked={groupByRepo}
+        onChange={(checked) => void saveSettings({ groupByRepo: checked })}
       />
       <NumberField
         label="Hide PRs with no commit for (days)"

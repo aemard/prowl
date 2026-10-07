@@ -19,6 +19,9 @@ Everything is reachable with Tab and operable with Enter/Space. In the list:
 
 Shortcuts never fire while typing in a field, inside a menu or a dialog, or with Ctrl, Cmd or
 Alt held. Arrows and `o` only act inside the list, so they keep their normal meaning elsewhere.
+Grouped by repository (a setting), each repository header is a button in an `h2` (Tab, then
+Enter or Space folds it); `j` / `k` and the arrows still go from card to card, skip the cards of a
+folded group (they are not rendered), and from a header go to the nearest card after or before it.
 Menus follow the ARIA menu pattern (arrows, Home/End, Esc); dialogs are native `<dialog>`s that
 trap focus and return it to the control that opened them.
 
@@ -26,6 +29,9 @@ trap focus and return it to the control that opened them.
 
 - Cards: the title is a link named after the PR; the expand button describes every fact on the
   card (CI, reviews, merge state, labels, activity), so status is never only a color or an icon.
+- Grouped lists keep list semantics: the section's list holds one item per repository, each with
+  a heading button ("acme/web 2 pull requests", expanded or collapsed) and a list named after the
+  repository, so a screen reader can jump by heading and hears how many cards are inside.
 - Toasts (`role=region` "Messages", polite live region) report every action's outcome.
 - A refresh the user asks for (button or `r`) is announced ("Updated. 12 pull requests." or the
   error). Background polls stay silent.

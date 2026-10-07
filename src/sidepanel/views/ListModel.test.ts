@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyPrLocal, snooze } from '../../lib/storage/prLocal';
 import { DEFAULT_SETTINGS } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
-import { filterPullRequests, sortPullRequests, splitSection } from './ListModel';
+import { filterPullRequests, groupByRepo, sortPullRequests, splitSection } from './ListModel';
 
 const prs = [
   buildPullRequest({
@@ -47,6 +47,44 @@ describe('filterPullRequests', () => {
     ['api nothing', []],
   ])('"%s" keeps %j', (query, expected) => {
     expect(numbers(filterPullRequests(prs, query))).toEqual(expected);
+  });
+});
+
+describe('groupByRepo', () => {
+  const inRepo = (number: number, nameWithOwner: string, updatedAt: string) => {
+    const [owner = '', name = ''] = nameWithOwner.split('/');
+    return buildPullRequest({ number, repo: { owner, name, nameWithOwner }, updatedAt });
+  };
+  // Newest first: web 1, mobile 2, web 3, api 4, mobile 5.
+  const mixed = [
+    inRepo(1, 'acme/web', '2026-10-06T05:00:00.000Z'),
+    inRepo(2, 'acme/mobile', '2026-10-06T04:00:00.000Z'),
+    inRepo(3, 'acme/web', '2026-10-06T03:00:00.000Z'),
+    inRepo(4, 'acme/api', '2026-10-06T02:00:00.000Z'),
+    inRepo(5, 'acme/mobile', '2026-10-06T01:00:00.000Z'),
+  ];
+  const shape = (list: ReturnType<typeof groupByRepo>) =>
+    list.map(({ repo, prs: inside }) => [repo, inside.map((pr) => pr.number)]);
+
+  it('orders the groups by their first PR, and keeps the order inside', () => {
+    expect(shape(groupByRepo(sortPullRequests(mixed, 'updated')))).toEqual([
+      ['acme/web', [1, 3]],
+      ['acme/mobile', [2, 5]],
+      ['acme/api', [4]],
+    ]);
+  });
+
+  it('is alphabetical when the sort is by repository, newest first inside', () => {
+    expect(shape(groupByRepo(sortPullRequests(mixed, 'repo')))).toEqual([
+      ['acme/api', [4]],
+      ['acme/mobile', [2, 5]],
+      ['acme/web', [1, 3]],
+    ]);
+  });
+
+  it('has no groups without PRs, and one group for one repository', () => {
+    expect(groupByRepo([])).toEqual([]);
+    expect(shape(groupByRepo(prs.slice(1)))).toEqual([['acme/api', [22, 3]]]);
   });
 });
 

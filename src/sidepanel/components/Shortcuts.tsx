@@ -7,13 +7,26 @@ import './Shortcuts.css';
 
 export const shortcutsOpen = signal(false);
 
-/** Focuses the expand button of the card `step` away from the focused one (first when none). */
+/**
+ * Focuses the expand button of the card `step` away from the focused one (the first when none is
+ * focused). From a repository header, the card just after or before it: cards of a folded group
+ * are not in the DOM, so they are skipped.
+ */
 function moveFocus(step: 1 | -1) {
   const toggles = [...document.querySelectorAll<HTMLElement>('.pr-list .pr-card__toggle')];
   if (toggles.length === 0) return;
-  const card = document.activeElement?.closest('.pr-card');
-  const index = toggles.findIndex((toggle) => toggle.closest('.pr-card') === card);
-  const next = index === -1 ? 0 : Math.min(Math.max(index + step, 0), toggles.length - 1);
+  const from = document.activeElement;
+  const card = from?.closest('.pr-card');
+  let next = 0;
+  if (card) {
+    const index = toggles.findIndex((toggle) => toggle.closest('.pr-card') === card);
+    next = Math.min(Math.max(index + step, 0), toggles.length - 1);
+  } else if (from?.closest('.repo-group__heading')) {
+    const after = toggles.findIndex(
+      (toggle) => from.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    next = step === 1 ? after : (after === -1 ? toggles.length : after) - 1;
+  }
   toggles[next]?.focus();
   toggles[next]?.scrollIntoView({ block: 'nearest' });
 }

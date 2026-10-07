@@ -67,6 +67,7 @@ describe('DEFAULT_SETTINGS', () => {
       badge: 'attention',
       theme: 'system',
       sort: 'updated',
+      groupByRepo: false,
       hideStaleAfterDays: 20,
       hideDrafts: false,
       hideBots: false,
@@ -127,6 +128,7 @@ describe('normalizeSettings', () => {
       badge: 'unseen',
       theme: 'dark',
       sort: 'repo',
+      groupByRepo: true,
       hideStaleAfterDays: 0,
       hideDrafts: true,
       hideBots: true,
@@ -217,15 +219,18 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
   });
 
-  it.each(['hideDrafts', 'hideBots'] as const)('repairs %s: a boolean, else off', (key) => {
-    expect(normalizeSettings({ [key]: true })[key]).toBe(true);
-    expect(normalizeSettings({ [key]: false })[key]).toBe(false);
-    for (const value of ['yes', 1, null, undefined]) {
-      expect(normalizeSettings({ [key]: value })[key]).toBe(false);
-    }
-    // Settings stored before the switches existed.
-    expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(false);
-  });
+  it.each(['groupByRepo', 'hideDrafts', 'hideBots'] as const)(
+    'repairs %s: a boolean, else off',
+    (key) => {
+      expect(normalizeSettings({ [key]: true })[key]).toBe(true);
+      expect(normalizeSettings({ [key]: false })[key]).toBe(false);
+      for (const value of ['yes', 1, null, undefined]) {
+        expect(normalizeSettings({ [key]: value })[key]).toBe(false);
+      }
+      // Settings stored before the switches existed.
+      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(false);
+    },
+  );
 
   it('repairs notification switches and quiet hours', () => {
     const { notifications } = normalizeSettings({

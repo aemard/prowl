@@ -518,6 +518,129 @@ test.describe('with a rich set of pull requests', () => {
     await expect(panel.getByRole('listitem')).toHaveCount(3);
   });
 
+  test('groups pull requests by repository with its own switch, and folds a group', async ({
+    openPanel,
+    expectNoA11yViolations,
+  }) => {
+    const panel = await openPanel();
+    const headers = panel.locator('.repo-group__heading');
+    const header = (repo: string) =>
+      panel.getByRole('button', { name: new RegExp(`^${repo} \\d`) });
+    const rateLimit = /^Add rate limiting middleware/;
+    await expect(headers).toHaveCount(0);
+
+    // Its own switch in Settings, apart from the sort order.
+    await panel.getByRole('button', { name: 'Settings', exact: true }).click();
+    const grouping = panel.getByRole('switch', { name: 'Group pull requests by repository' });
+    await expect(grouping).toHaveAttribute('aria-checked', 'false');
+    await expect(panel.getByLabel('Sort pull requests by')).toHaveValue('updated');
+    await grouping.click();
+    await expect(grouping).toHaveAttribute('aria-checked', 'true');
+    await expect(panel.getByLabel('Sort pull requests by')).toHaveValue('updated');
+    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+
+    // One header per repository, in the order of its newest PR; the count of the bar is unchanged.
+    await expect(headers).toHaveText([
+      'acme/web2 pull requests',
+      'acme/api2 pull requests',
+      'acme/mobile1 pull request',
+      'octo/docs1 pull request',
+      'northwind-engineering/internal-platform-services-monorepo1 pull request',
+    ]);
+    await expect(header('acme/web')).toHaveAttribute('aria-expanded', 'true');
+    const web = panel.getByRole('list', { name: 'acme/web pull requests' });
+    await expect(web.getByRole('listitem')).toHaveCount(2);
+    await expect(web.locator('.pr-card__repo').first()).toHaveText('#2481');
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    // The long name is cut by the strip (full name in the tooltip), never by scrolling sideways.
+    const long = header('northwind-engineering/internal-platform-services-monorepo');
+    await expect(long.locator('.repo-group__name')).toHaveAttribute(
+      'title',
+      'northwind-engineering/internal-platform-services-monorepo',
+    );
+    expect(await panel.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+
+    // Folding: no cards, still counted, state on the button; Space does it from the keyboard.
+    await header('acme/api').focus();
+    await panel.keyboard.press('Space');
+    await expect(header('acme/api')).toHaveAttribute('aria-expanded', 'false');
+    await expect(cardFor(panel, rateLimit)).toHaveCount(0);
+    // Five groups and five cards: the folded group's two are gone.
+    await expect(panel.getByRole('listitem')).toHaveCount(5 + 5);
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    await expect(header('acme/api')).toBeFocused();
+
+    // j / k go from card to card across the headers, past the folded group.
+    await panel.getByRole('button', { name: /^Details for Dark mode: fix contrast/ }).focus();
+    await panel.keyboard.press('j');
+    await expect(
+      panel.getByRole('button', { name: /^Details for Fix crash when rotating/ }),
+    ).toBeFocused();
+    await panel.keyboard.press('k');
+    await expect(panel.getByRole('button', { name: /^Details for Dark mode/ })).toBeFocused();
+    await header('acme/api').focus();
+    await panel.keyboard.press('j');
+    await expect(
+      panel.getByRole('button', { name: /^Details for Fix crash when rotating/ }),
+    ).toBeFocused();
+
+    // The quick filter narrows the groups and their counts; a folded group stays folded.
+    const filter = panel.getByRole('searchbox', { name: 'Filter pull requests' });
+    await filter.fill('acme/web');
+    await expect(headers).toHaveText(['acme/web2 pull requests']);
+    await filter.fill('rate limiting');
+    await expect(headers).toHaveText(['acme/api1 pull request']);
+    await expect(header('acme/api')).toHaveAttribute('aria-expanded', 'false');
+    await filter.fill('');
+    await expect(headers).toHaveCount(5);
+
+    // Hidden PRs keep their own button and list: flat, with the repository on each card.
+    await panel.getByRole('button', { name: 'Show 1 hidden' }).click();
+    const revealed = panel.getByRole('list', { name: 'Hidden Created by me pull requests' });
+    await expect(revealed.locator('.repo-group__heading')).toHaveCount(0);
+    await expect(revealed.locator('.pr-card__repo')).toHaveText('acme/web#2311');
+    await expect(headers).toHaveCount(5);
+
+    // Folded state lasts for the session: through Settings and back.
+    await panel.getByRole('button', { name: 'Settings', exact: true }).click();
+    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+    await expect(header('acme/api')).toHaveAttribute('aria-expanded', 'false');
+    await header('acme/api').click();
+    await expect(cardFor(panel, rateLimit)).toBeVisible();
+
+    await panel.emulateMedia({ colorScheme: 'light' });
+    await expectNoA11yViolations(panel);
+    await panel.emulateMedia({ colorScheme: 'dark' });
+    await expectNoA11yViolations(panel);
+  });
+
+  test('does not mark the cards of a folded group as seen', async ({
+    openPanel,
+    seedStorage,
+    serviceWorker,
+  }) => {
+    await seedStorage({ settings: { sections: allSections(), groupByRepo: true } });
+    const messages = await recordMessages(serviceWorker);
+    const panel = await openPanel();
+    const checkout = panel.locator(`[data-pr-id="${AUTHORED.checkout}"]`);
+    const rateLimit = panel.locator(`[data-pr-id="${AUTHORED.rateLimit}"]`);
+    await panel.getByRole('button', { name: /^acme\/api \d/ }).click();
+    await expect(rateLimit).toHaveCount(0);
+
+    await expect(checkout).not.toHaveAttribute('data-unseen', 'true', { timeout: 6_000 });
+    const marked = (await messages()).filter((m) => m.type === 'markSeen').flatMap((m) => m.prIds);
+    expect(marked).toContain(AUTHORED.checkout);
+    expect(marked).not.toContain(AUTHORED.rateLimit);
+    expect(marked).not.toContain(AUTHORED.draft);
+
+    // Unfolded, they are on screen and get marked like any card.
+    await panel.getByRole('button', { name: /^acme\/api \d/ }).click();
+    await expect(rateLimit).toHaveAttribute('data-unseen', 'true');
+    await expect(rateLimit).not.toHaveAttribute('data-unseen', 'true', { timeout: 6_000 });
+  });
+
   test('marks the cards on screen as seen after 1.5 s, and the others once scrolled to', async ({
     openPanel,
     serviceWorker,
@@ -590,6 +713,40 @@ test.describe('with a rich set of pull requests', () => {
     await panel.emulateMedia({ colorScheme: 'dark' });
     await expectNoA11yViolations(panel);
     await saveScreenshot(panel, 'list-dark');
+  });
+
+  test('looks right grouped by repository, in light and dark, and passes axe in both', async ({
+    openPanel,
+    seedStorage,
+    expectNoA11yViolations,
+  }) => {
+    // Three dots, as in the flat list; the api group is folded to show both states.
+    const unseen = new Set([AUTHORED.checkout, AUTHORED.conflicts, AUTHORED.deps]);
+    const seen = Object.fromEntries(
+      authored
+        .filter((node) => !unseen.has(node.id))
+        .map((node) => [node.id, new Date().toISOString()]),
+    );
+    await seedStorage({
+      settings: { sections: allSections(), groupByRepo: true },
+      prLocal: { snoozed: {}, muted: {}, seen },
+    });
+    const panel = await openPanel();
+    await panel.evaluate(() => {
+      chrome.runtime.sendMessage = (async () => undefined) as typeof chrome.runtime.sendMessage;
+    });
+    await panel.getByRole('button', { name: /^acme\/api \d/ }).click();
+    // The pointer would leave the header it clicked in its hover color.
+    await panel.mouse.move(0, 0);
+    await expect(panel.locator('[data-unseen="true"]')).toHaveCount(3);
+
+    await panel.emulateMedia({ colorScheme: 'light' });
+    await expectNoA11yViolations(panel);
+    await saveScreenshot(panel, 'list-grouped');
+
+    await panel.emulateMedia({ colorScheme: 'dark' });
+    await expectNoA11yViolations(panel);
+    await panel.screenshot({ path: test.info().outputPath('list-grouped-dark.png') });
   });
 });
 

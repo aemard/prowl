@@ -63,6 +63,8 @@ export interface PullRequestCardProps {
   snoozedUntil?: string | null;
   /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
   hiddenBecause?: string;
+  /** The card sits under its repository's header, so its own row shows only `#number`. */
+  grouped?: boolean;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -81,6 +83,7 @@ export function PullRequestCard({
   muted,
   snoozedUntil,
   hiddenBecause,
+  grouped,
 }: PullRequestCardProps) {
   const detailId = useId();
   const card = useRef<HTMLLIElement>(null);
@@ -124,7 +127,7 @@ export function PullRequestCard({
         <span class="pr-card__head">
           <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
           <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
-            <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>
+            {!grouped && <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>}
             <span class="pr-card__number">#{pr.number}</span>
           </span>
           <time

@@ -301,6 +301,8 @@ export interface Settings {
   badge: BadgeMode;
   theme: Theme;
   sort: SortOrder;
+  /** The list groups each section's PRs under their repository (independent of `sort`). */
+  groupByRepo: boolean;
   /**
    * PRs whose last commit is older than this many days are left out of the list, the section
    * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.

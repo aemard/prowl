@@ -88,6 +88,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   badge: 'attention',
   theme: 'system',
   sort: 'updated',
+  groupByRepo: false,
   hideStaleAfterDays: 20,
   hideDrafts: false,
   hideBots: false,
@@ -288,6 +289,7 @@ export function normalizeSettings(value: unknown): Settings {
     badge: oneOf(raw.badge, BADGE_MODES, DEFAULT_SETTINGS.badge),
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
+    groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
     hideStaleAfterDays: clampInt(
       raw.hideStaleAfterDays,
       MIN_HIDE_STALE_DAYS,
