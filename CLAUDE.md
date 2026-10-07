@@ -74,6 +74,7 @@ Never rewrite history, never force-push, never skip hooks or weaken a quality ga
 
 ## Ralph loop
 
-Work is tracked in `prd.json` (stories, `passes`) and `progress.txt` (append-only log with a
-"Codebase patterns" section at the top). One story per iteration; see `scripts/ralph/prompt.md`.
-Specialist roles are in `.claude/agents/`.
+Work is tracked in `prd.json` (stories, `passes`; `node scripts/ralph/story.mjs` prints the next
+one and records results) and `progress.txt` ("Codebase patterns" at the top, the latest entries
+below, older ones in `progress-archive.txt`). One story per iteration; see
+`scripts/ralph/prompt.md`. Specialist roles are in `.claude/agents/`.
