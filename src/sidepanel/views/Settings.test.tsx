@@ -384,6 +384,30 @@ describe('SettingsView', () => {
     });
   });
 
+  describe('settings sync', () => {
+    it('turns syncing on for this device only, and shows why Chrome sync refused', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      const toggle = privacy.getByRole('switch', {
+        name: 'Sync settings with your Chrome profile',
+      });
+      expect(toggle.getAttribute('aria-checked')).toBe('false');
+      fireEvent.click(toggle);
+      await waitFor(async () =>
+        expect((await chrome.storage.local.get('sync')).sync).toEqual({
+          enabled: true,
+          error: null,
+        }),
+      );
+      await act(async () => {
+        await chrome.storage.local.set({
+          sync: { enabled: true, error: 'Too big for Chrome sync.' },
+        });
+      });
+      expect(privacy.getByRole('status').textContent).toBe('Too big for Chrome sync.');
+    });
+  });
+
   describe('notifications', () => {
     it('turns every kind of notification on or off on its own', async () => {
       await open();

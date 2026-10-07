@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
+import { STORAGE_KEYS } from '../../lib/model';
+import { setItem } from '../../lib/storage/storage';
 import { GitHubLink } from '../components/GitHubLink';
 import { LinkExternalIcon } from '../components/icons';
+import { Switch } from '../components/ui/Switch';
+import { sync } from '../state/store';
 import { PRIVACY_URL } from './SettingsAccount';
 import { SettingsGroup } from './SettingsGroup';
 import { describePermissions } from './SettingsModel';
@@ -36,6 +40,17 @@ export function PrivacySettings() {
   return (
     <SettingsGroup title="Privacy and permissions">
       <p class="settings-promise">{NO_SITE_ACCESS}</p>
+      <Switch
+        label="Sync settings with your Chrome profile"
+        description="Your settings follow you to Chrome on your other computers through Chrome sync (your Google account). Your token and what you snoozed or muted stay on this device."
+        checked={sync.value?.enabled === true}
+        onChange={(on) => void setItem(STORAGE_KEYS.sync, { enabled: on, error: null })}
+      />
+      {sync.value?.enabled && sync.value.error && (
+        <p class="settings-note" role="status">
+          {sync.value.error}
+        </p>
+      )}
       {granted && (
         <ul class="settings-permissions" aria-label="What Prowl may do">
           {describePermissions(granted).map(({ title, detail }) => (

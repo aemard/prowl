@@ -11,6 +11,7 @@ import type {
   Settings,
   Snapshot,
   StorageKey,
+  SyncState,
   TeamsState,
 } from '../model';
 import { jsonEqual } from './guards';
@@ -23,6 +24,7 @@ export interface StorageSchema {
   pollState: PollState;
   prLocal: PrLocalState;
   teams: TeamsState;
+  sync: SyncState;
 }
 
 /** Called with the new and previous value; `undefined` means the key is absent. */

@@ -737,8 +737,8 @@
       ],
       "priority": 41,
       "dependsOn": ["US-030"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Opt-in sync (device-local sync key) mirrors settings only to chrome.storage.sync (8 KB check, errors shown), pulls through normalizeSettings, adopts the shared copy on turn-on; unit tests over the fake, no E2E (real Chrome sync needs a signed-in profile)."
     },
     {
       "id": "US-042",

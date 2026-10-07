@@ -363,10 +363,21 @@ export interface Settings {
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
+/**
+ * Whether this device mirrors its settings through Chrome sync, and why the last write there
+ * failed. Device-local: it never goes to `chrome.storage.sync` itself.
+ */
+export interface SyncState {
+  enabled: boolean;
+  /** Why settings could not be written to Chrome sync (over its quota...); null when they were. */
+  error: string | null;
+}
+
 /** The manifest command that opens the side panel from the keyboard. */
 export const OPEN_PANEL_COMMAND = 'open-panel';
 
 export const STORAGE_KEYS = {
+  sync: 'sync',
   settings: 'settings',
   auth: 'auth',
   snapshot: 'snapshot',

@@ -13,6 +13,7 @@ import {
   type Snapshot,
   STORAGE_KEYS,
   type StorageKey,
+  type SyncState,
   type TeamsState,
 } from '../../lib/model';
 import { emptyPrLocal, normalizePrLocal } from '../../lib/storage/prLocal';
@@ -27,6 +28,8 @@ export const pollState = signal<PollState | undefined>(undefined);
 export const prLocal = signal<PrLocalState>(emptyPrLocal());
 /** The viewer's teams as the worker last discovered them; undefined until then. */
 export const teams = signal<TeamsState | undefined>(undefined);
+/** Whether this device syncs its settings through Chrome, and the last sync error. */
+export const sync = signal<SyncState | undefined>(undefined);
 /** False until the first read of storage has been applied: show a skeleton, not a guess. */
 export const hydrated = signal(false);
 
@@ -50,6 +53,9 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   },
   [STORAGE_KEYS.teams]: (raw) => {
     teams.value = raw as TeamsState | undefined;
+  },
+  [STORAGE_KEYS.sync]: (raw) => {
+    sync.value = raw as SyncState | undefined;
   },
 };
 const KEYS = Object.keys(BINDINGS) as StorageKey[];

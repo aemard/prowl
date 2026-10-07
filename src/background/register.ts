@@ -4,6 +4,7 @@ import { updateBadge, watchBadge } from './badge';
 import { handleMessage } from './messages';
 import { onNotificationButtonClicked, onNotificationClicked } from './notifier';
 import { POLL_ALARM, poll, scheduleAlarm } from './poller';
+import { watchSettingsSync } from './sync';
 
 /** Registers every service worker listener. Listeners must be added synchronously at startup. */
 export function registerBackground(): void {
@@ -32,4 +33,5 @@ export function registerBackground(): void {
   // A new interval applies to a running schedule; signed out or stopped, nothing is scheduled.
   subscribeSettings(({ pollIntervalMinutes }) => void scheduleAlarm(pollIntervalMinutes, true));
   watchBadge();
+  watchSettingsSync();
 }

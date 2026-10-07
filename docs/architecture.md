@@ -718,6 +718,12 @@ signal (`state/store.ts`).
     the team section as one search per followed team (`teamSearches`).
   - Cards get `teams` (`snapshot.teamRequests[pr.id]`): a people chip "@org/slug, ..." whose title
     and the card's description say "Review requested from @org/slug".
+- Settings sync (US-041, `src/background/sync.ts`, off by default): the device-local `sync` key
+  (`{ enabled, error }`, never synced) turns it on from Settings > Privacy and permissions. The
+  worker mirrors `settings` to `chrome.storage.sync` key `settings` (the only key it ever writes
+  there; at most 8 KB, else `error`) and applies that key's changes from other devices through
+  `normalizeSettings`. Turning it on adopts an existing synced copy, else shares this one. Writes
+  happen only when the copies differ, which stops the echo between the two areas.
 - Keyboard and notification actions (US-040): the manifest's `commands` has `open-panel`
   (`OPEN_PANEL_COMMAND`, suggested Alt+Shift+P); `register.ts` answers `commands.onCommand` by
   calling `chrome.sidePanel.open({ windowId })` before any await (the shortcut is the user gesture

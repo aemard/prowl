@@ -80,6 +80,12 @@ api.github.com" does not mean your browsing. api.github.com answers programs wit
 pages, and a site permission cannot run code in a page without the `scripting` permission or a
 declared content script, which Prowl does not have.
 
+**Settings sync is off unless you turn it on** (Settings > Privacy and permissions). When it is on,
+your settings, and only your settings, are copied to `chrome.storage.sync`, which Chrome keeps
+in your Google account and copies to Chrome on your other computers. Your token, the pull
+requests Prowl fetched, your teams and what you snoozed or muted never go there. The choice is
+per device.
+
 The manifest also declares one keyboard shortcut (`commands`: Alt+Shift+P opens the side panel;
 change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no
 warning for it, and it gives Prowl no access to pages or data.
