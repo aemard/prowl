@@ -12,6 +12,7 @@ import {
   notificationContent,
   summaryContent,
 } from '../lib/notify/messages';
+import { snooze, updatePrLocal } from '../lib/storage/prLocal';
 import { isGitHubUrl } from '../lib/url';
 
 const NOTIFIED = 'notified';
@@ -20,6 +21,9 @@ const MAX_NOTIFIED = 300;
 /** More events than this in one poll become one summary notification. */
 const MAX_SEPARATE = 3;
 const ICON = 'icons/icon-128.png';
+/** The buttons of a notification about one pull request, in this order. */
+const BUTTONS = [{ title: 'Open' }, { title: 'Snooze 1 h' }];
+const SNOOZE_MS = 60 * 60 * 1000;
 
 type Notified = Record<string, string>;
 
@@ -33,11 +37,12 @@ export function forgetNotified(): Promise<void> {
   return chrome.storage.session.remove(NOTIFIED);
 }
 
-function show(id: string, content: NotificationContent) {
+function show(id: string, content: NotificationContent, buttons?: typeof BUTTONS) {
   return chrome.notifications.create(id, {
     type: 'basic',
     iconUrl: chrome.runtime.getURL(ICON),
     ...content,
+    ...(buttons ? { buttons } : {}),
   });
 }
 
@@ -57,7 +62,7 @@ export async function notifyEvents(
     const shown = filterEvents(fresh, settings, local);
     if (shown.length === 0) return;
     if (shown.length <= MAX_SEPARATE) {
-      for (const event of shown) await show(event.id, notificationContent(event));
+      for (const event of shown) await show(event.id, notificationContent(event), BUTTONS);
     } else {
       await show(`summary:${Date.now()}`, summaryContent(shown));
     }
@@ -77,5 +82,22 @@ export async function onNotificationClicked(id: string): Promise<void> {
     if (url && isGitHubUrl(url)) await chrome.tabs.create({ url });
   } catch (error) {
     console.error('Prowl: opening a notification failed', error);
+  }
+}
+
+/**
+ * "Open" does what a click does. "Snooze 1 h" snoozes the pull request (an event id starts with
+ * its PR's id, see the diff engine) and clears the notification. Never rejects.
+ */
+export async function onNotificationButtonClicked(id: string, index: number): Promise<void> {
+  if (index === 0) return onNotificationClicked(id);
+  try {
+    const notified = await readNotified();
+    await chrome.notifications.clear(id);
+    if (index !== 1 || !Object.hasOwn(notified, id)) return;
+    const prId = id.slice(0, id.indexOf(':'));
+    await updatePrLocal((state) => snooze(state, prId, Date.now() + SNOOZE_MS));
+  } catch (error) {
+    console.error('Prowl: a notification button failed', error);
   }
 }

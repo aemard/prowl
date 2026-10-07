@@ -317,6 +317,14 @@ test.describe('account and about', () => {
     const panel = await openPanel('#/settings');
     const version = await serviceWorker.evaluate(() => chrome.runtime.getManifest().version);
     await expect(group(panel, 'About')).toContainText(`Version ${version}`);
+    // Chrome registered the manifest's suggested shortcut for the open-panel command.
+    await expect(group(panel, 'About')).toContainText(
+      'Open Prowl from the keyboard with Alt+Shift+P',
+    );
+    // Chrome registered the manifest's suggested shortcut for the open-panel command.
+    await expect(group(panel, 'About')).toContainText(
+      'Open Prowl from the keyboard with Alt+Shift+P',
+    );
 
     for (const [name, path] of [
       ['Documentation', '/aemard/prowl/tree/main/docs'],

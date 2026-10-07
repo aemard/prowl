@@ -363,6 +363,9 @@ export interface Settings {
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
+/** The manifest command that opens the side panel from the keyboard. */
+export const OPEN_PANEL_COMMAND = 'open-panel';
+
 export const STORAGE_KEYS = {
   settings: 'settings',
   auth: 'auth',

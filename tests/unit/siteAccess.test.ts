@@ -43,7 +43,6 @@ describe('manifest lock', () => {
     ['externally_connectable', { externally_connectable: { matches: ['https://*/*'] } }],
     ['declarative_net_request', { declarative_net_request: { rule_resources: [] } }],
     ['optional_permissions', { optional_permissions: ['tabs'] }],
-    ['a commands key (US-040 allows it on purpose, in manifestLock.ts)', { commands: {} }],
     ['the tabs permission', withPermission('tabs')],
     ['the scripting permission', withPermission('scripting')],
     ['the activeTab permission', withPermission('activeTab')],

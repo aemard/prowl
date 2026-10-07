@@ -28,6 +28,8 @@ export const ALLOWED_KEYS = [
   'icons',
   'action',
   'side_panel',
+  // Keyboard shortcuts only (US-040): no access to pages or data. docs/privacy.md says so.
+  'commands',
   'background',
   'permissions',
   'host_permissions',

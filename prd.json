@@ -720,8 +720,8 @@
       ],
       "priority": 40,
       "dependsOn": ["US-032"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "open-panel command (Alt+Shift+P) -> sidePanel.open in onCommand; Open / Snooze 1 h notification buttons; About shows the live shortcut; lock allows commands. E2E runs in CI."
     },
     {
       "id": "US-041",

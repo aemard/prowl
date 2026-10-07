@@ -114,6 +114,10 @@ export function createFakeChrome() {
   const notifications = new Map<string, FakeNotification>();
   const badge = { text: '', color: '' as string | number[], title: 'Prowl' };
   const createdTabs: chrome.tabs.CreateProperties[] = [];
+  /** What `commands.getAll` answers; tests may change a shortcut. */
+  const commands: chrome.commands.Command[] = [
+    { name: 'open-panel', description: 'Open Prowl', shortcut: 'Alt+Shift+P' },
+  ];
   const grantedOrigins = new Set<string>();
   const permissionsOnAdded = new FakeEvent<[chrome.permissions.Permissions]>();
   const permissionsOnRemoved = new FakeEvent<[chrome.permissions.Permissions]>();
@@ -230,8 +234,12 @@ export function createFakeChrome() {
       onAdded: permissionsOnAdded,
       onRemoved: permissionsOnRemoved,
     },
+    commands: {
+      getAll: async () => commands.map((command) => ({ ...command })),
+      onCommand: new FakeEvent<[string, chrome.tabs.Tab | undefined]>(),
+    },
     /** Test-only inspection handles. Not part of the real API. */
-    __state: { alarms, notifications, badge, createdTabs, grantedOrigins },
+    __state: { alarms, notifications, badge, createdTabs, grantedOrigins, commands },
   };
 
   fake.storage.local = new FakeStorageArea('local', storageOnChanged);

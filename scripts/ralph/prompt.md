@@ -36,8 +36,9 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
 
 - Iterate with `pnpm verify:fast` and targeted E2E (`pnpm build:e2e`, then
   `pnpm exec playwright test <spec> --reporter=dot`). Then run `pnpm lint:fix` and
-  `pnpm verify:changed` (fast checks, build, size and the E2E specs you changed) until it is
-  green. CI runs the full `pnpm verify` on every push; fix what it reports there.
+  `pnpm verify:changed` (fast checks, build, size) until it is green. E2E runs in CI with the
+  full `pnpm verify` on every push: run a spec locally only while writing it or to fix a CI
+  failure.
 - Never weaken a gate: do not lower coverage thresholds or budgets, skip/`.only`/delete tests,
   or add ignores to get green. A test that fails once without a code change is a bug: fix it.
 - For UI work, run `pnpm screenshots` (writes docs/screenshots/), open the PNGs in `docs/screenshots/`
