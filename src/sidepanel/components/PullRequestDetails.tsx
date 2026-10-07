@@ -183,7 +183,7 @@ function Reviewers({ reviewers, labelledBy }: { reviewers: Reviewer[]; labelledB
             <span class="pr-detail__text" title={login}>
               {login}
             </span>
-            <Badge tone={tone} icon={<Icon size={12} />}>
+            <Badge tone={tone} variant="plain" icon={<Icon size={12} />}>
               {label}
             </Badge>
           </li>

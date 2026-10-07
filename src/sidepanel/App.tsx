@@ -47,7 +47,7 @@ function Loading() {
           </span>
           {[0, 1, 2].map((row) => (
             <div class="app-loading__row" key={row}>
-              <Skeleton shape="circle" width={20} />
+              <Skeleton shape="circle" width={16} />
               <div class="app-loading__lines">
                 <Skeleton width="85%" />
                 <Skeleton width="50%" />

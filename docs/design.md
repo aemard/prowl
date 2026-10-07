@@ -2,6 +2,8 @@
 
 Prowl lives in Chrome's side panel (360–500 px wide), next to whatever you are doing. It should
 feel like part of the browser: calm, quick to scan, and out of the way until something needs you.
+The look is minimal: neutral surfaces with a trace of the logo's ink, one mint accent, small type,
+and color only where it means something.
 
 ## Principles
 
@@ -11,9 +13,11 @@ feel like part of the browser: calm, quick to scan, and out of the way until som
    the one primary action on a screen. Everything else is neutral.
 3. **Never color alone.** Every state color is paired with an icon, a word or a shape
    (e.g. a red ✕ plus "2 failing"), so it reads in grayscale and for color-blind users.
-4. **Dense but airy.** A 4 px grid, 13 px body text, 28 px controls in lists and 32 px elsewhere.
+4. **Dense but airy.** A 4 px grid, 12 px body text, 24 px controls in lists and 28 px elsewhere.
    Enough room to scan a dozen pull requests without scrolling, never cramped.
-5. **Light and dark are equal.** Both themes are designed, checked for contrast and screenshotted.
+5. **Follow the system.** The panel and the website take the system's light or dark theme by
+   default; Settings can force one. Both themes are designed, checked for contrast and
+   screenshotted.
 6. **Quiet motion.** 120–180 ms, ease-out, only to show where something came from. Off under
    `prefers-reduced-motion` (the spinner keeps turning, slowly, because it is the only
    progress signal).
@@ -23,16 +27,18 @@ feel like part of the browser: calm, quick to scan, and out of the way until som
 ## Brand
 
 - **Name:** Prowl, a cat on the prowl, quietly keeping an eye on your pull requests.
-- **Mark:** a cat's eye, an amber almond with a vertical slit pupil, on a rounded indigo tile
-  (`src/assets/logo.svg`, `ProwlMark` in the app). The tile carries the mark on light toolbars,
-  and the amber eye carries it on dark ones. At 16 px the eye is 13 × 8 px with a 2 px pupil
-  centred on the pixel grid.
-- **Colors:** tile `--color-brand` `#3b4fd8` (also the light accent), eye `--color-brand-eye`
-  `#ffc53d`, pupil `--color-brand-pupil` `#1d2266`. The eye is 4.0:1 on the tile.
+- **Mark:** a white cat peeking out of a mint circle with an ink ring (`src/assets/logo.svg`).
+  The face fills most of the circle, so it still reads at 16 px. The ink ring carries the mark on
+  light toolbars and the mint disc on dark ones.
+- **Colors:** ink `#1e1e24` (also the light theme's text, `--gray-12`), mint `#a8dacd` (the dark
+  theme's accent is a step more saturated), fur white. They live in the SVG only: the logo is one
+  file, so they are not tokens.
+- **Artwork:** traced from the 1024 px illustration into one circle and two paths (mint, white);
+  the ink lines are the circle showing through. About 12 KB, 5 KB gzipped.
 - **Icons:** `pnpm icons` rasterizes the SVG to `public/icons/icon-{16,32,48,128}.png`. 16–48 px
   use the full canvas; 128 px has 16 px of transparent padding around 96 px of artwork, as the
-  Chrome Web Store asks. Change the geometry in `logo.svg` and `ProwlMark.tsx` together (a unit
-  test compares them).
+  Chrome Web Store asks. The panel shows the same SVG through `ProwlMark` (an `<img>`), and the
+  website uses it as its favicon and header logo.
 - Use the word "Prowl" next to the mark in the panel header; don't recolor, outline or stretch it.
 
 ## Color
@@ -42,10 +48,14 @@ A unit test fails if any other stylesheet contains a hex, `rgb()` or `hsl()` col
 
 ### Themes
 
-Light is the default. Dark applies when the system prefers dark, unless `<html data-theme="light">`
-forces light; `<html data-theme="dark">` forces dark. The two dark blocks in `tokens.css` must
-stay identical (tested). Each theme also sets `color-scheme`, so native controls, scrollbars and
-`<select>` pickers match.
+The panel follows the system theme by default (the `theme` setting defaults to `system`, shown
+as "Match system"): light, or dark when the system prefers dark. Settings > Theme can force one
+through `<html data-theme="light">` or `<html data-theme="dark">`. The two dark blocks in
+`tokens.css` must stay identical (tested). Each theme also sets `color-scheme`, so native
+controls, scrollbars and `<select>` pickers match.
+
+The palette is defined in OKLCH and written as hex: neutrals keep the logo ink's hue (285°) at a
+very low chroma, and every hue uses the same lightness steps per role, so tints look related.
 
 ### Neutral scale
 
@@ -53,37 +63,43 @@ Steps follow one rule in both themes: 1 is the app background and 12 is high-con
 
 | Step | Use | Light | Dark |
 |---|---|---|---|
-| `--gray-1` | `bg`: panel background | `#ffffff` | `#141619` |
-| `--gray-2` | `bg-subtle`: secondary buttons, insets | `#f7f8fa` | `#1a1d21` |
-| `--gray-3` | `bg-hover`, `neutral-bg` | `#eff1f4` | `#222529` |
-| `--gray-4` | `bg-active`, `border-subtle`, light skeleton | `#e6e9ed` | `#292d32` |
-| `--gray-5` | dark skeleton shine | `#dde1e6` | `#2f3339` |
-| `--gray-6` | `border`: cards, menus, dialogs | `#d0d5dc` | `#3a3f46` |
-| `--gray-7` | `scrollbar`, dark `neutral-solid` | `#b6bdc6` | `#4b515a` |
-| `--gray-8` | `border-control` (3:1), `fg-disabled` | `#848d98` | `#6d7580` |
-| `--gray-9` | reserve | `#6e7781` | `#7e8691` |
-| `--gray-10` | reserve | `#626b75` | `#8f97a1` |
-| `--gray-11` | `fg-muted`, `neutral-fg` | `#535c66` | `#a6aeb8` |
-| `--gray-12` | `fg` | `#1c2026` | `#e7e9ec` |
+| `--gray-1` | `bg`: panel background | `#ffffff` | `#121215` |
+| `--gray-2` | `bg-subtle`: insets (expanded card) | `#fafafb` | `#17171b` |
+| `--gray-3` | `bg-hover`, `neutral-bg` | `#f3f3f6` | `#1e1e22` |
+| `--gray-4` | `bg-active`, `border-subtle`, light skeleton | `#ececef` | `#242429` |
+| `--gray-5` | dark skeleton shine | `#e6e6e9` | `#2a2a30` |
+| `--gray-6` | `border`: cards, labels, menus, dialogs | `#dcdce0` | `#35353b` |
+| `--gray-7` | `scrollbar`, dark `neutral-solid` | `#c3c3c9` | `#47474e` |
+| `--gray-8` | `border-control` (3:1), `fg-disabled` | `#8b8b93` | `#6e6e76` |
+| `--gray-9` | reserve | `#7b7b83` | `#7f7f87` |
+| `--gray-10` | reserve | `#6f6f77` | `#919199` |
+| `--gray-11` | `fg-muted`, `neutral-fg` | `#5f6067` | `#b0b0b7` |
+| `--gray-12` | `fg` (light: the logo's ink) | `#1e1e24` | `#ececef` |
 
-`--color-surface` is the overlay surface (menus, dialogs, toasts): `#ffffff` in light, `#1e2125`
-in dark (a step lighter than the background, since shadows barely show on dark).
+`--color-surface` is the overlay and button surface (menus, dialogs, toasts, secondary buttons):
+`#ffffff` in light, `#1b1b1f` in dark (a step lighter than the background, since shadows barely
+show on dark).
 
 ### State hues
 
-Each hue has `-fg` (text and icons on any neutral surface), `-bg` (tinted chip background),
+Each hue has `-fg` (text and icons on any neutral surface), `-bg` (tinted background),
 `-border` (outline chips) and `-solid` (strong fill under `--color-fg-on-solid` white text).
-`accent` and `danger` also have `-solid-hover`.
+`accent` and `danger` also have `-solid-hover`. The accent is the exception for text on a fill:
+in dark it is the light mint, so text on it is `--color-fg-on-accent` (white in light, the dark
+background in dark). Primary buttons, a checked switch's thumb and solid accent badges use it.
 
 | Hue | Means in Prowl | Pair with | Light fg / solid | Dark fg / solid |
 |---|---|---|---|---|
-| `accent` | Primary action, links, focus, selection, unseen changes | | `#3646c9` / `#3b4fd8` | `#8d9cff` / `#4356de` |
-| `success` | Checks passed, approved | check icon | `#1a7434` / `#1f7a39` | `#4cc26d` / `#1f7a39` |
-| `danger` | Checks failed, changes requested, closed, destructive actions | ✕ icon | `#c01f2b` / `#c9222e` | `#ff7d75` / `#c9222e` |
-| `warning` | Merge conflicts, rate limited, offline, stale data | alert icon | `#a6420a` / `#b0460c` | `#f39550` / `#b0460c` |
-| `attention` | Checks pending, review required | dot icon | `#835700` / `#8a5c00` | `#e3ad3b` / `#8a5c00` |
-| `done` | Merged | merge icon | `#7041d1` / `#7a4bda` | `#b791f6` / `#7a4bda` |
-| `neutral` | Draft, counts, skipped checks | draft icon or text | `#535c66` / `#535c66` | `#a6aeb8` / `#4b515a` |
+| `accent` | Primary action, links, focus, selection, unseen changes | | `#007467` / `#007a6d` | `#89ddcf` / `#89ddcf` |
+| `success` | Checks passed, approved | check icon | `#1d7635` / `#217937` | `#60c473` / `#217937` |
+| `danger` | Checks failed, changes requested, closed, destructive actions | ✕ icon | `#be222a` / `#c2272d` | `#fb817a` / `#c2272d` |
+| `warning` | Merge conflicts, rate limited, offline, stale data | alert icon | `#a84811` / `#a84811` | `#f59569` / `#a84811` |
+| `attention` | Checks pending, review required | dot icon | `#825b0c` / `#825b0c` | `#e8af4f` / `#825b0c` |
+| `done` | Merged | merge icon | `#7447c8` / `#774bcb` | `#b49cf7` / `#774bcb` |
+| `neutral` | Draft, counts, skipped checks | draft icon or text | `#5f6067` / `#5f6067` | `#b0b0b7` / `#47474e` |
+
+The accent hue (182°) sits a little cooler than the logo's mint (177°) so it stays apart from
+`success` green (148°).
 
 ### Contrast
 
@@ -99,52 +115,48 @@ Text, 4.5:1 minimum. Each cell is `light / dark`.
 
 | Text token | `bg` | `bg-subtle` | `bg-hover` | `bg-active` | `surface` | `tint` |
 |---|---:|---:|---:|---:|---:|---:|
-| `fg` | 16.36 / 14.90 | 15.39 / 13.90 | 14.45 / 12.65 | 13.43 / 11.39 | 16.36 / 13.29 | 14.42 / 12.61 (`accent-bg`) |
-| `fg-muted` | 6.79 / 8.09 | 6.39 / 7.54 | 6.01 / 6.86 | 5.58 / 6.18 | 6.79 / 7.21 | 5.99 / 6.84 (`accent-bg`) |
-| `neutral-fg` | 6.79 / 8.09 | 6.39 / 7.54 | 6.01 / 6.86 | 5.58 / 6.18 | 6.79 / 7.21 | 6.01 / 6.86 (`neutral-bg`) |
-| `accent-fg` | 7.30 / 7.19 | 6.87 / 6.71 | 6.45 / 6.11 | 5.99 / 5.50 | 7.30 / 6.41 | 6.44 / 6.08 (`accent-bg`) |
-| `success-fg` | 5.85 / 7.98 | 5.50 / 7.45 | 5.17 / 6.77 | 4.80 / 6.10 | 5.85 / 7.11 | 5.21 / 6.89 (`success-bg`) |
-| `danger-fg` | 6.05 / 7.29 | 5.69 / 6.80 | 5.34 / 6.19 | 4.97 / 5.57 | 6.05 / 6.50 | 5.30 / 6.61 (`danger-bg`) |
-| `warning-fg` | 6.17 / 7.96 | 5.80 / 7.43 | 5.45 / 6.76 | 5.06 / 6.09 | 6.17 / 7.10 | 5.52 / 6.81 (`warning-bg`) |
-| `attention-fg` | 6.31 / 8.90 | 5.94 / 8.30 | 5.58 / 7.55 | 5.18 / 6.80 | 6.31 / 7.93 | 5.74 / 7.52 (`attention-bg`) |
-| `done-fg` | 6.24 / 7.25 | 5.87 / 6.76 | 5.51 / 6.15 | 5.12 / 5.54 | 6.24 / 6.46 | 5.48 / 6.42 (`done-bg`) |
+| `fg` | 16.58 / 15.86 | 15.90 / 15.16 | 14.97 / 14.09 | 14.06 / 13.10 | 16.58 / 14.56 | 15.28 / 12.95 (`accent-bg`) |
+| `fg-muted` | 6.26 / 8.67 | 6.00 / 8.29 | 5.65 / 7.71 | 5.31 / 7.16 | 6.26 / 7.96 | 5.77 / 7.08 (`accent-bg`) |
+| `neutral-fg` | 6.26 / 8.67 | 6.00 / 8.29 | 5.65 / 7.71 | 5.31 / 7.16 | 6.26 / 7.96 | 5.65 / 7.71 (`neutral-bg`) |
+| `accent-fg` | 5.68 / 11.85 | 5.45 / 11.33 | 5.13 / 10.53 | 4.82 / 9.79 | 5.68 / 10.88 | 5.24 / 9.68 (`accent-bg`) |
+| `success-fg` | 5.68 / 8.58 | 5.45 / 8.21 | 5.13 / 7.63 | 4.82 / 7.09 | 5.68 / 7.88 | 5.17 / 7.15 (`success-bg`) |
+| `danger-fg` | 6.08 / 7.59 | 5.83 / 7.25 | 5.49 / 6.74 | 5.16 / 6.27 | 6.08 / 6.97 | 5.45 / 6.43 (`danger-bg`) |
+| `warning-fg` | 5.83 / 8.36 | 5.59 / 7.99 | 5.27 / 7.43 | 4.95 / 6.90 | 5.83 / 7.67 | 5.21 / 7.00 (`warning-bg`) |
+| `attention-fg` | 6.09 / 9.51 | 5.83 / 9.09 | 5.49 / 8.45 | 5.16 / 7.85 | 6.09 / 8.73 | 5.53 / 7.80 (`attention-bg`) |
+| `done-fg` | 6.04 / 8.05 | 5.79 / 7.69 | 5.45 / 7.15 | 5.12 / 6.65 | 6.04 / 7.39 | 5.43 / 6.75 (`done-bg`) |
 
-Text on solid fills (`fg-on-solid`), 4.5:1 minimum.
+Text on solid fills (`fg-on-accent` on the accent, `fg-on-solid` on the rest), 4.5:1 minimum.
 
 | Background | Light | Dark |
 |---|---:|---:|
-| `accent-solid` | 6.37 | 5.79 |
-| `accent-solid-hover` | 7.80 | 4.83 |
-| `success-solid` | 5.38 | 5.38 |
-| `danger-solid` | 5.60 | 5.60 |
-| `danger-solid-hover` | 6.90 | 4.93 |
-| `warning-solid` | 5.63 | 5.63 |
-| `attention-solid` | 5.81 | 5.81 |
-| `done-solid` | 5.46 | 5.46 |
-| `neutral-solid` | 6.79 | 8.00 |
+| `accent-solid` | 5.24 | 11.85 |
+| `accent-solid-hover` | 6.79 | 13.39 |
+| `success-solid` | 5.45 | 5.45 |
+| `danger-solid` | 5.80 | 5.80 |
+| `danger-solid-hover` | 7.47 | 4.90 |
+| `warning-solid` | 5.83 | 5.83 |
+| `attention-solid` | 6.09 | 6.09 |
+| `done-solid` | 5.75 | 5.75 |
+| `neutral-solid` | 6.26 | 9.21 |
 
 UI components and graphics, 3:1 minimum.
 
 | Foreground | Background | Light | Dark |
 |---|---|---:|---:|
-| `border-control` | `bg` | 3.36 | 3.89 |
-| `border-control` | `bg-subtle` | 3.16 | 3.63 |
-| `border-control` | `surface` | 3.36 | 3.47 |
-| `focus` | `bg` | 6.37 | 7.19 |
-| `focus` | `bg-subtle` | 6.00 | 6.71 |
-| `focus` | `surface` | 6.37 | 6.41 |
-| `accent-solid` | `bg` | 6.37 | 3.13 |
-| `fg-on-solid` | `border-control` | 3.36 | 4.66 |
-| `brand-eye` | `brand` | 4.04 | 4.04 |
-| `brand-pupil` | `brand-eye` | 9.03 | 9.03 |
+| `border-control` | `bg` | 3.38 | 3.70 |
+| `border-control` | `bg-subtle` | 3.24 | 3.54 |
+| `border-control` | `surface` | 3.38 | 3.40 |
+| `focus` | `bg` | 5.24 | 11.85 |
+| `focus` | `bg-subtle` | 5.03 | 11.33 |
+| `focus` | `surface` | 5.24 | 10.88 |
+| `accent-solid` | `bg` | 5.24 | 11.85 |
+| `fg-on-solid` | `border-control` | 3.38 | 5.05 |
 <!-- contrast:end -->
 
-GitHub label colors are user-defined, so the PR card cannot take label text from tokens:
-`labelColors()` (`components/labelColor.ts`) fills the chip with the label color and picks white
-text when that reaches 4.5:1, black otherwise (black then has at least 4.67:1). The border is the
-label color mixed with `--color-fg`, so near-white and near-black labels keep an edge in both
-themes. A unit test checks the ratio over the whole color cube and an E2E test on the rendered
-chips.
+GitHub label colors are user-defined, so they never carry text: a label is an outlined pill
+with its name in `fg-muted` after a 6 px dot of the label's color (`--label-color`). The name
+carries the meaning, so the dot needs no contrast; a faint `--color-fg` ring keeps near-white and
+near-black dots visible in both themes. An E2E test checks every rendered dot against its label.
 
 ## Typography
 
@@ -153,12 +165,16 @@ for branch names and SHAs. Numbers in badges use tabular figures.
 
 | Token | Size / line height | Use |
 |---|---|---|
-| `--text-xs` / `--leading-xs` | 11 / 16 px | Small counts (`Badge size="sm"`). Never for sentences. |
-| `--text-sm` / `--leading-sm` | 12 / 16 px | Metadata (repo#number, time), hints, small buttons, badges |
-| `--text-md` / `--leading-md` | 13 / 20 px | Body default, PR titles, controls |
-| `--text-lg` / `--leading-lg` | 15 / 22 px | Panel and dialog titles, empty-state titles |
-| `--text-xl` / `--leading-xl` | 18 / 24 px | Onboarding headings |
-| `--text-2xl` / `--leading-2xl` | 22 / 28 px | Onboarding hero only |
+| `--text-xs` / `--leading-xs` | 10 / 14 px | Small counts (`Badge size="sm"`). Never for sentences. |
+| `--text-sm` / `--leading-sm` | 11 / 16 px | Metadata (repo#number, time), hints, labels, small buttons, badges |
+| `--text-md` / `--leading-md` | 12 / 18 px | Body default, PR titles, controls |
+| `--text-lg` / `--leading-lg` | 13 / 20 px | Panel and dialog titles, empty-state titles |
+| `--text-xl` / `--leading-xl` | 16 / 22 px | The Settings heading |
+| `--text-2xl` / `--leading-2xl` | 20 / 26 px | The device-flow code only |
+
+The scale is one step smaller than Chrome's own UI text so a 400 px panel shows more pull
+requests; Chrome's page zoom (and the OS text scale) still enlarges it, since every size is in
+CSS px.
 
 Weights: `--weight-regular` 400 (body), `--weight-medium` 500 (PR titles, buttons, labels),
 `--weight-semibold` 600 (headings). Long titles wrap; branch names and labels truncate with an
@@ -169,10 +185,12 @@ ellipsis and keep the full text in `title`.
 - **Spacing:** 4 px grid: `--space-1` 4, `-2` 8, `-3` 12, `-4` 16, `-5` 20, `-6` 24, `-8` 32,
   `-10` 40, `-12` 48 px, plus `--space-0-5` (2) and `--space-1-5` (6) for optical alignment
   inside controls. Panel gutters are `--space-4`; list rows use `--space-3` vertical padding.
-- **Controls:** `--control-sm` 28 px (dense rows), `--control-md` 32 px (default). Icons
-  `--icon-sm` 12, `--icon-md` 16, `--icon-lg` 20 px.
+- **Controls:** `--control-sm` 24 px (dense rows), `--control-md` 28 px (default); 24 px is the
+  WCAG 2.2 minimum target size, so nothing interactive is smaller. Icons `--icon-sm` 12,
+  `--icon-md` 16 (also avatars), `--icon-lg` 20 px.
 - **Radius:** `--radius-sm` 4 (skeleton lines), `--radius-md` 6 (buttons, inputs, menu items),
-  `--radius-lg` 8 (cards, menus, dialogs, toasts), `--radius-full` (badges, switches, avatars).
+  `--radius-lg` 10 (cards, menus, dialogs, toasts), `--radius-full` (badges, labels, switches,
+  avatars).
 - **Borders:** `--border-width` 1 px hairlines. Focus: `--focus-width` 2 px solid `--color-focus`
   at `--focus-offset` 2 px, set once in `base.css` on `:focus-visible`. Text inputs show a ring on
   any focus.
@@ -227,20 +245,20 @@ attributes (`data-variant`, `data-size`, `data-tone`) styled in the component's 
 
 | Component | Use it for | Key props | Accessibility |
 |---|---|---|---|
-| `Button` | Any text action | `variant` primary / secondary (default) / danger / ghost, `size` sm (28) / md (32), `icon`, `loading` | Native `<button type="button">`; `loading` sets `aria-busy` + `aria-disabled`, keeps focus, ignores clicks and submits |
+| `Button` | Any text action | `variant` primary / secondary (default) / danger / ghost, `size` sm (24) / md (28), `icon`, `loading` | Native `<button type="button">`; `loading` sets `aria-busy` + `aria-disabled`, keeps focus, ignores clicks and submits |
 | `IconButton` | Toolbar and row actions | required `label`, `variant` ghost / secondary, `size`, `pressed`, `loading` | `label` is the `aria-label` and tooltip; `pressed` sets `aria-pressed` |
-| `Badge` | PR state, counts, labels | `tone` (7 hues), `variant` subtle / solid / outline, `size`, `icon`, `title` | Text inside, never color only; truncates with ellipsis |
-| `Avatar` | A person or bot next to their name | `src` (a person icon without one), `title` | Decorative (`alt=""`): the login is always in text beside it; 20 px, round |
+| `Badge` | PR state, counts | `tone` (7 hues), `variant` subtle / solid / outline / plain (icon and word, no fill), `size` sm (16) / md (18), `icon`, `title` | Text inside, never color only; truncates with ellipsis |
+| `Avatar` | A person or bot next to their name | `src` (a person icon without one), `title` | Decorative (`alt=""`): the login is always in text beside it; 16 px, round |
 | `Spinner` | Indeterminate progress | `size` 12–24, `label` | Decorative unless `label`, then `role="status"` |
 | `Skeleton` | Loading placeholders | `shape` text / circle / rect, `width`, `height` | `aria-hidden`; put `aria-busy` and a label on the loading container |
 | `Dialog` | Confirmations, composers | `open`, `onClose`, `title`, `description`, `footer`, `initialFocus`, `closeOnBackdrop` | Native modal `<dialog>`: top layer, inert page, Tab trapped, Esc closes, focus returns to the opener; named by the title, described by the description |
 | `Menu` | Overflow actions, single choice lists | `trigger` render prop, `items` (`MenuItem` or `'separator'`), `align` start / end, `label` | APG menu button: Enter / Space / ↓ open on the first item, ↑ on the last, arrows wrap, Home / End, type-ahead, Esc and Tab close and return focus; `checked` makes `menuitemradio`; follows its trigger on scroll |
-| `Switch` | Settings that apply immediately | `checked`, `onChange`, `label`, `description`, `hideLabel`, `disabled` | `role="switch"` button with `aria-checked`, 40 × 28 hit target, labelled by its visible label; the thumb position also shows state |
+| `Switch` | Settings that apply immediately | `checked`, `onChange`, `label`, `description`, `hideLabel`, `disabled` | `role="switch"` button with `aria-checked`, 40 × 24 hit target (28 × 16 track), labelled by its visible label; the thumb position also shows state |
 | `TextField` | Text input and textarea | `label`, `value`, `onValueChange`, `type`, `multiline`, `hint`, `error`, `icon`, `hideLabel`, `inputRef` | Visible `<label>`; `aria-describedby` error + hint; `aria-invalid` and an icon on error |
 | `Select` | Short single-choice lists in forms | `label`, `value`, `options`, `onValueChange`, `hint`, `error` | Native `<select>`: keyboard and screen readers for free |
 | `ToastRegion`, `showToast`, `dismissToast` | Action outcomes ("Approved #42", "Copied") | `message`, `tone` info / success / danger, `action`, `durationMs` | One polite `aria-live` region, always mounted; max 3; 5 s (8 s for errors), paused on hover and focus; `durationMs: 0` stays until dismissed |
 | `EmptyState` | Empty lists and filtered-out results | `title`, `description`, `icon`, `action`, `headingLevel` | Real heading at the level you choose |
-| `ProwlMark` | Logo in the header and onboarding | `size`, `label` | Decorative next to the word "Prowl" |
+| `ProwlMark` | Logo in the header | `size` (20), `label` | An `<img>` of `logo.svg`; decorative (`alt=""`) next to the word "Prowl", named by `label` alone |
 
 `Field` (label, hint, error layout plus `.ui-control` chrome) is internal to `TextField` and
 `Select`. `cx.ts` has `cx()` for class names, the shared `Tone` type and `focusableIn()`.
@@ -251,8 +269,8 @@ Built from the components above; they live in `components/`, not `components/ui/
 
 | Component | Use it for | Notes |
 |---|---|---|
-| `PullRequestCard` | One PR in the list | A summary and, expanded, its details. The title is a link to GitHub (`GitHubLink`, opens a new tab) and a sibling `IconButton` chevron expands the card; a click on the rest of the summary does the same, Escape folds it back with focus on the chevron. Full width, hairline separated, hover `bg-hover`. Rows: avatar + repo#number + last activity + chevron, title (2 lines, then ellipsis, underlined on hover), status chips, labels, counts + "Opened ... ago". Labels and counts share a line when they fit. The link is named "Title, owner/name#n"; the chevron is "Details for Title" and its description is every fact the card shows (`describePullRequest`). A dot in the left gutter marks unseen changes (same `isSeen` as the badge) and is in the description too. Row actions go beside the link, never inside it. |
-| `PullRequestDetails` | What an expanded card shows | An inset panel (`bg-subtle`, hairline above): **Merge** (one line per blocker with a tone icon, or "Ready to merge"), **Checks** (failed and pending first with a state word, a "Required" badge and a link to GitHub; passed and skipped folded in a native `<details>`), **Actions** (one wrapping row of `size="sm"` buttons right after Merge, so it stays put while the detail loads; `ReviewActions` fills it with Approve, Request changes and Comment, secondary with a 12 px icon, each named with its PR, then `MergeAction`'s Merge, primary only when the PR is ready to merge (secondary beside blockers); the dialogs are a `Dialog` with a labelled multi-line `TextField` (merge: a `Select` of the allowed methods and a `TextField` for the commit title), Cancel first and one primary button), **Reviewers** (avatar, login, state `Badge`). Skeleton rows while loading, a warning notice with "Try again" on failure, no headings (labels name their lists) so the page outline stays flat. |
+| `PullRequestCard` | One PR in the list | A summary and, expanded, its details. The title is a link to GitHub (`GitHubLink`, opens a new tab) and a sibling `IconButton` chevron expands the card; a click on the rest of the summary does the same, Escape folds it back with focus on the chevron. Full width, hairline separated, hover `bg-hover`. Rows: avatar + repo#number + last activity + chevron, title (2 lines, then ellipsis, underlined on hover), status chips (plain: icon and word in the tone's color, no fill), labels (dots), counts + "Opened ... ago". Labels and counts share a line when they fit. The link is named "Title, owner/name#n"; the chevron is "Details for Title" and its description is every fact the card shows (`describePullRequest`). A dot in the left gutter marks unseen changes (same `isSeen` as the badge) and is in the description too. Row actions go beside the link, never inside it. |
+| `PullRequestDetails` | What an expanded card shows | An inset panel (`bg-subtle`, hairline above): **Merge** (one line per blocker with a tone icon, or "Ready to merge"), **Checks** (failed and pending first with a state word, a "Required" badge and a link to GitHub; passed and skipped folded in a native `<details>`), **Actions** (one wrapping row of `size="sm"` buttons right after Merge, so it stays put while the detail loads; `ReviewActions` fills it with Approve, Request changes and Comment, secondary with a 12 px icon, each named with its PR, then `MergeAction`'s Merge, primary only when the PR is ready to merge (secondary beside blockers); the dialogs are a `Dialog` with a labelled multi-line `TextField` (merge: a `Select` of the allowed methods and a `TextField` for the commit title), Cancel first and one primary button), **Reviewers** (avatar, login, plain state `Badge`). Skeleton rows while loading, a warning notice with "Try again" on failure, no headings (labels name their lists) so the page outline stays flat. |
 | `StatusBanner` | Why Prowl cannot update, or that the list is stale | A full-width strip under the header, above the list (which it never hides): tone icon (key, clock, cloud-off, alert), a semibold title, one or two `--text-sm` lines (GitHub's message, the "Last updated 14 min ago." age) and at most one `size="sm"` button (Re-authenticate is primary, Retry / Refresh now secondary). `danger` background for a rejected token and GitHub errors, `warning` for rate limits, offline and stale data; text stays `--color-fg` (not the tone's own fg) so it keeps its contrast on the tinted background, the icon and the words carry the meaning. Title and detail are a `role="status"` live region (`alert` for a rejected token); the age is outside it, since it ticks. |
 | `SectionTabs` | Sections of the list | APG tabs: one tab stop, arrows / Home / End select, count `Badge` (accent when selected), warning icon + "Could not load" instead of a count for a failed section. Scrolls sideways when too wide: a fade with a chevron at an edge with more tabs behind it, the wheel scrolls it, and a tab brought into view stays clear of the fades. Three tabs fit a 400 px panel. |
 | `SettingsGroup` (view) | A titled block of the settings screen | `h2` title, optional muted description, groups separated by a hairline, `--space-4` gutters. Sub-headings are `h3`; lists of switches are `ul`s named by their heading. Hints and notes are `--text-sm` muted. |
@@ -260,7 +278,8 @@ Built from the components above; they live in `components/`, not `components/ui/
 | `NumberField` | A whole number that saves as you type | A `TextField type="number"`; shows an error while the text is out of range and the saved value again on blur. |
 | `SignOutDialog` | Confirming sign-out (header menu and Settings) | A `Dialog` with Cancel first and a `danger` Sign out; the token stays valid on GitHub, and the text says so. |
 
-**Status chips** (`prStatus.ts`, always icon + word, tone from the table above): Draft (neutral);
+**Status chips** (`prStatus.ts`, always icon + word in the tone's `-fg`, no fill, tone from the
+table above): Draft (neutral);
 CI "2 failing" / "3 pending" / "8 passed" (none when there are no checks); Approved / Changes
 requested / Review required (hidden on drafts, which nobody is expected to review yet);
 Conflicts (warning) or Ready to merge (success, replaces Approved because it implies it).
@@ -272,8 +291,9 @@ Conflicts (warning) or Ready to merge (success, replaces Approved because it imp
 - **Lists:** rows are full-width, hairline-separated (`--color-border-subtle`), hover
   `--color-bg-hover`, selected `--color-bg-active`. Row actions use `size="sm"` controls.
   Rows that touch the panel edge draw their focus ring inside (`outline-offset` negative).
-- **Status chips:** `Badge tone=… size="sm"` with a 12 px icon: ✕ "2 failing", ● "Review
-  required", ⚠ "Conflicts", merge icon "Merged".
+- **Status chips:** `Badge tone=… variant="plain"` with a 12 px icon: ✕ "2 failing", ● "Review
+  required", ⚠ "Conflicts", merge icon "Merged". Keep fills for counts and the few badges that
+  stand alone (onboarding's "Recommended"); a row of text stays fill-free.
 - **Loading:** show skeletons that match the final layout for first loads. For refreshes keep the
   data and spin the refresh `IconButton` (`loading`).
 - **Feedback:** use a toast for results of actions, inline `TextField` errors for validation, and

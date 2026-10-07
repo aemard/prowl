@@ -15,8 +15,9 @@ Standards
   amber, done/merged purple, neutral gray, draft gray. Never color-only: pair with an icon
   or text.
 - WCAG AA contrast for every text/background pair; 3:1 for icons and focus rings.
-- 4 px spacing grid, radius 6–8 px, hairline borders, subtle elevation only for overlays.
-- Hit targets ≥ 28 px in the dense list, ≥ 32 px elsewhere.
+- 4 px spacing grid, radius 6–10 px, hairline borders, subtle elevation only for overlays.
+- Compact type (12 px body, 11 px metadata); one mint accent; the system theme by default.
+- Hit targets ≥ 24 px in the dense list (the WCAG 2.2 minimum), ≥ 28 px elsewhere.
 - Copy: short, sentence case, verbs on buttons ("Merge", "Request changes").
 
 Checklist before you finish

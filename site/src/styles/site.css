@@ -264,12 +264,12 @@ nav a[aria-current="page"] {
 .button[data-variant="primary"] {
   border-color: transparent;
   background: var(--color-accent-solid);
-  color: var(--color-fg-on-solid);
+  color: var(--color-fg-on-accent);
 }
 
 .button[data-variant="primary"]:hover {
   background: var(--color-accent-solid-hover);
-  color: var(--color-fg-on-solid);
+  color: var(--color-fg-on-accent);
 }
 
 /* Sections */
@@ -342,7 +342,7 @@ nav a[aria-current="page"] {
   margin-bottom: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--color-accent-solid);
-  color: var(--color-fg-on-solid);
+  color: var(--color-fg-on-accent);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
@@ -502,7 +502,7 @@ nav a[aria-current="page"] {
   height: 2rem;
   border-radius: var(--radius-full);
   background: var(--color-accent-solid);
-  color: var(--color-fg-on-solid);
+  color: var(--color-fg-on-accent);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }

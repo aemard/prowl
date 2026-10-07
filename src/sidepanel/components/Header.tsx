@@ -46,7 +46,7 @@ export function Header() {
 
   return (
     <header class="header">
-      <ProwlMark size={24} />
+      <ProwlMark size={20} />
       <div class="header__text">
         <h1 class="header__title">Prowl</h1>
         {viewer && <UpdatedAt />}
@@ -92,7 +92,7 @@ export function Header() {
             ]}
             trigger={(props) => (
               <IconButton {...props} label={`Account: ${viewer.login}`}>
-                <img class="header__avatar" src={viewer.avatarUrl} alt="" width="24" height="24" />
+                <img class="header__avatar" src={viewer.avatarUrl} alt="" width="20" height="20" />
               </IconButton>
             )}
           />

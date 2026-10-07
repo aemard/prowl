@@ -94,7 +94,7 @@ function ListSkeleton() {
       {[0, 1, 2, 3].map((row) => (
         <div class="list__skeleton-row" key={row}>
           <div class="list__skeleton-head">
-            <Skeleton shape="circle" width={20} />
+            <Skeleton shape="circle" width={16} />
             <Skeleton width="45%" />
           </div>
           <Skeleton width={row % 2 ? '70%' : '92%'} />

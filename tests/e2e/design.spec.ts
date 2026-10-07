@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 
 const LIGHT_BG = 'rgb(255, 255, 255)';
-const DARK_BG = 'rgb(20, 22, 25)';
+const DARK_BG = 'rgb(18, 18, 21)';
 
 const look = (page: Page) =>
   page.evaluate(() => {

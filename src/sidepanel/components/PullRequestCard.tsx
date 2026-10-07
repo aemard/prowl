@@ -21,7 +21,6 @@ import {
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
-import { labelColors } from './labelColor';
 import { lazy } from './lazy';
 import { PrMenu } from './PrMenu';
 import { describePullRequest, pullRequestStatuses, type StatusIcon } from './prStatus';
@@ -166,7 +165,13 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
             {statuses.map(({ id, tone, icon, label, detail }) => {
               const Icon = STATUS_ICONS[icon];
               return (
-                <Badge key={id} tone={tone} icon={<Icon size={12} />} title={detail}>
+                <Badge
+                  key={id}
+                  tone={tone}
+                  variant="plain"
+                  icon={<Icon size={12} />}
+                  title={detail}
+                >
                   {label}
                 </Badge>
               );
@@ -177,7 +182,12 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
           {pr.labels.length > 0 && (
             <span class="pr-card__labels">
               {labels.map(({ name, color }) => (
-                <span class="pr-label" key={name} title={name} style={labelStyle(color)}>
+                <span
+                  class="pr-label"
+                  key={name}
+                  title={name}
+                  style={{ '--label-color': `#${color}` }}
+                >
                   {name}
                 </span>
               ))}
@@ -217,9 +227,4 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}
     </li>
   );
-}
-
-function labelStyle(color: string) {
-  const { background, color: text } = labelColors(color);
-  return { '--label-bg': background, '--label-fg': text };
 }

@@ -358,8 +358,8 @@ now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/bad
   muted ones do (mute only silences notifications). Merged and closed PRs outside every section
   never count.
 - Text is the count, empty for 0 and `99+` above 99. The color is `--color-danger-solid`
-  (`#c9222e`) when a counted PR has failing CI or requested changes, else `--color-accent-solid`
-  (`#3b4fd8`); a unit test keeps the two constants equal to the tokens. The tooltip is
+  (`#c2272d`) when a counted PR has failing CI or requested changes, else `--color-accent-solid`
+  (`#007a6d`); a unit test keeps the two constants equal to the tokens. The tooltip is
   `Prowl: 3 pull requests needing attention (2 CI failing, 1 ready to merge)` (reasons are
   counted separately, so they can add up to more than the count), `Prowl: 2 pull requests with
   unseen changes` in `unseen` mode, and plain `Prowl` when empty.
