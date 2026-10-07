@@ -45,7 +45,8 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
 
 - **Scope**: PRs you authored by default; add review requested (from you), team reviews
   (requests to your teams, found with `read:org`), mentioned, assigned, custom GitHub
-  searches, and repository include/exclude filters. Each scope is a tab. PRs with no
+  searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of
+  the panel, with its count. PRs with no
   commit for 20 days (you choose) step aside behind a "Show hidden" button and still notify;
   so can drafts and PRs opened by bots (Dependabot, Renovate), one switch each in Settings.
   A further switch groups each tab's PRs under their repository, in collapsible groups.
@@ -53,11 +54,16 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
 - **Notifications**: CI failed, CI passed after a failure, new review, approved, changes
-  requested, new comment, ready to merge, merged or closed by someone else. Per-event toggles,
-  quiet hours, and a toolbar badge counting PRs that need you.
+  requested, new comment, ready to merge, merged or closed by someone else, with Open and
+  Snooze 1 h buttons. Per-event toggles, quiet hours, and a toolbar badge counting PRs that
+  need you.
 - **Actions**: approve, request changes and merge (with confirmation; only the merge methods the
-  repository allows), comment, re-run failed checks, ready for review / convert to draft,
-  snooze, mute, open in GitHub, copy branch name.
+  repository allows), turn auto-merge on or off, update a branch that is behind (merge or
+  rebase), comment, re-run failed checks, ready for review / convert to draft, snooze, mute,
+  open in GitHub, copy branch name.
+- **Everywhere you work**: Alt+Shift+P opens the panel (change it at
+  chrome://extensions/shortcuts). Turn on settings sync to find your settings in Chrome on your
+  other computers; the token and your local PR state never leave the device.
 - **Polite polling**: every 2 minutes by default (1 minute minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
 

@@ -753,8 +753,8 @@
       ],
       "priority": 42,
       "dependsOn": ["US-034", "US-035", "US-036", "US-038", "US-039", "US-040", "US-041"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "README features, site feature cards and a store listing text cover the v1.2 features; settings.png regenerated; list/teams/grouped shots came from US-033..038. Lighthouse runs in CI."
     },
     {
       "id": "US-043",

@@ -18,6 +18,27 @@ The job is skipped until the repository variable `CWS_ITEM_ID` exists, so releas
 before the store is set up. It uses API v2: v1 stops on 15 October 2026. The API only uploads and
 submits packages; the listing text, images and privacy answers are edited in the dashboard.
 
+## Listing text
+
+**Summary** (132 characters at most): Follow your GitHub pull requests in the side panel: CI,
+reviews, merge state, notifications and actions. No backend.
+
+**Description**:
+
+> Prowl follows your GitHub pull requests from Chrome's side panel.
+>
+> - See CI, reviews, conflicts and merge readiness on every card, for what you opened, what asks
+>   for your review or your teams' review, where you are mentioned, or any GitHub search.
+> - Get notified when CI fails or passes, a review arrives, or a PR is ready, merged or closed;
+>   open or snooze it from the notification. Quiet hours and a toolbar badge.
+> - Approve, request changes, comment, merge, turn on auto-merge, update a branch that is
+>   behind, re-run failed checks, all without leaving your tab. Alt+Shift+P opens the panel.
+> - Hide stale, draft and bot PRs, and group them by repository.
+>
+> Private by design: no backend and no telemetry. Your token stays on your device, GitHub is the
+> only server Prowl talks to, and it cannot read or change the pages you visit. Settings can
+> sync through your Chrome profile if you turn it on; the token never does.
+
 ## One-time setup
 
 ### 1. Create the item by hand
