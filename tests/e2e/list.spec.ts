@@ -170,27 +170,17 @@ test.describe('with a rich set of pull requests', () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
-  test('label text is readable on every label color', async ({ openPanel }) => {
+  test('labels show their GitHub color as a dot beside the name', async ({ openPanel }) => {
     const panel = await openPanel();
-    const contrasts = await panel.evaluate(() => {
-      const channel = (value: number) => {
-        const c = value / 255;
-        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-      };
-      const luminance = (css: string) => {
-        const [r = 0, g = 0, b = 0] = (css.match(/\d+/g) ?? []).map(Number);
-        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-      };
-      return [...document.querySelectorAll<HTMLElement>('.pr-label:not(.pr-label--more)')].map(
-        (label) => {
-          const style = getComputedStyle(label);
-          const [a, b] = [luminance(style.backgroundColor), luminance(style.color)];
-          return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-        },
-      );
-    });
-    expect(contrasts.length).toBeGreaterThan(8);
-    expect(Math.min(...contrasts)).toBeGreaterThanOrEqual(4.5);
+    const dots = await panel.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('.pr-label:not(.pr-label--more)')].map((label) => {
+        const hex = label.style.getPropertyValue('--label-color');
+        const rgb = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16));
+        return [getComputedStyle(label, '::before').backgroundColor, `rgb(${rgb.join(', ')})`];
+      }),
+    );
+    expect(dots.length).toBeGreaterThan(8);
+    for (const [shown, expected] of dots) expect(shown).toBe(expected);
   });
 
   test('opens the pull request on GitHub in a new tab', async ({ context, openPanel }) => {

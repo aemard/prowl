@@ -9,7 +9,7 @@ import { normalizeSettings } from '../lib/storage/settings';
 import { getItems, subscribe, withLock } from '../lib/storage/storage';
 
 /** `--color-danger-solid` and `--color-accent-solid` of src/styles/tokens.css (light theme). */
-export const BADGE_COLORS = { danger: '#c9222e', accent: '#3b4fd8' } as const;
+export const BADGE_COLORS = { danger: '#c2272d', accent: '#007a6d' } as const;
 
 const LOCK = 'prowl:badge';
 

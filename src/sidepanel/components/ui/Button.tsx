@@ -14,7 +14,7 @@ type NativeButtonProps = Omit<
 export interface ButtonProps extends NativeButtonProps {
   /** Default `secondary`. One `primary` per view; `danger` for destructive actions. */
   variant?: ButtonVariant;
-  /** `sm` = 28 px (dense rows), `md` = 32 px (default). */
+  /** `sm` = 24 px (dense rows), `md` = 28 px (default). */
   size?: ButtonSize;
   /** Shows a spinner, sets `aria-busy` and ignores activation while staying focusable. */
   loading?: boolean;

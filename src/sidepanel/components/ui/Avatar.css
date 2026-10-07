@@ -2,8 +2,8 @@
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: var(--icon-lg);
-  height: var(--icon-lg);
+  width: var(--icon-md);
+  height: var(--icon-md);
   border-radius: var(--radius-full);
   background: var(--color-bg-active);
   color: var(--color-fg-muted);

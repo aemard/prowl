@@ -99,6 +99,10 @@
   min-width: 0;
 }
 
+.pr-card__chips {
+  gap: var(--space-0-5) var(--space-3);
+}
+
 /* Labels and counts share a line when they fit; otherwise the counts wrap below. */
 .pr-card__meta {
   display: flex;
@@ -111,28 +115,31 @@
   max-width: 100%;
 }
 
-/* GitHub label: its own color, with black or white text chosen for contrast (labelColor.ts). */
+/* GitHub label: its name in muted text after a dot of its own color. The name carries the
+   meaning, so the user-chosen color needs no contrast; a faint ring keeps pale dots visible. */
 .pr-label {
-  --label-bg: var(--color-neutral-bg);
-  --label-fg: var(--color-neutral-fg);
-
   max-width: 100%;
-  height: var(--leading-sm);
   padding: 0 var(--space-1-5);
   overflow: hidden;
-  border: var(--border-width) solid color-mix(in srgb, var(--label-bg), var(--color-fg) 22%);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-full);
-  background: var(--label-bg);
-  color: var(--label-fg);
-  font-size: var(--text-xs);
-  line-height: calc(var(--leading-sm) - 2 * var(--border-width));
-  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pr-label--more {
-  border-color: var(--color-neutral-border);
+.pr-label:not(.pr-label--more)::before {
+  content: "";
+  display: inline-block;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  margin-right: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--label-color);
+  box-shadow: inset 0 0 0 var(--border-width) color-mix(in srgb, var(--color-fg) 15%, transparent);
+  vertical-align: 0.05em;
 }
 
 .pr-card__foot {

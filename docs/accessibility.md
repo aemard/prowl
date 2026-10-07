@@ -35,7 +35,8 @@ trap focus and return it to the control that opened them.
 ## Visual
 
 - All text and UI tokens meet AA contrast in light and dark (checked by `src/styles/tokens.test.ts`
-  against the table in `docs/design.md`); label colors pick black or white text to reach AA.
+  against the table in `docs/design.md`); a label's own color only fills a dot beside its name,
+  which uses the muted text token.
 - Visible focus ring on every control; `prefers-reduced-motion` turns off non-essential motion.
 - Layout works from 320 px to full width without horizontal scrolling.
 

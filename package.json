@@ -16,6 +16,7 @@
     "zip": "node scripts/zip.mjs",
     "size": "node scripts/check-size.mjs",
     "icons": "node scripts/icons.mjs",
+    "store-images": "node scripts/store-images.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",

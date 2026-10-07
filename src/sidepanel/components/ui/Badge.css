@@ -3,13 +3,14 @@
   --badge-bg: var(--color-neutral-bg);
   --badge-border: var(--color-neutral-border);
   --badge-solid: var(--color-neutral-solid);
+  --badge-on-solid: var(--color-fg-on-solid);
 
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   max-width: 100%;
-  height: 20px;
-  padding: 0 var(--space-2);
+  height: 18px;
+  padding: 0 var(--space-1-5);
   border: var(--border-width) solid transparent;
   border-radius: var(--radius-full);
   background: var(--badge-bg);
@@ -29,14 +30,15 @@
 }
 
 .ui-badge[data-size="sm"] {
-  height: 18px;
-  padding: 0 var(--space-1-5);
+  height: 16px;
+  padding: 0 var(--space-1);
   font-size: var(--text-xs);
+  line-height: var(--leading-xs);
 }
 
 .ui-badge[data-variant="solid"] {
   background: var(--badge-solid);
-  color: var(--color-fg-on-solid);
+  color: var(--badge-on-solid);
 }
 
 .ui-badge[data-variant="outline"] {
@@ -44,11 +46,19 @@
   border-color: var(--badge-border);
 }
 
+/* Icon and word only: for state that sits in a row of text, like a card's CI and review. */
+.ui-badge[data-variant="plain"] {
+  height: auto;
+  padding: 0;
+  background: transparent;
+}
+
 .ui-badge[data-tone="accent"] {
   --badge-fg: var(--color-accent-fg);
   --badge-bg: var(--color-accent-bg);
   --badge-border: var(--color-accent-border);
   --badge-solid: var(--color-accent-solid);
+  --badge-on-solid: var(--color-fg-on-accent);
 }
 
 .ui-badge[data-tone="success"] {

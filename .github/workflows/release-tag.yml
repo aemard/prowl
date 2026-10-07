@@ -43,3 +43,17 @@ jobs:
     uses: ./.github/workflows/release-assets.yml
     with:
       tag: ${{ github.ref_name }}
+
+  # Chrome Web Store: waits for approval in the `chrome-web-store` environment. Skipped until
+  # the store item is set up (docs/chrome-web-store.md), so releases keep working without it.
+  store:
+    name: Chrome Web Store
+    needs: assets
+    if: vars.CWS_ITEM_ID != ''
+    permissions:
+      contents: read
+      id-token: write
+      attestations: read
+    uses: ./.github/workflows/chrome-web-store.yml
+    with:
+      tag: ${{ github.ref_name }}

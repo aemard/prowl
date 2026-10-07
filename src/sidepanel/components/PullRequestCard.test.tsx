@@ -111,7 +111,7 @@ describe('PullRequestCard', () => {
     expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBe('true');
   });
 
-  it('colors labels from their own color with readable text, and collapses extras', () => {
+  it('marks labels with a dot of their own color, and collapses extras', () => {
     renderCard({
       labels: [
         { name: 'bug', color: 'd73a4a' },
@@ -122,9 +122,8 @@ describe('PullRequestCard', () => {
       ],
     });
     const style = (name: string) => screen.getByText(name).getAttribute('style') ?? '';
-    expect(style('bug')).toContain('--label-bg: #d73a4a');
-    expect(style('bug')).toContain('--label-fg: #ffffff');
-    expect(style('needs design')).toContain('--label-fg: #000000');
+    expect(style('bug')).toContain('--label-color: #d73a4a');
+    expect(style('needs design')).toContain('--label-color: #fbca04');
     expect(screen.queryByText('p1')).toBeNull();
     expect(screen.getByText('+2').getAttribute('title')).toBe('p1, p2');
     expect(toggleOf().description).toContain('Labels: bug, needs design, ui, p1, p2');

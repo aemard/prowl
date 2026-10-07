@@ -22,7 +22,7 @@
 }
 
 .ui-icon-button[data-variant="secondary"] {
-  background: var(--color-bg-subtle);
+  background: var(--color-surface);
   border-color: var(--color-border);
 }
 

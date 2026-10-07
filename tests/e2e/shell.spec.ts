@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { MOCK_ORIGIN } from './mock-github/server';
 
-const DARK_BG = 'rgb(20, 22, 25)';
+const DARK_BG = 'rgb(18, 18, 21)';
 const avatar = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect width="24" height="24" fill="#d97706"/></svg>',
 )}`;

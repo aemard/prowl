@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/preact';
 import { describe, expect, it } from 'vitest';
 import { createIcon } from './Icon';
 import * as icons from './index';
-import { PROWL_MARK, ProwlMark } from './ProwlMark';
+import { ProwlMark } from './ProwlMark';
 
 const root = resolve(import.meta.dirname, '../../../..');
 
@@ -49,10 +49,10 @@ describe('icon set', () => {
 describe('ProwlMark', () => {
   it('is decorative next to the product name', () => {
     const { container } = render(<ProwlMark />);
-    const svg = container.querySelector('svg');
-    expect(svg?.getAttribute('aria-hidden')).toBe('true');
-    expect(svg?.getAttribute('width')).toBe('20');
-    expect(svg?.querySelectorAll('rect, path')).toHaveLength(3);
+    const img = container.querySelector('img');
+    expect(img?.getAttribute('alt')).toBe('');
+    expect(img?.getAttribute('width')).toBe('20');
+    expect(img?.getAttribute('src')).toMatch(/logo\.svg$/);
   });
 
   it('can stand alone with a name', () => {
@@ -62,13 +62,9 @@ describe('ProwlMark', () => {
     expect(img.getAttribute('height')).toBe('32');
   });
 
-  it('matches src/assets/logo.svg and the brand tokens', () => {
+  it('ships a square, named logo that pnpm icons can rasterize', () => {
     const logo = readFileSync(resolve(root, 'src/assets/logo.svg'), 'utf8');
-    const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
-    const token = (name: string) =>
-      new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})`).exec(tokens)?.[1];
-    expect(logo).toContain(`rx="${PROWL_MARK.radius}" fill="${token('brand')}"`);
-    expect(logo).toContain(`d="${PROWL_MARK.eye}" fill="${token('brand-eye')}"`);
-    expect(logo).toContain(`d="${PROWL_MARK.pupil}" fill="${token('brand-pupil')}"`);
+    expect(logo).toMatch(/^<svg [^>]*viewBox="0 0 128 128"/);
+    expect(logo).toContain('<title>Prowl</title>');
   });
 });

@@ -10,7 +10,7 @@ export interface AvatarProps {
   class?: string;
 }
 
-/** A round 20 px avatar. Decorative: whoever it shows is named in text beside it. */
+/** A round 16 px avatar. Decorative: whoever it shows is named in text beside it. */
 export function Avatar({ src, title, class: className }: AvatarProps) {
   return src ? (
     <img
@@ -18,8 +18,8 @@ export function Avatar({ src, title, class: className }: AvatarProps) {
       src={src}
       alt=""
       title={title}
-      width="20"
-      height="20"
+      width="16"
+      height="16"
       decoding="async"
     />
   ) : (

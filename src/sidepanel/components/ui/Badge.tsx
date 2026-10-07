@@ -5,9 +5,9 @@ import './Badge.css';
 export interface BadgeProps {
   /** State hue (default `neutral`). Pair it with text or an icon, never color alone. */
   tone?: Tone;
-  /** `subtle` tinted fill (default), `solid` strong fill, `outline` border only. */
-  variant?: 'subtle' | 'solid' | 'outline';
-  /** `sm` = 18 px (counts), `md` = 20 px (default). */
+  /** `subtle` tinted fill (default), `solid` strong fill, `outline` border only, `plain` none. */
+  variant?: 'subtle' | 'solid' | 'outline' | 'plain';
+  /** `sm` = 16 px (counts), `md` = 18 px (default). */
   size?: 'sm' | 'md';
   /** Decorative leading icon (12 px works best). */
   icon?: ComponentChildren;

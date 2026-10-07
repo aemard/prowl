@@ -44,8 +44,8 @@
 
 .header__avatar {
   display: block;
-  width: var(--space-6);
-  height: var(--space-6);
+  width: var(--icon-lg);
+  height: var(--icon-lg);
   border-radius: var(--radius-full);
   background: var(--color-bg-active);
 }

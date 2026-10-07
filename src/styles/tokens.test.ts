@@ -77,6 +77,8 @@ const SOLIDS = [
   'done-solid',
   'neutral-solid',
 ];
+/** Text on a solid fill: the accent has its own (mint is light in dark), every other hue white. */
+const onSolid = (solid: string) => (solid.startsWith('accent') ? 'fg-on-accent' : 'fg-on-solid');
 /** Non-text UI pairs (WCAG 1.4.11, 3:1): control borders, focus ring, switch track and thumb. */
 const UI_PAIRS: [fg: string, bg: string][] = [
   ['border-control', 'bg'],
@@ -87,8 +89,6 @@ const UI_PAIRS: [fg: string, bg: string][] = [
   ['focus', 'surface'],
   ['accent-solid', 'bg'],
   ['fg-on-solid', 'border-control'],
-  ['brand-eye', 'brand'],
-  ['brand-pupil', 'brand-eye'],
 ];
 
 const fmt = (n: number) => n.toFixed(2);
@@ -106,13 +106,13 @@ function contrastTable(): string {
         `| \`${row}\` | ${SURFACES.map((s) => cell(row, s)).join(' | ')} | ${cell(row, tintOf(row))} (\`${tintOf(row)}\`) |`,
     ),
     '',
-    'Text on solid fills (`fg-on-solid`), 4.5:1 minimum.',
+    'Text on solid fills (`fg-on-accent` on the accent, `fg-on-solid` on the rest), 4.5:1 minimum.',
     '',
     '| Background | Light | Dark |',
     '|---|---:|---:|',
     ...SOLIDS.map(
       (s) =>
-        `| \`${s}\` | ${fmt(ratio(light, 'fg-on-solid', s))} | ${fmt(ratio(dark, 'fg-on-solid', s))} |`,
+        `| \`${s}\` | ${fmt(ratio(light, onSolid(s), s))} | ${fmt(ratio(dark, onSolid(s), s))} |`,
     ),
     '',
     'UI components and graphics, 3:1 minimum.',
@@ -161,8 +161,8 @@ describe('design tokens', () => {
         }
       }
       for (const solid of SOLIDS) {
-        const r = ratio(tokens, 'fg-on-solid', solid);
-        if (r < 4.5) failures.push(`fg-on-solid on ${solid}: ${fmt(r)}`);
+        const r = ratio(tokens, onSolid(solid), solid);
+        if (r < 4.5) failures.push(`${onSolid(solid)} on ${solid}: ${fmt(r)}`);
       }
       expect(failures).toEqual([]);
     });

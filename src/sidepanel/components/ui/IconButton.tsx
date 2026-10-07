@@ -16,7 +16,7 @@ export interface IconButtonProps extends NativeButtonProps {
   children: ComponentChildren;
   /** Default `ghost`. */
   variant?: 'ghost' | 'secondary';
-  /** `sm` = 28 px square (dense rows), `md` = 32 px (default). */
+  /** `sm` = 24 px square (dense rows), `md` = 28 px (default). */
   size?: 'sm' | 'md';
   /** Toggle buttons: sets `aria-pressed`. */
   pressed?: boolean;

@@ -3,8 +3,8 @@ import { headCommit, prId, prNode, searchResponse } from '../fixtures/github';
 import { expect, test } from './fixtures';
 
 // `--color-danger-solid` and `--color-accent-solid` as RGBA.
-const DANGER = [201, 34, 46, 255];
-const ACCENT = [59, 79, 216, 255];
+const DANGER = [194, 39, 45, 255];
+const ACCENT = [0, 122, 109, 255];
 
 /** The toolbar icon as Chrome has it: what a user sees and the tooltip they hover. */
 const icon = (worker: Worker) =>
