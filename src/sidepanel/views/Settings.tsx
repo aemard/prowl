@@ -13,6 +13,7 @@ import { AboutSettings, AccountSettings } from './SettingsAccount';
 import { SettingsGroup } from './SettingsGroup';
 import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
+import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
 
 const THEMES: SelectOption<Theme>[] = [
@@ -103,6 +104,7 @@ export function SettingsView() {
       <NotificationsSettings />
       <AppearanceSettings />
       <AccountSettings />
+      <PrivacySettings />
       <AboutSettings />
     </div>
   );

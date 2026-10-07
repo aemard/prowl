@@ -627,14 +627,32 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
   - Account: avatar, login, name, token type, scopes (a fine-grained token says why it has none)
     and Sign out; the token itself is never rendered. About: `chrome.runtime.getManifest().version`
     and three links opened through `openGitHubUrl` (docs folder, `docs/privacy.md`, repository).
+  - Privacy and permissions (`SettingsPrivacy.tsx`): the sentence that Prowl cannot see or change
+    the pages you visit, one row per entry of `chrome.permissions.getAll()` in plain language
+    (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
+    no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
+    a link to the permission table in `docs/privacy.md`.
 - Section tabs scroll sideways when they do not fit; a fade and a chevron at an edge with more
   tabs behind it say so (measured on scroll and resize), and a tab brought into view by the arrow
   keys stays clear of them.
 
+## Site access lock
+
+Prowl cannot read or change the pages a user visits: its manifest asks for `sidePanel`,
+`storage`, `alarms`, `notifications`, the host `api.github.com` and the optional host
+`github.com`, and nothing else. `tests/fixtures/manifestLock.ts` is that list plus an allowlist of
+the manifest's top-level keys. `tests/unit/siteAccess.test.ts` holds both builds' manifests to it,
+checks that the docs name every permission, and scans `src/` for anything but `chrome.tabs.create`
+and for the page-reading APIs; `tests/e2e/permissions.spec.ts` holds the loaded e2e and production
+extensions to it, through `chrome.runtime.getManifest()` and `chrome.permissions.getAll()`. A
+deliberate change (the `commands` key of US-040, say) edits the lock, `docs/privacy.md` and
+`docs/decisions.md` together.
+
 ## Testing
 
 - Unit: Vitest + happy-dom + `src/test/chrome.ts`. Colocated `*.test.ts(x)`.
-- E2E: Playwright loads `dist-e2e/` (`vite build --mode e2e`) whose API and web URLs point to
+- E2E: `pnpm e2e` builds `dist/` and `dist-e2e/` (only `permissions.spec.ts` loads `dist/`, to
+  check the manifest that ships). Playwright loads `dist-e2e/` (`vite build --mode e2e`) whose API and web URLs point to
   the mock server on `http://127.0.0.1:4010`. Seed auth/settings with the `seedStorage(items)`
   fixture (it writes `chrome.storage.local` from the service worker, so an open panel updates
   live) or `signIn(overrides?)`; drive polls with `poll()` (a forced poll sent from an extension

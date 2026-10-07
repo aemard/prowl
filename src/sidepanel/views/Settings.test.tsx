@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AuthState, Section, Settings } from '../../lib/model';
 import { defaultSettings, normalizeSettings } from '../../lib/storage/settings';
@@ -59,6 +59,7 @@ describe('SettingsView', () => {
       'Notifications',
       'Appearance',
       'Account',
+      'Privacy and permissions',
       'About',
     ]);
   });
@@ -438,6 +439,87 @@ describe('SettingsView', () => {
       expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
       expect(Object.keys(await chrome.storage.local.get(null))).toEqual(['settings']);
       expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  describe('privacy and permissions', () => {
+    const names = (scope: ReturnType<typeof group>) =>
+      scope.getAllByRole('listitem').map((item) => item.firstElementChild?.textContent);
+
+    it('promises that Prowl cannot see the pages, and lists what Chrome lets it do', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      expect(
+        privacy.getByText(
+          'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',
+        ),
+      ).toBeTruthy();
+      await waitFor(() =>
+        expect(names(privacy)).toEqual([
+          'Side panel',
+          'Storage',
+          'Alarms',
+          'Notifications',
+          'api.github.com',
+        ]),
+      );
+      const list = privacy.getByRole('list', { name: 'What Prowl may do' });
+      expect(within(list).getByText(/Read your pull requests and act on them/)).toBeTruthy();
+      // The optional github.com host is not there until it is granted.
+      expect(privacy.queryByText('github.com')).toBeNull();
+    });
+
+    it('opens the privacy policy on GitHub', async () => {
+      await open();
+      fireEvent.click(
+        group('Privacy and permissions').getByRole('link', { name: /privacy policy/ }),
+      );
+      expect(fakeChrome().__state.createdTabs).toEqual([
+        { url: 'https://github.com/aemard/prowl/blob/main/docs/privacy.md' },
+      ]);
+    });
+
+    it('lists github.com only while it is granted, and follows Chrome as it changes', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      await waitFor(() => expect(names(privacy)).toHaveLength(5));
+
+      await act(async () => {
+        await chrome.permissions.request({ origins: ['https://github.com/*'] });
+      });
+      await waitFor(() => expect(names(privacy).at(-1)).toBe('github.com'));
+      expect(
+        privacy.getByText(/Sign in with GitHub\. Prowl asks for this only while/),
+      ).toBeTruthy();
+
+      await act(async () => {
+        await chrome.permissions.remove({ origins: ['https://github.com/*'] });
+      });
+      await waitFor(() => expect(privacy.queryByText('github.com')).toBeNull());
+      expect(names(privacy)).toHaveLength(5);
+    });
+
+    it('shows a permission it does not know by name instead of hiding it', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      await waitFor(() => expect(names(privacy)).toHaveLength(5));
+      vi.spyOn(fakeChrome().permissions, 'getAll').mockResolvedValue({
+        permissions: ['storage', 'tabs'],
+        origins: [],
+      });
+      await act(async () => {
+        fakeChrome().permissions.onAdded.emit({ permissions: ['tabs'] });
+      });
+      await waitFor(() => expect(names(privacy)).toEqual(['Storage', 'tabs']));
+      expect(privacy.getByText('Not described by this version of Prowl.')).toBeTruthy();
+    });
+
+    it('stops listening to Chrome when the screen closes', async () => {
+      await open();
+      const { onAdded, onRemoved } = fakeChrome().permissions;
+      expect([onAdded.hasListeners(), onRemoved.hasListeners()]).toEqual([true, true]);
+      cleanup();
+      expect([onAdded.hasListeners(), onRemoved.hasListeners()]).toEqual([false, false]);
     });
   });
 

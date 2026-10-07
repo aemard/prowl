@@ -578,8 +578,8 @@
       ],
       "priority": 32,
       "dependsOn": ["US-031"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Lock in tests/fixtures/manifestLock.ts (unit, plus e2e on dist-e2e and dist), live Privacy and permissions group in Settings, permission tables in privacy.md, README, site and store doc; 96 e2e, settings.png regenerated."
     },
     {
       "id": "US-033",

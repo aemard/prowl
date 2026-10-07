@@ -1,4 +1,5 @@
 /** Pure helpers and copy for the settings screen. */
+import { env } from '../../lib/env';
 import type { AuthState, BadgeMode, PrEventType, QuietHours, SectionKind } from '../../lib/model';
 
 /** GitHub's GraphQL budget per hour for one token. */
@@ -59,3 +60,55 @@ export const TOKEN_TYPES: Record<AuthState['tokenType'], string> = {
   oauth: 'OAuth token (signed in with GitHub)',
   unknown: 'Unknown',
 };
+
+/** What each named permission lets Prowl do, in the order Settings lists them. */
+const NAMED_PERMISSIONS: Record<string, { title: string; detail: string }> = {
+  sidePanel: { title: 'Side panel', detail: "Show Prowl in Chrome's side panel." },
+  storage: { title: 'Storage', detail: 'Keep your settings and pull requests in this browser.' },
+  alarms: {
+    title: 'Alarms',
+    detail: 'Check GitHub on a schedule, even when the panel is closed.',
+  },
+  notifications: { title: 'Notifications', detail: 'Tell you when a pull request changes.' },
+};
+
+export interface PermissionRow {
+  title: string;
+  detail: string;
+}
+
+/** What the sites Prowl may contact let it do. Any other host gets Chrome's own wording. */
+function describeOrigin(pattern: string): PermissionRow {
+  const title = pattern.replace(/^[^:]+:\/\//, '').replace(/\/.*$/, '');
+  if (pattern === `${env.apiUrl}/*`) {
+    return { title, detail: 'Read your pull requests and act on them, using your token.' };
+  }
+  if (pattern === `${env.webUrl}/*`) {
+    return {
+      title,
+      detail:
+        'Sign in with GitHub. Prowl asks for this only while you sign in, then gives it back.',
+    };
+  }
+  return { title, detail: 'Read and change your data on this site.' };
+}
+
+/**
+ * Plain-language rows for what Chrome says Prowl may do right now (`chrome.permissions.getAll()`):
+ * the named permissions Prowl knows first, any other after them under its own name, then the sites.
+ */
+export function describePermissions({
+  permissions = [],
+  origins = [],
+}: {
+  permissions?: readonly string[];
+  origins?: readonly string[];
+}): PermissionRow[] {
+  const known = Object.keys(NAMED_PERMISSIONS).filter((name) => permissions.includes(name));
+  const unknown = permissions.filter((name) => !Object.hasOwn(NAMED_PERMISSIONS, name));
+  return [
+    ...known.map((name) => NAMED_PERMISSIONS[name] as PermissionRow),
+    ...unknown.map((title) => ({ title, detail: 'Not described by this version of Prowl.' })),
+    ...origins.map(describeOrigin),
+  ];
+}

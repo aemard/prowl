@@ -25,7 +25,7 @@ const features = [
   {
     icon: 'key',
     title: 'Private by design',
-    text: 'Prowl runs in your browser. Your token stays on your device, GitHub is the only server it talks to, and there is no telemetry.',
+    text: 'Prowl runs in your browser. Your token stays on your device, GitHub is the only server it talks to, there is no telemetry, and it cannot read or change the pages you visit.',
     link: ['Read the privacy policy', 'privacy/'],
   },
 ] as const;
@@ -76,6 +76,64 @@ const features = [
           ))
         }
       </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="permissions">
+    <div class="wrap prose">
+      <h2 id="permissions" class="section-title">Prowl cannot read the pages you visit</h2>
+      <p class="lead">
+        Prowl has no access to your tabs or their content. Chrome enforces that, not a promise:
+        an extension can only touch a page if its manifest asks for it, and Prowl's manifest asks
+        for the six things below and nothing else. A test fails the build if that list grows.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Permission</th>
+            <th scope="col">What it allows</th>
+            <th scope="col">Chrome's install prompt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>sidePanel</code></td>
+            <td>Show Prowl in the side panel</td>
+            <td>Nothing</td>
+          </tr>
+          <tr>
+            <td><code>storage</code></td>
+            <td>Keep your settings and data on your device</td>
+            <td>Nothing</td>
+          </tr>
+          <tr>
+            <td><code>alarms</code></td>
+            <td>Check GitHub on a schedule</td>
+            <td>Nothing</td>
+          </tr>
+          <tr>
+            <td><code>notifications</code></td>
+            <td>Tell you when a pull request changes</td>
+            <td>"Display notifications"</td>
+          </tr>
+          <tr>
+            <td><code>api.github.com</code></td>
+            <td>Read your pull requests and act on them, with your token</td>
+            <td>"Read and change your data on api.github.com"</td>
+          </tr>
+          <tr>
+            <td><code>github.com</code> (optional)</td>
+            <td>Sign in with GitHub; asked for only then, and given back</td>
+            <td>Nothing at install</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Prowl can never read, inject code into or change a page, list your tabs or history, see
+        other sites' requests or cookies, or be driven by a web page: it has none of the
+        permissions for that.
+        <a href={page('privacy/#what-prowl-can-never-do')}>See everything it can never do</a>.
+      </p>
     </div>
   </section>
 

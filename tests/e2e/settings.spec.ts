@@ -326,11 +326,52 @@ test.describe('account and about', () => {
       ['Source code', '/aemard/prowl'],
     ] as const) {
       const opened = context.waitForEvent('page');
-      await panel.getByRole('link', { name }).click();
+      await group(panel, 'About').getByRole('link', { name }).click();
       const page = await opened;
       expect(page.url()).toBe(`${MOCK_ORIGIN}${path}`);
       await page.close();
     }
+  });
+});
+
+test.describe('privacy and permissions', () => {
+  test('promises no access to the pages and lists what Chrome granted', async ({
+    context,
+    openPanel,
+    serviceWorker,
+    expectNoA11yViolations,
+  }) => {
+    const panel = await openPanel('#/settings');
+    const privacy = group(panel, 'Privacy and permissions');
+    await expect(privacy).toContainText(
+      'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',
+    );
+
+    // The rows are what Chrome reports for the loaded extension, not a copy of the docs.
+    const granted = await serviceWorker.evaluate(() => chrome.permissions.getAll());
+    const rows = privacy.getByRole('list', { name: 'What Prowl may do' }).getByRole('listitem');
+    await expect(rows).toHaveCount(
+      (granted.permissions?.length ?? 0) + (granted.origins?.length ?? 0),
+    );
+    await expect(rows.locator('.settings-permissions__name')).toHaveText([
+      'Side panel',
+      'Storage',
+      'Alarms',
+      'Notifications',
+      new URL(MOCK_ORIGIN).host,
+    ]);
+    await expect(rows.last()).toContainText('Read your pull requests and act on them');
+
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await panel.emulateMedia({ colorScheme });
+      await expectNoA11yViolations(panel);
+    }
+
+    const opened = context.waitForEvent('page');
+    await privacy.getByRole('link', { name: 'Read the privacy policy' }).click();
+    const page = await opened;
+    expect(page.url()).toBe(`${MOCK_ORIGIN}/aemard/prowl/blob/main/docs/privacy.md`);
+    await page.close();
   });
 });
 
@@ -389,6 +430,14 @@ test.describe('look', () => {
     const panel = await openPanel('#/settings');
     await panel.emulateMedia({ colorScheme: 'light' });
     await expect(panel.getByRole('switch', { name: 'Bugs' })).toBeVisible();
+    // The e2e build talks to the mock server; the image shows the host the shipped build has.
+    await expect(panel.locator('.settings-permissions__name').last()).toHaveText(
+      new URL(MOCK_ORIGIN).host,
+    );
+    await panel.evaluate((mock) => {
+      for (const name of document.querySelectorAll('.settings-permissions__name'))
+        if (name.textContent === mock) name.textContent = 'api.github.com';
+    }, new URL(MOCK_ORIGIN).host);
     await saveScreenshot(panel, 'settings', { fullPage: true });
     await panel.emulateMedia({ colorScheme: 'dark' });
     await panel.screenshot({ path: test.info().outputPath('settings-dark.png'), fullPage: true });

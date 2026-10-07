@@ -460,6 +460,18 @@ nav a[aria-current="page"] {
   white-space: nowrap;
 }
 
+/* Three columns on a phone: tighter cells, and the text columns may break inside a word. */
+@media (max-width: 30rem) {
+  .prose th,
+  .prose td {
+    padding-inline: var(--space-2);
+  }
+
+  .prose td + td {
+    overflow-wrap: anywhere;
+  }
+}
+
 .prose th {
   background: var(--color-bg-subtle);
   font-weight: var(--weight-semibold);

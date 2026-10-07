@@ -30,6 +30,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Open in GitHub, copy branch name | `local-actions` › mutes, copies its branch and opens it on GitHub; `list` › opens the PR |
 | **Auth**: OAuth device flow | `device-flow` (approve, denied, device flow disabled, cancel) |
 | PAT, classic or fine-grained | `auth` › classic, no-repo-scope warning, fine-grained warning, invalid token, sign-out |
+| **Privacy**: cannot read or change the pages visited | `permissions` (the loaded e2e and production builds hold exactly the locked permissions and hosts); `settings` › privacy and permissions (the promise, the rows Chrome reports, axe in light and dark, the privacy link) |
 | **Backend**: none, GitHub only | All E2E runs offline against the mock; `review` › never the token in errors; `performance` › no network on open |
 | Errors, offline, revoked token | `errors` (401, 403 rate limit, 502, refused connection, stale data) |
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |

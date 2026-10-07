@@ -12,9 +12,11 @@ import { TOKEN_TYPES } from './SettingsModel';
 
 /** Where Prowl's code and docs live. Opened through `openGitHubUrl`, so on the GitHub origin. */
 const REPO_URL = `${env.webUrl}/aemard/prowl`;
+/** The permission table of the privacy policy. */
+export const PRIVACY_URL = `${REPO_URL}/blob/main/docs/privacy.md`;
 const ABOUT_LINKS = [
   { label: 'Documentation', href: `${REPO_URL}/tree/main/docs` },
-  { label: 'Privacy', href: `${REPO_URL}/blob/main/docs/privacy.md` },
+  { label: 'Privacy', href: PRIVACY_URL },
   { label: 'Source code', href: REPO_URL },
 ];
 

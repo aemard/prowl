@@ -59,9 +59,24 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
 
 ## Privacy
 
-Prowl only talks to `api.github.com` (and `github.com` for the optional device-flow sign-in).
-Settings, the token and the PR snapshot live in `chrome.storage.local`; snoozes and mutes never
-leave your machine. See the [privacy policy](docs/privacy.md).
+**Prowl cannot see or change the pages you visit: it has no access to your tabs or their
+content.** Chrome enforces that through the extension's permissions, and a test fails the build if
+they ever grow. Prowl only talks to `api.github.com` (and `github.com` for the optional
+device-flow sign-in). Settings, the token and the PR snapshot live in `chrome.storage.local`;
+snoozes and mutes never leave your machine. See the [privacy policy](docs/privacy.md).
+
+| Permission | What it allows | Chrome's install prompt |
+|---|---|---|
+| `sidePanel` | Show Prowl in the side panel | Nothing |
+| `storage` | Keep settings and data on your device | Nothing |
+| `alarms` | Check GitHub on a schedule | Nothing |
+| `notifications` | Tell you when a pull request changes | "Display notifications" |
+| `api.github.com` | Read your pull requests and act on them, with your token | "Read and change your data on api.github.com" |
+| `github.com` (optional) | Sign in with GitHub; asked for only then, and given back | Nothing at install |
+
+Prowl can never read, inject code into or change a page, list your tabs or history, see other
+sites' requests or cookies, or be driven by a web page: it has none of the permissions for that
+([what it can never do](docs/privacy.md#what-prowl-can-never-do)).
 
 ## Development
 
