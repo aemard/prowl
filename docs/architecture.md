@@ -516,8 +516,9 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
 - Components in `src/sidepanel/components/ui/` are the design system; feature components
   compose them. One CSS file per component, tokens only (no raw colors).
 - List (`views/List.tsx`): sections come from `settings.sections` (enabled ones; a single one has
-  no tabs), each tab shows its number of PRs that match the quick filter. PRs are
-  `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
+  no section bar), each item of the bar at the bottom shows its number of PRs that match the
+  quick filter; `KINDS` maps each `SectionKind` to its bar icon, short name and empty-list hint.
+  PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match). The
   selected tab and the filter are module signals, so they survive a visit to Settings. States:
   skeleton until the first snapshot (or "Could not load pull requests" when the first poll failed;
@@ -632,9 +633,10 @@ Readers of `auth`, `snapshot` and `pollState` trust the stored shape: only Prowl
     (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
     no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
     a link to the permission table in `docs/privacy.md`.
-- Section tabs scroll sideways when they do not fit; a fade and a chevron at an edge with more
-  tabs behind it say so (measured on scroll and resize), and a tab brought into view by the arrow
-  keys stays clear of them.
+- The section bar (`components/SectionTabs.tsx`) is fixed at the bottom of the list: up to five
+  sections as tabs, past five the first four and a "More" menu with the rest. While it is shown
+  `:root` gets `--app-inset-bottom`, which the shell, toasts and focus scrolling keep clear of;
+  `Menu` and the seen observer measure the element marked `data-bottom-bar` instead.
 
 ## Site access lock
 
@@ -677,6 +679,6 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
   copy branch name, snooze (1 h, 4 h, tomorrow 09:00, next Monday 09:00, local time;
   `src/lib/time/snooze.ts`) or unsnooze, mute or unmute, plus re-run and the draft toggle. The
   expanded card's Actions row also has re-run and the draft toggle (`MaintenanceActions`).
-- **Snoozed PRs** leave the tabs, their counts and the badge until the snooze ends; the list
+- **Snoozed PRs** leave the cards, the section counts and the badge until the snooze ends; the list
   keeps them behind a "Snoozed (n)" disclosure at the end of the section. Muted PRs show a
   bell-off flag and produce no notifications. Both are `prLocal` only.

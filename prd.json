@@ -596,8 +596,8 @@
       ],
       "priority": 33,
       "dependsOn": ["US-031"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Bottom bar (SectionTabs): up to 5 sections as tabs, past 5 the first 4 + a \"More\" Menu; KINDS in views/List.tsx maps a kind to icon, short name and empty hint; --app-inset-bottom and data-bottom-bar keep toasts, menus, focus and seen-marking clear of the bar."
     },
     {
       "id": "US-034",

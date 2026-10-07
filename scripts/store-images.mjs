@@ -37,6 +37,7 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .panel img { display: block; }
 `;
 
+/** The panel cut to `height` from the top; list shots show it whole, section bar included. */
 const panel = (name, height = 720) =>
   `<div class="panel" style="height:${height}px"><img src="${shot(name)}" width="400" height="760" alt=""></div>`;
 
@@ -58,7 +59,7 @@ const IMAGES = [
     html: screenshot(
       'Your pull requests at a glance',
       'CI, reviews and merge state for what you opened, review or are mentioned in.',
-      panel('list-light'),
+      panel('list-light', 760),
     ),
   },
   {
@@ -89,7 +90,7 @@ const IMAGES = [
           <h1 style="font-size:46px">Follows your theme</h1>
           <p style="font-size:20px">Light or dark, like your system. Change it in Settings.</p>
         </div>
-        <div style="display:flex;gap:24px">${panel('list-light')}${panel('list-dark')}</div>
+        <div style="display:flex;gap:24px">${panel('list-light', 760)}${panel('list-dark', 760)}</div>
       </div>`,
   },
   {

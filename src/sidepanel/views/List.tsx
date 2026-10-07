@@ -2,9 +2,20 @@ import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import type { Section, SectionKind, Snapshot } from '../../lib/model';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
-import { AlertIcon, ClockIcon, InboxIcon, SearchIcon } from '../components/icons';
+import {
+  AlertIcon,
+  ClockIcon,
+  EyeIcon,
+  FilterIcon,
+  GitPullRequestIcon,
+  InboxIcon,
+  MentionIcon,
+  PersonIcon,
+  SearchIcon,
+} from '../components/icons';
+import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
-import { panelId, SectionTabs, tabId } from '../components/SectionTabs';
+import { panelId, SectionTabs } from '../components/SectionTabs';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -26,12 +37,32 @@ const SEEN_DELAY_MS = 1500;
 export const activeSectionId = signal<string | undefined>(undefined);
 export const filterQuery = signal('');
 
-const EMPTY_HINTS: Record<SectionKind, string> = {
-  authored: 'Pull requests you open will show up here.',
-  review_requested: 'When someone asks for your review, it will show up here.',
-  mentioned: 'Pull requests that mention you will show up here.',
-  assigned: 'Pull requests assigned to you will show up here.',
-  custom: 'No open pull requests match this search.',
+/**
+ * Per section kind: its icon and short name in the section bar (a custom section shows its own
+ * label) and the hint of its empty list. A new kind is one entry here.
+ */
+const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
+  authored: {
+    icon: GitPullRequestIcon,
+    short: 'Mine',
+    empty: 'Pull requests you open will show up here.',
+  },
+  review_requested: {
+    icon: EyeIcon,
+    short: 'Review',
+    empty: 'When someone asks for your review, it will show up here.',
+  },
+  mentioned: {
+    icon: MentionIcon,
+    short: 'Mentions',
+    empty: 'Pull requests that mention you will show up here.',
+  },
+  assigned: {
+    icon: PersonIcon,
+    short: 'Assigned',
+    empty: 'Pull requests assigned to you will show up here.',
+  },
+  custom: { icon: FilterIcon, empty: 'No open pull requests match this search.' },
 };
 
 const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
@@ -40,7 +71,8 @@ const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
 /**
  * Sends `markSeen` for the unseen cards that have been on screen for `SEEN_DELAY_MS` while the
  * panel is visible. A scroll or a new snapshot restarts the wait, so only cards the user rested
- * on are marked. `renderedKey` changes with the rendered cards; `unseenIds` are the ones to mark.
+ * on are marked; a card behind the section bar is not on screen. `renderedKey` changes with the
+ * rendered cards and the bar; `unseenIds` are the ones to mark.
  */
 function useMarkSeen(
   list: { current: HTMLElement | null },
@@ -59,6 +91,7 @@ function useMarkSeen(
 
   useEffect(() => {
     const visible = new Set<string>();
+    const bar = document.querySelector<HTMLElement>('[data-bottom-bar]')?.offsetHeight ?? 0;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const { target, isIntersecting } of entries) {
@@ -67,7 +100,7 @@ function useMarkSeen(
         }
         setOnScreen([...visible]);
       },
-      { threshold: 0.6 },
+      { threshold: 0.6, rootMargin: `0px 0px ${-bar}px 0px` },
     );
     for (const card of list.current?.querySelectorAll('[data-pr-id]') ?? []) observer.observe(card);
     return () => {
@@ -123,7 +156,7 @@ function SectionNotice({ section, message }: { section: Section; message: string
 export const LIST_RENDERED_MARK = 'prowl:list-rendered';
 let listRendered = false;
 
-/** The pull request list: section tabs with counts, a quick filter and one card per PR. */
+/** The pull request list: a quick filter, one card per PR and the section bar at the bottom. */
 export function ListView() {
   const now = useNow(30_000);
   const idPrefix = useId();
@@ -166,7 +199,7 @@ export function ListView() {
   });
   useMarkSeen(
     list,
-    shown.map((pr) => pr.id).join('\n'),
+    [enabled.length > 1, ...shown.map((pr) => pr.id)].join('\n'),
     shown.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
   );
 
@@ -200,31 +233,25 @@ export function ListView() {
   const filteredOut =
     shown.length === 0 && shownSnoozed.length === 0 && pullRequestsOf(snap, selected.id).length > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
-  const tabs = enabled.map((section) => ({
-    id: section.id,
-    label: section.label,
-    count: matching.get(section.id)?.length ?? 0,
-    failed: snap.sectionErrors?.[section.id] !== undefined,
-  }));
+  const tabs = enabled.map((section) => {
+    const { icon: Icon, short } = KINDS[section.kind];
+    return {
+      id: section.id,
+      label: short ?? section.label,
+      fullLabel: section.label,
+      icon: <Icon />,
+      count: matching.get(section.id)?.length ?? 0,
+      failed: snap.sectionErrors?.[section.id] !== undefined,
+    };
+  });
 
-  // A lone section has no tabs, so nothing to point at.
+  // A lone section has no tabs. The panel is named by the section's full name rather than by its
+  // tab, which is not there when the section is under "More".
   const panelProps =
-    tabs.length > 1
-      ? { role: 'tabpanel' as const, 'aria-labelledby': tabId(idPrefix, selected.id) }
-      : {};
+    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': selected.label } : {};
 
   return (
     <div class="list">
-      {tabs.length > 1 && (
-        <SectionTabs
-          tabs={tabs}
-          selectedId={selected.id}
-          onSelect={(id) => {
-            activeSectionId.value = id;
-          }}
-          idPrefix={idPrefix}
-        />
-      )}
       {anyPullRequests && (
         <div class="list__filter">
           <TextField
@@ -242,6 +269,18 @@ export function ListView() {
             inputRef={filterInput}
           />
         </div>
+      )}
+      {/* Fixed at the bottom of the panel, but before the list in the DOM: the tabs come before the
+          panel they control, and the keyboard reaches them without going through every card. */}
+      {tabs.length > 1 && (
+        <SectionTabs
+          tabs={tabs}
+          selectedId={selected.id}
+          onSelect={(id) => {
+            activeSectionId.value = id;
+          }}
+          idPrefix={idPrefix}
+        />
       )}
       <div id={panelId(idPrefix)} {...panelProps}>
         {error !== undefined && <SectionNotice section={selected} message={error} />}
@@ -292,7 +331,7 @@ export function ListView() {
             description={
               filteredOut
                 ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
-                : EMPTY_HINTS[selected.kind]
+                : KINDS[selected.kind].empty
             }
             action={
               filteredOut ? (

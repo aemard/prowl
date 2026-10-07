@@ -1,7 +1,8 @@
 .ui-toast-region {
   position: fixed;
   right: var(--space-3);
-  bottom: var(--space-3);
+  /* Above a bar fixed at the bottom of the panel, if any (App.css). */
+  bottom: calc(var(--space-3) + var(--app-inset-bottom, 0px));
   left: var(--space-3);
   z-index: var(--z-toast);
   pointer-events: none;

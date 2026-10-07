@@ -7,7 +7,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Spec item | E2E test(s) |
 |---|---|
 | **Surface**: MV3, native side panel | `smoke` loads the extension, checks MV3 and `side_panel`; `shell` |
-| **Scope**: authored by default | `poller` (default query), `list` › sections as tabs |
+| **Scope**: authored by default | `poller` (default query), `list` › sections in a bar at the bottom |
 | Scope presets: review requested, mentioned, assigned, custom search | `scope` (every preset and a custom query reach `ProwlSearch`), `settings` › scope |
 | Repo include / exclude | `scope` (`user:`/`-repo:` qualifiers and client-side exclusion), `settings` › include and exclude lists |
 | **PR state**: CI rollup, review decision, mergeable/conflicts, draft, labels, last activity, age, unresolved comments | `list` › a card says everything about its pull request, label text is readable; `detail` › why it is blocked |
@@ -34,6 +34,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | **Backend**: none, GitHub only | All E2E runs offline against the mock; `review` › never the token in errors; `performance` › no network on open |
 | Errors, offline, revoked token | `errors` (401, 403 rate limit, 502, refused connection, stale data) |
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |
+| Section bar at the bottom (US-033) | `list` › sections in a bar at the bottom (position, names, arrows / Home / End); fits 320 to 600 px wide panels, with the sections past the fourth under "More" (truncation, menu, selected More, Tab order, axe light/dark); keeps menus, toasts and keyboard focus clear of the bar |
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
 | Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 

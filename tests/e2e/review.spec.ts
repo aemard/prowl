@@ -62,7 +62,7 @@ test.describe('review actions', () => {
       return reviewed;
     });
     const panel = await openPanel();
-    await panel.getByRole('tab', { name: /^Review requested/ }).click();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     const theirs = await expand(panel, THEIRS.title);
     const polls = github.requestsFor(SEARCH).length;
 
@@ -98,7 +98,7 @@ test.describe('review actions', () => {
   }) => {
     github.onGraphQL('ProwlRequestChanges', () => reviewed);
     const panel = await openPanel();
-    await panel.getByRole('tab', { name: /^Review requested/ }).click();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     const theirs = await expand(panel, THEIRS.title);
     const opener = theirs.getByRole('button', { name: `Request changes ${THEIRS.ref}` });
     await opener.click();
@@ -142,7 +142,7 @@ test.describe('review actions', () => {
     openPanel,
   }) => {
     const panel = await openPanel();
-    await panel.getByRole('tab', { name: /^Review requested/ }).click();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     const theirs = await expand(panel, THEIRS.title);
     const opener = theirs.getByRole('button', { name: `Request changes ${THEIRS.ref}` });
     await opener.click();
@@ -178,7 +178,7 @@ test.describe('review actions', () => {
     );
     github.onGraphQL('ProwlRequestChanges', () => failure('Review could not be submitted'));
     const panel = await openPanel();
-    await panel.getByRole('tab', { name: /^Review requested/ }).click();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     const theirs = await expand(panel, THEIRS.title);
     const polls = github.requestsFor(SEARCH).length;
 

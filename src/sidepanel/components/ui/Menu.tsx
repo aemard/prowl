@@ -44,14 +44,24 @@ const GAP = 4;
 const MARGIN = 8;
 
 /**
- * Places the fixed-position menu under (or above) the trigger, inside the viewport.
- * Returns false when the trigger has scrolled out of view.
+ * Where the visible page ends for a menu: the top of a bar fixed at the bottom of the panel
+ * (`data-bottom-bar`, the section bar) unless the trigger is in that bar, else the viewport's.
+ */
+function floorFor(trigger: HTMLElement): number {
+  const bar = document.querySelector('[data-bottom-bar]');
+  return bar && !bar.contains(trigger) ? bar.getBoundingClientRect().top : window.innerHeight;
+}
+
+/**
+ * Places the fixed-position menu under (or above) the trigger, inside the viewport and clear of
+ * a bottom bar. Returns false when the trigger has scrolled out of view (or behind that bar).
  */
 function place(menu: HTMLElement, trigger: HTMLElement, align: 'start' | 'end'): boolean {
   const t = trigger.getBoundingClientRect();
-  if (t.bottom < 0 || t.top > window.innerHeight) return false;
+  const floor = floorFor(trigger);
+  if (t.bottom < 0 || t.top > floor) return false;
   const m = menu.getBoundingClientRect();
-  const fitsBelow = t.bottom + GAP + m.height <= window.innerHeight - MARGIN;
+  const fitsBelow = t.bottom + GAP + m.height <= floor - MARGIN;
   const top =
     fitsBelow || t.top - GAP - m.height < MARGIN ? t.bottom + GAP : t.top - GAP - m.height;
   const preferred = align === 'end' ? t.right - m.width : t.left;

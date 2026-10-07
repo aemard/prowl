@@ -21,6 +21,14 @@ const AUTHORED = {
 };
 
 const tabNames = (panel: Page) => panel.getByRole('tab').allTextContents();
+const box = async (locator: Locator) =>
+  (await locator.boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
+/** Top and bottom edges of the section bar, in CSS px from the top of the panel. */
+const barTop = async (panel: Page) => (await box(panel.locator('[data-bottom-bar]'))).y;
+const barBottom = async (panel: Page) => {
+  const bar = await box(panel.locator('[data-bottom-bar]'));
+  return bar.y + bar.height;
+};
 const linkFor = (panel: Page, title: RegExp) => panel.getByRole('link', { name: title });
 /** The card (`li`) of the pull request whose title link matches. */
 const cardFor = (panel: Page, title: RegExp) =>
@@ -55,74 +63,175 @@ test.describe('with a rich set of pull requests', () => {
     for (const page of context.pages()) if (page.url().includes('/sidepanel/')) await page.close();
   });
 
-  test('shows the sections as tabs with counts and switches between them', async ({
+  test('shows the sections in a bar at the bottom, with counts, and switches between them', async ({
     openPanel,
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('tab')).toHaveCount(4);
-    expect(await tabNames(panel)).toEqual([
-      'Created by me7',
-      'Review requested3',
-      'Mentioned1',
-      'Assigned to me1',
-    ]);
-    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Created by me7');
+    expect(await tabNames(panel)).toEqual(['Mine7', 'Review3', 'Mentions1', 'Assigned1']);
+    await expect(panel.getByRole('tab', { name: /^Mine/ })).toHaveAttribute(
+      'title',
+      'Created by me',
+    );
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    await expect(panel.getByRole('tabpanel', { name: 'Created by me' })).toBeVisible();
     await expect(panel.getByRole('listitem')).toHaveCount(7);
 
-    await panel.getByRole('tab', { name: /Review requested/ }).click();
+    // Header and filter on top, the bar at the bottom edge, and the list ends above the bar.
+    const filter = await box(panel.getByRole('searchbox'));
+    expect(await barTop(panel)).toBeGreaterThan(filter.y + filter.height);
+    expect(await barBottom(panel)).toBe(760);
+    await panel.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect.poll(() => barBottom(panel)).toBe(760);
+    const last = await box(panel.locator('.pr-card').last());
+    expect(last.y + last.height).toBeLessThanOrEqual(await barTop(panel));
+
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     await expect(panel.getByRole('listitem')).toHaveCount(3);
     await expect(cardFor(panel, /^Add keyboard shortcuts/)).toBeVisible();
 
     // Arrow keys move between tabs, like any tab list.
     await panel.getByRole('tab', { selected: true }).press('ArrowRight');
-    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mentioned1');
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mentions1');
     await expect(cardFor(panel, /^Spike: edge-render/)).toBeVisible();
+    await panel.getByRole('tab', { selected: true }).press('End');
+    await expect(panel.getByRole('tab', { name: /^Assigned/ })).toBeFocused();
+    await panel.keyboard.press('Home');
+    await expect(panel.getByRole('tab', { name: /^Mine/ })).toBeFocused();
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
   });
 
-  test('four sections scroll sideways with an edge cue, and every tab is reachable by keyboard', async ({
+  test('fits 320 to 600 px wide panels, with the sections past the fourth under "More"', async ({
     openPanel,
+    seedStorage,
+    expectNoA11yViolations,
   }) => {
+    const custom = (id: string, label: string): Section => ({
+      id,
+      kind: 'custom',
+      label,
+      enabled: true,
+      query: 'label:none',
+    });
+    const long = custom('custom-1', 'Needs attention from the platform team this week');
+    await seedStorage({ settings: { sections: [...allSections(), long] } });
     const panel = await openPanel();
-    const tablist = panel.getByRole('tablist');
-    const overflow = () => tablist.evaluate((el) => el.scrollWidth - el.clientWidth);
-    const inView = (tab: Locator) =>
-      tab.evaluate((el) => {
-        const [t, l] = [el, el.closest('[role="tablist"]')].map((e) => e?.getBoundingClientRect());
-        return !!t && !!l && t.left >= l.left && t.right <= l.right;
+    const fits = () =>
+      panel.evaluate(() => {
+        const page = document.documentElement;
+        const items = [...document.querySelectorAll('[data-bottom-bar] button')];
+        return (
+          page.scrollWidth <= page.clientWidth &&
+          items.every((item) => {
+            const { left, right } = item.getBoundingClientRect();
+            return left >= 0 && right <= page.clientWidth;
+          })
+        );
       });
 
-    expect(await overflow()).toBeGreaterThan(0);
-    // A chevron at the edge says there are more tabs that way.
-    const more = (side: string) => panel.locator(`.section-tabs__more[data-side="${side}"]`);
-    await expect(more('end')).toBeVisible();
-    await expect(more('start')).toHaveCount(0);
+    // Five sections: five tabs. A long custom name is cut short on screen, whole for a screen reader.
+    await expect(panel.getByRole('tab')).toHaveCount(5);
+    const named = panel.getByRole('tab', { name: `${long.label} 0` });
+    await expect(named).toHaveAttribute('title', long.label);
+    expect(
+      await named.locator('.section-tabs__label').evaluate((el) => el.scrollWidth > el.clientWidth),
+    ).toBe(true);
+    for (const width of [600, 400, 320]) {
+      await panel.setViewportSize({ width, height: 760 });
+      expect(await fits(), `${width} px`).toBe(true);
+    }
+    await panel.screenshot({ path: test.info().outputPath('bar-320-five.png') });
 
-    await panel.getByRole('tab', { selected: true }).press('End');
-    const last = panel.getByRole('tab', { name: /Assigned to me/ });
-    await expect(last).toBeFocused();
-    await expect.poll(() => inView(last)).toBe(true);
-    expect(await tablist.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
-    await expect(more('end')).toHaveCount(0);
-    await expect(more('start')).toBeVisible();
+    // A sixth: the fifth slot becomes "More", a menu with the rest and their counts.
+    await seedStorage({
+      settings: { sections: [...allSections(), long, custom('custom-2', 'Docs')] },
+    });
+    await expect(panel.getByRole('tab')).toHaveCount(4);
+    const more = panel.getByRole('button', { name: /^More sections/ });
+    for (const width of [600, 400, 320]) {
+      await panel.setViewportSize({ width, height: 760 });
+      expect(await fits(), `${width} px`).toBe(true);
+    }
+    await more.click();
+    const menu = panel.getByRole('menu', { name: 'More sections' });
+    await expect(menu.getByRole('menuitemradio')).toHaveText([`${long.label}0`, 'Docs0']);
+    const menuBox = await box(menu);
+    expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(await barTop(panel));
+    await menu.getByRole('menuitemradio', { name: /^Docs/ }).click();
 
-    await last.press('Home');
-    await expect(panel.getByRole('tab', { name: /Created by me/ })).toBeFocused();
-    await expect.poll(() => tablist.evaluate((el) => el.scrollLeft)).toBe(0);
-    await expect(more('end')).toBeVisible();
-    await panel.screenshot({ path: test.info().outputPath('tabs-four.png') });
+    // "More" now stands for the section shown: indicator and weight on screen, its name in words.
+    await expect(more).toHaveAccessibleName('More sections, Docs selected');
+    await expect(more).toBeFocused();
+    await expect(panel.getByRole('tab', { selected: true })).toHaveCount(0);
+    await expect(panel.getByRole('tabpanel', { name: 'Docs' })).toBeVisible();
+    await expect(panel.getByText('No open pull requests match this search.')).toBeVisible();
+
+    // Keyboard: the filter, then the one tab stop of the tab list, then "More".
+    await panel.getByRole('searchbox').focus();
+    await panel.keyboard.press('Tab');
+    await expect(panel.getByRole('tab', { name: /^Mine/ })).toBeFocused();
+    await panel.keyboard.press('Tab');
+    await expect(more).toBeFocused();
+    await panel.keyboard.press('ArrowUp');
+    await expect(menu.getByRole('menuitemradio', { name: /^Docs/ })).toBeFocused();
+    await expect(menu.getByRole('menuitemradio', { name: /^Docs/ })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await panel.keyboard.press('Escape');
+    await expect(more).toBeFocused();
+
+    for (const scheme of ['light', 'dark'] as const) {
+      await panel.emulateMedia({ colorScheme: scheme });
+      await expectNoA11yViolations(panel);
+      await panel.screenshot({ path: test.info().outputPath(`bar-320-more-${scheme}.png`) });
+    }
+    await panel.setViewportSize({ width: 600, height: 760 });
+    await panel.getByRole('tab', { name: /^Review/ }).click();
+    await panel.screenshot({ path: test.info().outputPath('bar-600.png') });
   });
 
-  test('three sections fit the panel without scrolling', async ({ openPanel, seedStorage }) => {
-    const sections = allSections().map((section) => ({
-      ...section,
-      enabled: section.id !== 'assigned',
-    }));
-    await seedStorage({ settings: { sections } });
+  test('keeps menus, toasts and keyboard focus clear of the bar', async ({ openPanel }) => {
     const panel = await openPanel();
-    const tablist = panel.getByRole('tablist');
-    await expect(panel.getByRole('tab')).toHaveCount(3);
-    expect(await tablist.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
-    await panel.screenshot({ path: test.info().outputPath('tabs-three.png') });
+    await panel.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const top = await barTop(panel);
+
+    // The last card's menu has no room below it above the bar: it opens upward.
+    const trigger = panel.getByRole('button', { name: /^More actions for / }).last();
+    await trigger.click();
+    const menu = panel.getByRole('menu');
+    const menuBox = await box(menu);
+    expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(top);
+    expect(menuBox.y + menuBox.height).toBeLessThanOrEqual((await box(trigger)).y);
+
+    // Its outcome toast sits above the bar.
+    await menu
+      .getByRole('menuitem', { name: /^Snooze/ })
+      .first()
+      .click();
+    const toast = panel.locator('.ui-toast');
+    await expect(toast).toContainText('Snoozed');
+    const toastBox = await box(toast);
+    expect(toastBox.y + toastBox.height).toBeLessThanOrEqual(top);
+
+    // Focus never hides behind the bar: a control focused while under it scrolls above it,
+    // whether focus came from Tab or from j on the card before.
+    const toggle = panel.locator('.pr-list .pr-card__toggle').last();
+    for (const move of ['focus', 'j'] as const) {
+      await panel.evaluate(() => {
+        const toggles = document.querySelectorAll<HTMLElement>('.pr-list .pr-card__toggle');
+        toggles[toggles.length - 2]?.focus({ preventScroll: true });
+        window.scrollTo(0, 0);
+      });
+      const under = (await box(toggle)).y - (top + 8);
+      await panel.evaluate((y) => window.scrollTo(0, y), under);
+      expect((await box(toggle)).y).toBeGreaterThan(top);
+      if (move === 'focus') await toggle.focus();
+      else await panel.keyboard.press('j');
+      await expect(toggle).toBeFocused();
+      const focused = await box(toggle);
+      expect(focused.y + focused.height, move).toBeLessThanOrEqual(top);
+    }
   });
 
   test('a card says everything about its pull request, and not by color alone', async ({
@@ -202,12 +311,8 @@ test.describe('with a rich set of pull requests', () => {
 
     await filter.fill('checkout');
     await expect(panel.getByRole('listitem')).toHaveCount(1);
-    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Created by me1');
-    expect((await tabNames(panel)).slice(1)).toEqual([
-      'Review requested0',
-      'Mentioned0',
-      'Assigned to me0',
-    ]);
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine1');
+    expect((await tabNames(panel)).slice(1)).toEqual(['Review0', 'Mentions0', 'Assigned0']);
 
     await filter.fill('label-that-does-not-exist');
     await expect(panel.getByRole('heading', { name: 'No matches' })).toBeVisible();
@@ -218,7 +323,7 @@ test.describe('with a rich set of pull requests', () => {
     await expect(panel.getByRole('listitem')).toHaveCount(7);
 
     // Author, repository, label and number are searched too.
-    await panel.getByRole('tab', { name: /Review requested/ }).click();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
     for (const [query, title] of [
       ['alice', /^Add keyboard shortcuts/],
       ['acme/api', /^Return 409/],
@@ -378,7 +483,7 @@ test.describe('other states', () => {
     await poll();
 
     const panel = await openPanel();
-    expect(await tabNames(panel)).toEqual(['Created by me7', 'StaleCould not load']);
+    expect(await tabNames(panel)).toEqual(['Mine7', 'StaleCould not load']);
     await panel.getByRole('tab', { name: /Stale/ }).click();
     await expect(panel.getByText(/Could not load “Stale”/)).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'No pull requests' })).toHaveCount(0);

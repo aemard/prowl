@@ -55,9 +55,7 @@ test.describe('scope', () => {
       .poll(() => searches(github).some((query) => query.includes('review-requested:@me')))
       .toBe(true);
     await panel.getByRole('button', { name: 'Back to pull requests' }).click();
-    await expect(panel.getByRole('tab', { name: /Review requested/ })).toHaveText(
-      'Review requested3',
-    );
+    await expect(panel.getByRole('tab', { name: /^Review/ })).toHaveText('Review3');
   });
 
   test('adds, edits and removes a custom section, checking its query first', async ({

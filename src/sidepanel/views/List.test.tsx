@@ -21,7 +21,10 @@ const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 class FakeObserver {
   static all: FakeObserver[] = [];
   targets: Element[] = [];
-  constructor(readonly callback: IntersectionObserverCallback) {
+  constructor(
+    readonly callback: IntersectionObserverCallback,
+    readonly options?: IntersectionObserverInit,
+  ) {
     FakeObserver.all.push(this);
   }
   observe(target: Element) {
@@ -211,22 +214,29 @@ describe('several sections', () => {
     );
   });
 
-  it('shows tabs with counts, the first selected, and switches panels', () => {
+  it('shows the section bar with short names, icons and counts, and switches panels', () => {
     render(<ListView />);
-    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-      'Created by me2',
-      'Review requested1',
-      'StaleCould not load',
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Mine2', 'Review1', 'StaleCould not load']);
+    expect(tabs.map((tab) => tab.title)).toEqual(['Created by me', 'Review requested', 'Stale']);
+    expect(tabs.map((tab) => tab.querySelectorAll('svg[aria-hidden="true"]').length)).toEqual([
+      1, 1, 2,
     ]);
-    const tab = screen.getByRole('tab', { selected: true });
-    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(tab.id);
-    expect(cardTitles()).toEqual(['PR number 1', 'PR number 2']);
-
-    fireEvent.click(screen.getByRole('tab', { name: /Review requested/ }));
-    expect(cardTitles()).toEqual(['Please review me']);
-    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(
-      screen.getByRole('tab', { selected: true }).id,
+    expect(screen.getByRole('tabpanel', { name: 'Created by me' }).id).toBe(
+      screen.getByRole('tab', { selected: true }).getAttribute('aria-controls'),
     );
+    expect(cardTitles()).toEqual(['PR number 1', 'PR number 2']);
+    // The filter, then the tabs, then the panel they control.
+    const [filter, tablist, panel] = ['searchbox', 'tablist', 'tabpanel'].map((role) =>
+      screen.getByRole(role),
+    ) as HTMLElement[];
+    const follows = (a?: Node, b?: Node) =>
+      Boolean(a && b && a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(filter, tablist) && follows(tablist, panel)).toBe(true);
+
+    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
+    expect(cardTitles()).toEqual(['Please review me']);
+    expect(screen.getByRole('tabpanel', { name: 'Review requested' })).toBeTruthy();
   });
 
   it('counts only what matches the filter', () => {
@@ -237,7 +247,7 @@ describe('several sections', () => {
         .getAllByRole('tab')
         .map((tab) => tab.textContent)
         .slice(0, 2),
-    ).toEqual(['Created by me0', 'Review requested1']);
+    ).toEqual(['Mine0', 'Review1']);
     expect(screen.getByRole('heading', { name: 'No matches' })).toBeTruthy();
   });
 
@@ -251,7 +261,33 @@ describe('several sections', () => {
   it('falls back to the first section when the selected one is turned off', () => {
     activeSectionId.value = 'mentioned';
     render(<ListView />);
-    expect(screen.getByRole('tab', { selected: true }).textContent).toContain('Created by me');
+    expect(screen.getByRole('tab', { selected: true }).textContent).toContain('Mine');
+  });
+
+  it('puts the sections past the fourth under "More" and shows the one picked there', () => {
+    const extra = ['Bots', 'Docs', 'Infra'].map((label, n) => ({
+      id: `custom-${n + 2}`,
+      kind: 'custom' as const,
+      label,
+      enabled: true,
+      query: `is:pr ${label}`,
+    }));
+    withSections(['authored', 'review_requested', 'mentioned', 'assigned']);
+    settings.value = { ...settings.value, sections: [...settings.value.sections, ...extra] };
+    snapshot.value = buildSnapshotOf({ authored: [pr(1)], 'custom-3': [pr(9, { title: 'Docs' })] });
+    render(<ListView />);
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+      'Mine1',
+      'Review0',
+      'Mentions0',
+      'Assigned0',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'More sections' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Docs 1' }));
+    expect(screen.getByRole('button', { name: 'More sections, Docs selected' })).toBeTruthy();
+    expect(cardTitles()).toEqual(['Docs']);
+    expect(screen.queryByRole('tab', { selected: true })).toBeNull();
+    expect(screen.getByRole('tabpanel', { name: 'Docs' })).toBeTruthy();
   });
 });
 
@@ -281,6 +317,17 @@ describe('unseen changes', () => {
     expect(dots).toEqual(['true', null, 'true']);
     const badge = computeBadge(snapshot.value, prLocal.value, 'unseen', NOW);
     expect(badge.text).toBe(String(dots.filter(Boolean).length));
+  });
+
+  it('does not count a card behind the section bar as on screen', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(49);
+    render(<ListView />);
+    expect(observer().options).toEqual({ threshold: 0.6, rootMargin: '0px 0px 0px 0px' });
+
+    // Turning a second section on brings the bar, and a new observer that leaves it out.
+    act(() => withSections(['authored', 'mentioned']));
+    expect(screen.getByRole('tablist')).toBeTruthy();
+    expect(observer().options?.rootMargin).toBe('0px 0px -49px 0px');
   });
 
   it('marks the unseen cards that stayed on screen for 1.5 s, once', () => {
@@ -387,8 +434,8 @@ describe('expanded cards', () => {
     expect(toggle(1).getAttribute('aria-expanded')).toBe('false');
     expect(screen.getAllByRole('list', { name: 'Merge' })).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole('tab', { name: /Review requested/ }));
-    fireEvent.click(screen.getByRole('tab', { name: /Created by me/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Mine/ }));
     expect(toggle(2).getAttribute('aria-expanded')).toBe('true');
 
     unmount();
