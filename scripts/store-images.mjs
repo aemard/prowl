@@ -130,7 +130,7 @@ const IMAGES = [
 ];
 
 mkdirSync(outDir, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMIUM || undefined });
 try {
   for (const { file, size, html } of IMAGES) {
     const [width, height] = size;

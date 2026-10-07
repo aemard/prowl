@@ -18,6 +18,9 @@ export default defineConfig({
   },
   test: {
     environment: 'happy-dom',
+    // Each file still gets its own VM context, but happy-dom is built once per worker instead of
+    // once per file: about 3x faster (docs/decisions.md).
+    pool: 'vmThreads',
     include: [
       'src/**/*.test.{ts,tsx}',
       'tests/unit/**/*.test.{ts,tsx}',

@@ -62,6 +62,43 @@ so edit those, not the site: `/auth/` is `docs/auth.md`, `/privacy/` is `docs/pr
 `CONTRIBUTING.md`. `/install/` is written in `site/src/pages/install.astro`. `pnpm verify` also
 builds the site.
 
+## Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens weekly pull requests for npm (development dependencies
+grouped, a 2 day cooldown because pnpm refuses packages younger than a day) and for GitHub Actions.
+`.github/workflows/dependabot-auto-merge.yml` then turns on auto-merge, with a squash, for the
+pull requests that are **patch or minor updates of development dependencies or of GitHub Actions**.
+Anything else stays for a person: runtime dependencies (Preact, `@preact/signals`, Astro, sharp),
+every major update, and a group that contains even one of those. Auto-merge waits for the required
+checks, so a red `Verify` run leaves the pull request open.
+
+One-time setup (needs admin rights; without it the workflow fails or merges too early):
+
+1. **Settings, General, Pull Requests**: tick **Allow auto-merge** and keep **Allow squash
+   merging** on.
+2. **Settings, Rules, Rulesets** (or Branches, branch protection) for `main`: require status
+   checks to pass before merging and add **`Verify`** (the CI job; it is listed once CI has run on
+   a pull request). Without a required check `gh pr merge --auto` has nothing to wait for and
+   merges at once. Do not require approving reviews for these pull requests: nothing approves them.
+3. **Settings, Actions, General, Workflow permissions** may stay on "Read repository contents": the
+   job asks for `contents: write` and `pull-requests: write` itself.
+
+To keep one pull request from merging by itself, press "Disable auto-merge" on it.
+
+## Toolchain
+
+- **Node** follows the newest Active LTS release: `.nvmrc` (used by CI, Pages, releases and the
+  store upload), `engines.node` and `@types/node` move together. Node 24 until Node 26 turns LTS
+  on 2026-10-28; then move all three to 26, run `pnpm verify` and update the README and
+  CONTRIBUTING.
+- **pnpm** is `packageManager` in `package.json` (`pnpm/action-setup` and a local pnpm 10 or newer
+  read it). Build scripts of dependencies are decided in `pnpm-workspace.yaml` (`allowBuilds`);
+  a new dependency with an install script fails `pnpm install` until it is listed there.
+- **Playwright's browser** is installed by CI (`playwright install chromium`, cached by Playwright
+  version). On a machine that has a Chromium but not Playwright's build, set
+  `PROWL_CHROMIUM=/path/to/chromium` before `pnpm e2e`, `pnpm screenshots`, `pnpm icons` or
+  `pnpm store-images`. CI leaves it unset.
+
 ## Recommended repository settings
 
 - **Protect release tags**: Settings → Rules → Rulesets → new tag ruleset for `v*` restricting

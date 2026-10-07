@@ -54,6 +54,9 @@ export async function launchExtension(extensionPath: string): Promise<BrowserCon
   const launch = () =>
     chromium.launchPersistentContext('', {
       channel: 'chromium',
+      // Unset in CI, which uses Playwright's own Chromium. A machine that has another Chromium
+      // points PROWL_CHROMIUM at it (docs/releasing.md).
+      executablePath: process.env.PROWL_CHROMIUM || undefined,
       headless: !process.env.HEADED,
       viewport: { width: 400, height: 760 },
       // The images in docs/ are shown on HiDPI screens: capture them at twice the pixel density

@@ -19,6 +19,10 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 | `pnpm icons` | Re-rasterize `src/assets/logo.svg` into `public/icons/*.png` |
 | `pnpm lint:fix` | Biome format + safe fixes |
 
+Needs Node 24 (`.nvmrc`) and pnpm 12 (`packageManager`; pnpm fetches that exact version). E2E runs
+in Playwright's Chromium; set `PROWL_CHROMIUM=/path/to/chromium` to use another (the cloud sandbox:
+`/opt/pw-browsers/chromium`; `pnpm icons` and `pnpm store-images` honour it too).
+
 Load the built extension: `chrome://extensions` → Developer mode → Load unpacked → `dist/`.
 
 ## Conventions

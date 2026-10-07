@@ -787,8 +787,8 @@
       ],
       "priority": 36.5,
       "dependsOn": ["US-036"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Node 24, pnpm 12.10.1 (allowBuilds esbuild:false), Vitest vmThreads (27.8s -> 7.5s), Playwright 1.63.0 + PROWL_CHROMIUM, Dependabot auto-merge workflow + releasing.md settings; verify green on Node 24.21/pnpm 12.10.1; the action-setup layout warning can only be confirmed in the first CI log"
     }
   ]
 }

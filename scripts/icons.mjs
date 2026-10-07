@@ -13,7 +13,7 @@ mkdirSync(outDir, { recursive: true });
 // Smaller sizes (toolbar, extensions page) use the full canvas so the mark stays legible.
 const padding = { 128: 16 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMIUM || undefined });
 try {
   for (const size of [16, 32, 48, 128]) {
     const page = await browser.newPage({ viewport: { width: size, height: size } });

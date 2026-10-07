@@ -1,2 +1,7 @@
 packages:
   - site
+
+# esbuild's install script only checks and optimises the binary that its optional
+# dependencies already ship, so it stays off (docs/decisions.md).
+allowBuilds:
+  esbuild: false

@@ -93,8 +93,9 @@ pnpm screenshots   # same, and refresh docs/screenshots/ (at 2x)
 pnpm zip           # prowl-v<version>.zip from dist/
 ```
 
-Node 22+ and pnpm 10. E2E tests never touch the real GitHub: they load `dist-e2e/` into Chromium
-and point it at a local mock server (`tests/e2e/mock-github`).
+Node 24+ (`.nvmrc`) and pnpm 12 (`packageManager`; pnpm downloads that exact version). E2E tests
+never touch the real GitHub: they load `dist-e2e/` into Chromium and point it at a local mock
+server (`tests/e2e/mock-github`).
 
 | Path | What |
 |---|---|
