@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/aemard/prowl/compare/v1.0.0...v1.1.0) (2026-10-07)
+
+
+### Features
+
+* **design:** minimal design system with the mint cat logo ([c51fcef](https://github.com/aemard/prowl/commit/c51fcef8494d52ac13856d7a70f85a8ed3851d84))
+* **design:** mint design system, store listing images and Chrome Web Store publishing ([f3c1adb](https://github.com/aemard/prowl/commit/f3c1adb809cfcb0597a857795bd5ef09e8fb79eb))
+
 ## [1.0.0](https://github.com/aemard/prowl/compare/v0.1.0...v1.0.0) (2026-10-06)
 
 
