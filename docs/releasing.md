@@ -18,6 +18,10 @@ One-time setup:
    and variables → Actions → Variables). Release builds bake it in; without it the zip supports
    token sign-in only.
 
+Once the Chrome Web Store is set up, both paths then call `chrome-web-store.yml`, which waits
+for a maintainer's approval and submits that release's zip to the store. Setup and
+troubleshooting: [chrome-web-store.md](chrome-web-store.md).
+
 `release-please-config.json` pinned `"release-as": "1.0.0"` for the first release. It was removed
 after v1.0.0 so later releases follow Conventional Commits (`feat` → minor, `fix` → patch).
 Releases are reproducible: the zip is built from a clean checkout of the tag with a frozen

@@ -297,3 +297,8 @@ Started: 2026-10-06
 - tokens.css: ink-tinted neutrals, mint/teal accent, `--color-fg-on-accent`, type 10/11/12/13/16/20 px, controls 24/28 px, radius-lg 10. Status chips are `Badge variant="plain"`; labels are dots (`--label-color`).
 - Learning: anti-aliased gray edges are closer to mint than to ink or white, so trace by hue (green minus red) and brightness, not nearest color.
 ---
+## 2026-10-07 - Chrome Web Store publishing and listing images (maintainer request)
+- `.github/workflows/chrome-web-store.yml` (approval in the `chrome-web-store` environment, attestation check, WIF sign-in, `scripts/cws-publish.mjs` with API v2), called from release-please.yml and release-tag.yml once `CWS_ITEM_ID` is set. Setup: docs/chrome-web-store.md.
+- `pnpm store-images` renders docs/store/*.png (5 screenshots, promo tile, marquee) from docs/screenshots.
+- Learning: API v2 cannot create items and v1 ends 2026-10-15; check any store action you reuse targets v2.
+---

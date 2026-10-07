@@ -1,9 +1,23 @@
-# Chrome Web Store publishing is out of scope for v1. This stub documents the intended job;
-# see docs/chrome-web-store.md. It only runs on manual dispatch and is disabled by `if: false`.
-name: Chrome Web Store (disabled)
+# Uploads a release's zip to the Chrome Web Store and submits it for review (API v2).
+# release-please.yml and release-tag.yml call it once the release assets are attached; run it by
+# hand to publish an existing tag again. The job waits for a reviewer's approval in the
+# `chrome-web-store` environment and signs in to Google through Workload Identity Federation, so
+# no key is stored in GitHub. One-time setup: docs/chrome-web-store.md.
+name: Chrome Web Store
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag (for example v1.2.0)
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (for example v1.2.0)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -11,7 +25,54 @@ permissions:
 jobs:
   publish:
     name: Publish to Chrome Web Store
-    if: false
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: chrome-web-store
+    # One submission at a time; a second release waits instead of racing the first.
+    concurrency:
+      group: chrome-web-store
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+      attestations: read
     steps:
-      - run: echo "Not enabled. See docs/chrome-web-store.md."
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      # The store gets the exact zip attached to the release (never a fresh build), and only if
+      # its provenance says release-assets.yml built it.
+      - name: Download and verify the release zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a release tag: $TAG"; exit 1; }
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "prowl-$TAG.zip"
+          gh attestation verify "prowl-$TAG.zip" --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release-assets.yml"
+
+      - name: Sign in to Google
+        id: google
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.CWS_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.CWS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+          access_token_lifetime: 900s
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Upload and submit for review
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_ITEM_ID: ${{ vars.CWS_ITEM_ID }}
+          TAG: ${{ inputs.tag }}
+        run: node scripts/cws-publish.mjs "prowl-$TAG.zip" | tee -a "$GITHUB_STEP_SUMMARY"
