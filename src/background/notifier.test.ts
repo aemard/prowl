@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { prEvent } from '../../tests/fixtures/events';
+import type { PrLocalState } from '../lib/model';
 import { emptyPrLocal, mute } from '../lib/storage/prLocal';
 import { defaultSettings } from '../lib/storage/settings';
 import { fakeChrome } from '../test/chrome';
-import { forgetNotified, notifyEvents, onNotificationClicked } from './notifier';
+import {
+  forgetNotified,
+  notifyEvents,
+  onNotificationButtonClicked,
+  onNotificationClicked,
+} from './notifier';
 
 const settings = () => defaultSettings().notifications;
 const shown = () => fakeChrome().__state.notifications;
@@ -28,6 +34,7 @@ describe('notifyEvents', () => {
       title: 'hubot approved',
       message: 'Improve widget 2',
       contextMessage: 'acme/widgets#2',
+      buttons: [{ title: 'Open' }, { title: 'Snooze 1 h' }],
     });
   });
 
@@ -38,6 +45,7 @@ describe('notifyEvents', () => {
 
     await notify(...events(7).map((e) => ({ ...e, id: `${e.id}:2` })));
     expect([...shown().keys()]).toEqual([expect.stringMatching(/^summary:\d+$/)]);
+    expect([...shown().values()][0]?.options.buttons).toBeUndefined();
     expect([...shown().values()][0]?.options).toMatchObject({
       title: '7 pull request updates',
       message: 'acme/widgets#1, acme/widgets#2, acme/widgets#3 and 4 more',
@@ -145,5 +153,37 @@ describe('forgetNotified', () => {
     await notify(prEvent());
     await forgetNotified();
     expect(await stored()).toBeUndefined();
+  });
+});
+
+describe('onNotificationButtonClicked', () => {
+  it('opens the pull request with the first button, like a click', async () => {
+    const event = prEvent({ number: 7 });
+    await notify(event);
+    await onNotificationButtonClicked(event.id, 0);
+    expect(fakeChrome().__state.createdTabs).toEqual([
+      { url: 'https://github.com/acme/widgets/pull/7' },
+    ]);
+  });
+
+  it('snoozes the pull request for an hour with the second button and clears it', async () => {
+    vi.useFakeTimers({ now: Date.parse('2026-10-07T10:00:00Z'), toFake: ['Date'] });
+    const event = prEvent({ prId: 'PR_kwDOabc', number: 7 });
+    await notify(event);
+    await onNotificationButtonClicked(event.id, 1);
+    const { prLocal } = await chrome.storage.local.get<{ prLocal: PrLocalState }>('prLocal');
+    expect(prLocal.snoozed).toEqual({ PR_kwDOabc: '2026-10-07T11:00:00.000Z' });
+    expect(shown().size).toBe(0);
+    expect(fakeChrome().__state.createdTabs).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('only clears a notification it does not know, and never rejects', async () => {
+    await onNotificationButtonClicked('summary:1', 1);
+    expect(await chrome.storage.local.get('prLocal')).toEqual({});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(chrome.storage.session, 'get').mockRejectedValue(new Error('storage'));
+    await expect(onNotificationButtonClicked('x', 1)).resolves.toBeUndefined();
+    expect(error).toHaveBeenCalledOnce();
   });
 });

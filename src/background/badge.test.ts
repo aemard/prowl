@@ -111,6 +111,29 @@ describe('watchBadge', () => {
     await updateSettings({ badge: 'attention' });
     await repainted('1');
   });
+
+  it('repaints when the list starts to hide drafts or bots', async () => {
+    const draft = mapPullRequest(
+      prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
+    );
+    const bot = mapPullRequest(
+      prNode({
+        number: 3,
+        author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
+        commits: headCommit({ FAILURE: 1 }),
+      }),
+    );
+    await setItem('snapshot', snapshot(failing, draft, bot));
+    await updateBadge();
+    watchBadge();
+    await repainted('3');
+    await updateSettings({ hideDrafts: true });
+    await repainted('2');
+    await updateSettings({ hideBots: true });
+    await repainted('1');
+    await updateSettings({ hideDrafts: false, hideBots: false });
+    await repainted('3');
+  });
 });
 
 describe('BADGE_COLORS', () => {

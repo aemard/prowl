@@ -4,7 +4,7 @@
  * `PullRequestCard` only picks an icon per `StatusIcon` and renders.
  */
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
-import type { CheckSummary, PullRequest } from '../../lib/model';
+import type { CheckSummary, MergeMethod, PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import type { Tone } from './ui/cx';
 
@@ -19,6 +19,13 @@ export interface Status {
   /** Full sentence for the tooltip and the card's accessible name. */
   detail: string;
 }
+
+/** How GitHub names each merge method in its merge box. */
+export const MERGE_METHOD_NAMES: Record<MergeMethod, string> = {
+  merge: 'merge commit',
+  squash: 'squash',
+  rebase: 'rebase',
+};
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
@@ -116,15 +123,25 @@ export function pullRequestStatuses(pr: PullRequest): Status[] {
           label: 'Conflicts',
           detail: 'Has merge conflicts',
         }
-      : ready
+      : pr.autoMerge && pr.state === 'open'
         ? {
             id: 'merge',
-            tone: 'success',
+            tone: 'accent',
             icon: 'merge',
-            label: 'Ready to merge',
-            detail: 'Ready to merge',
+            label: 'Auto-merge',
+            detail: `Auto-merge on (${MERGE_METHOD_NAMES[pr.autoMerge.method]})${
+              pr.autoMerge.enabledBy ? `, by ${pr.autoMerge.enabledBy}` : ''
+            }`,
           }
-        : null,
+        : ready
+          ? {
+              id: 'merge',
+              tone: 'success',
+              icon: 'merge',
+              label: 'Ready to merge',
+              detail: 'Ready to merge',
+            }
+          : null,
   ];
   return chips.filter((chip): chip is Status => chip !== null);
 }

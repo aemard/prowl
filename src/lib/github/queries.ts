@@ -32,7 +32,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         headRefOid
         createdAt
         updatedAt
-        author { login avatarUrl(size: 64) }
+        author { __typename login avatarUrl(size: 64) }
         mergedBy { login }
         repository {
           name
@@ -43,7 +43,9 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           rebaseMergeAllowed
           viewerDefaultMergeMethod
           viewerPermission
+          autoMergeAllowed
         }
+        autoMergeRequest { mergeMethod enabledBy { login } }
         reviewDecision
         mergeable
         mergeStateStatus
@@ -65,6 +67,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         commits(last: 1) {
           nodes {
             commit {
+              committedDate
               statusCheckRollup {
                 contexts {
                   checkRunCountsByState { state count }
@@ -168,7 +171,7 @@ export interface PullRequestNode {
   headRefOid: string;
   createdAt: string;
   updatedAt: string;
-  author: (Login & { avatarUrl: string }) | null;
+  author: (Login & { __typename: string; avatarUrl: string }) | null;
   mergedBy: Login | null;
   repository: {
     name: string;
@@ -181,7 +184,10 @@ export interface PullRequestNode {
     viewerDefaultMergeMethod: string;
     /** `RepositoryPermission`; null for a GitHub App. */
     viewerPermission: string | null;
+    autoMergeAllowed: boolean;
   };
+  /** Null while auto-merge is off. */
+  autoMergeRequest: { mergeMethod: string; enabledBy: Login | null } | null;
   reviewDecision: string | null;
   mergeable: string;
   mergeStateStatus: string;
@@ -200,6 +206,8 @@ export interface PullRequestNode {
   comments: Nodes<{ createdAt: string; author: Login | null }>;
   commits: Nodes<{
     commit: {
+      /** Committer date (set by git, renewed by a rebase or amend). */
+      committedDate: string;
       statusCheckRollup: {
         contexts: {
           checkRunCountsByState: StateCount[] | null;

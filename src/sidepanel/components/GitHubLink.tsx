@@ -1,8 +1,8 @@
-import type { JSX } from 'preact';
+import type { AnchorHTMLAttributes } from 'preact';
 import { isGitHubUrl } from '../../lib/url';
 import { openGitHubUrl } from '../openUrl';
 
-type GitHubLinkProps = Omit<JSX.AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'target'> & {
+type GitHubLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'target'> & {
   href: string;
 };
 

@@ -19,6 +19,11 @@ import { graphqlRateLimit } from './http';
 
 const WEB = 'https://github.com';
 const AVATAR = 'https://avatars.githubusercontent.com/u/583231?s=64&v=4';
+/**
+ * Default `committedDate`: when the tests started, in GitHub's format. Fixed dates would make
+ * every default PR "no commit for 20 days" (hidden) on later runs; set it to test staleness.
+ */
+export const RECENT_COMMIT = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
 /** `viewer { login avatarUrl name }`. */
 export function viewerNode(overrides: Partial<Viewer> = {}): Viewer {
@@ -40,14 +45,19 @@ export function repositoryNode(nameWithOwner = 'acme/widgets', overrides = {}) {
     rebaseMergeAllowed: false,
     viewerDefaultMergeMethod: 'MERGE',
     viewerPermission: 'WRITE',
+    autoMergeAllowed: false,
     ...overrides,
   };
 }
 
-/** `commits(last: 1)` whose head commit has these check-run and status counts (null: none). */
+/**
+ * `commits(last: 1)` whose head commit has these check-run and status counts (null: none) and
+ * was committed at `committedDate`.
+ */
 export function headCommit(
   checkRuns: Record<string, number> | null = { SUCCESS: 2 },
   statuses: Record<string, number> = {},
+  committedDate = RECENT_COMMIT,
 ): PullRequestNode['commits'] {
   const counts = (byState: Record<string, number>): StateCount[] =>
     Object.entries(byState).map(([state, count]) => ({ state, count }));
@@ -55,6 +65,7 @@ export function headCommit(
     nodes: [
       {
         commit: {
+          committedDate,
           statusCheckRollup: checkRuns && {
             contexts: {
               checkRunCountsByState: counts(checkRuns),
@@ -98,13 +109,14 @@ export function prNode(
     headRefOid: 'a'.repeat(40),
     createdAt: '2026-10-01T09:00:00Z',
     updatedAt: '2026-10-05T12:00:00Z',
-    author: { login: 'octocat', avatarUrl: AVATAR },
+    author: { __typename: 'User', login: 'octocat', avatarUrl: AVATAR },
     mergedBy: null,
     repository: repositoryNode(repository),
     reviewDecision: 'REVIEW_REQUIRED',
     mergeable: 'MERGEABLE',
     mergeStateStatus: 'BLOCKED',
     viewerCanUpdate: true,
+    autoMergeRequest: null,
     totalCommentsCount: 0,
     labels: { nodes: [] },
     latestReviews: { nodes: [] },
@@ -268,4 +280,45 @@ export function detailResponse(
   rateLimit = graphqlRateLimit(),
 ): DetailData {
   return { node, rateLimit };
+}
+
+/** One item of REST `GET /user/teams` (GitHub's "Full Team"), for `org/slug`. */
+export function teamJson(key = 'acme/core', name = 'Core') {
+  const [org = '', slug = ''] = key.split('/');
+  return {
+    id: 4_200_001,
+    node_id: 'T_kwDOAAAB0c4AQBIx',
+    url: `https://api.github.com/organizations/1001/team/4200001`,
+    html_url: `${WEB}/orgs/${org}/teams/${slug}`,
+    name,
+    slug,
+    description: null,
+    privacy: 'closed',
+    notification_setting: 'notifications_enabled',
+    permission: 'pull',
+    parent: null,
+    members_count: 4,
+    repos_count: 2,
+    created_at: '2024-02-01T09:00:00Z',
+    updated_at: '2026-09-30T09:00:00Z',
+    organization: {
+      login: org,
+      id: 1001,
+      node_id: 'O_kgDOAAAD6Q',
+      url: `https://api.github.com/orgs/${org}`,
+      avatar_url: AVATAR,
+      description: null,
+    },
+  };
+}
+
+/**
+ * A REST answer for `GET /user/teams?per_page&page`, paged like GitHub (`teams` is every team,
+ * `path` the request path with its query).
+ */
+export function userTeamsPage(teams: ReturnType<typeof teamJson>[], path: string) {
+  const params = new URL(path, 'https://api.github.com').searchParams;
+  const perPage = Number(params.get('per_page') ?? 30);
+  const page = Number(params.get('page') ?? 1);
+  return teams.slice((page - 1) * perPage, page * perPage);
 }

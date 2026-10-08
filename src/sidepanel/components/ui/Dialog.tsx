@@ -1,4 +1,4 @@
-import type { ComponentChildren, JSX, RefObject } from 'preact';
+import type { ComponentChildren, RefObject, TargetedKeyboardEvent } from 'preact';
 import { useId, useLayoutEffect, useRef } from 'preact/hooks';
 import { XIcon } from '../icons';
 import { cx, focusableIn } from './cx';
@@ -69,7 +69,7 @@ function OpenDialog({
     };
   }, []);
 
-  const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDialogElement>) => {
+  const onKeyDown = (event: TargetedKeyboardEvent<HTMLDialogElement>) => {
     // Esc belongs to the dialog (the `cancel` event closes it): a handler of whatever contains
     // the dialog in the DOM, such as a card that folds on Esc, must not see it as its own.
     if (event.key === 'Escape') event.stopPropagation();

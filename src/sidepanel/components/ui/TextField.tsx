@@ -1,4 +1,10 @@
-import type { ComponentChildren, JSX, Ref } from 'preact';
+import type {
+  ComponentChildren,
+  Ref,
+  TargetedEvent,
+  TargetedFocusEvent,
+  TargetedKeyboardEvent,
+} from 'preact';
 import { useId } from 'preact/hooks';
 import { cx } from './cx';
 import { describedBy, Field } from './Field';
@@ -34,8 +40,8 @@ export interface TextFieldProps {
   autoFocus?: boolean;
   /** Receives the `<input>` or `<textarea>` (for focusing it programmatically). */
   inputRef?: Ref<HTMLElement>;
-  onKeyDown?: (event: JSX.TargetedKeyboardEvent<HTMLElement>) => void;
-  onBlur?: (event: JSX.TargetedFocusEvent<HTMLElement>) => void;
+  onKeyDown?: (event: TargetedKeyboardEvent<HTMLElement>) => void;
+  onBlur?: (event: TargetedFocusEvent<HTMLElement>) => void;
   class?: string;
 }
 
@@ -64,7 +70,7 @@ export function TextField({
     class: 'ui-control ui-text-field__control',
     'aria-invalid': error ? true : undefined,
     'aria-describedby': describedBy(controlId, hint, error),
-    onInput: (event: JSX.TargetedEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    onInput: (event: TargetedEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       onValueChange(event.currentTarget.value),
   };
   return (

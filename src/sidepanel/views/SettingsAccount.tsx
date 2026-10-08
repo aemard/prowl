@@ -1,5 +1,6 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { env } from '../../lib/env';
+import { OPEN_PANEL_COMMAND } from '../../lib/model';
 import { GitHubLink } from '../components/GitHubLink';
 import { LinkExternalIcon, SignOutIcon } from '../components/icons';
 import { SignOutDialog } from '../components/SignOutDialog';
@@ -12,9 +13,11 @@ import { TOKEN_TYPES } from './SettingsModel';
 
 /** Where Prowl's code and docs live. Opened through `openGitHubUrl`, so on the GitHub origin. */
 const REPO_URL = `${env.webUrl}/aemard/prowl`;
+/** The permission table of the privacy policy. */
+export const PRIVACY_URL = `${REPO_URL}/blob/main/docs/privacy.md`;
 const ABOUT_LINKS = [
   { label: 'Documentation', href: `${REPO_URL}/tree/main/docs` },
-  { label: 'Privacy', href: `${REPO_URL}/blob/main/docs/privacy.md` },
+  { label: 'Privacy', href: PRIVACY_URL },
   { label: 'Source code', href: REPO_URL },
 ];
 
@@ -66,10 +69,34 @@ export function AccountSettings() {
   );
 }
 
+/** The shortcut Chrome gives the open-panel command: the suggested one unless the user changed it. */
+function useOpenShortcut(): string | undefined {
+  const [shortcut, setShortcut] = useState<string>();
+  useEffect(() => {
+    void chrome.commands
+      .getAll()
+      .then((all) => setShortcut(all.find((c) => c.name === OPEN_PANEL_COMMAND)?.shortcut ?? ''));
+  }, []);
+  return shortcut;
+}
+
 export function AboutSettings() {
+  const shortcut = useOpenShortcut();
   return (
     <SettingsGroup title="About">
       <p>Version {chrome.runtime.getManifest().version}</p>
+      {shortcut !== undefined && (
+        <p class="settings-note">
+          {shortcut ? (
+            <>
+              Open Prowl from the keyboard with <kbd>{shortcut}</kbd>.
+            </>
+          ) : (
+            'No keyboard shortcut opens Prowl yet.'
+          )}{' '}
+          Change it at chrome://extensions/shortcuts.
+        </p>
+      )}
       <ul class="settings-links">
         {ABOUT_LINKS.map(({ label, href }) => (
           <li key={label}>

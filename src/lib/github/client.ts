@@ -106,6 +106,8 @@ export function createGitHubClient({
         body: body === undefined ? undefined : JSON.stringify(body),
         // GET responses are cacheable for a minute; polling and re-reads need fresh data.
         cache: 'no-store',
+        // The token authenticates; a host permission would otherwise attach the site's cookies.
+        credentials: 'omit',
         signal: controller.signal,
       });
       text = await response.text();

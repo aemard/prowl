@@ -247,3 +247,80 @@ export async function setDraft(client: GitHubClient, prId: string, draft: boolea
     throw new GitHubError('server', 'GitHub did not confirm the change.');
   }
 }
+
+export const UPDATE_BRANCH_MUTATION = /* GraphQL */ `
+mutation ProwlUpdateBranch($id: ID!, $oid: GitObjectID!, $method: PullRequestBranchUpdateMethod!) {
+  updatePullRequestBranch(input: { pullRequestId: $id, expectedHeadOid: $oid, updateMethod: $method }) {
+    pullRequest { headRefOid }
+  }
+}`;
+
+/**
+ * Brings the base branch into the pull request's branch, with a merge commit or by rebasing it,
+ * unless its head is no longer `headSha`.
+ */
+export async function updateBranch(
+  client: GitHubClient,
+  prId: string,
+  headSha: string,
+  method: 'merge' | 'rebase',
+): Promise<void> {
+  const data = await client.graphql<{
+    updatePullRequestBranch: { pullRequest: { headRefOid: string } | null } | null;
+  }>(UPDATE_BRANCH_MUTATION, { id: prId, oid: headSha, method: method.toUpperCase() });
+  if (!data.updatePullRequestBranch?.pullRequest) {
+    throw new GitHubError('server', 'GitHub did not confirm the update.');
+  }
+}
+
+export const ENABLE_AUTO_MERGE_MUTATION = /* GraphQL */ `
+mutation ProwlEnableAutoMerge($id: ID!, $method: PullRequestMergeMethod!, $oid: GitObjectID!, $headline: String) {
+  enablePullRequestAutoMerge(
+    input: { pullRequestId: $id, mergeMethod: $method, expectedHeadOid: $oid, commitHeadline: $headline }
+  ) {
+    pullRequest { autoMergeRequest { mergeMethod } }
+  }
+}`;
+
+export const DISABLE_AUTO_MERGE_MUTATION = /* GraphQL */ `
+mutation ProwlDisableAutoMerge($id: ID!) {
+  disablePullRequestAutoMerge(input: { pullRequestId: $id }) {
+    pullRequest { autoMergeRequest { mergeMethod } }
+  }
+}`;
+
+type AutoMergePayload = { pullRequest: { autoMergeRequest: object | null } | null } | null;
+
+/**
+ * Turns auto-merge on with `method` (GitHub merges once the requirements pass, unless the head
+ * moved from `headSha`; `title` as for `mergePullRequest`), or off when `method` is null.
+ */
+export async function setAutoMerge(
+  client: GitHubClient,
+  prId: string,
+  method: MergeMethod | null,
+  headSha: string,
+  title?: string,
+): Promise<void> {
+  const data = await client.graphql<{
+    enablePullRequestAutoMerge?: AutoMergePayload;
+    disablePullRequestAutoMerge?: AutoMergePayload;
+  }>(
+    method ? ENABLE_AUTO_MERGE_MUTATION : DISABLE_AUTO_MERGE_MUTATION,
+    method
+      ? {
+          id: prId,
+          method: method.toUpperCase(),
+          oid: headSha,
+          headline: method === 'rebase' ? undefined : title?.trim() || undefined,
+        }
+      : { id: prId },
+  );
+  const payload = method ? data.enablePullRequestAutoMerge : data.disablePullRequestAutoMerge;
+  if (
+    !payload?.pullRequest ||
+    (payload.pullRequest.autoMergeRequest !== null) !== (method !== null)
+  ) {
+    throw new GitHubError('server', 'GitHub did not confirm the change.');
+  }
+}

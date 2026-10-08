@@ -1,6 +1,8 @@
 // Renders the Chrome Web Store listing images into docs/store/: five 1280 x 800 screenshots, the
 // 440 x 280 small promo tile and the 1400 x 560 marquee. They frame the real panel from
-// docs/screenshots (drawn at 1:1, so it stays sharp) with the logo and colors from tokens.css.
+// docs/screenshots (captured at 2x, 800 x 1520, and drawn at their 400 x 760 CSS size, so the
+// browser downsamples them 2:1) with the logo and colors from tokens.css. The store wants exact
+// pixel sizes, so these pages render at 1x.
 // Usage: pnpm screenshots, then pnpm store-images (commit the PNGs). Headlines use Inter when
 // it is installed, else the system UI font.
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -35,6 +37,7 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .panel img { display: block; }
 `;
 
+/** The panel cut to `height` from the top; list shots show it whole, section bar included. */
 const panel = (name, height = 720) =>
   `<div class="panel" style="height:${height}px"><img src="${shot(name)}" width="400" height="760" alt=""></div>`;
 
@@ -56,7 +59,7 @@ const IMAGES = [
     html: screenshot(
       'Your pull requests at a glance',
       'CI, reviews and merge state for what you opened, review or are mentioned in.',
-      panel('list-light'),
+      panel('list-light', 760),
     ),
   },
   {
@@ -87,7 +90,7 @@ const IMAGES = [
           <h1 style="font-size:46px">Follows your theme</h1>
           <p style="font-size:20px">Light or dark, like your system. Change it in Settings.</p>
         </div>
-        <div style="display:flex;gap:24px">${panel('list-light')}${panel('list-dark')}</div>
+        <div style="display:flex;gap:24px">${panel('list-light', 760)}${panel('list-dark', 760)}</div>
       </div>`,
   },
   {
@@ -127,7 +130,7 @@ const IMAGES = [
 ];
 
 mkdirSync(outDir, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMIUM || undefined });
 try {
   for (const { file, size, html } of IMAGES) {
     const [width, height] = size;

@@ -8,9 +8,10 @@ import type { BuiltInSectionKind } from '../storage/settings';
 
 type RepoFilters = Pick<Settings, 'repoInclude' | 'repoExclude'>;
 
-const PRESET_QUALIFIER: Record<BuiltInSectionKind, string> = {
+/** `review-requested:@me` would also match the viewer's teams: they have their own section. */
+const PRESET_QUALIFIER: Record<Exclude<BuiltInSectionKind, 'team_review_requested'>, string> = {
   authored: 'author:@me',
-  review_requested: 'review-requested:@me',
+  review_requested: 'user-review-requested:@me',
   mentioned: 'mentions:@me',
   assigned: 'assignee:@me',
 };
@@ -27,7 +28,8 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
 /**
  * The search string for a section: `is:pr` is always enforced (AND / OR / NOT only combine
  * search words in GitHub's syntax, never qualifiers, so `is:pr` cannot be OR-ed away).
- * Presets follow the shape `is:pr is:open <who>:@me archived:false`; a custom query is used
+ * Presets follow the shape `is:pr is:open <who>:@me archived:false`, the team section
+ * `team-review-requested:<team>` for one team key (`org/slug`); a custom query is used
  * as typed (callers skip it when `validateCustomQuery` reports errors).
  *
  * `repoInclude` adds positive scope qualifiers, which GitHub ORs together, unless the custom
@@ -35,7 +37,7 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
  * with the include list. `repoExclude` adds `-repo:` / `-user:`. GitHub ignores a scope that
  * the exclusions cancel out completely, so `filterByRepo` stays the source of truth.
  */
-export function buildSearchQuery(section: Section, filters: RepoFilters): string {
+export function buildSearchQuery(section: Section, filters: RepoFilters, team = ''): string {
   const parts = ['is:pr'];
   let scoped = false;
   if (section.kind === 'custom') {
@@ -43,7 +45,11 @@ export function buildSearchQuery(section: Section, filters: RepoFilters): string
     scoped = OWN_SCOPE.test(query);
     parts.push(query);
   } else {
-    parts.push('is:open', PRESET_QUALIFIER[section.kind], 'archived:false');
+    const who =
+      section.kind === 'team_review_requested'
+        ? `team-review-requested:${team}`
+        : PRESET_QUALIFIER[section.kind];
+    parts.push('is:open', who, 'archived:false');
   }
   if (!scoped) parts.push(...filters.repoInclude.map(scope));
   parts.push(...filters.repoExclude.map((pattern) => `-${scope(pattern)}`));

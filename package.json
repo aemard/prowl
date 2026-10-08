@@ -5,9 +5,9 @@
   "description": "Minimalist Chrome side panel to follow your GitHub pull requests at a glance.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@12.10.1",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "vite build --watch --mode development",
@@ -23,19 +23,20 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "e2e": "pnpm build:e2e && playwright test",
+    "e2e": "pnpm build && pnpm build:e2e && playwright test",
     "screenshots": "PROWL_SCREENSHOTS=1 pnpm e2e",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm test",
+    "verify:changed": "pnpm verify:fast && pnpm build && pnpm size",
     "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@biomejs/biome": "2.5.15",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.63.0",
     "@preact/preset-vite": "^2.10.6",
     "@testing-library/preact": "^3.2.4",
     "@types/chrome": "^0.3.4",
-    "@types/node": "^22.20.5",
+    "@types/node": "^24.19.1",
     "@vitest/coverage-v8": "^5.0.3",
     "fflate": "^0.8.3",
     "happy-dom": "^20.14.5",

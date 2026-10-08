@@ -53,6 +53,10 @@ export class MockGitHub {
   /** Default headers on every API response, e.g. rate-limit headers. */
   defaultHeaders: Record<string, string> = {};
 
+  constructor() {
+    this.reset();
+  }
+
   async start(port = MOCK_PORT): Promise<void> {
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -79,12 +83,16 @@ export class MockGitHub {
     this.server = undefined;
   }
 
-  /** Forget handlers and the request log. Called before every test. */
+  /**
+   * Forget handlers and the request log. Called before every test. What every poll asks for
+   * outside the GraphQL operations keeps a default answer: `GET /user/teams` lists no team.
+   */
   reset(): void {
     this.graphql.clear();
     this.routes = [];
     this.requests.length = 0;
     this.defaultHeaders = {};
+    this.on('GET', '/user/teams', () => ({ body: [] }));
   }
 
   /** Respond to a GraphQL operation (matched on `operationName` or the `query Name` declaration). */

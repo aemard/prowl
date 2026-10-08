@@ -26,7 +26,7 @@ function serveDeviceFlow(github: MockGitHub, decide: () => object) {
   github.on('GET', '/login/device', () => ({ body: { page: 'device verification' } }));
   github.onGraphQL('ProwlViewer', () => ({ viewer }));
   github.on('GET', '/user', () => ({
-    headers: { 'x-oauth-scopes': 'repo' },
+    headers: { 'x-oauth-scopes': 'read:org, repo' },
     body: { login: viewer.login },
   }));
 }
@@ -45,7 +45,9 @@ test.describe('sign in with the OAuth device flow', () => {
   }) => {
     let approved = false;
     serveDeviceFlow(github, () =>
-      approved ? { access_token: OAUTH_TOKEN, token_type: 'bearer', scope: 'repo' } : pending(),
+      approved
+        ? { access_token: OAUTH_TOKEN, token_type: 'bearer', scope: 'read:org,repo' }
+        : pending(),
     );
     const panel = await openPanel();
     await expect(startButton(panel)).toBeVisible();
@@ -83,13 +85,19 @@ test.describe('sign in with the OAuth device flow', () => {
     });
     await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
     expect(await stored(serviceWorker)).toMatchObject({
-      auth: { method: 'oauth', token: OAUTH_TOKEN, tokenType: 'oauth', scopes: ['repo'], viewer },
+      auth: {
+        method: 'oauth',
+        token: OAUTH_TOKEN,
+        tokenType: 'oauth',
+        scopes: ['read:org', 'repo'],
+        viewer,
+      },
     });
 
     // What was sent: the public client id and the scope, then the device code, then the token.
     expect(github.requestsFor('/login/device/code')[0]?.body).toEqual({
       client_id: 'e2e-client-id',
-      scope: 'repo',
+      scope: 'repo read:org',
     });
     expect(github.requestsFor('/login/oauth/access_token')[0]?.body).toEqual({
       client_id: 'e2e-client-id',

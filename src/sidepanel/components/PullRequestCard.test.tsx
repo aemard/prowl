@@ -42,9 +42,43 @@ afterEach(() => {
 });
 
 describe('PullRequestCard', () => {
+  it('shows the repository next to the number, unless it sits under its repository header', () => {
+    const { rerender } = render(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} />
+      </ul>,
+    );
+    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('acme/widgets#42');
+
+    rerender(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} grouped />
+      </ul>,
+    );
+    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('#42');
+    // The title link still names the repository for a screen reader that jumps between links.
+    expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBeTruthy();
+  });
+
+  it('says which of your teams is asked to review, on the card and to a screen reader', () => {
+    render(
+      <ul>
+        <PullRequestCard pr={pr42()} unseen={false} now={NOW} teams={['acme/web', 'acme/api']} />
+      </ul>,
+    );
+    expect(screen.getByTitle('Review requested from @acme/web, @acme/api').textContent).toBe(
+      '@acme/web, @acme/api',
+    );
+    expect(toggleOf().description).toContain('Review requested from @acme/web, @acme/api');
+  });
+
   it('has a title link and a separate expand button, each named, and describes the rest', () => {
     const link = renderCard({
-      author: { login: 'bob', avatarUrl: 'https://avatars.githubusercontent.com/bob' },
+      author: {
+        login: 'bob',
+        avatarUrl: 'https://avatars.githubusercontent.com/bob',
+        isBot: false,
+      },
       checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
       reviewDecision: 'changes_requested',
       commentCount: 4,

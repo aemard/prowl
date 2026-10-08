@@ -13,7 +13,8 @@ remote host.
 
 ## Set up
 
-You need Node 22 or newer and [pnpm](https://pnpm.io/installation).
+You need Node 24 or newer (`.nvmrc`, so `nvm use` picks it) and [pnpm 12](https://pnpm.io/installation).
+An older pnpm (10 or newer) downloads the version `packageManager` names by itself.
 
 ```sh
 git clone https://github.com/aemard/prowl.git
@@ -35,7 +36,9 @@ unpacked and pick the `dist` folder. `pnpm dev` rebuilds on every change; reload
 | `pnpm lint:fix` | Formats the code with Biome and applies its safe fixes. |
 
 A pull request needs a green `pnpm verify`. Tests never call the real GitHub API: they use the
-builders in `tests/fixtures/` and the mock GitHub server of the end-to-end suite.
+builders in `tests/fixtures/` and the mock GitHub server of the end-to-end suite. The end-to-end
+tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once); set
+`PROWL_CHROMIUM=/path/to/chromium` to use a Chromium you already have.
 
 ## Conventions
 

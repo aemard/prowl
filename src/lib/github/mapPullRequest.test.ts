@@ -6,6 +6,7 @@ import {
   detailReview,
   headCommit,
   prNode,
+  repositoryNode,
   requestedReviewer,
   reviewNode,
   statusContextNode,
@@ -19,6 +20,27 @@ import {
 } from './mapPullRequest';
 
 describe('mapPullRequest', () => {
+  it('maps auto-merge: whether the repository allows it, and the method and who turned it on', () => {
+    const on = mapPullRequest(
+      prNode({
+        repository: 'acme/widgets',
+        autoMergeRequest: { mergeMethod: 'SQUASH', enabledBy: { login: 'alice' } },
+      }),
+    );
+    expect(on.autoMerge).toEqual({ method: 'squash', enabledBy: 'alice' });
+    const ghost = mapPullRequest(
+      prNode({ autoMergeRequest: { mergeMethod: 'BOGUS', enabledBy: null } }),
+    );
+    expect(ghost.autoMerge).toEqual({ method: 'merge', enabledBy: null });
+    expect(mapPullRequest(prNode()).autoMerge).toBeNull();
+    expect(mapPullRequest(prNode()).autoMergeAllowed).toBe(false);
+    const allowed = {
+      ...prNode(),
+      repository: repositoryNode('acme/widgets', { autoMergeAllowed: true }),
+    };
+    expect(mapPullRequest(allowed).autoMergeAllowed).toBe(true);
+  });
+
   it('maps a search node to the model', () => {
     const node = prNode({
       number: 7,
@@ -29,6 +51,7 @@ describe('mapPullRequest', () => {
       reviewThreads: { nodes: [{ isResolved: false }, { isResolved: true }] },
       totalCommentsCount: 4,
       comments: { nodes: [{ createdAt: '2026-10-05T11:00:00Z', author: { login: 'hubot' } }] },
+      commits: headCommit({ SUCCESS: 2 }, {}, '2026-10-04T16:20:00Z'),
     });
     expect(mapPullRequest(node)).toEqual({
       id: 'PR_acme_api_7',
@@ -39,6 +62,7 @@ describe('mapPullRequest', () => {
       author: {
         login: 'octocat',
         avatarUrl: 'https://avatars.githubusercontent.com/u/583231?s=64&v=4',
+        isBot: false,
       },
       state: 'open',
       isDraft: false,
@@ -47,6 +71,7 @@ describe('mapPullRequest', () => {
       headSha: 'a'.repeat(40),
       createdAt: '2026-10-01T09:00:00Z',
       updatedAt: '2026-10-05T12:00:00Z',
+      lastCommitAt: '2026-10-04T16:20:00Z',
       checks: { state: 'success', total: 2, passed: 2, failed: 0, pending: 0, neutral: 0 },
       reviewDecision: 'review_required',
       reviews: [
@@ -69,6 +94,8 @@ describe('mapPullRequest', () => {
       defaultMergeMethod: 'merge',
       viewerCanUpdate: true,
       viewerCanMerge: true,
+      autoMergeAllowed: false,
+      autoMerge: null,
     } satisfies PullRequest);
   });
 
@@ -115,9 +142,51 @@ describe('mapPullRequest', () => {
       const rollup = {
         contexts: { checkRunCountsByState: null, statusContextCountsByState: null },
       };
-      expect(checks({ nodes: [{ commit: { statusCheckRollup: rollup } }] }).state).toBe('none');
+      const commit = { committedDate: '2026-10-04T16:20:00Z', statusCheckRollup: rollup };
+      expect(checks({ nodes: [{ commit }] }).state).toBe('none');
       expect(checks({ nodes: null }).state).toBe('none');
       expect(checks({ nodes: [] }).state).toBe('none');
+    });
+  });
+
+  describe('author.isBot', () => {
+    const author = (login: string, __typename: string) =>
+      mapPullRequest(prNode({ author: { __typename, login, avatarUrl: 'a' } })).author;
+
+    it.each([
+      // GraphQL: the type says it, the login has no suffix.
+      ['Bot', 'dependabot', true],
+      // The suffix says it on its own, as REST spells bot logins.
+      ['User', 'renovate[bot]', true],
+      ['Bot', 'renovate[bot]', true],
+      ['User', 'octocat', false],
+      // A person who happens to be called like a bot is not one.
+      ['User', 'bot', false],
+      ['Mannequin', 'dependabot-fan', false],
+      ['Organization', 'acme', false],
+    ])('is %s %s -> %s', (typename, login, isBot) => {
+      expect(author(login, typename)).toEqual({ login, avatarUrl: 'a', isBot });
+    });
+
+    it('is absent with the author of a deleted account', () => {
+      expect(mapPullRequest(prNode({ author: null })).author).toBeNull();
+    });
+  });
+
+  describe('lastCommitAt', () => {
+    const lastCommitAt = (commits: ReturnType<typeof headCommit>) =>
+      mapPullRequest(prNode({ commits, updatedAt: '2026-10-05T12:00:00Z' })).lastCommitAt;
+
+    it("is the head commit's committedDate, however recent the other activity", () => {
+      expect(lastCommitAt(headCommit(null, {}, '2026-08-30T07:15:00Z'))).toBe(
+        '2026-08-30T07:15:00Z',
+      );
+    });
+
+    it('falls back to the last activity when the head commit did not load', () => {
+      expect(lastCommitAt({ nodes: [null] })).toBe('2026-10-05T12:00:00Z');
+      expect(lastCommitAt({ nodes: [] })).toBe('2026-10-05T12:00:00Z');
+      expect(lastCommitAt({ nodes: null })).toBe('2026-10-05T12:00:00Z');
     });
   });
 

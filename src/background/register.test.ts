@@ -87,4 +87,25 @@ describe('registerBackground', () => {
     await settle();
     expect(alarm()).toMatchObject({ periodInMinutes: 10 });
   });
+
+  it('opens the side panel of the window the open-panel shortcut was pressed in', () => {
+    registerBackground();
+    const open = vi.spyOn(chrome.sidePanel, 'open');
+    fakeChrome().commands.onCommand.emit('other', { windowId: 3 } as chrome.tabs.Tab);
+    fakeChrome().commands.onCommand.emit('open-panel', undefined);
+    expect(open).not.toHaveBeenCalled();
+    fakeChrome().commands.onCommand.emit('open-panel', { windowId: 3 } as chrome.tabs.Tab);
+    expect(open).toHaveBeenCalledWith({ windowId: 3 });
+  });
+
+  it('routes notification buttons to the notifier', async () => {
+    registerBackground();
+    await chrome.storage.session.set({
+      notified: { 'PR_1:approved:r1': 'https://github.com/a/b/pull/1' },
+    });
+    fakeChrome().notifications.onButtonClicked.emit('PR_1:approved:r1', 0);
+    await vi.waitFor(() =>
+      expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/a/b/pull/1' }]),
+    );
+  });
 });

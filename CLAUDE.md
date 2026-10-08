@@ -10,14 +10,19 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 
 | Command | What |
 |---|---|
-| `pnpm verify` | Everything CI runs: Biome, types, unit + coverage gates, build, size budget, E2E. Must be green before every commit. |
+| `pnpm verify` | Everything CI runs: Biome, types, unit + coverage gates, build, size budget, all E2E. CI runs it on every push; it must be green before merging. |
+| `pnpm verify:changed` | Before every commit: `verify:fast`, build and size budget. E2E runs in CI only; run one spec locally (`pnpm build:e2e && pnpm exec playwright test <spec> --reporter=dot`) only while writing it or to chase a CI failure. |
 | `pnpm verify:fast` | Lint + types + unit tests (inner loop) |
 | `pnpm test` / `pnpm coverage` | Vitest (coverage gates: 80% global, 95% `src/lib/diff` and `src/lib/github`) |
 | `pnpm e2e` | Builds `dist-e2e/` then runs Playwright against the mock GitHub server |
-| `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` (only way they change) |
+| `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` at 2x, 800 px wide (only way they change) |
 | `pnpm build` / `pnpm size` / `pnpm zip` | Production build, perf budget (`perf-budget.json`), release zip |
 | `pnpm icons` | Re-rasterize `src/assets/logo.svg` into `public/icons/*.png` |
 | `pnpm lint:fix` | Biome format + safe fixes |
+
+Needs Node 24 (`.nvmrc`) and pnpm 12 (`packageManager`; pnpm fetches that exact version). E2E runs
+in Playwright's Chromium; set `PROWL_CHROMIUM=/path/to/chromium` to use another (the cloud sandbox:
+`/opt/pw-browsers/chromium`; `pnpm icons` and `pnpm store-images` honour it too).
 
 Load the built extension: `chrome://extensions` → Developer mode → Load unpacked → `dist/`.
 
@@ -74,6 +79,7 @@ Never rewrite history, never force-push, never skip hooks or weaken a quality ga
 
 ## Ralph loop
 
-Work is tracked in `prd.json` (stories, `passes`) and `progress.txt` (append-only log with a
-"Codebase patterns" section at the top). One story per iteration; see `scripts/ralph/prompt.md`.
-Specialist roles are in `.claude/agents/`.
+Work is tracked in `prd.json` (stories, `passes`; `node scripts/ralph/story.mjs` prints the next
+one and records results) and `progress.txt` ("Codebase patterns" at the top, the latest entries
+below, older ones in `progress-archive.txt`). One story per iteration; see
+`scripts/ralph/prompt.md`. Specialist roles are in `.claude/agents/`.

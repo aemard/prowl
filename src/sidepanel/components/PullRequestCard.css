@@ -56,6 +56,9 @@
 
 .pr-card__number {
   flex-shrink: 0;
+}
+
+.pr-card__repo-name + .pr-card__number {
   margin-left: var(--space-0-5);
 }
 

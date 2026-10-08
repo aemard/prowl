@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 /** Stubs GitHub: the viewer query and `GET /user` with the given scopes header. */
-function stubGitHub(scopes = 'repo') {
+function stubGitHub(scopes = 'repo, read:org') {
   const fetch = vi.fn(async (input: RequestInfo | URL) =>
     String(input).endsWith('/graphql')
       ? jsonResponse({ data: { viewer: viewerNode() } })
@@ -55,7 +55,7 @@ describe('OnboardingView', () => {
 
     const classic = screen.getByRole('link', { name: 'Create a classic token' });
     expect(classic.getAttribute('href')).toBe(TOKEN_URLS.classic);
-    expect(classic.getAttribute('href')).toContain('scopes=repo');
+    expect(classic.getAttribute('href')).toContain('scopes=repo,read:org');
     const fine = screen.getByRole('link', { name: 'Create a fine-grained token' });
     expect(fine.getAttribute('href')).toBe(TOKEN_URLS.fineGrained);
   });
@@ -95,7 +95,7 @@ describe('OnboardingView', () => {
       method: 'pat',
       token: TOKEN,
       tokenType: 'classic',
-      scopes: ['repo'],
+      scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
     expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });

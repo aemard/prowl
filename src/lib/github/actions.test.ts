@@ -6,6 +6,8 @@ import {
   COMMENT_MUTATION,
   CONVERT_TO_DRAFT_MUTATION,
   comment,
+  DISABLE_AUTO_MERGE_MUTATION,
+  ENABLE_AUTO_MERGE_MUTATION,
   MARK_READY_MUTATION,
   MAX_BODY_LENGTH,
   MERGE_MUTATION,
@@ -13,7 +15,10 @@ import {
   REQUEST_CHANGES_MUTATION,
   requestChanges,
   rerunFailedChecks,
+  setAutoMerge,
   setDraft,
+  UPDATE_BRANCH_MUTATION,
+  updateBranch,
 } from './actions';
 import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
@@ -353,5 +358,56 @@ describe('setDraft', () => {
     });
     const empty = setup({ convertPullRequestToDraft: null });
     await expect(setDraft(empty.client, 'PR_1', true)).rejects.toBeInstanceOf(GitHubError);
+  });
+});
+
+describe('updateBranch', () => {
+  it('merges or rebases the base in, pinned to the head it was asked on', async () => {
+    const merged = setup({ updatePullRequestBranch: { pullRequest: { headRefOid: 'def' } } });
+    await updateBranch(merged.client, 'PR_1', 'abc', 'merge');
+    expect(merged.sent).toEqual([
+      { query: UPDATE_BRANCH_MUTATION, variables: { id: 'PR_1', oid: 'abc', method: 'MERGE' } },
+    ]);
+    const rebased = setup({ updatePullRequestBranch: { pullRequest: { headRefOid: 'def' } } });
+    await updateBranch(rebased.client, 'PR_1', 'abc', 'rebase');
+    expect(rebased.sent[0]?.variables).toMatchObject({ method: 'REBASE' });
+  });
+
+  it('fails when GitHub does not confirm the update', async () => {
+    const empty = setup({ updatePullRequestBranch: null });
+    await expect(updateBranch(empty.client, 'PR_1', 'abc', 'merge')).rejects.toMatchObject({
+      kind: 'server',
+    });
+  });
+});
+
+describe('setAutoMerge', () => {
+  it('turns auto-merge on with a method pinned to the head, and off', async () => {
+    const on = setup({
+      enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: { mergeMethod: 'SQUASH' } } },
+    });
+    await setAutoMerge(on.client, 'PR_1', 'squash', 'abc');
+    expect(on.sent).toEqual([
+      {
+        query: ENABLE_AUTO_MERGE_MUTATION,
+        variables: { id: 'PR_1', method: 'SQUASH', oid: 'abc' },
+      },
+    ]);
+    const off = setup({ disablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null } } });
+    await setAutoMerge(off.client, 'PR_1', null, 'abc');
+    expect(off.sent).toEqual([{ query: DISABLE_AUTO_MERGE_MUTATION, variables: { id: 'PR_1' } }]);
+  });
+
+  it('fails when GitHub does not confirm the new state', async () => {
+    const stillOff = setup({
+      enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null } },
+    });
+    await expect(setAutoMerge(stillOff.client, 'PR_1', 'merge', 'abc')).rejects.toMatchObject({
+      kind: 'server',
+    });
+    const empty = setup({ disablePullRequestAutoMerge: null });
+    await expect(setAutoMerge(empty.client, 'PR_1', null, 'abc')).rejects.toBeInstanceOf(
+      GitHubError,
+    );
   });
 });

@@ -1,5 +1,7 @@
-/** Pure list logic for the pull request list: the quick filter and the sort order. */
-import type { PullRequest, SortOrder } from '../../lib/model';
+/** Pure logic of the pull request list: quick filter, sort order, repositories, PRs set aside. */
+import { type HiddenReason, type HideSettings, hiddenReasons } from '../../lib/hidden';
+import type { PrLocalState, PullRequest, SortOrder } from '../../lib/model';
+import { isSnoozed } from '../../lib/storage/prLocal';
 
 /**
  * Keeps the PRs matching every word of `query` (case-insensitive) in the repository, number,
@@ -33,4 +35,53 @@ export function sortPullRequests(prs: PullRequest[], order: SortOrder): PullRequ
           a.repo.nameWithOwner.localeCompare(b.repo.nameWithOwner) || newest('updatedAt')(a, b)
       : newest(order === 'created' ? 'createdAt' : 'updatedAt');
   return [...prs].sort(compare);
+}
+
+/** The PRs of one repository in a grouped list. */
+export interface RepoGroup {
+  /** `owner/name`. */
+  repo: string;
+  prs: PullRequest[];
+}
+
+/**
+ * Groups already filtered and sorted PRs by repository. A group sits where its first PR does,
+ * so the groups follow the sort order (alphabetical for `repo`, which sorts by name first) and
+ * the PRs inside a group keep theirs.
+ */
+export function groupByRepo(prs: PullRequest[]): RepoGroup[] {
+  const groups = new Map<string, RepoGroup>();
+  for (const pr of prs) {
+    const repo = pr.repo.nameWithOwner;
+    const group = groups.get(repo) ?? { repo, prs: [] };
+    group.prs.push(pr);
+    groups.set(repo, group);
+  }
+  return [...groups.values()];
+}
+
+/** The PRs of one section, split the way the list shows them. Each part keeps the given order. */
+export interface SectionParts {
+  /** Cards, and the section's count. */
+  shown: PullRequest[];
+  /** Behind "Show N hidden", with why each one is hidden. */
+  hidden: { pr: PullRequest; reasons: HiddenReason[] }[];
+  /** Behind "Snoozed (N)". A snoozed PR is there even when it would also be hidden. */
+  snoozed: PullRequest[];
+}
+
+export function splitSection(
+  prs: PullRequest[],
+  local: PrLocalState,
+  hide: HideSettings,
+  now: number,
+): SectionParts {
+  const parts: SectionParts = { shown: [], hidden: [], snoozed: [] };
+  for (const pr of prs) {
+    const reasons = hiddenReasons(pr, hide, now);
+    if (isSnoozed(local, pr.id, now)) parts.snoozed.push(pr);
+    else if (reasons.length > 0) parts.hidden.push({ pr, reasons });
+    else parts.shown.push(pr);
+  }
+  return parts;
 }

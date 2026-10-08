@@ -103,7 +103,7 @@ describe('describePullRequest', () => {
     const pr = buildPullRequest({
       number: 42,
       title: 'Fix the flaky test',
-      author: { login: 'bob', avatarUrl: '' },
+      author: { login: 'bob', avatarUrl: '', isBot: false },
       checks: checks({ state: 'failure', total: 3, failed: 1, passed: 2 }),
       unresolvedThreads: 2,
       commentCount: 1,
@@ -124,6 +124,22 @@ describe('describePullRequest', () => {
     const pr = buildPullRequest({ author: null });
     expect(describePullRequest(pr, [], false, NOW)).toBe(
       'acme/widgets#1. Updated 2 h ago. Opened 5 d ago',
+    );
+  });
+});
+
+describe('auto-merge', () => {
+  it('says auto-merge is on, with the method and who turned it on, after conflicts', () => {
+    const on = buildPullRequest({ autoMerge: { method: 'squash', enabledBy: 'alice' } });
+    expect(pullRequestStatuses(on).find((s) => s.id === 'merge')).toMatchObject({
+      label: 'Auto-merge',
+      detail: 'Auto-merge on (squash), by alice',
+    });
+    const conflicting = { ...on, mergeable: 'conflicting' as const };
+    expect(pullRequestStatuses(conflicting).find((s) => s.id === 'merge')?.label).toBe('Conflicts');
+    const anonymous = buildPullRequest({ autoMerge: { method: 'merge', enabledBy: null } });
+    expect(pullRequestStatuses(anonymous).find((s) => s.id === 'merge')?.detail).toBe(
+      'Auto-merge on (merge commit)',
     );
   });
 });

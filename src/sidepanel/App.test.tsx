@@ -62,6 +62,9 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const settings = await screen.findByRole('main', { name: 'Settings' });
     expect(document.activeElement).toBe(settings);
+    // The landmark is renamed at once; wait for the lazy view too, or its import can outlive the
+    // test environment (EnvironmentTeardownError under coverage).
+    await screen.findByRole('heading', { name: 'Settings', level: 2 });
 
     await act(() => navigate('list'));
     expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Pull requests' }));

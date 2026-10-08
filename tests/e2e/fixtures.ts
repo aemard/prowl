@@ -11,6 +11,10 @@ import type { AuthState } from '../../src/lib/model';
 import { MockGitHub } from './mock-github/server';
 
 const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
+/** The production build, as the store ships it (`pnpm build`). */
+export const PRODUCTION_PATH = resolve(import.meta.dirname, '../../dist');
+/** `pnpm screenshots`: the run that writes docs/screenshots/. */
+const WRITE_SCREENSHOTS = process.env.PROWL_SCREENSHOTS === '1';
 
 export interface ExtensionFixtures {
   context: BrowserContext;
@@ -42,6 +46,42 @@ export const E2E_AUTH: AuthState = {
   createdAt: '2026-10-06T08:00:00.000Z',
 };
 
+/**
+ * Chromium with the unpacked extension in `extensionPath` loaded, in a fresh profile, once its
+ * service worker is running.
+ */
+export async function launchExtension(extensionPath: string): Promise<BrowserContext> {
+  const launch = () =>
+    chromium.launchPersistentContext('', {
+      channel: 'chromium',
+      // Unset in CI, which uses Playwright's own Chromium. A machine that has another Chromium
+      // points PROWL_CHROMIUM at it (docs/releasing.md).
+      executablePath: process.env.PROWL_CHROMIUM || undefined,
+      headless: !process.env.HEADED,
+      viewport: { width: 400, height: 760 },
+      // The images in docs/ are shown on HiDPI screens: capture them at twice the pixel density
+      // (800 x 1520). Routine runs stay at 1x, which renders four times fewer pixels.
+      deviceScaleFactor: WRITE_SCREENSHOTS ? 2 : 1,
+      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+    });
+  // On a machine under heavy load Chrome sometimes never starts the extension's service worker
+  // (seen twice in a few hundred launches, both while other builds ran). A new profile fixes it,
+  // so start over after a few seconds instead of waiting out the whole test timeout.
+  const hasWorker = (browser: BrowserContext) =>
+    browser.serviceWorkers().length > 0
+      ? true
+      : browser.waitForEvent('serviceworker', { timeout: 8_000 }).then(
+          () => true,
+          () => false,
+        );
+  let context = await launch();
+  for (let retry = 0; retry < 2 && !(await hasWorker(context)); retry++) {
+    await context.close();
+    context = await launch();
+  }
+  return context;
+}
+
 export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
   github: [
     // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture signature.
@@ -56,31 +96,7 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 
   context: async ({ github }, use) => {
     github.reset();
-    const launch = () =>
-      chromium.launchPersistentContext('', {
-        channel: 'chromium',
-        headless: !process.env.HEADED,
-        viewport: { width: 400, height: 760 },
-        args: [
-          `--disable-extensions-except=${EXTENSION_PATH}`,
-          `--load-extension=${EXTENSION_PATH}`,
-        ],
-      });
-    // On a machine under heavy load Chrome sometimes never starts the extension's service worker
-    // (seen twice in a few hundred launches, both while other builds ran). A new profile fixes it,
-    // so start over after a few seconds instead of waiting out the whole test timeout.
-    const hasWorker = (browser: BrowserContext) =>
-      browser.serviceWorkers().length > 0
-        ? true
-        : browser.waitForEvent('serviceworker', { timeout: 8_000 }).then(
-            () => true,
-            () => false,
-          );
-    let context = await launch();
-    for (let retry = 0; retry < 2 && !(await hasWorker(context)); retry++) {
-      await context.close();
-      context = await launch();
-    }
+    const context = await launchExtension(EXTENSION_PATH);
     await use(context);
     await context.close();
   },
@@ -171,13 +187,20 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
 export const expect = test.expect;
 
 /**
- * Saves a screenshot to docs/screenshots/<name>.png for the README and the site.
- * Only writes when PROWL_SCREENSHOTS=1 (`pnpm screenshots`), so routine E2E runs don't churn
- * the committed images; the page is still captured so rendering errors surface either way.
+ * Saves a screenshot to docs/screenshots/<name>.png for the README and the site, at twice the
+ * panel's CSS size (see `deviceScaleFactor` above). Only writes when PROWL_SCREENSHOTS=1
+ * (`pnpm screenshots`), so routine E2E runs don't churn the committed images; the page is still
+ * captured so rendering errors surface either way.
  */
-export async function saveScreenshot(page: Page, name: string): Promise<void> {
-  const write = process.env.PROWL_SCREENSHOTS === '1';
-  await page.screenshot(
-    write ? { path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`) } : {},
-  );
+export async function saveScreenshot(
+  page: Page,
+  name: string,
+  options: { fullPage?: boolean } = {},
+): Promise<void> {
+  await page.screenshot({
+    ...options,
+    ...(WRITE_SCREENSHOTS && {
+      path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`),
+    }),
+  });
 }

@@ -2,7 +2,8 @@
 
 Prowl is a Manifest V3 extension that holds a GitHub token able to read private repositories,
 approve, merge and re-run CI. That token is the asset worth protecting. Method: STRIDE over the
-data flows below. Last reviewed: 2026-10-06, for the v1.0.0 release.
+data flows below. Last reviewed: 2026-10-06, for the v1.0.0 release; the site-access lock below was
+added on 2026-10-07 (US-032).
 
 ## Assets
 
@@ -50,7 +51,11 @@ another extension or web page could send.
 | I | Notifications reveal private PR titles on a shared screen | Quiet hours and per-event toggles; OS notification privacy settings apply | `src/lib/notify` |
 | D | Polling exhausts the user's API budget | Minimum interval 1 min, rate-limit aware waits, low-budget pause, exponential backoff with jitter, single-flight polls | `src/background/poller.ts`, `src/lib/time/backoff.ts` |
 | D | A huge or hostile response stalls the panel | Results capped per section (≤ 100), error messages truncated, 20 s request timeout | `fetchPullRequests.ts`, `client.ts` |
-| E | Over-broad permissions widen the blast radius | Permissions: `sidePanel`, `storage`, `alarms`, `notifications`; host `api.github.com`; `github.com` optional, requested when the device flow starts and removed when it ends and on sign-out | manifest test, `session.ts` |
+| E | Over-broad permissions widen the blast radius | The manifest is held to an exact list by the site-access lock: permissions `sidePanel`, `storage`, `alarms`, `notifications`; host `api.github.com`; optional host `github.com`, requested when the device flow starts and removed when it ends and on sign-out. Any other permission, host or top-level manifest key fails the build, and the same lock runs on the built extensions loaded in Chrome | `tests/fixtures/manifestLock.ts`, `tests/unit/siteAccess.test.ts`, `tests/e2e/permissions.spec.ts`, `session.ts` |
+| I | The extension (or code that reaches it) spies on the pages the user visits | Chrome has nothing to give it: no content scripts, no `scripting`, `activeTab`, `tabs`, `history`, `webNavigation`, `webRequest`, `declarativeNetRequest` or `cookies`, no host beyond GitHub; the code only ever calls `chrome.tabs.create`. The panel shows Chrome's live permission list, and docs/privacy.md has the table of what each permission allows and what the install prompt shows | lock above, `tests/unit/siteAccess.test.ts` (source scan, docs name every permission), Settings › Privacy and permissions |
+| T | Settings synced by another device (or a tampered Chrome sync copy) inject bad values | Sync is off unless the user turns it on, per device; incoming copies go through `normalizeSettings` like any stored value (custom queries are still validated before use, team keys and repo patterns are checked), and only the `settings` key is ever written to `chrome.storage.sync` | `src/background/sync.ts`, `sync.test.ts` |
+| I | GitHub cookies ride along with Prowl's requests | Every request to api.github.com and github.com sets `credentials: 'omit'`: the token authenticates, and the optional github.com permission would otherwise attach the user's session cookies to the device flow | `client.ts`, `deviceFlow.ts` |
+| T | A team slug turns into a search qualifier | Discovered teams are kept only when `org/slug` matches the same rule as `unfollowedTeams` (`TEAM_KEY`) before it reaches `team-review-requested:` | `teams.ts`, `settings.ts` |
 | E | Supply-chain compromise of a dependency or action | Two direct runtime dependencies (Preact, @preact/signals, which pulls @preact/signals-core); the release job builds without a shared dependency cache; lockfile; Dependabot; CodeQL; dependency review; Scorecard; actions pinned to commit SHAs with least-privilege `permissions` and `persist-credentials: false`; releases ship an SBOM and provenance | `.github/workflows` |
 
 ## Residual risks (accepted)
@@ -64,5 +69,11 @@ another extension or web page could send.
 - **Malicious extension with broad privileges** installed in the same profile is out of scope:
   Chrome isolates extension storage, but such an extension could still attack github.com tabs.
 - **GitHub itself** is trusted for the data it returns and for TLS.
+- **A GitHub host permission still lets an extension read the address and title of the tabs on
+  that host** (`chrome.tabs`, Chrome's rule for any host permission). For Prowl that is a tab
+  showing api.github.com, or github.com while the device flow runs. The code never queries tabs
+  (a test fails if it does), and docs/privacy.md says so in "The one thing a site permission
+  still shows". A malicious update could still add such a call: the lock keeps the manifest
+  honest, not the code, so release provenance and review of the diff remain the control.
 - **Side-loaded installs** ("Load unpacked") do not auto-update; users must watch releases.
   Release zips carry a provenance attestation so users can verify their origin.

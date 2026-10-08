@@ -102,7 +102,8 @@ export function OnboardingView() {
           </header>
           <p>
             Sees every repository you can access, with full CI status. It needs the{' '}
-            <code>repo</code> scope; the link selects it for you.
+            <code>repo</code> scope, and <code>read:org</code> to find your teams’ review requests;
+            the link selects both for you.
           </p>
           <GitHubLink href={TOKEN_URLS.classic}>Create a classic token</GitHubLink>
         </article>
@@ -115,8 +116,8 @@ export function OnboardingView() {
           <p>
             Covers one account or organization and the repositories you pick. Grant Pull requests,
             Contents and Actions (read and write, to approve, merge and re-run checks) and Commit
-            statuses (read). GitHub does not offer the Checks permission to fine-grained tokens, so
-            CI status can be missing.
+            statuses (read), plus Members (read) on an organization to find its teams. GitHub does
+            not offer the Checks permission to fine-grained tokens, so CI status can be missing.
           </p>
           <GitHubLink href={TOKEN_URLS.fineGrained}>Create a fine-grained token</GitHubLink>
         </article>

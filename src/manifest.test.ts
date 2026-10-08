@@ -15,12 +15,15 @@ describe('toExtensionVersion', () => {
 });
 
 describe('createManifest', () => {
-  it('requests only GitHub API access in production', () => {
+  it('declares the open-panel shortcut and no other command', () => {
+    expect(createManifest('production').commands).toEqual({
+      'open-panel': { suggested_key: { default: 'Alt+Shift+P' }, description: 'Open Prowl' },
+    });
+  });
+
+  it('has a strict extension CSP in production', () => {
     const manifest = createManifest('production');
     expect(manifest.manifest_version).toBe(3);
-    expect(manifest.host_permissions).toEqual(['https://api.github.com/*']);
-    expect(manifest.optional_host_permissions).toEqual(['https://github.com/*']);
-    expect(manifest.permissions).toEqual(['sidePanel', 'storage', 'alarms', 'notifications']);
     expect(manifest.content_security_policy?.extension_pages).toContain("script-src 'self'");
     expect(manifest.content_security_policy?.extension_pages).not.toContain(E2E_ORIGIN);
   });
@@ -33,13 +36,11 @@ describe('createManifest', () => {
     expect(manifest.content_security_policy?.extension_pages).toContain(E2E_ORIGIN);
   });
 
-  it('exposes no surface to web pages or other extensions', () => {
+  // What the manifest may ask Chrome for (permissions, hosts, content scripts, web-accessible
+  // resources, ...) is locked in tests/unit/siteAccess.test.ts.
+  it('allows no unsafe script source or plugin', () => {
     for (const mode of ['production', 'e2e'] as const) {
-      const manifest = createManifest(mode) as Record<string, unknown>;
-      expect(manifest.content_scripts).toBeUndefined();
-      expect(manifest.externally_connectable).toBeUndefined();
-      expect(manifest.web_accessible_resources).toBeUndefined();
-      const csp = (manifest.content_security_policy as { extension_pages: string }).extension_pages;
+      const csp = createManifest(mode).content_security_policy?.extension_pages ?? '';
       expect(csp).toMatch(/script-src 'self'(;|$)/);
       expect(csp).toContain("object-src 'none'");
       expect(csp).not.toMatch(/unsafe-(inline|eval)/);

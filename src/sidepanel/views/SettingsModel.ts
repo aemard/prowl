@@ -1,5 +1,14 @@
 /** Pure helpers and copy for the settings screen. */
-import type { AuthState, BadgeMode, PrEventType, QuietHours, SectionKind } from '../../lib/model';
+import { env } from '../../lib/env';
+import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
+import type {
+  AuthState,
+  BadgeMode,
+  PrEventType,
+  QuietHours,
+  SectionKind,
+  Team,
+} from '../../lib/model';
 
 /** GitHub's GraphQL budget per hour for one token. */
 export const HOURLY_POINTS = 5000;
@@ -21,9 +30,16 @@ export function estimatedPointsPerHour(
   return Math.round((sections * perSearch * 60) / intervalMinutes);
 }
 
+/** Searches the team section runs per poll: one per followed team, capped like the worker. */
+export function teamSearches(list: readonly Team[], unfollowed: readonly string[]): number {
+  const skip = new Set(unfollowed);
+  return Math.min(list.filter((team) => !skip.has(teamKey(team))).length, MAX_TEAM_SEARCHES);
+}
+
 export const PRESET_DESCRIPTIONS: Record<Exclude<SectionKind, 'custom'>, string> = {
   authored: 'Pull requests you opened',
-  review_requested: 'Pull requests waiting for your review',
+  review_requested: 'Pull requests that ask you for a review (your teams have their own section)',
+  team_review_requested: 'Pull requests that ask one of your teams for a review',
   mentioned: 'Pull requests that mention you',
   assigned: 'Pull requests assigned to you',
 };
@@ -59,3 +75,55 @@ export const TOKEN_TYPES: Record<AuthState['tokenType'], string> = {
   oauth: 'OAuth token (signed in with GitHub)',
   unknown: 'Unknown',
 };
+
+/** What each named permission lets Prowl do, in the order Settings lists them. */
+const NAMED_PERMISSIONS: Record<string, { title: string; detail: string }> = {
+  sidePanel: { title: 'Side panel', detail: "Show Prowl in Chrome's side panel." },
+  storage: { title: 'Storage', detail: 'Keep your settings and pull requests in this browser.' },
+  alarms: {
+    title: 'Alarms',
+    detail: 'Check GitHub on a schedule, even when the panel is closed.',
+  },
+  notifications: { title: 'Notifications', detail: 'Tell you when a pull request changes.' },
+};
+
+export interface PermissionRow {
+  title: string;
+  detail: string;
+}
+
+/** What the sites Prowl may contact let it do. Any other host gets Chrome's own wording. */
+function describeOrigin(pattern: string): PermissionRow {
+  const title = pattern.replace(/^[^:]+:\/\//, '').replace(/\/.*$/, '');
+  if (pattern === `${env.apiUrl}/*`) {
+    return { title, detail: 'Read your pull requests and act on them, using your token.' };
+  }
+  if (pattern === `${env.webUrl}/*`) {
+    return {
+      title,
+      detail:
+        'Sign in with GitHub. Prowl asks for this only while you sign in, then gives it back.',
+    };
+  }
+  return { title, detail: 'Read and change your data on this site.' };
+}
+
+/**
+ * Plain-language rows for what Chrome says Prowl may do right now (`chrome.permissions.getAll()`):
+ * the named permissions Prowl knows first, any other after them under its own name, then the sites.
+ */
+export function describePermissions({
+  permissions = [],
+  origins = [],
+}: {
+  permissions?: readonly string[];
+  origins?: readonly string[];
+}): PermissionRow[] {
+  const known = Object.keys(NAMED_PERMISSIONS).filter((name) => permissions.includes(name));
+  const unknown = permissions.filter((name) => !Object.hasOwn(NAMED_PERMISSIONS, name));
+  return [
+    ...known.map((name) => NAMED_PERMISSIONS[name] as PermissionRow),
+    ...unknown.map((title) => ({ title, detail: 'Not described by this version of Prowl.' })),
+    ...origins.map(describeOrigin),
+  ];
+}

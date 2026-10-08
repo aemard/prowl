@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AuthState, Section, Settings } from '../../lib/model';
+import type { AuthState, Section, Settings, TeamsState } from '../../lib/model';
 import { defaultSettings, normalizeSettings } from '../../lib/storage/settings';
 import { fakeChrome } from '../../test/chrome';
 import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
@@ -19,10 +19,15 @@ afterEach(() => {
 });
 
 /** Stores `settings` (and the account), loads the panel's store from it and renders the screen. */
-async function open(settings: Partial<Settings> = {}, account: AuthState | null = buildAuth()) {
+async function open(
+  settings: Partial<Settings> = {},
+  account: AuthState | null = buildAuth(),
+  stored: Record<string, unknown> = {},
+) {
   await chrome.storage.local.set({
     settings: { ...defaultSettings(), ...settings },
     ...(account ? { auth: account } : {}),
+    ...stored,
   });
   await act(async () => {
     stop = await hydrateStore();
@@ -40,6 +45,17 @@ const group = (title: string) =>
   within(screen.getByRole('heading', { level: 3, name: title }).closest('section') as HTMLElement);
 const toggle = (name: string, scope: Pick<typeof screen, 'getByRole'> = screen) =>
   scope.getByRole('switch', { name });
+const teamsState = (overrides: Partial<TeamsState> = {}): TeamsState => ({
+  login: buildAuth().viewer.login,
+  fetchedAt: new Date().toISOString(),
+  teams: [
+    { org: 'acme', slug: 'ops', name: 'Ops' },
+    { org: 'acme', slug: 'web', name: 'Web' },
+    { org: 'octo', slug: 'docs', name: 'Docs' },
+  ],
+  error: null,
+  ...overrides,
+});
 const custom = (overrides: Partial<Section> = {}): Section => ({
   id: 'custom-1',
   kind: 'custom',
@@ -55,10 +71,12 @@ describe('SettingsView', () => {
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings');
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
       'Pull requests',
+      'Teams',
       'Refresh',
       'Notifications',
       'Appearance',
       'Account',
+      'Privacy and permissions',
       'About',
     ]);
   });
@@ -69,7 +87,13 @@ describe('SettingsView', () => {
       const scope = group('Pull requests');
       expect(toggle('Created by me', scope).getAttribute('aria-checked')).toBe('true');
       expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('false');
-      expect(scope.getByText('Pull requests waiting for your review')).toBeTruthy();
+      expect(
+        scope.getByText(
+          'Pull requests that ask you for a review (your teams have their own section)',
+        ),
+      ).toBeTruthy();
+      expect(toggle('Team reviews', scope).getAttribute('aria-checked')).toBe('false');
+      expect(scope.getByText('Pull requests that ask one of your teams for a review')).toBeTruthy();
 
       fireEvent.click(toggle('Review requested', scope));
       await waitFor(() =>
@@ -78,6 +102,7 @@ describe('SettingsView', () => {
       expect((await saved()).sections.map((s) => [s.id, s.enabled])).toEqual([
         ['authored', true],
         ['review_requested', true],
+        ['team_review_requested', false],
         ['mentioned', false],
         ['assigned', false],
       ]);
@@ -145,7 +170,7 @@ describe('SettingsView', () => {
       expect(dialog.getByText(/follows pull requests only/)).toBeTruthy();
       fireEvent.click(dialog.getByRole('button', { name: 'Save' }));
       expect(document.activeElement).toBe(dialog.getByLabelText('Search query'));
-      expect((await saved()).sections).toHaveLength(4);
+      expect((await saved()).sections).toHaveLength(5);
     });
 
     it('rejects queries GitHub would answer with an error', async () => {
@@ -181,7 +206,7 @@ describe('SettingsView', () => {
       fill(dialog, 'Bugs', 'label:bug');
       fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));
       expect(screen.queryByRole('dialog')).toBeNull();
-      expect((await saved()).sections).toHaveLength(4);
+      expect((await saved()).sections).toHaveLength(5);
     });
 
     it('removes a section and puts it back where it was on undo', async () => {
@@ -205,6 +230,7 @@ describe('SettingsView', () => {
           'authored',
           'review_requested',
           'custom-1',
+          'team_review_requested',
           'mentioned',
           'assigned',
         ]),
@@ -280,7 +306,105 @@ describe('SettingsView', () => {
         maxPerSection: 100,
         pollIntervalMinutes: 1,
       });
+      // Four presets at 480 points an hour; Team reviews searches nothing without a team.
       expect(group('Refresh').getByText(/about 1,920 points an hour/)).toBeTruthy();
+    });
+
+    it('counts a search per followed team', async () => {
+      await open(
+        {
+          sections: defaultSettings().sections.map((s) => ({ ...s, enabled: true })),
+          maxPerSection: 100,
+          pollIntervalMinutes: 1,
+          unfollowedTeams: ['acme/ops'],
+        },
+        buildAuth(),
+        { teams: teamsState() },
+      );
+      expect(group('Refresh').getByText(/about 2,880 points an hour/)).toBeTruthy();
+    });
+  });
+
+  describe('teams', () => {
+    it('lists the teams by organization and follows or unfollows each one', async () => {
+      await open({}, buildAuth(), { teams: teamsState() });
+      const teams = group('Teams');
+      expect(
+        teams.getAllByRole('group').map((g) => g.querySelector('legend')?.textContent),
+      ).toEqual(['acme', 'octo']);
+      expect(toggle('Web', teams).getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(toggle('Ops', teams));
+      await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual(['acme/ops']));
+      fireEvent.click(toggle('Ops', teams));
+      await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual([]));
+    });
+
+    it('says when Team reviews is off, and refreshes the list on demand', async () => {
+      const send = vi.spyOn(chrome.runtime, 'sendMessage');
+      await open({}, buildAuth(), { teams: teamsState() });
+      const teams = group('Teams');
+      expect(teams.getByText(/Turn on Team reviews under Sections/)).toBeTruthy();
+      fireEvent.click(teams.getByRole('button', { name: 'Refresh teams' }));
+      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' }));
+    });
+
+    it('explains a token that cannot list teams and offers to sign in again', async () => {
+      await open({}, buildAuth(), {
+        teams: teamsState({
+          teams: [],
+          error: { kind: 'missing_scope', message: 'GitHub would not list your teams.' },
+        }),
+      });
+      const teams = group('Teams');
+      expect(teams.getByText('GitHub would not list your teams.')).toBeTruthy();
+      fireEvent.click(teams.getByRole('button', { name: 'Sign in again' }));
+      expect(location.hash).toBe('#/onboarding');
+    });
+
+    it('says when GitHub lists no team, and when it has not looked yet', async () => {
+      await open({}, buildAuth(), { teams: teamsState({ teams: [] }) });
+      expect(group('Teams').getByText('GitHub lists no team for your account.')).toBeTruthy();
+      cleanup();
+      stop?.();
+      await chrome.storage.local.remove('teams');
+      await open();
+      expect(group('Teams').getByText('Not checked yet')).toBeTruthy();
+    });
+
+    it('warns when more teams are followed than Prowl searches', async () => {
+      const many = Array.from({ length: 12 }, (_, i) => ({
+        org: 'acme',
+        slug: `t${i}`,
+        name: `T${i}`,
+      }));
+      await open({}, buildAuth(), { teams: teamsState({ teams: many }) });
+      expect(
+        group('Teams').getByText(/You follow 12 teams; Prowl searches the first 10/),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('settings sync', () => {
+    it('turns syncing on for this device only, and shows why Chrome sync refused', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      const toggle = privacy.getByRole('switch', {
+        name: 'Sync settings with your Chrome profile',
+      });
+      expect(toggle.getAttribute('aria-checked')).toBe('false');
+      fireEvent.click(toggle);
+      await waitFor(async () =>
+        expect((await chrome.storage.local.get('sync')).sync).toEqual({
+          enabled: true,
+          error: null,
+        }),
+      );
+      await act(async () => {
+        await chrome.storage.local.set({
+          sync: { enabled: true, error: 'Too big for Chrome sync.' },
+        });
+      });
+      expect(privacy.getByRole('status').textContent).toBe('Too big for Chrome sync.');
     });
   });
 
@@ -391,6 +515,58 @@ describe('SettingsView', () => {
       );
     });
 
+    it('hides pull requests after the number of days without a commit, 0 for never', async () => {
+      await open();
+      const field = group('Appearance').getByLabelText('Hide PRs with no commit for (days)');
+      expect((field as HTMLInputElement).value).toBe('20');
+      expect(group('Appearance').getByText(/still notify you\. 0 never hides\./)).toBeTruthy();
+
+      fireEvent.input(field, { target: { value: '366' } });
+      expect(screen.getByText('Enter a whole number from 0 to 365.')).toBeTruthy();
+      expect((await saved()).hideStaleAfterDays).toBe(20);
+      fireEvent.input(field, { target: { value: '0' } });
+      await waitFor(async () => expect((await saved()).hideStaleAfterDays).toBe(0));
+    });
+
+    it('hides drafts and bot PRs with one switch each, off by default', async () => {
+      await open();
+      const appearance = group('Appearance');
+      const drafts = toggle('Hide draft PRs', appearance);
+      const bots = toggle('Hide PRs opened by bots', appearance);
+      expect(drafts.getAttribute('aria-checked')).toBe('false');
+      expect(bots.getAttribute('aria-checked')).toBe('false');
+      expect(bots.getAttribute('aria-describedby')).toBeTruthy();
+      expect(appearance.getByText(/Dependabot, Renovate and other apps/)).toBeTruthy();
+
+      fireEvent.click(drafts);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: true }));
+      expect((await saved()).hideBots).toBe(false);
+      fireEvent.click(bots);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideBots: true }));
+      expect(drafts.getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(drafts);
+      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: false }));
+    });
+
+    it('groups by repository with its own switch, apart from the sort order', async () => {
+      await open();
+      const appearance = group('Appearance');
+      const grouping = toggle('Group pull requests by repository', appearance);
+      expect(grouping.getAttribute('aria-checked')).toBe('false');
+      expect(grouping.getAttribute('aria-describedby')).toBeTruthy();
+
+      fireEvent.click(grouping);
+      await waitFor(async () => expect(await saved()).toMatchObject({ groupByRepo: true }));
+      expect((await saved()).sort).toBe('updated');
+      fireEvent.change(appearance.getByLabelText('Sort pull requests by'), {
+        target: { value: 'repo' },
+      });
+      await waitFor(async () => expect(await saved()).toMatchObject({ sort: 'repo' }));
+      expect((await saved()).groupByRepo).toBe(true);
+      fireEvent.click(grouping);
+      await waitFor(async () => expect(await saved()).toMatchObject({ groupByRepo: false }));
+    });
+
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>
@@ -441,11 +617,101 @@ describe('SettingsView', () => {
     });
   });
 
+  describe('privacy and permissions', () => {
+    const names = (scope: ReturnType<typeof group>) =>
+      scope.getAllByRole('listitem').map((item) => item.firstElementChild?.textContent);
+
+    it('promises that Prowl cannot see the pages, and lists what Chrome lets it do', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      expect(
+        privacy.getByText(
+          'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',
+        ),
+      ).toBeTruthy();
+      await waitFor(() =>
+        expect(names(privacy)).toEqual([
+          'Side panel',
+          'Storage',
+          'Alarms',
+          'Notifications',
+          'api.github.com',
+        ]),
+      );
+      const list = privacy.getByRole('list', { name: 'What Prowl may do' });
+      expect(within(list).getByText(/Read your pull requests and act on them/)).toBeTruthy();
+      // The optional github.com host is not there until it is granted.
+      expect(privacy.queryByText('github.com')).toBeNull();
+    });
+
+    it('opens the privacy policy on GitHub', async () => {
+      await open();
+      fireEvent.click(
+        group('Privacy and permissions').getByRole('link', { name: /privacy policy/ }),
+      );
+      expect(fakeChrome().__state.createdTabs).toEqual([
+        { url: 'https://github.com/aemard/prowl/blob/main/docs/privacy.md' },
+      ]);
+    });
+
+    it('lists github.com only while it is granted, and follows Chrome as it changes', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      await waitFor(() => expect(names(privacy)).toHaveLength(5));
+
+      await act(async () => {
+        await chrome.permissions.request({ origins: ['https://github.com/*'] });
+      });
+      await waitFor(() => expect(names(privacy).at(-1)).toBe('github.com'));
+      expect(
+        privacy.getByText(/Sign in with GitHub\. Prowl asks for this only while/),
+      ).toBeTruthy();
+
+      await act(async () => {
+        await chrome.permissions.remove({ origins: ['https://github.com/*'] });
+      });
+      await waitFor(() => expect(privacy.queryByText('github.com')).toBeNull());
+      expect(names(privacy)).toHaveLength(5);
+    });
+
+    it('shows a permission it does not know by name instead of hiding it', async () => {
+      await open();
+      const privacy = group('Privacy and permissions');
+      await waitFor(() => expect(names(privacy)).toHaveLength(5));
+      vi.spyOn(fakeChrome().permissions, 'getAll').mockResolvedValue({
+        permissions: ['storage', 'tabs'],
+        origins: [],
+      });
+      await act(async () => {
+        fakeChrome().permissions.onAdded.emit({ permissions: ['tabs'] });
+      });
+      await waitFor(() => expect(names(privacy)).toEqual(['Storage', 'tabs']));
+      expect(privacy.getByText('Not described by this version of Prowl.')).toBeTruthy();
+    });
+
+    it('stops listening to Chrome when the screen closes', async () => {
+      await open();
+      const { onAdded, onRemoved } = fakeChrome().permissions;
+      expect([onAdded.hasListeners(), onRemoved.hasListeners()]).toEqual([true, true]);
+      cleanup();
+      expect([onAdded.hasListeners(), onRemoved.hasListeners()]).toEqual([false, false]);
+    });
+  });
+
   describe('about', () => {
+    it('says when no shortcut opens Prowl', async () => {
+      fakeChrome().__state.commands[0] = { name: 'open-panel', shortcut: '' };
+      await open();
+      await waitFor(() =>
+        expect(group('About').getByText(/No keyboard shortcut opens Prowl yet/)).toBeTruthy(),
+      );
+    });
+
     it('shows the version and opens the documentation, privacy and source on GitHub', async () => {
       await open();
       const about = group('About');
       expect(about.getByText('Version 0.0.0-test')).toBeTruthy();
+      await waitFor(() => expect(about.getByText('Alt+Shift+P')).toBeTruthy());
 
       const links = about.getAllByRole('link');
       expect(links.map((link) => link.textContent)).toEqual([

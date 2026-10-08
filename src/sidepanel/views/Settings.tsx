@@ -1,19 +1,24 @@
 import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
 import {
+  MAX_HIDE_STALE_DAYS,
   MAX_PER_SECTION,
   MAX_POLL_INTERVAL_MINUTES,
+  MIN_HIDE_STALE_DAYS,
   MIN_PER_SECTION,
   MIN_POLL_INTERVAL_MINUTES,
 } from '../../lib/storage/settings';
 import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
+import { Switch } from '../components/ui/Switch';
 import { saveSettings } from '../state/settings';
-import { settings } from '../state/store';
+import { settings, teams } from '../state/store';
 import { AboutSettings, AccountSettings } from './SettingsAccount';
 import { SettingsGroup } from './SettingsGroup';
-import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS } from './SettingsModel';
+import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
+import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
+import { TeamsSettings } from './SettingsTeams';
 
 const THEMES: SelectOption<Theme>[] = [
   { value: 'system', label: 'Match system' },
@@ -35,9 +40,18 @@ const BADGES: SelectOption<BadgeMode>[] = [
 
 /** How often Prowl asks GitHub, and what that costs of the hourly rate limit. */
 function PollingSettings() {
-  const { pollIntervalMinutes, maxPerSection, sections } = settings.value;
-  const followed = sections.filter((section) => section.enabled).length;
-  const points = estimatedPointsPerHour(followed, maxPerSection, pollIntervalMinutes);
+  const { pollIntervalMinutes, maxPerSection, sections, unfollowedTeams } = settings.value;
+  const searches = sections
+    .filter((section) => section.enabled)
+    .reduce(
+      (total, section) =>
+        total +
+        (section.kind === 'team_review_requested'
+          ? teamSearches(teams.value?.teams ?? [], unfollowedTeams)
+          : 1),
+      0,
+    );
+  const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
   return (
     <SettingsGroup title="Refresh">
       <div class="settings-pair">
@@ -67,7 +81,8 @@ function PollingSettings() {
 }
 
 function AppearanceSettings() {
-  const { theme, sort, badge } = settings.value;
+  const { theme, sort, groupByRepo, badge, hideStaleAfterDays, hideDrafts, hideBots } =
+    settings.value;
   return (
     <SettingsGroup title="Appearance">
       <Select
@@ -81,6 +96,32 @@ function AppearanceSettings() {
         value={sort}
         options={SORTS}
         onValueChange={(value) => void saveSettings({ sort: value })}
+      />
+      <Switch
+        label="Group pull requests by repository"
+        description="Lists each repository’s pull requests under a header you can fold, in the order chosen above."
+        checked={groupByRepo}
+        onChange={(checked) => void saveSettings({ groupByRepo: checked })}
+      />
+      <NumberField
+        label="Hide PRs with no commit for (days)"
+        value={hideStaleAfterDays}
+        min={MIN_HIDE_STALE_DAYS}
+        max={MAX_HIDE_STALE_DAYS}
+        hint="They stay out of the list, the counts and the badge until you choose “Show hidden”, and still notify you. 0 never hides."
+        onCommit={(value) => void saveSettings({ hideStaleAfterDays: value })}
+      />
+      <Switch
+        label="Hide draft PRs"
+        description="Shown again with “Show hidden”. They still notify you."
+        checked={hideDrafts}
+        onChange={(checked) => void saveSettings({ hideDrafts: checked })}
+      />
+      <Switch
+        label="Hide PRs opened by bots"
+        description="Dependabot, Renovate and other apps. Shown again with “Show hidden”. They still notify you."
+        checked={hideBots}
+        onChange={(checked) => void saveSettings({ hideBots: checked })}
       />
       <Select
         label="Toolbar badge"
@@ -99,10 +140,12 @@ export function SettingsView() {
     <div class="settings">
       <h2 class="settings__title">Settings</h2>
       <ScopeSettings />
+      <TeamsSettings />
       <PollingSettings />
       <NotificationsSettings />
       <AppearanceSettings />
       <AccountSettings />
+      <PrivacySettings />
       <AboutSettings />
     </div>
   );

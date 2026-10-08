@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
-import { mergePullRequest } from '../../lib/github/actions';
+import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
@@ -19,6 +19,8 @@ const METHODS: Record<MergeMethod, string> = {
 };
 
 const MERGE = 'Merge';
+const ENABLE_AUTO_MERGE = 'Enable auto-merge';
+const DISABLE_AUTO_MERGE = 'Disable auto-merge';
 
 /**
  * Merge, for the row of an expanded card's Actions: shown to someone with write access on an
@@ -44,6 +46,8 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
 
   const ref = prRef(pr);
   const pending = pendingActions.value[pr.id];
+  // GitHub only takes auto-merge for a PR that cannot merge yet (checks or reviews to come).
+  const offerAutoMerge = pr.autoMergeAllowed && !pr.autoMerge && !isReadyToMerge(pr);
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async () => {
@@ -53,6 +57,13 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
     setConfirming(false);
     if (merged) setTitle('');
     else void sendToBackground({ type: 'poll', force: true });
+  };
+  const enableAutoMerge = async () => {
+    const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, 'Auto-merge is on for', (client) =>
+      setAutoMerge(client, pr.id, method, pr.headSha, title),
+    );
+    setConfirming(false);
+    if (enabled) setTitle('');
   };
 
   return (
@@ -68,20 +79,50 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
       >
         {MERGE}
       </Button>
+      {pr.autoMerge && (
+        <Button
+          size="sm"
+          aria-label={`${DISABLE_AUTO_MERGE} of ${ref}`}
+          loading={pending === DISABLE_AUTO_MERGE}
+          disabled={pending !== undefined && pending !== DISABLE_AUTO_MERGE}
+          onClick={() =>
+            void runPrAction(pr, DISABLE_AUTO_MERGE, 'Auto-merge is off for', (client) =>
+              setAutoMerge(client, pr.id, null, pr.headSha),
+            )
+          }
+        >
+          {DISABLE_AUTO_MERGE}
+        </Button>
+      )}
       {confirming && (
         <Dialog
           open
           onClose={close}
           title="Merge pull request"
-          description={`Merge ${ref} into ${pr.baseRefName}.`}
+          description={
+            offerAutoMerge
+              ? `Merge ${ref} into ${pr.baseRefName} now, or let GitHub merge it once its checks and reviews pass.`
+              : `Merge ${ref} into ${pr.baseRefName}.`
+          }
           footer={
             <>
               <Button disabled={pending !== undefined} onClick={close}>
                 Cancel
               </Button>
+              {offerAutoMerge && (
+                <Button
+                  variant="primary"
+                  loading={pending === ENABLE_AUTO_MERGE}
+                  disabled={pending !== undefined && pending !== ENABLE_AUTO_MERGE}
+                  onClick={() => void enableAutoMerge()}
+                >
+                  {ENABLE_AUTO_MERGE}
+                </Button>
+              )}
               <Button
-                variant="primary"
-                loading={pending !== undefined}
+                variant={offerAutoMerge ? 'secondary' : 'primary'}
+                loading={pending === MERGE}
+                disabled={pending !== undefined && pending !== MERGE}
                 onClick={() => void merge()}
               >
                 {MERGE}

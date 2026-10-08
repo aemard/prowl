@@ -22,6 +22,9 @@ export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
 export const MAX_SECTION_LABEL_LENGTH = 60;
+/** `hideStaleAfterDays` range; 0 never hides. */
+export const MIN_HIDE_STALE_DAYS = 0;
+export const MAX_HIDE_STALE_DAYS = 365;
 
 export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 
@@ -29,6 +32,7 @@ export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: boolean }> = {
   authored: { label: 'Created by me', enabled: true },
   review_requested: { label: 'Review requested', enabled: false },
+  team_review_requested: { label: 'Team reviews', enabled: false },
   mentioned: { label: 'Mentioned', enabled: false },
   assigned: { label: 'Assigned to me', enabled: false },
 };
@@ -85,6 +89,11 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   badge: 'attention',
   theme: 'system',
   sort: 'updated',
+  groupByRepo: false,
+  hideStaleAfterDays: 20,
+  hideDrafts: false,
+  hideBots: false,
+  unfollowedTeams: [],
 });
 
 export function defaultSettings(): Settings {
@@ -179,6 +188,18 @@ function normalizeRepoList(value: unknown): string[] {
   return out;
 }
 
+/** `org/slug`, lowercase: what GitHub allows in an organization login and a team slug. */
+export const TEAM_KEY = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9._-]{1,100}$/;
+
+/** Team keys (`org/slug`), lowercased, deduped; anything else is dropped. */
+function normalizeTeamKeys(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const keys = value
+    .filter((item) => typeof item === 'string')
+    .map((item) => item.trim().toLowerCase());
+  return [...new Set(keys.filter((key) => TEAM_KEY.test(key)))];
+}
+
 function isBuiltInKind(value: unknown): value is BuiltInSectionKind {
   return typeof value === 'string' && Object.hasOwn(BUILT_IN_SECTIONS, value);
 }
@@ -231,7 +252,13 @@ function normalizeSections(value: unknown): Section[] {
     sections.push(section);
   }
   for (const kind of BUILT_IN_SECTION_KINDS) {
-    if (!used.has(kind)) sections.push(builtInSection(kind));
+    if (used.has(kind)) continue;
+    // "Review requested" used to include team requests: whoever followed it keeps seeing them.
+    const inherited =
+      kind === 'team_review_requested'
+        ? sections.find((section) => section.id === 'review_requested')?.enabled
+        : undefined;
+    sections.push(builtInSection(kind, inherited));
   }
   return sections;
 }
@@ -282,6 +309,16 @@ export function normalizeSettings(value: unknown): Settings {
     badge: oneOf(raw.badge, BADGE_MODES, DEFAULT_SETTINGS.badge),
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
+    groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
+    hideStaleAfterDays: clampInt(
+      raw.hideStaleAfterDays,
+      MIN_HIDE_STALE_DAYS,
+      MAX_HIDE_STALE_DAYS,
+      DEFAULT_SETTINGS.hideStaleAfterDays,
+    ),
+    hideDrafts: bool(raw.hideDrafts, DEFAULT_SETTINGS.hideDrafts),
+    hideBots: bool(raw.hideBots, DEFAULT_SETTINGS.hideBots),
+    unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }
 

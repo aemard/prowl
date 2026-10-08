@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { buildPollState } from '../../test/panel';
 import { refreshRequested } from '../state/shortcuts';
 import { pollState, snapshot } from '../state/store';
+import { RepoGroup } from './RepoGroup';
 import { RefreshAnnouncer, ShortcutsDialog, shortcutsOpen, useShortcuts } from './Shortcuts';
 
 function Harness({ enabled = true }: { enabled?: boolean }) {
@@ -26,6 +27,34 @@ function Harness({ enabled = true }: { enabled?: boolean }) {
       </ul>
       <ShortcutsDialog />
     </>
+  );
+}
+
+function GroupedHarness() {
+  useShortcuts(true);
+  const cards = (names: string[]) =>
+    names.map((name) => (
+      <li class="pr-card" key={name}>
+        <button type="button" class="pr-card__toggle">
+          {name}
+        </button>
+      </li>
+    ));
+  return (
+    <ul class="pr-list">
+      <RepoGroup repo="acme/web" count={2} expanded onToggle={() => {}}>
+        {cards(['Web 1', 'Web 2'])}
+      </RepoGroup>
+      <RepoGroup repo="acme/api" count={4} expanded={false} onToggle={() => {}}>
+        {cards(['Not rendered'])}
+      </RepoGroup>
+      <RepoGroup repo="acme/docs" count={1} expanded onToggle={() => {}}>
+        {cards(['Docs 1'])}
+      </RepoGroup>
+      <RepoGroup repo="acme/old" count={1} expanded={false} onToggle={() => {}}>
+        {cards(['Not rendered either'])}
+      </RepoGroup>
+    </ul>
   );
 }
 
@@ -53,6 +82,38 @@ describe('useShortcuts', () => {
     press('ArrowUp', document.activeElement as Element);
     press('k');
     expect(focusedText()).toBe('Details 1');
+  });
+
+  it('moves through a grouped list: cards only, folded groups skipped, headers as starting points', () => {
+    render(<GroupedHarness />);
+    const header = (repo: string) => screen.getByRole('button', { name: new RegExp(`^${repo}`) });
+    press('j');
+    expect(focusedText()).toBe('Web 1');
+    press('j');
+    press('j');
+    // The folded acme/api group has no cards to stop at.
+    expect(focusedText()).toBe('Docs 1');
+    press('k');
+    expect(focusedText()).toBe('Web 2');
+
+    // From a header: the card after it, or the one before it.
+    header('acme/api').focus();
+    press('j', document.activeElement as Element);
+    expect(focusedText()).toBe('Docs 1');
+    header('acme/api').focus();
+    press('k');
+    expect(focusedText()).toBe('Web 2');
+    header('acme/docs').focus();
+    press('ArrowDown', document.activeElement as Element);
+    expect(focusedText()).toBe('Docs 1');
+
+    // Nothing after the last header, nothing before the first: focus stays put.
+    header('acme/old').focus();
+    press('j');
+    expect(document.activeElement).toBe(header('acme/old'));
+    header('acme/web').focus();
+    press('k');
+    expect(document.activeElement).toBe(header('acme/web'));
   });
 
   it('opens the focused card, focuses the filter and shows the shortcuts', () => {

@@ -46,6 +46,13 @@
   gap: var(--space-1);
 }
 
-.list__snoozed {
-  padding: var(--space-2) var(--space-4) var(--space-4);
+/* "Snoozed (N)" and "Show N hidden" at the end of the list: a button, then the cards it reveals,
+   as wide as the others. */
+/* The button's own padding puts its icon in line with the cards' avatars. */
+.list__aside-toggle {
+  margin: var(--space-2);
+}
+
+.list__aside:last-child {
+  padding-bottom: var(--space-2);
 }

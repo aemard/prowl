@@ -73,7 +73,7 @@ test.describe('onboarding', () => {
     const classic = context.waitForEvent('page');
     await panel.getByRole('link', { name: 'Create a classic token' }).click();
     expect((await classic).url()).toBe(
-      `${MOCK_ORIGIN}/settings/tokens/new?scopes=repo&description=Prowl`,
+      `${MOCK_ORIGIN}/settings/tokens/new?scopes=repo,read:org&description=Prowl`,
     );
 
     const fineGrained = context.waitForEvent('page');

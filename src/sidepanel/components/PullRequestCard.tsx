@@ -14,10 +14,12 @@ import {
   CommentDiscussionIcon,
   CommentIcon,
   DotFillIcon,
+  EyeClosedIcon,
   EyeIcon,
   FileDiffIcon,
   GitMergeIcon,
   GitPullRequestDraftIcon,
+  PeopleIcon,
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
@@ -60,6 +62,12 @@ export interface PullRequestCardProps {
   muted?: boolean;
   /** ISO time the snooze ends, when the PR is snoozed. */
   snoozedUntil?: string | null;
+  /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
+  hiddenBecause?: string;
+  /** The card sits under its repository's header, so its own row shows only `#number`. */
+  grouped?: boolean;
+  /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
+  teams?: readonly string[];
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -71,13 +79,24 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
  * opens and describes the card with every fact it shows, so a screen reader gets the whole card
  * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
  */
-export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRequestCardProps) {
+export function PullRequestCard({
+  pr,
+  unseen,
+  now,
+  muted,
+  snoozedUntil,
+  hiddenBecause,
+  grouped,
+  teams,
+}: PullRequestCardProps) {
   const detailId = useId();
   const card = useRef<HTMLLIElement>(null);
   const expanded = expandedIds.value.includes(pr.id);
   const statuses = pullRequestStatuses(pr);
   const labels = pr.labels.slice(0, MAX_LABELS);
   const hidden = pr.labels.slice(MAX_LABELS);
+  const teamRequest =
+    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
 
   // Two conveniences on top of the chevron button, which is the keyboard and screen reader path:
   // a click on the card's summary (not on a link or button, nor a selection made to copy text)
@@ -114,7 +133,7 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
         <span class="pr-card__head">
           <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
           <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
-            <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>
+            {!grouped && <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>}
             <span class="pr-card__number">#{pr.number}</span>
           </span>
           <time
@@ -160,8 +179,22 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
         >
           {pr.title}
         </GitHubLink>
-        {statuses.length > 0 && (
+        {(hiddenBecause || teamRequest || statuses.length > 0) && (
           <span class="pr-card__chips">
+            {hiddenBecause && (
+              <Badge
+                variant="plain"
+                icon={<EyeClosedIcon size={12} />}
+                title="Why it is hidden from the list"
+              >
+                {hiddenBecause}
+              </Badge>
+            )}
+            {teamRequest && (
+              <Badge variant="plain" icon={<PeopleIcon size={12} />} title={teamRequest}>
+                {teams?.map((t) => `@${t}`).join(', ')}
+              </Badge>
+            )}
             {statuses.map(({ id, tone, icon, label, detail }) => {
               const Icon = STATUS_ICONS[icon];
               return (
@@ -222,6 +255,8 @@ export function PullRequestCard({ pr, unseen, now, muted, snoozedUntil }: PullRe
         </span>
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
+          {teamRequest && `. ${teamRequest}`}
+          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
         </span>
       </div>
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}

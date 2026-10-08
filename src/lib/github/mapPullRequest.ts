@@ -29,6 +29,8 @@ import type {
 
 /** GitHub's name for a deleted account. */
 const GHOST = 'ghost';
+/** REST spells a bot's login `dependabot[bot]`; GraphQL gives `dependabot` and `__typename: Bot`. */
+const BOT_SUFFIX = '[bot]';
 /** Used when a label color is not six hex digits. */
 export const NEUTRAL_LABEL_COLOR = 'ededed';
 const HEX_COLOR = /^[0-9a-f]{6}$/i;
@@ -125,7 +127,8 @@ const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
 
 export function mapPullRequest(node: PullRequestNode): PullRequest {
   const { repository: repo } = node;
-  const contexts = node.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts;
+  const head = node.commits.nodes?.at(-1)?.commit;
+  const contexts = head?.statusCheckRollup?.contexts;
   const lastComment = present(node.comments).at(-1);
   const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
   return {
@@ -134,7 +137,11 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     title: node.title,
     url: node.url,
     repo: { owner: repo.owner.login, name: repo.name, nameWithOwner: repo.nameWithOwner },
-    author: node.author && { login: node.author.login, avatarUrl: node.author.avatarUrl },
+    author: node.author && {
+      login: node.author.login,
+      avatarUrl: node.author.avatarUrl,
+      isBot: node.author.__typename === 'Bot' || node.author.login.endsWith(BOT_SUFFIX),
+    },
     state: pick(PR_STATES, node.state, 'open'),
     isDraft: node.isDraft,
     headRefName: node.headRefName,
@@ -142,6 +149,9 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     headSha: node.headRefOid,
     createdAt: node.createdAt,
     updatedAt: node.updatedAt,
+    // A head commit that failed to load counts as the last activity: a read error alone never
+    // hides a PR that something recently happened on.
+    lastCommitAt: head?.committedDate ?? node.updatedAt,
     checks: mapChecks([
       ...(contexts?.checkRunCountsByState ?? []),
       ...(contexts?.statusContextCountsByState ?? []),
@@ -174,6 +184,13 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     defaultMergeMethod: pick(MERGE_METHODS, repo.viewerDefaultMergeMethod, 'merge'),
     viewerCanUpdate: node.viewerCanUpdate,
     viewerCanMerge: CAN_MERGE.includes(repo.viewerPermission ?? ''),
+    autoMergeAllowed: repo.autoMergeAllowed === true,
+    autoMerge: node.autoMergeRequest
+      ? {
+          method: pick(MERGE_METHODS, node.autoMergeRequest.mergeMethod, 'merge'),
+          enabledBy: node.autoMergeRequest.enabledBy?.login ?? null,
+        }
+      : null,
   };
 }
 

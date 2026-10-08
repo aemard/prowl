@@ -4,6 +4,7 @@
  * Extend it here (not in individual tests) when a new API is needed.
  */
 import { isDeepStrictEqual } from 'node:util';
+import { createManifest } from '../manifest';
 
 type Listener<A extends unknown[]> = (...args: A) => unknown;
 
@@ -113,7 +114,15 @@ export function createFakeChrome() {
   const notifications = new Map<string, FakeNotification>();
   const badge = { text: '', color: '' as string | number[], title: 'Prowl' };
   const createdTabs: chrome.tabs.CreateProperties[] = [];
+  /** What `commands.getAll` answers; tests may change a shortcut. */
+  const commands: chrome.commands.Command[] = [
+    { name: 'open-panel', description: 'Open Prowl', shortcut: 'Alt+Shift+P' },
+  ];
   const grantedOrigins = new Set<string>();
+  const permissionsOnAdded = new FakeEvent<[chrome.permissions.Permissions]>();
+  const permissionsOnRemoved = new FakeEvent<[chrome.permissions.Permissions]>();
+  /** What the shipped manifest asks for at install; `getAll()` starts from it. */
+  const shipped = createManifest('production');
   let notificationSeq = 0;
 
   const fake = {
@@ -204,19 +213,33 @@ export function createFakeChrome() {
       query: async () => [] as chrome.tabs.Tab[],
     },
     permissions: {
+      // Like Chrome: the manifest's permissions and hosts, plus the optional hosts granted since.
+      getAll: async (): Promise<chrome.permissions.Permissions> => ({
+        permissions: [...(shipped.permissions ?? [])],
+        origins: [...(shipped.host_permissions ?? []), ...grantedOrigins],
+      }),
       contains: async ({ origins = [] }: chrome.permissions.Permissions) =>
         origins.every((o) => grantedOrigins.has(o)),
       request: async ({ origins = [] }: chrome.permissions.Permissions) => {
-        for (const o of origins) grantedOrigins.add(o);
+        const added = origins.filter((o) => !grantedOrigins.has(o));
+        for (const o of added) grantedOrigins.add(o);
+        if (added.length > 0) permissionsOnAdded.emit({ origins: added });
         return true;
       },
       remove: async ({ origins = [] }: chrome.permissions.Permissions) => {
-        for (const o of origins) grantedOrigins.delete(o);
+        const removed = origins.filter((o) => grantedOrigins.delete(o));
+        if (removed.length > 0) permissionsOnRemoved.emit({ origins: removed });
         return true;
       },
+      onAdded: permissionsOnAdded,
+      onRemoved: permissionsOnRemoved,
+    },
+    commands: {
+      getAll: async () => commands.map((command) => ({ ...command })),
+      onCommand: new FakeEvent<[string, chrome.tabs.Tab | undefined]>(),
     },
     /** Test-only inspection handles. Not part of the real API. */
-    __state: { alarms, notifications, badge, createdTabs, grantedOrigins },
+    __state: { alarms, notifications, badge, createdTabs, grantedOrigins, commands },
   };
 
   fake.storage.local = new FakeStorageArea('local', storageOnChanged);

@@ -27,6 +27,12 @@ const presets = (overrides: Partial<Record<string, boolean>> = {}): Section[] =>
     label: 'Review requested',
     enabled: overrides.review_requested ?? false,
   },
+  {
+    id: 'team_review_requested',
+    kind: 'team_review_requested',
+    label: 'Team reviews',
+    enabled: overrides.team_review_requested ?? false,
+  },
   { id: 'mentioned', kind: 'mentioned', label: 'Mentioned', enabled: overrides.mentioned ?? false },
   {
     id: 'assigned',
@@ -67,6 +73,11 @@ describe('DEFAULT_SETTINGS', () => {
       badge: 'attention',
       theme: 'system',
       sort: 'updated',
+      groupByRepo: false,
+      hideStaleAfterDays: 20,
+      hideDrafts: false,
+      hideBots: false,
+      unfollowedTeams: [],
     } satisfies Settings);
   });
 
@@ -91,6 +102,7 @@ describe('DEFAULT_SETTINGS', () => {
     expect(BUILT_IN_SECTION_KINDS).toEqual([
       'authored',
       'review_requested',
+      'team_review_requested',
       'mentioned',
       'assigned',
     ]);
@@ -124,6 +136,11 @@ describe('normalizeSettings', () => {
       badge: 'unseen',
       theme: 'dark',
       sort: 'repo',
+      groupByRepo: true,
+      hideStaleAfterDays: 0,
+      hideDrafts: true,
+      hideBots: true,
+      unfollowedTeams: ['acme/core', 'octo-org/web.ui'],
     };
     expect(normalizeSettings(custom)).toEqual(custom);
     expect(normalizeSettings(normalizeSettings(custom))).toEqual(custom);
@@ -198,6 +215,32 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
   });
 
+  it.each([
+    [0, 0],
+    [-1, 0],
+    [7.4, 7],
+    [365, 365],
+    [366, 365],
+    [Number.POSITIVE_INFINITY, 20],
+    ['30', 20],
+    [null, 20],
+  ])('repairs hideStaleAfterDays %j to %j', (value, expected) => {
+    expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
+  });
+
+  it.each(['groupByRepo', 'hideDrafts', 'hideBots'] as const)(
+    'repairs %s: a boolean, else off',
+    (key) => {
+      expect(normalizeSettings({ [key]: true })[key]).toBe(true);
+      expect(normalizeSettings({ [key]: false })[key]).toBe(false);
+      for (const value of ['yes', 1, null, undefined]) {
+        expect(normalizeSettings({ [key]: value })[key]).toBe(false);
+      }
+      // Settings stored before the switches existed.
+      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(false);
+    },
+  );
+
   it('repairs notification switches and quiet hours', () => {
     const { notifications } = normalizeSettings({
       notifications: {
@@ -257,6 +300,25 @@ describe('normalizeSettings', () => {
     expect(settings.repoExclude).toEqual([]);
   });
 
+  it('cleans unfollowed teams: org/slug keys, lowercase, once', () => {
+    const settings = normalizeSettings({
+      unfollowedTeams: [
+        ' Acme/Core ',
+        'acme/core',
+        'octo-org/web.ui',
+        'acme',
+        'acme/',
+        '/core',
+        'acme/core/x',
+        '-acme/core',
+        42,
+        null,
+      ],
+    });
+    expect(settings.unfollowedTeams).toEqual(['acme/core', 'octo-org/web.ui']);
+    expect(normalizeSettings({ unfollowedTeams: 'acme/core' }).unfollowedTeams).toEqual([]);
+  });
+
   it('records the current version whatever version was stored', () => {
     expect(normalizeSettings({ version: 1 }).version).toBe(SETTINGS_VERSION);
     expect(normalizeSettings({}).version).toBe(SETTINGS_VERSION);
@@ -309,8 +371,23 @@ describe('normalizeSettings sections', () => {
     ).toEqual([
       { id: 'authored', kind: 'authored', label: 'Created by me', enabled: false },
       { id: 'assigned', kind: 'assigned', label: 'Assigned to me', enabled: false },
-      ...presets().slice(1, 3),
+      ...presets().slice(1, 4),
     ]);
+  });
+
+  it('enables a missing Team reviews section when Review requested is followed', () => {
+    // Settings stored before team reviews had their own section.
+    const before = presets({ review_requested: true }).filter(
+      (section) => section.kind !== 'team_review_requested',
+    );
+    expect(sectionsOf(before)).toEqual([...before, { ...presets()[2], enabled: true } as Section]);
+    expect(sectionsOf(presets().filter((s) => s.kind !== 'team_review_requested'))).toContainEqual(
+      presets()[2],
+    );
+    // Once stored, the section keeps its own state.
+    expect(sectionsOf(presets({ review_requested: true }))).toEqual(
+      presets({ review_requested: true }),
+    );
   });
 
   it('drops entries that are not sections', () => {
@@ -367,6 +444,7 @@ describe('normalizeSettings sections', () => {
       'custom-6',
       'authored',
       'review_requested',
+      'team_review_requested',
       'mentioned',
       'assigned',
     ]);

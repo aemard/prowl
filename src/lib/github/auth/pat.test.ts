@@ -54,7 +54,7 @@ describe('TOKEN_URLS', () => {
     const classic = new URL(TOKEN_URLS.classic);
     expect(`${classic.origin}${classic.pathname}`).toBe('https://github.com/settings/tokens/new');
     expect(Object.fromEntries(classic.searchParams)).toEqual({
-      scopes: 'repo',
+      scopes: 'repo,read:org',
       description: 'Prowl',
     });
 
@@ -116,8 +116,26 @@ describe('validatePat', () => {
   it('warns about a token with no scopes at all (empty header)', async () => {
     const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes: '' }) });
     expect(auth.scopes).toEqual([]);
-    expect(warning).toMatch(/no repo scope/);
+    expect(warning).toMatch(/no repo scope.* Without the read:org scope/);
   });
+
+  it.each(['repo', 'repo, user'])(
+    'warns (and still signs in) when a %s token has no read:org',
+    async (scopes) => {
+      const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes }) });
+      expect(auth.viewer).toEqual(viewerNode());
+      expect(warning).toBe(
+        'Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.',
+      );
+    },
+  );
+
+  it.each(['repo, read:org', 'repo, admin:org', 'repo, write:org'])(
+    'does not warn when %s includes read:org',
+    async (scopes) => {
+      expect((await validatePat(CLASSIC, { fetch: github({ scopes }) })).warning).toBeNull();
+    },
+  );
 
   it('does not warn about scopes when GitHub sent no header (unknown token type)', async () => {
     const { auth, warning } = await validatePat('0123456789abcdef0123456789abcdef01234567', {

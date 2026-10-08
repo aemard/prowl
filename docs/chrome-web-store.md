@@ -18,6 +18,27 @@ The job is skipped until the repository variable `CWS_ITEM_ID` exists, so releas
 before the store is set up. It uses API v2: v1 stops on 15 October 2026. The API only uploads and
 submits packages; the listing text, images and privacy answers are edited in the dashboard.
 
+## Listing text
+
+**Summary** (132 characters at most): Follow your GitHub pull requests in the side panel: CI,
+reviews, merge state, notifications and actions. No backend.
+
+**Description**:
+
+> Prowl follows your GitHub pull requests from Chrome's side panel.
+>
+> - See CI, reviews, conflicts and merge readiness on every card, for what you opened, what asks
+>   for your review or your teams' review, where you are mentioned, or any GitHub search.
+> - Get notified when CI fails or passes, a review arrives, or a PR is ready, merged or closed;
+>   open or snooze it from the notification. Quiet hours and a toolbar badge.
+> - Approve, request changes, comment, merge, turn on auto-merge, update a branch that is
+>   behind, re-run failed checks, all without leaving your tab. Alt+Shift+P opens the panel.
+> - Hide stale, draft and bot PRs, and group them by repository.
+>
+> Private by design: no backend and no telemetry. Your token stays on your device, GitHub is the
+> only server Prowl talks to, and it cannot read or change the pages you visit. Settings can
+> sync through your Chrome profile if you turn it on; the token never does.
+
 ## One-time setup
 
 ### 1. Create the item by hand
@@ -44,11 +65,22 @@ The API cannot create items, so the first version is uploaded in the
 4. **Privacy**
    - Single purpose: "Show the user's GitHub pull requests and their status in the side panel,
      notify about changes and let the user act on them."
-   - Permission justifications, as in the [privacy policy](privacy.md#permissions): `sidePanel`
-     shows Prowl in the side panel; `storage` keeps settings and fetched data on the device;
-     `alarms` checks GitHub on a schedule; `notifications` tells you when a pull request changes;
-     host `api.github.com` reads and acts on your pull requests; optional host `github.com` is
-     asked for only for "Continue with GitHub".
+   - Permission justifications (paste each in its dashboard field; they match the
+     [privacy policy](privacy.md#permissions), and `tests/unit/siteAccess.test.ts` fails if the
+     manifest asks for anything that is not in this table):
+
+     | Permission | Justification | Install prompt |
+     |---|---|---|
+     | `sidePanel` | Prowl's whole interface is the browser side panel. | Nothing |
+     | `storage` | Keeps the user's settings and the pull requests last fetched on their device. | Nothing |
+     | `alarms` | Checks GitHub on a schedule while the panel is closed. | Nothing |
+     | `notifications` | Tells the user when a pull request changes. | "Display notifications" |
+     | host `api.github.com` | Reads the user's pull requests and acts on them, with the user's own token. It serves data, not pages. | "Read and change your data on api.github.com" |
+     | optional host `github.com` | Asked for only when the user chooses "Continue with GitHub", for the OAuth device flow; given back afterwards. | Nothing at install |
+
+     Say it plainly in the single-purpose and justification fields: Prowl has no content scripts,
+     no `tabs`, `activeTab` or `scripting` permission and no site access beyond GitHub, so it
+     cannot read or change the pages the user visits.
    - Remote code: no. Data usage: Prowl collects no user data (the token and pull requests stay
      on the device and are sent only to GitHub), then confirm the data-use certifications.
    - Privacy policy: <https://aemard.github.io/prowl/privacy/>.

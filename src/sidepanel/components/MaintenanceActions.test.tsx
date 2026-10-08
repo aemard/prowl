@@ -29,18 +29,30 @@ describe('MaintenanceActions', () => {
   it('offers a re-run only for failed checks on an open PR the viewer can write to', () => {
     show({ checks: failing, viewerCanMerge: true });
     expect(screen.getByRole('button', { name: /^Re-run failed checks of / })).toBeTruthy();
-    show({ checks: failing, viewerCanMerge: false, author: { login: 'someone', avatarUrl: '' } });
+    show({
+      checks: failing,
+      viewerCanMerge: false,
+      author: { login: 'someone', avatarUrl: '', isBot: false },
+    });
     show({ checks: failing, viewerCanMerge: true, state: 'merged' });
     show({ viewerCanMerge: true });
     expect(screen.getAllByRole('button', { name: /^Re-run/ })).toHaveLength(1);
   });
 
   it('labels the draft toggle by state, for the author or a writer', () => {
-    show({ isDraft: true, viewerCanMerge: false, author: { login: 'OctoCat', avatarUrl: '' } });
+    show({
+      isDraft: true,
+      viewerCanMerge: false,
+      author: { login: 'OctoCat', avatarUrl: '', isBot: false },
+    });
     expect(screen.getByRole('button', { name: /^Ready for review: / })).toBeTruthy();
-    show({ isDraft: false, viewerCanMerge: true, author: { login: 'someone', avatarUrl: '' } });
+    show({
+      isDraft: false,
+      viewerCanMerge: true,
+      author: { login: 'someone', avatarUrl: '', isBot: false },
+    });
     expect(screen.getByRole('button', { name: /^Convert to draft: / })).toBeTruthy();
-    show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '' } });
+    show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '', isBot: false } });
     expect(screen.getAllByRole('button', { name: /draft|review/ })).toHaveLength(2);
   });
 
@@ -74,5 +86,32 @@ describe('MaintenanceActions', () => {
         'danger: Re-run failed checks failed: GitHub did not find the pull request.',
       ),
     );
+  });
+
+  it('offers to update a branch that is behind, to whoever may push to it', () => {
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
+    expect(screen.getByRole('button', { name: /^Update branch of / })).toBeTruthy();
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: false });
+    show({ mergeStateStatus: 'clean', viewerCanUpdate: true });
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true, state: 'closed' });
+    expect(screen.getAllByRole('button', { name: /^Update branch/ })).toHaveLength(1);
+  });
+
+  it('updates the branch with a merge commit or a rebase, pinned to the head', async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit) => {
+        bodies.push(JSON.parse(String(init.body)).variables);
+        return jsonResponse({
+          data: { updatePullRequestBranch: { pullRequest: { headRefOid: 'new' } } },
+        });
+      }),
+    );
+    show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
+    fireEvent.click(screen.getByRole('button', { name: /^Update branch of / }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Update with a rebase' }));
+    await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Updated the branch of /));
+    expect(bodies).toEqual([{ id: base.id, oid: base.headSha, method: 'REBASE' }]);
   });
 });

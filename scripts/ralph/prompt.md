@@ -5,14 +5,17 @@ GitHub pull requests. You start with a fresh context: everything you know comes 
 repository. Work autonomously; never ask questions. When something is unclear, make a
 reasonable assumption and record it as one line in `docs/decisions.md` with the reason.
 
-## 1. Orient (read, in this order)
+## 1. Orient (read only what the story needs: every turn pays for what you have read)
 
-1. `CLAUDE.md`, `docs/architecture.md`, `docs/decisions.md`, `src/lib/model.ts`.
-2. `progress.txt`: the "Codebase patterns" section, then the last three entries.
-3. `prd.json`: pick the story with the lowest `priority` whose `passes` is `false` and whose
-   `dependsOn` stories all have `passes: true`.
+1. `CLAUDE.md` and `src/lib/model.ts`.
+2. `node scripts/ralph/story.mjs` prints your story: the lowest `priority` whose `passes` is
+   `false` and whose `dependsOn` all pass. Never read `prd.json` whole.
+3. `progress.txt` (the "Codebase patterns" section and the latest entries). Older entries live in
+   `progress-archive.txt`: grep it, never read it whole.
 4. `.claude/agents/<story.agent>.md`: adopt that specialist's role, standards and checklist.
-5. `git log --oneline -15` and the code the story touches.
+5. `docs/architecture.md` and `docs/decisions.md` are long: grep them for the modules, settings
+   and terms the story touches and read those sections only.
+6. `git log --oneline -10` and the code the story touches.
 
 ## 2. Build exactly one story
 
@@ -25,10 +28,17 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
 - Follow "Write the least code that works" in CLAUDE.md: reuse before writing, platform
   before code, shortest correct diff. Keep tool output small (filter with grep/tail, use
   `--reporter=dot` or quiet flags) to save tokens.
+- Check any Chrome or library API you add or change against current docs with Context7
+  (ToolSearch `select:mcp__Context7__resolve-library-id,mcp__Context7__query-docs`) rather than
+  from memory.
 
 ## 3. Prove it
 
-- Run `pnpm lint:fix` then `pnpm verify`. Iterate until it is fully green.
+- Iterate with `pnpm verify:fast` and targeted E2E (`pnpm build:e2e`, then
+  `pnpm exec playwright test <spec> --reporter=dot`). Then run `pnpm lint:fix` and
+  `pnpm verify:changed` (fast checks, build, size) until it is green. E2E runs in CI with the
+  full `pnpm verify` on every push: run a spec locally only while writing it or to fix a CI
+  failure.
 - Never weaken a gate: do not lower coverage thresholds or budgets, skip/`.only`/delete tests,
   or add ignores to get green. A test that fails once without a code change is a bug: fix it.
 - For UI work, run `pnpm screenshots` (writes docs/screenshots/), open the PNGs in `docs/screenshots/`
@@ -38,9 +48,9 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
 
 ## 4. Record
 
-- `prd.json`: set the story's `passes` to `true` only if every acceptance criterion is met,
-  and write a one-line `notes`. If a criterion cannot be met, leave `passes: false` and
-  explain in `notes`.
+- `node scripts/ralph/story.mjs pass <id> "<one-line notes>"` only if every acceptance
+  criterion is met; otherwise `node scripts/ralph/story.mjs fail <id> "<what is missing>"`.
+  Do not edit `prd.json` by hand.
 - `progress.txt`: append an entry:
   ```
   ## <YYYY-MM-DD> - <story id> <title>
@@ -50,7 +60,8 @@ reasonable assumption and record it as one line in `docs/decisions.md` with the 
   ---
   ```
   Move learnings that every future iteration needs into "Codebase patterns" at the top.
-- Commit everything in one commit on `main` with a Conventional Commit subject containing the
+  Keep three entries in `progress.txt`: move older ones to the end of `progress-archive.txt`.
+- Commit everything in one commit on the current branch with a Conventional Commit subject containing the
   story id (see CLAUDE.md for the trailers). Do not push, amend, rebase or force anything.
 
 ## 5. Finish

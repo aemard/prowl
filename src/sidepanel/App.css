@@ -1,3 +1,13 @@
+/* A bar fixed at the bottom of the panel (the section bar) sets --app-inset-bottom while it is
+   shown: the page ends above it, and focus and scrollIntoView stop above it. */
+html {
+  scroll-padding-bottom: var(--app-inset-bottom, 0px);
+}
+
+.app-main {
+  padding-bottom: var(--app-inset-bottom, 0px);
+}
+
 .app-main:focus {
   outline: none;
 }

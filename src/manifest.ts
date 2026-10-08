@@ -1,4 +1,5 @@
 import pkg from '../package.json' with { type: 'json' };
+import { OPEN_PANEL_COMMAND } from './lib/model';
 
 export type BuildMode = 'production' | 'development' | 'e2e';
 
@@ -48,6 +49,13 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
     },
     side_panel: {
       default_path: 'sidepanel/index.html',
+    },
+    // A keyboard shortcut, handled in src/background/register.ts. Adds no permission.
+    commands: {
+      [OPEN_PANEL_COMMAND]: {
+        suggested_key: { default: 'Alt+Shift+P' },
+        description: 'Open Prowl',
+      },
     },
     background: {
       service_worker: 'background.js',

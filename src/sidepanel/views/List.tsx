@@ -1,10 +1,25 @@
 import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
-import type { Section, SectionKind, Snapshot } from '../../lib/model';
-import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
-import { AlertIcon, ClockIcon, InboxIcon, SearchIcon } from '../components/icons';
+import { describeHiddenReasons } from '../../lib/hidden';
+import type { PullRequest, Section, SectionKind, Snapshot } from '../../lib/model';
+import { isMuted, isSeen } from '../../lib/storage/prLocal';
+import {
+  AlertIcon,
+  ClockIcon,
+  EyeClosedIcon,
+  EyeIcon,
+  FilterIcon,
+  GitPullRequestIcon,
+  InboxIcon,
+  MentionIcon,
+  PeopleIcon,
+  PersonIcon,
+  SearchIcon,
+} from '../components/icons';
+import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
-import { panelId, SectionTabs, tabId } from '../components/SectionTabs';
+import { RepoGroup } from '../components/RepoGroup';
+import { panelId, SectionTabs } from '../components/SectionTabs';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -13,25 +28,67 @@ import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { filterPullRequests, sortPullRequests } from './ListModel';
+import {
+  filterPullRequests,
+  groupByRepo,
+  type SectionParts,
+  sortPullRequests,
+  splitSection,
+} from './ListModel';
 import './List.css';
 
 /** How long a card must stay on screen before it counts as seen. */
 const SEEN_DELAY_MS = 1500;
 
 /**
- * Selected tab and quick filter live outside the view, so they survive a visit to Settings.
- * Exported for tests, which reset them.
+ * Selected tab, quick filter, whether hidden PRs are revealed and which repository groups are
+ * folded (a `foldKey` per section and repository) live outside the view, so they survive a
+ * visit to Settings and last until the panel closes. Exported for tests, which reset them.
  */
 export const activeSectionId = signal<string | undefined>(undefined);
 export const filterQuery = signal('');
+export const showHidden = signal(false);
+export const foldedGroups = signal<string[]>([]);
 
-const EMPTY_HINTS: Record<SectionKind, string> = {
-  authored: 'Pull requests you open will show up here.',
-  review_requested: 'When someone asks for your review, it will show up here.',
-  mentioned: 'Pull requests that mention you will show up here.',
-  assigned: 'Pull requests assigned to you will show up here.',
-  custom: 'No open pull requests match this search.',
+const foldKey = (sectionId: string, repo: string) => `${sectionId}\n${repo}`;
+const toggleFolded = (key: string) => {
+  const folded = foldedGroups.value;
+  foldedGroups.value = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
+};
+
+const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
+
+/**
+ * Per section kind: its icon and short name in the section bar (a custom section shows its own
+ * label) and the hint of its empty list. A new kind is one entry here.
+ */
+const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
+  authored: {
+    icon: GitPullRequestIcon,
+    short: 'Mine',
+    empty: 'Pull requests you open will show up here.',
+  },
+  review_requested: {
+    icon: EyeIcon,
+    short: 'Review',
+    empty: 'When someone asks you for a review, it will show up here.',
+  },
+  team_review_requested: {
+    icon: PeopleIcon,
+    short: 'Teams',
+    empty: 'When someone asks one of your teams for a review, it will show up here.',
+  },
+  mentioned: {
+    icon: MentionIcon,
+    short: 'Mentions',
+    empty: 'Pull requests that mention you will show up here.',
+  },
+  assigned: {
+    icon: PersonIcon,
+    short: 'Assigned',
+    empty: 'Pull requests assigned to you will show up here.',
+  },
+  custom: { icon: FilterIcon, empty: 'No open pull requests match this search.' },
 };
 
 const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
@@ -40,7 +97,8 @@ const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
 /**
  * Sends `markSeen` for the unseen cards that have been on screen for `SEEN_DELAY_MS` while the
  * panel is visible. A scroll or a new snapshot restarts the wait, so only cards the user rested
- * on are marked. `renderedKey` changes with the rendered cards; `unseenIds` are the ones to mark.
+ * on are marked; a card behind the section bar is not on screen. `renderedKey` changes with the
+ * rendered cards and the bar; `unseenIds` are the ones to mark.
  */
 function useMarkSeen(
   list: { current: HTMLElement | null },
@@ -59,6 +117,7 @@ function useMarkSeen(
 
   useEffect(() => {
     const visible = new Set<string>();
+    const bar = document.querySelector<HTMLElement>('[data-bottom-bar]')?.offsetHeight ?? 0;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const { target, isIntersecting } of entries) {
@@ -67,7 +126,7 @@ function useMarkSeen(
         }
         setOnScreen([...visible]);
       },
-      { threshold: 0.6 },
+      { threshold: 0.6, rootMargin: `0px 0px ${-bar}px 0px` },
     );
     for (const card of list.current?.querySelectorAll('[data-pr-id]') ?? []) observer.observe(card);
     return () => {
@@ -123,14 +182,15 @@ function SectionNotice({ section, message }: { section: Section; message: string
 export const LIST_RENDERED_MARK = 'prowl:list-rendered';
 let listRendered = false;
 
-/** The pull request list: section tabs with counts, a quick filter and one card per PR. */
+/** The pull request list: a quick filter, one card per PR and the section bar at the bottom. */
 export function ListView() {
   const now = useNow(30_000);
   const idPrefix = useId();
-  const list = useRef<HTMLUListElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const filterInput = useRef<HTMLElement>(null);
 
-  const { sections, sort } = settings.value;
+  const current = settings.value;
+  const { sections, sort } = current;
   // A snapshot left by another account (sign-out raced a poll) is never shown.
   const viewer = auth.value?.viewer.login.toLowerCase();
   const raw = snapshot.value;
@@ -140,34 +200,43 @@ export function ListView() {
   const enabled = sections.filter((section) => section.enabled);
   const selected = enabled.find((section) => section.id === activeSectionId.value) ?? enabled[0];
 
-  // Per section, the PRs that pass the filter in the chosen order; snoozed ones are set aside.
+  // Per section, the PRs that pass the filter in the chosen order: cards (counted), hidden ones
+  // and snoozed ones, each set aside behind a button at the end.
   const clock = Date.now();
-  const snoozed = (id: string) => isSnoozed(local, id, clock);
-  const filtered = new Map(
+  const parts = new Map(
     enabled.map((section) => [
       section.id,
       snap
-        ? sortPullRequests(filterPullRequests(pullRequestsOf(snap, section.id), query), sort)
-        : [],
+        ? splitSection(
+            sortPullRequests(filterPullRequests(pullRequestsOf(snap, section.id), query), sort),
+            local,
+            current,
+            clock,
+          )
+        : NOTHING,
     ]),
   );
-  const matching = new Map(
-    [...filtered].map(([id, prs]) => [id, prs.filter((pr) => !snoozed(pr.id))]),
-  );
-  const shown = (selected && matching.get(selected.id)) || [];
-  const shownSnoozed = ((selected && filtered.get(selected.id)) || []).filter((pr) =>
-    snoozed(pr.id),
-  );
+  const { shown, hidden, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
+  const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
+  // Grouped, only the cards of open groups are rendered: a folded group is not on screen, so its
+  // cards are not marked seen. Hidden and snoozed PRs stay flat, with their repository on the card.
+  const grouped = current.groupByRepo;
+  const groups = grouped ? groupByRepo(shown) : [];
+  const isFolded = (repo: string) => foldedGroups.value.includes(foldKey(selected?.id ?? '', repo));
+  const rendered = grouped
+    ? groups.filter(({ repo }) => !isFolded(repo)).flatMap((g) => g.prs)
+    : shown;
   const [snoozedOpen, setSnoozedOpen] = useState(false);
   useEffect(() => {
     if (listRendered || shown.length === 0) return;
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
+  const seeable = [...rendered, ...revealed];
   useMarkSeen(
-    list,
-    shown.map((pr) => pr.id).join('\n'),
-    shown.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
+    panel,
+    [enabled.length > 1, ...seeable.map((pr) => pr.id)].join('\n'),
+    seeable.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
   );
 
   if (!selected) {
@@ -195,36 +264,41 @@ export function ListView() {
     );
   }
 
+  const card = (pr: PullRequest) => (
+    <PullRequestCard
+      key={pr.id}
+      pr={pr}
+      now={now}
+      unseen={!isSeen(local, pr.id, pr.updatedAt)}
+      muted={isMuted(local, pr.id)}
+      teams={snap.teamRequests?.[pr.id]}
+      grouped={grouped}
+    />
+  );
   const error = snap.sectionErrors?.[selected.id];
+  const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
-  const filteredOut =
-    shown.length === 0 && shownSnoozed.length === 0 && pullRequestsOf(snap, selected.id).length > 0;
+  const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
-  const tabs = enabled.map((section) => ({
-    id: section.id,
-    label: section.label,
-    count: matching.get(section.id)?.length ?? 0,
-    failed: snap.sectionErrors?.[section.id] !== undefined,
-  }));
+  const tabs = enabled.map((section) => {
+    const { icon: Icon, short } = KINDS[section.kind];
+    return {
+      id: section.id,
+      label: short ?? section.label,
+      fullLabel: section.label,
+      icon: <Icon />,
+      count: parts.get(section.id)?.shown.length ?? 0,
+      failed: snap.sectionErrors?.[section.id] !== undefined,
+    };
+  });
 
-  // A lone section has no tabs, so nothing to point at.
+  // A lone section has no tabs. The panel is named by the section's full name rather than by its
+  // tab, which is not there when the section is under "More".
   const panelProps =
-    tabs.length > 1
-      ? { role: 'tabpanel' as const, 'aria-labelledby': tabId(idPrefix, selected.id) }
-      : {};
+    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': selected.label } : {};
 
   return (
     <div class="list">
-      {tabs.length > 1 && (
-        <SectionTabs
-          tabs={tabs}
-          selectedId={selected.id}
-          onSelect={(id) => {
-            activeSectionId.value = id;
-          }}
-          idPrefix={idPrefix}
-        />
-      )}
       {anyPullRequests && (
         <div class="list__filter">
           <TextField
@@ -243,41 +317,59 @@ export function ListView() {
           />
         </div>
       )}
-      <div id={panelId(idPrefix)} {...panelProps}>
+      {/* Fixed at the bottom of the panel, but before the list in the DOM: the tabs come before the
+          panel they control, and the keyboard reaches them without going through every card. */}
+      {tabs.length > 1 && (
+        <SectionTabs
+          tabs={tabs}
+          selectedId={selected.id}
+          onSelect={(id) => {
+            activeSectionId.value = id;
+          }}
+          idPrefix={idPrefix}
+        />
+      )}
+      <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
         {error !== undefined && <SectionNotice section={selected} message={error} />}
         {shown.length > 0 && (
-          <ul class="pr-list" ref={list} aria-label={`${selected.label} pull requests`}>
-            {shown.map((pr) => (
-              <PullRequestCard
-                key={pr.id}
-                pr={pr}
-                now={now}
-                unseen={!isSeen(local, pr.id, pr.updatedAt)}
-                muted={isMuted(local, pr.id)}
-              />
-            ))}
+          <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
+            {grouped
+              ? groups.map(({ repo, prs }) => (
+                  <RepoGroup
+                    key={repo}
+                    repo={repo}
+                    count={prs.length}
+                    expanded={!isFolded(repo)}
+                    onToggle={() => toggleFolded(foldKey(selected.id, repo))}
+                  >
+                    {prs.map(card)}
+                  </RepoGroup>
+                ))
+              : shown.map(card)}
           </ul>
         )}
-        {shownSnoozed.length > 0 && (
-          <div class="list__snoozed">
+        {snoozed.length > 0 && (
+          <div class="list__aside">
             <Button
+              class="list__aside-toggle"
               size="sm"
               variant="ghost"
               icon={<ClockIcon size={12} />}
               aria-expanded={snoozedOpen}
               onClick={() => setSnoozedOpen(!snoozedOpen)}
             >
-              Snoozed ({shownSnoozed.length})
+              Snoozed ({snoozed.length})
             </Button>
             {snoozedOpen && (
               <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
-                {shownSnoozed.map((pr) => (
+                {snoozed.map((pr) => (
                   <PullRequestCard
                     key={pr.id}
                     pr={pr}
                     now={now}
                     unseen={false}
                     muted={isMuted(local, pr.id)}
+                    teams={snap.teamRequests?.[pr.id]}
                     snoozedUntil={local.snoozed[pr.id]}
                   />
                 ))}
@@ -285,14 +377,45 @@ export function ListView() {
             )}
           </div>
         )}
-        {shown.length === 0 && shownSnoozed.length === 0 && error === undefined && (
+        {hidden.length > 0 && (
+          <div class="list__aside">
+            <Button
+              class="list__aside-toggle"
+              size="sm"
+              variant="ghost"
+              icon={showHidden.value ? <EyeClosedIcon size={12} /> : <EyeIcon size={12} />}
+              aria-expanded={showHidden.value}
+              onClick={() => {
+                showHidden.value = !showHidden.value;
+              }}
+            >
+              {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
+            </Button>
+            {showHidden.value && (
+              <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
+                {hidden.map(({ pr, reasons }) => (
+                  <PullRequestCard
+                    key={pr.id}
+                    pr={pr}
+                    now={now}
+                    unseen={!isSeen(local, pr.id, pr.updatedAt)}
+                    muted={isMuted(local, pr.id)}
+                    teams={snap.teamRequests?.[pr.id]}
+                    hiddenBecause={describeHiddenReasons(reasons)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {empty && error === undefined && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
             title={filteredOut ? 'No matches' : 'No pull requests'}
             description={
               filteredOut
                 ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
-                : EMPTY_HINTS[selected.kind]
+                : KINDS[selected.kind].empty
             }
             action={
               filteredOut ? (

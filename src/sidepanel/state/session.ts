@@ -19,6 +19,8 @@ export async function completeSignIn(
   if (cached && cached.viewer.login.toLowerCase() !== auth.viewer.login.toLowerCase()) {
     await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
   }
+  // A new token may see other teams (read:org added): the first poll discovers them again.
+  await removeItems(STORAGE_KEYS.teams);
   await setItem(STORAGE_KEYS.auth, auth);
   void sendToBackground({ type: 'poll', force: true });
   navigate('list');
@@ -32,7 +34,12 @@ export async function completeSignIn(
  * onboarding on its own; the worker clears its alarms, badge and notifications on `signedOut`.
  */
 export async function signOut(): Promise<void> {
-  await removeItems(STORAGE_KEYS.auth, STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
+  await removeItems(
+    STORAGE_KEYS.auth,
+    STORAGE_KEYS.snapshot,
+    STORAGE_KEYS.pollState,
+    STORAGE_KEYS.teams,
+  );
   await sendToBackground({ type: 'signedOut' });
   await releaseGitHubWebAccess();
 }

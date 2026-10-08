@@ -1,97 +1,107 @@
-/* Tabs that do not fit scroll sideways; at an edge with more tabs behind it, a fade and a
-   chevron say so. The frame carries the hairline so the fades stop above it. The scroll padding
-   keeps a tab brought into view clear of them. */
-.section-tabs-frame {
-  position: relative;
-  border-bottom: var(--border-width) solid var(--color-border-subtle);
+/* The bar is fixed at the bottom of the panel. While it is shown, the page keeps clear of it
+   through --app-inset-bottom: content ends and focused or scrolled-to elements stop above it
+   (App.css), toasts sit above it (Toast.css). Menus read its box (Menu.tsx). */
+:root:has(.section-tabs) {
+  --app-inset-bottom: calc(var(--space-12) + var(--border-width));
 }
 
 .section-tabs {
-  display: flex;
-  gap: var(--space-0-5);
-  padding: 0 var(--space-1-5);
-  overflow-x: auto;
-  scroll-padding-inline: var(--space-8);
-  scrollbar-width: none;
-}
-
-.section-tabs__more {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  width: var(--space-8);
-  padding: 0 var(--space-1);
-  color: var(--color-fg-muted);
-  pointer-events: none;
-}
-
-.section-tabs__more[data-side="end"] {
+  position: fixed;
   right: 0;
-  justify-content: flex-end;
-  background: linear-gradient(to left, var(--color-bg) 40%, transparent);
-}
-
-.section-tabs__more[data-side="start"] {
+  bottom: 0;
   left: 0;
-  justify-content: flex-start;
-  background: linear-gradient(to right, var(--color-bg) 40%, transparent);
+  z-index: var(--z-sticky);
+  display: flex;
+  height: var(--app-inset-bottom);
+  /* Items share at most 480 px, centred, so they stay together in a wide panel. */
+  padding: 0 max(var(--space-1), (100% - 480px) / 2);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  background: var(--color-bg);
 }
 
-.section-tabs__more[data-side="start"] .icon {
-  transform: scaleX(-1);
+.section-tabs__list {
+  display: flex;
+  flex: 1;
+  min-width: 0;
 }
 
-.section-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.section-tabs__tab {
+/* Icon and count over the label. The label comes first in the DOM (it leads the accessible
+   name), so the column is reversed. */
+.section-tabs__item {
   position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: var(--space-1);
-  height: var(--control-md);
-  /* Tight enough that three sections fit 400 px even with wide Linux fonts (DejaVu). */
+  justify-content: center;
+  gap: var(--space-0-5);
+  min-width: 0;
   padding: 0 var(--space-1);
   border: 0;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-fg-muted);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease-standard);
 }
 
-.section-tabs__tab:hover {
+/* "More" is the fifth of five equal slots: the tab list holds the other four. */
+.section-tabs__more {
+  flex: 0 0 20%;
+}
+
+.section-tabs__item:hover,
+.section-tabs__item[aria-expanded="true"],
+.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) {
   color: var(--color-fg);
 }
 
-.section-tabs__tab[aria-selected="true"] {
-  color: var(--color-fg);
+.section-tabs__item:focus-visible {
+  outline-offset: calc(var(--focus-width) * -1);
 }
 
-/* Selection is the underline plus the accent count, never color alone: the tab also reads as
-   selected to assistive tech and is the only one in the tab order. */
-.section-tabs__tab::after {
+.section-tabs__top {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--icon-lg);
+}
+
+.section-tabs__label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Selected is never color alone: a bar on the top edge (over the hairline), the accent icon and
+   count, and a heavier label. Assistive tech gets aria-selected, or "More" names the section. */
+.section-tabs__item::before {
   content: "";
   position: absolute;
-  right: var(--space-1);
-  bottom: calc(var(--border-width) * -1);
-  left: var(--space-1);
+  top: calc(var(--border-width) * -1);
+  right: 0;
+  left: 0;
+  width: var(--space-8);
   height: 2px;
-  border-radius: var(--radius-full);
+  margin: 0 auto;
+  border-radius: 0 0 var(--radius-full) var(--radius-full);
   background: transparent;
 }
 
-.section-tabs__tab[aria-selected="true"]::after {
+.section-tabs__item:is([aria-selected="true"], [data-selected="true"])::before {
   background: var(--color-accent-solid);
 }
 
-.section-tabs__tab:focus-visible {
-  outline-offset: calc(var(--focus-width) * -1);
+.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) .section-tabs__label {
+  font-weight: var(--weight-semibold);
+}
+
+.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) .section-tabs__top > .icon {
+  color: var(--color-accent-fg);
 }
 
 .section-tabs__failed {

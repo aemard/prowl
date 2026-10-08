@@ -240,6 +240,56 @@ describe('Menu', () => {
     expect(menu()).toBeNull();
   });
 
+  describe('with a bar fixed at the bottom of the panel', () => {
+    /** A 600 px viewport whose last 50 px are a bottom bar; `at` is where the trigger is. */
+    function withBar(at: { trigger: DOMRect }) {
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(360);
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        if (this.hasAttribute('data-bottom-bar')) return rect(0, 550, 360, 50);
+        return this.getAttribute('role') === 'menu' ? rect(0, 0, 200, 120) : at.trigger;
+      });
+    }
+
+    it('opens above a trigger whose menu would cover the bar, and closes behind it', () => {
+      const at = { trigger: rect(10, 400, 32, 32) };
+      withBar(at);
+      render(<div data-bottom-bar="" />);
+      const { trigger } = setup();
+      fireEvent.click(trigger);
+      // Below would end at 556 px: inside the viewport, but over the bar.
+      expect(screen.getByRole('menu').style.top).toBe('276px');
+
+      at.trigger = rect(10, 560, 32, 32);
+      fireEvent.scroll(document);
+      expect(menu()).toBeNull();
+    });
+
+    it('opens above its trigger when the trigger is in the bar, and stays open on scroll', () => {
+      const at = { trigger: rect(296, 551, 64, 49) };
+      withBar(at);
+      render(
+        <div data-bottom-bar="">
+          <Menu
+            align="end"
+            items={[{ id: 'bots', label: 'Bots', onSelect: () => {} }]}
+            trigger={(p) => (
+              <button type="button" {...p}>
+                More
+              </button>
+            )}
+          />
+        </div>,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'More' }));
+      expect(screen.getByRole('menu').style.top).toBe('427px');
+      fireEvent.scroll(document);
+      expect(menu()).not.toBeNull();
+    });
+  });
+
   it('keeps an enclosing dialog open when Escape closes the menu', () => {
     const onClose = vi.fn();
     render(

@@ -40,4 +40,29 @@ describe('fake chrome', () => {
     await chrome.action.setBadgeText({ text: '3' });
     expect(await chrome.action.getBadgeText({})).toBe('3');
   });
+
+  it('lists the shipped permissions and tells when an optional host comes and goes', async () => {
+    const added = vi.fn();
+    const removed = vi.fn();
+    chrome.permissions.onAdded.addListener(added);
+    chrome.permissions.onRemoved.addListener(removed);
+    const github = { origins: ['https://github.com/*'] };
+    expect(await chrome.permissions.getAll()).toEqual({
+      permissions: ['sidePanel', 'storage', 'alarms', 'notifications'],
+      origins: ['https://api.github.com/*'],
+    });
+
+    await chrome.permissions.request(github);
+    await chrome.permissions.request(github); // already granted: Chrome fires nothing
+    expect((await chrome.permissions.getAll()).origins).toEqual([
+      'https://api.github.com/*',
+      'https://github.com/*',
+    ]);
+    expect(added.mock.calls).toEqual([[github]]);
+
+    await chrome.permissions.remove(github);
+    await chrome.permissions.remove(github);
+    expect((await chrome.permissions.getAll()).origins).toEqual(['https://api.github.com/*']);
+    expect(removed.mock.calls).toEqual([[github]]);
+  });
 });

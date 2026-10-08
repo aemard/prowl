@@ -67,7 +67,7 @@ describe('which buttons show', () => {
   });
 
   it('hides approving and requesting changes on your own pull request, whatever the case', () => {
-    show({ author: { login: 'OctoCat', avatarUrl: '' } });
+    show({ author: { login: 'OctoCat', avatarUrl: '', isBot: false } });
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Comment']);
   });
 
@@ -260,7 +260,7 @@ describe('comment', () => {
   it('adds a conversation comment from the same kind of dialog', async () => {
     const sent = stubGitHub(() => jsonResponse({ data: commented }));
     const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
-    show({ author: { login: 'octocat', avatarUrl: '' } });
+    show({ author: { login: 'octocat', avatarUrl: '', isBot: false } });
     fireEvent.click(button('Comment on acme/widgets#1'));
     const dialog = screen.getByRole('dialog', { name: 'Comment' });
     expect(dialog.textContent).toContain('Add a comment to the conversation of acme/widgets#1.');

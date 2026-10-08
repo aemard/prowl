@@ -26,7 +26,7 @@ function serveList(github: MockGitHub) {
 function serveAccount(github: MockGitHub) {
   github.onGraphQL('ProwlViewer', () => ({ viewer: viewerNode() }));
   github.on('GET', '/user', () => ({
-    headers: { 'x-oauth-scopes': 'repo' },
+    headers: { 'x-oauth-scopes': 'repo, read:org' },
     body: { login: 'octocat' },
   }));
 }
