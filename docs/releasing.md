@@ -8,8 +8,8 @@ zip (`pnpm build && pnpm size && pnpm zip`), an SBOM and a provenance attestatio
 them to the release. If release-please cannot open pull requests, pushing a `v*` tag by hand runs
 `release-tag.yml`, which creates the release and attaches the same assets; it refuses a tag on a
 commit that is not on `main`. Releases start as drafts and are published once the assets are on,
-so with immutable releases on, a published release and its tag can no longer change. The website's Install
-button points to `releases/latest`, so the newest release is what visitors download.
+so with immutable releases on, a published release and its tag can no longer change. The website's and the
+README's install links point to the Chrome Web Store listing; the zip path uses `releases/latest`.
 
 One-time setup:
 

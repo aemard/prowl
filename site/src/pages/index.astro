@@ -4,7 +4,7 @@ import light from '../../../docs/screenshots/list-light.png';
 import Icon from '../components/Icon.astro';
 import Screenshot from '../components/Screenshot.astro';
 import Base from '../layouts/Base.astro';
-import { INSTALL, page, REPO } from '../links';
+import { page, REPO, STORE } from '../links';
 
 const features = [
   {
@@ -45,7 +45,7 @@ const features = [
           leaving your tab.
         </p>
         <p class="actions">
-          <a class="button" data-variant="primary" href={INSTALL}>Install Prowl</a>
+          <a class="button" data-variant="primary" href={STORE}>Add to Chrome</a>
           <a class="button" href={REPO}>View on GitHub</a>
         </p>
         <p class="note">Free and open source. No Prowl account, no backend, no telemetry.</p>
@@ -139,18 +139,18 @@ const features = [
 
   <section class="section band" aria-labelledby="install">
     <div class="wrap">
-      <h2 id="install" class="section-title">Install in under five minutes</h2>
+      <h2 id="install" class="section-title">Install in a minute</h2>
       <ol class="steps">
         <li>
-          <h3>Download</h3>
-          <p>Get the latest zip from the releases page and unzip it into a new folder.</p>
+          <h3>Add it to Chrome</h3>
+          <p>
+            Open Prowl in the <a href={STORE}>Chrome Web Store</a> and choose Add to Chrome. It
+            updates itself from then on.
+          </p>
         </li>
         <li>
-          <h3>Load it in Chrome</h3>
-          <p>
-            Open <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked
-            and pick the unzipped folder.
-          </p>
+          <h3>Pin it</h3>
+          <p>Pin Prowl from the puzzle-piece Extensions menu so its icon stays in reach.</p>
         </li>
         <li>
           <h3>Sign in</h3>
@@ -161,7 +161,7 @@ const features = [
         </li>
       </ol>
       <p class="actions">
-        <a class="button" data-variant="primary" href={INSTALL}>Install Prowl</a>
+        <a class="button" data-variant="primary" href={STORE}>Add to Chrome</a>
         <a class="button" href={page('install/')}>Read the install guide</a>
       </p>
     </div>
