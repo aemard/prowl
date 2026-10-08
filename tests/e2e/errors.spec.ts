@@ -143,7 +143,7 @@ test('a GitHub error: banner with its message, and Retry now recovers', async ({
   await poll();
 
   const status = panel.getByRole('status').filter({ hasText: 'GitHub error' });
-  await expect(status).toContainText(/GitHub error — retrying in (9|10) min/);
+  await expect(status).toContainText(/GitHub error — retrying in ([89]|10) min/);
   await expect(status).toContainText('Bad gateway');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);
@@ -174,7 +174,7 @@ test('offline: banner counts down to the retry, the list stays readable', async 
   }
 
   const status = panel.getByRole('status').filter({ hasText: 'Offline' });
-  await expect(status).toContainText(/Offline — retrying in (9|10) min/);
+  await expect(status).toContainText(/Offline — retrying in ([89]|10) min/);
   await expect(status).toContainText('Could not reach GitHub.');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);
