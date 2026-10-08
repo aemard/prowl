@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/aemard/prowl/compare/v1.3.0...v1.3.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **release:** verifiable, signed releases and a higher Scorecard score ([#8](https://github.com/aemard/prowl/issues/8)) ([3777fc7](https://github.com/aemard/prowl/commit/3777fc77155d885e03d9f3dd592310f87eb492f6))
+
 ## [1.3.0](https://github.com/aemard/prowl/compare/v1.2.0...v1.3.0) (2026-10-08)
 
 
