@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/aemard/prowl/compare/v1.1.0...v1.2.0) (2026-10-08)
+
+
+### Features
+
+* v1.2 — bottom bar, team reviews, hidden PRs, repo grouping, permission guarantee ([#4](https://github.com/aemard/prowl/issues/4)) ([7a9d696](https://github.com/aemard/prowl/commit/7a9d6967e9637415e6f75f63871093d3fa23b3f6))
+
 ## [1.1.0](https://github.com/aemard/prowl/compare/v1.0.0...v1.1.0) (2026-10-07)
 
 
