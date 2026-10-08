@@ -17,7 +17,8 @@ browser and is only ever sent to GitHub.
 [Install guide](https://aemard.github.io/prowl/install/) ·
 [Sign-in guide](https://aemard.github.io/prowl/auth/) ·
 [Privacy](https://aemard.github.io/prowl/privacy/) ·
-[Changelog](CHANGELOG.md)
+[Changelog](CHANGELOG.md) ·
+[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aemard/prowl)
 
 ## Install (about 2 minutes)
 
@@ -28,7 +29,7 @@ browser and is only ever sent to GitHub.
 5. Sign in: **Continue with GitHub**, or paste a token (see below).
 
 Requires Chrome 116 or later. Each release also ships an SBOM and a build provenance
-attestation (`gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl --signer-workflow aemard/prowl/.github/workflows/release-assets.yml`).
+attestation, and rebuilds byte for byte: see [verify a release](docs/releasing.md#verify-a-release).
 
 ## Sign in
 

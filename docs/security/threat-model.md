@@ -57,6 +57,7 @@ another extension or web page could send.
 | I | GitHub cookies ride along with Prowl's requests | Every request to api.github.com and github.com sets `credentials: 'omit'`: the token authenticates, and the optional github.com permission would otherwise attach the user's session cookies to the device flow | `client.ts`, `deviceFlow.ts` |
 | T | A team slug turns into a search qualifier | Discovered teams are kept only when `org/slug` matches the same rule as `unfollowedTeams` (`TEAM_KEY`) before it reaches `team-review-requested:` | `teams.ts`, `settings.ts` |
 | E | Supply-chain compromise of a dependency or action | Two direct runtime dependencies (Preact, @preact/signals, which pulls @preact/signals-core); the release job builds without a shared dependency cache; lockfile; Dependabot; CodeQL; dependency review; Scorecard; actions pinned to commit SHAs with least-privilege `permissions` and `persist-credentials: false`; releases ship an SBOM and provenance | `.github/workflows` |
+| T | A release built from code that skipped review reaches Chrome Web Store users (store submission is automatic) | `main` needs a pull request with `Verify` and CodeQL and signed commits; `v*` tags cannot move or be deleted and `release-tag.yml` refuses a tag that is not on `main`; releases are immutable once published; the store job only uploads the release's zip after `gh attestation verify` ties it to `release-assets.yml`; anyone can rebuild a tag and get the same bytes (docs/releasing.md) | `.github/workflows`, repository rulesets, `scripts/zip.mjs` |
 
 ## Residual risks (accepted)
 
@@ -75,5 +76,9 @@ another extension or web page could send.
   (a test fails if it does), and docs/privacy.md says so in "The one thing a site permission
   still shows". A malicious update could still add such a call: the lock keeps the manifest
   honest, not the code, so release provenance and review of the diff remain the control.
+- **No person approves a store submission.** A maintainer account that is taken over can still
+  merge to `main` through a pull request and ship to store users after Google's review. Hardware
+  2FA on the account and the rulesets above are the control; the `chrome-web-store` environment
+  can get a required reviewer back in one click.
 - **Side-loaded installs** ("Load unpacked") do not auto-update; users must watch releases.
   Release zips carry a provenance attestation so users can verify their origin.

@@ -1,12 +1,12 @@
 # Chrome Web Store
 
-Every release goes to the Chrome Web Store once a maintainer approves it:
+Every release goes to the Chrome Web Store on its own:
 
 1. Merging the release pull request tags `vX.Y.Z`, creates the GitHub release and attaches the
    signed zip (`release-please.yml` → `release-assets.yml`; `release-tag.yml` for a hand-pushed tag).
-2. `.github/workflows/chrome-web-store.yml` then waits for approval in the `chrome-web-store`
-   environment (Actions shows "Review deployments").
-3. Once approved, it downloads that exact zip (never a fresh build), checks its provenance
+2. `.github/workflows/chrome-web-store.yml` then runs in the `chrome-web-store` environment, which
+   only `main` and `v*` tags may deploy to.
+3. It downloads that exact zip (never a fresh build), checks its provenance
    attestation, gets a 15-minute Google token through Workload Identity Federation (no key is
    stored in GitHub) and runs `scripts/cws-publish.mjs`, which uploads the zip with the Chrome Web
    Store API v2 and submits it for review. Google's review publishes it, usually within a few days.
@@ -108,7 +108,7 @@ gcloud iam workload-identity-pools create github --project "$PROJECT_ID" --locat
   --display-name "GitHub Actions"
 
 # Only jobs of this repository (by id, so a re-created repo with the same name does not match)
-# running in the chrome-web-store environment, which needs your approval, get tokens.
+# running in the chrome-web-store environment, which only main and v* tags reach, get tokens.
 gcloud iam workload-identity-pools providers create-oidc prowl --project "$PROJECT_ID" \
   --location global --workload-identity-pool github --display-name "aemard/prowl" \
   --issuer-uri https://token.actions.githubusercontent.com \
@@ -133,7 +133,8 @@ publisher can have one service account.
 ### 4. GitHub environment and variables
 
 1. **Settings → Environments → New environment** `chrome-web-store`:
-   - **Required reviewers**: yourself. This is the approval gate.
+   - **Required reviewers**: none. Releases are reviewed as pull requests on `main`; add yourself
+     here to approve each store submission by hand instead.
    - **Deployment branches and tags**: Selected, add the branch `main` and the tag pattern `v*`
      (release-please runs on `main`, a hand-pushed tag runs on the tag).
 2. **Settings → Secrets and variables → Actions → Variables**, repository variables (none of them
@@ -146,7 +147,7 @@ publisher can have one service account.
    | `CWS_SERVICE_ACCOUNT` | Printed by step 2 |
    | `CWS_WORKLOAD_IDENTITY_PROVIDER` | Printed by step 2 |
 
-The next release then stops at "Review deployments"; approve it and the job submits it.
+The next release is then submitted on its own.
 
 ## When it fails
 

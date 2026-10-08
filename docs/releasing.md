@@ -6,7 +6,9 @@
 creates the GitHub release from `CHANGELOG.md` and calls `release-assets.yml`, which builds the
 zip (`pnpm build && pnpm size && pnpm zip`), an SBOM and a provenance attestation and attaches
 them to the release. If release-please cannot open pull requests, pushing a `v*` tag by hand runs
-`release-tag.yml`, which creates the release and attaches the same assets. The website's Install
+`release-tag.yml`, which creates the release and attaches the same assets; it refuses a tag on a
+commit that is not on `main`. Releases start as drafts and are published once the assets are on,
+so with immutable releases on, a published release and its tag can no longer change. The website's Install
 button points to `releases/latest`, so the newest release is what visitors download.
 
 One-time setup:
@@ -18,14 +20,37 @@ One-time setup:
    and variables → Actions → Variables). Release builds bake it in; without it the zip supports
    token sign-in only.
 
-Once the Chrome Web Store is set up, both paths then call `chrome-web-store.yml`, which waits
-for a maintainer's approval and submits that release's zip to the store. Setup and
+Once the Chrome Web Store is set up, both paths then call `chrome-web-store.yml`, which submits
+that release's zip to the store for Google's review, with no manual step. Setup and
 troubleshooting: [chrome-web-store.md](chrome-web-store.md).
 
 `release-please-config.json` pinned `"release-as": "1.0.0"` for the first release. It was removed
 after v1.0.0 so later releases follow Conventional Commits (`feat` → minor, `fix` → patch).
 Releases are reproducible: the zip is built from a clean checkout of the tag with a frozen
-lockfile and no shared cache, and its file times are fixed (`scripts/zip.mjs`).
+lockfile and no shared cache, and its file times are fixed in any timezone (`scripts/zip.mjs`).
+
+## Verify a release
+
+Anyone can check that a release zip comes from this repository's code:
+
+```sh
+# 1. It was built by release-assets.yml from this repository.
+gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl \
+  --signer-workflow aemard/prowl/.github/workflows/release-assets.yml
+
+# 2. Rebuilding the tag gives the same bytes (Node 24, pnpm 12).
+git clone --branch vX.Y.Z https://github.com/aemard/prowl && cd prowl
+pnpm install --frozen-lockfile
+PROWL_GITHUB_CLIENT_ID=Ov23liIe68P7KdZbUzPD pnpm build && pnpm zip
+shasum -a 256 prowl-vX.Y.Z.zip   # same as the release's zip
+```
+
+`PROWL_GITHUB_CLIENT_ID` is the public id of the OAuth App behind "Continue with GitHub"; it is in
+every release zip (not a secret). Releases up to v1.3.0 match only when rebuilt with `TZ=UTC`.
+
+To check a Chrome Web Store install, compare its files with the release zip: the extension's
+folder is `Extensions/<id>/<version>_0` in your Chrome profile (`chrome://version` shows the
+profile path). The store adds `_metadata/` (its own signature) and leaves every other file as is.
 
 ## Website
 
@@ -101,7 +126,12 @@ To keep one pull request from merging by itself, press "Disable auto-merge" on i
 
 ## Recommended repository settings
 
-- **Protect release tags**: Settings → Rules → Rulesets → new tag ruleset for `v*` restricting
-  creation, update and deletion to maintainers, so only intended releases get signed assets.
-- **Verify a download**: `gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl
-  --signer-workflow aemard/prowl/.github/workflows/release-assets.yml`.
+- **`main` ruleset**: pull request required (squash, no approval: nothing could approve the
+  maintainer's own), signed commits, `Verify` and CodeQL `Analyze` required, no force push or
+  deletion; admins bypass only through a pull request.
+- **`v*` tag ruleset**: no update or deletion. Creation stays open because release-please creates
+  tags with `GITHUB_TOKEN`, which a personal repository's ruleset cannot exempt; `release-tag.yml`
+  checks instead that a hand-pushed tag is on `main`.
+- **Immutable releases** (Settings → General → Releases), private vulnerability reporting,
+  Dependabot alerts and security updates, and Actions limited to GitHub's own and the pinned
+  third-party actions with SHA pinning required.

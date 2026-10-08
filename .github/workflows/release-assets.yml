@@ -1,4 +1,5 @@
-# Reusable: builds the release zip, SBOM and provenance and attaches them to a release.
+# Reusable: builds the release zip, SBOM and provenance, attaches them to the draft release and
+# publishes it. Releases are immutable once published, so the assets go on while it is a draft.
 name: Release assets
 
 on:
@@ -63,3 +64,4 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           gh release upload "$TAG" prowl-v*.zip "prowl-$TAG.sbom.spdx.json" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"

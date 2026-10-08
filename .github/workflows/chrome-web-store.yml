@@ -1,8 +1,8 @@
 # Uploads a release's zip to the Chrome Web Store and submits it for review (API v2).
 # release-please.yml and release-tag.yml call it once the release assets are attached; run it by
-# hand to publish an existing tag again. The job waits for a reviewer's approval in the
-# `chrome-web-store` environment and signs in to Google through Workload Identity Federation, so
-# no key is stored in GitHub. One-time setup: docs/chrome-web-store.md.
+# hand to publish an existing tag again. It runs in the `chrome-web-store` environment (only main
+# and v* tags may deploy) and signs in to Google through Workload Identity Federation, so no key is
+# stored in GitHub. One-time setup: docs/chrome-web-store.md.
 name: Chrome Web Store
 
 on:
