@@ -86,7 +86,7 @@ in your Google account and copies to Chrome on your other computers. Your token,
 requests Prowl fetched, your teams and what you snoozed or muted never go there. The choice is
 per device.
 
-The manifest also declares one keyboard shortcut (`commands`: Alt+Shift+P opens the side panel;
+The manifest also declares one keyboard shortcut (`commands`: Ctrl+Shift+P, ⌘⇧P on Mac, opens the side panel;
 change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no
 warning for it, and it gives Prowl no access to pages or data.
 

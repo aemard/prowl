@@ -61,10 +61,10 @@ CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
   repository allows), turn auto-merge on or off, update a branch that is behind (merge or
   rebase), comment, re-run failed checks, ready for review / convert to draft, snooze, mute,
   open in GitHub, copy branch name.
-- **Everywhere you work**: Alt+Shift+P opens the panel (change it at
+- **Everywhere you work**: Ctrl+Shift+P (⌘⇧P on Mac) opens the panel (change it at
   chrome://extensions/shortcuts). Turn on settings sync to find your settings in Chrome on your
   other computers; the token and your local PR state never leave the device.
-- **Polite polling**: every 2 minutes by default (1 minute minimum), rate-limit aware, with
+- **Polite polling**: every 5 minutes by default (2 minutes minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
 
 ## Privacy

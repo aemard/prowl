@@ -67,6 +67,19 @@ describe('fetchViewerTeams', () => {
     expect(paths).toEqual(['/user/teams?per_page=100&page=1']);
   });
 
+  it('adds the parent of a listed team once, since its review requests reach child teams', async () => {
+    const parent = { slug: 'platform', name: 'Platform' };
+    const { client } = setup([
+      { ...teamJson('acme/platform-web', 'Web'), parent },
+      { ...teamJson('acme/platform-api', 'API'), parent },
+    ]);
+    expect(await fetchViewerTeams(client)).toEqual([
+      { org: 'acme', slug: 'platform', name: 'Platform' },
+      { org: 'acme', slug: 'platform-api', name: 'API' },
+      { org: 'acme', slug: 'platform-web', name: 'Web' },
+    ]);
+  });
+
   it('follows the pages up to the cap', async () => {
     const { client, paths } = setup(many(105));
     expect(await fetchViewerTeams(client)).toHaveLength(105);

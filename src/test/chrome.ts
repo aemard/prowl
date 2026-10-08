@@ -116,7 +116,7 @@ export function createFakeChrome() {
   const createdTabs: chrome.tabs.CreateProperties[] = [];
   /** What `commands.getAll` answers; tests may change a shortcut. */
   const commands: chrome.commands.Command[] = [
-    { name: 'open-panel', description: 'Open Prowl', shortcut: 'Alt+Shift+P' },
+    { name: 'open-panel', description: 'Open Prowl', shortcut: 'Ctrl+Shift+P' },
   ];
   const grantedOrigins = new Set<string>();
   const permissionsOnAdded = new FakeEvent<[chrome.permissions.Permissions]>();

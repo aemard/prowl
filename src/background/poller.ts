@@ -136,6 +136,7 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
       sections: fetched.sections,
       sectionErrors,
       teamRequests: fetched.teamRequests,
+      mergeStateAt: fetched.mergeStateAt,
       settledChecks: carrySettledChecks(previous, fetched.pullRequests),
     };
   } catch (error) {

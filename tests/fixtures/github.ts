@@ -8,6 +8,8 @@ import type {
   ClosedPullRequestNode,
   DetailData,
   DetailPullRequestNode,
+  MergeStateData,
+  MergeStateNode,
   NodesData,
   PullRequestNode,
   SearchData,
@@ -91,10 +93,16 @@ export function reviewNode(
   };
 }
 
-/** A PR as `ProwlSearch` returns it. `repository` is an `owner/name` shortcut. */
+/** A PR as GitHub knows it, `ProwlSearch` plus `ProwlMergeState`. */
+export type FullPullRequestNode = PullRequestNode & MergeStateNode;
+
+/**
+ * A PR with what `ProwlSearch` and `ProwlMergeState` select; mocks answer both from it (see
+ * `mergeStateResponse`). `repository` is an `owner/name` shortcut.
+ */
 export function prNode(
-  overrides: Partial<Omit<PullRequestNode, 'repository'>> & { repository?: string } = {},
-): PullRequestNode {
+  overrides: Partial<Omit<FullPullRequestNode, 'repository'>> & { repository?: string } = {},
+): FullPullRequestNode {
   const { repository = 'acme/widgets', ...fields } = overrides;
   const number = fields.number ?? 1;
   return {
@@ -145,6 +153,30 @@ export function searchResponse(
       pageInfo: { hasNextPage: end < all.length, endCursor: all.length ? String(end) : null },
       nodes: all.slice(start, end),
     },
+    rateLimit,
+  };
+}
+
+/** The `data` of `ProwlMergeState` for `ids`: the facts of the matching node of `nodes`, or null. */
+export function mergeStateResponse(
+  ids: unknown,
+  nodes: readonly (FullPullRequestNode | null)[],
+  rateLimit = graphqlRateLimit(),
+): MergeStateData {
+  const byId = new Map(nodes.flatMap((node) => (node ? [[node.id, node]] : [])));
+  return {
+    nodes: (Array.isArray(ids) ? ids : []).map((id) => {
+      const node = byId.get(String(id));
+      return node
+        ? {
+            id: node.id,
+            reviewDecision: node.reviewDecision,
+            mergeable: node.mergeable,
+            mergeStateStatus: node.mergeStateStatus,
+            viewerCanUpdate: node.viewerCanUpdate,
+          }
+        : null;
+    }),
     rateLimit,
   };
 }
@@ -296,7 +328,7 @@ export function teamJson(key = 'acme/core', name = 'Core') {
     privacy: 'closed',
     notification_setting: 'notifications_enabled',
     permission: 'pull',
-    parent: null,
+    parent: null as { slug: string; name: string } | null,
     members_count: 4,
     repos_count: 2,
     created_at: '2024-02-01T09:00:00Z',

@@ -28,7 +28,7 @@ makes no GitHub call. Locally (Chromium 141, sandbox VM): 56–80 ms.
 - **Lazy chunks.** Settings and a card's expanded part (checks, reviewers, actions, dialogs) are
   separate chunks loaded on first use (`src/sidepanel/components/lazy.tsx`). The service worker
   never uses dynamic `import()`.
-- **Cheap polling.** One GraphQL search per enabled section (~4 points per 50 PRs), check counts
+- **Cheap polling.** One GraphQL search per enabled section (~4 points per 50 PRs, pages of 25), merge facts only for PRs that changed, check counts
   instead of check lists, details fetched only on expand.
 
 ## Measuring

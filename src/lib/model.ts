@@ -216,9 +216,10 @@ export interface Snapshot {
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
   /**
-   * Section id -> why it could not be loaded in this poll: a custom section's invalid or refused
-   * query (such a section has no entry in `sections`), or the team section's missing scope, no
-   * team, or refused team searches (it keeps the PRs of the teams that loaded). Absent means none.
+   * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
+   * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
+   * section's missing scope, no team, or failed team searches (it keeps the PRs of the teams that
+   * loaded). Absent means none.
    */
   sectionErrors?: Record<string, string>;
   /**
@@ -231,6 +232,12 @@ export interface Snapshot {
    * pending now, so failure -> pending -> success still reports `ci_passed`. Absent means none.
    */
   settledChecks?: Record<string, SettledCheckState>;
+  /**
+   * PR id -> when its merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`,
+   * `viewerCanUpdate`) were read; they are carried from poll to poll while the PR is unchanged.
+   * Absent means never: they are read again.
+   */
+  mergeStateAt?: Record<string, string>;
 }
 
 export type PrEventType =

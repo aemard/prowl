@@ -152,19 +152,19 @@ test.describe('refresh', () => {
     openPanel,
     serviceWorker,
   }) => {
-    expect(await pollPeriod(serviceWorker)).toBe(2);
+    expect(await pollPeriod(serviceWorker)).toBe(5);
     const panel = await openPanel('#/settings');
     const interval = panel.getByLabel('Check every (minutes)');
-    await expect(interval).toHaveValue('2');
+    await expect(interval).toHaveValue('5');
     await expect(panel.getByText(/5,000 points an hour/)).toBeVisible();
 
     await interval.fill('7');
     await expect.poll(() => pollPeriod(serviceWorker)).toBe(7);
     expect((await savedSettings(serviceWorker))?.pollIntervalMinutes).toBe(7);
 
-    // Less than one minute is refused, and the schedule stays.
-    await interval.fill('0');
-    await expect(panel.getByText('Enter a whole number from 1 to 60.')).toBeVisible();
+    // Less than two minutes is refused, and the schedule stays.
+    await interval.fill('1');
+    await expect(panel.getByText('Enter a whole number from 2 to 60.')).toBeVisible();
     await interval.blur();
     await expect(interval).toHaveValue('7');
     expect(await pollPeriod(serviceWorker)).toBe(7);

@@ -7,6 +7,8 @@
  * `github.onGraphQL('ProwlSearch', (vars) => searchResponse([prNode()], vars))`.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import type { SearchData } from '../../../src/lib/github/queries';
+import { type FullPullRequestNode, mergeStateResponse } from '../../fixtures/github';
 
 export const MOCK_PORT = Number(process.env.PROWL_E2E_PORT ?? 4010);
 export const MOCK_ORIGIN = `http://127.0.0.1:${MOCK_PORT}`;
@@ -49,6 +51,8 @@ export class MockGitHub {
   private server: Server | undefined;
   private graphql = new Map<string, GraphQLHandler>();
   private routes: RestRoute[] = [];
+  /** PR id -> the node `ProwlSearch` last answered with, what `ProwlMergeState` answers from. */
+  private searched = new Map<string, FullPullRequestNode>();
   readonly requests: LoggedRequest[] = [];
   /** Default headers on every API response, e.g. rate-limit headers. */
   defaultHeaders: Record<string, string> = {};
@@ -85,10 +89,15 @@ export class MockGitHub {
 
   /**
    * Forget handlers and the request log. Called before every test. What every poll asks for
-   * outside the GraphQL operations keeps a default answer: `GET /user/teams` lists no team.
+   * besides the searches keeps a default answer: `GET /user/teams` lists no team, and
+   * `ProwlMergeState` gives the facts of the PRs as the searches last returned them.
    */
   reset(): void {
     this.graphql.clear();
+    this.searched.clear();
+    this.onGraphQL('ProwlMergeState', ({ ids }) =>
+      mergeStateResponse(ids, [...this.searched.values()]),
+    );
     this.routes = [];
     this.requests.length = 0;
     this.defaultHeaders = {};
@@ -106,6 +115,13 @@ export class MockGitHub {
     const pattern = typeof path === 'string' ? new RegExp(`^${escapeRegExp(path)}$`) : path;
     this.routes.unshift({ method: method.toUpperCase(), pattern, handler });
     return this;
+  }
+
+  private remember(body: unknown): void {
+    const nodes = (body as { data?: SearchData } | undefined)?.data?.search?.nodes ?? [];
+    for (const node of nodes) {
+      if (node && 'id' in node) this.searched.set(node.id, node as FullPullRequestNode);
+    }
   }
 
   requestsFor(operationOrPath: string): LoggedRequest[] {
@@ -156,6 +172,7 @@ export class MockGitHub {
       } else {
         const out = await handler(variables, logged);
         result = isMockResponse(out) ? out : { body: { data: out } };
+        if (name === 'ProwlSearch') this.remember(result.body);
       }
     } else {
       this.requests.push(logged);
