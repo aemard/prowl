@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/aemard/prowl/compare/v1.2.0...v1.3.0) (2026-10-08)
+
+
+### Features
+
+* parent teams, sign-in footer, faster polling ([#6](https://github.com/aemard/prowl/issues/6)) ([49e07ed](https://github.com/aemard/prowl/commit/49e07ed55f43017d338a7473ce8ee6358282a66f))
+
 ## [1.2.0](https://github.com/aemard/prowl/compare/v1.1.0...v1.2.0) (2026-10-08)
 
 
