@@ -20,8 +20,8 @@ One-time setup:
    and variables → Actions → Variables). Release builds bake it in; without it the zip supports
    token sign-in only.
 
-Once the Chrome Web Store is set up, both paths then call `chrome-web-store.yml`, which submits
-that release's zip to the store for Google's review, with no manual step. Setup and
+Once the Chrome Web Store is set up, both paths then call `chrome-web-store.yml`, which waits
+for a maintainer's approval and submits that release's zip to the store. Setup and
 troubleshooting: [chrome-web-store.md](chrome-web-store.md).
 
 `release-please-config.json` pinned `"release-as": "1.0.0"` for the first release. It was removed
@@ -36,6 +36,10 @@ Anyone can check that a release zip comes from this repository's code:
 ```sh
 # 1. It was built by release-assets.yml from this repository.
 gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl \
+  --signer-workflow aemard/prowl/.github/workflows/release-assets.yml
+# Offline, with the bundle attached to the release (v1.3.1 and later):
+gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl \
+  --bundle prowl-vX.Y.Z.zip.sigstore.json \
   --signer-workflow aemard/prowl/.github/workflows/release-assets.yml
 
 # 2. Rebuilding the tag gives the same bytes (Node 24, pnpm 12).

@@ -1,5 +1,6 @@
-# Reusable: builds the release zip, SBOM and provenance, attaches them to the draft release and
-# publishes it. Releases are immutable once published, so the assets go on while it is a draft.
+# Reusable: builds the release zip, SBOM, provenance and its Sigstore bundle, attaches them to the
+# draft release and publishes it. Releases are immutable once published, so the assets go on
+# while it is a draft.
 name: Release assets
 
 on:
@@ -54,6 +55,7 @@ jobs:
           upload-release-assets: false
 
       - name: Provenance attestation
+        id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: prowl-v*.zip
@@ -62,6 +64,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          gh release upload "$TAG" prowl-v*.zip "prowl-$TAG.sbom.spdx.json" --clobber --repo "$GITHUB_REPOSITORY"
+          cp "$BUNDLE" "prowl-$TAG.zip.sigstore.json"
+          gh release upload "$TAG" prowl-v*.zip "prowl-$TAG.sbom.spdx.json" "prowl-$TAG.zip.sigstore.json" \
+            --clobber --repo "$GITHUB_REPOSITORY"
           gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"

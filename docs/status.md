@@ -20,7 +20,8 @@ outside the v1 scope, in priority order.
 
 ## Next (post v1)
 
-1. Chrome Web Store listing: every release is submitted automatically (`docs/chrome-web-store.md`).
+1. Chrome Web Store listing: publishing is automated after approval; the maintainer creates the
+   item and the Google access once (`docs/chrome-web-store.md`).
 2. Verify against live GitHub what the mock cannot: branch-protection fields readable by
    non-admin tokens ("1 approval required"), exact merge refusal wording, the Chrome permission
    prompt for the device flow, and CI visibility with fine-grained tokens.

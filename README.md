@@ -17,8 +17,9 @@ browser and is only ever sent to GitHub.
 [Install guide](https://aemard.github.io/prowl/install/) ·
 [Sign-in guide](https://aemard.github.io/prowl/auth/) ·
 [Privacy](https://aemard.github.io/prowl/privacy/) ·
-[Changelog](CHANGELOG.md) ·
-[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aemard/prowl)
+[Changelog](CHANGELOG.md)
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aemard/prowl/badge)](https://scorecard.dev/viewer/?uri=github.com/aemard/prowl)
 
 ## Install (about 2 minutes)
 

@@ -53,7 +53,7 @@ jobs:
     with:
       tag: ${{ github.ref_name }}
 
-  # Chrome Web Store: submits the release for Google's review, no manual step. Skipped until
+  # Chrome Web Store: waits for approval in the `chrome-web-store` environment. Skipped until
   # the store item is set up (docs/chrome-web-store.md), so releases keep working without it.
   store:
     name: Chrome Web Store
