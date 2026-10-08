@@ -47,7 +47,21 @@ function toTeam(json: unknown): Team | null {
 }
 
 /**
- * The viewer's teams from `GET /user/teams`, pages of 100 up to `MAX_TEAMS`, sorted by key.
+ * A listed team and its parent: GitHub lists direct memberships only, but a review requested
+ * from a parent team reaches the members of its child teams too.
+ * ponytail: one level up, the only one `GET /user/teams` returns; grandparents would need a
+ * `GET /orgs/{org}/teams/{slug}` per team.
+ */
+function toTeams(json: unknown): Team[] {
+  const { parent, organization } = (json ?? {}) as Record<string, unknown>;
+  return [toTeam(json), toTeam({ ...(parent ?? {}), organization })].filter(
+    (team) => team !== null,
+  );
+}
+
+/**
+ * The viewer's teams from `GET /user/teams` and their parents, pages of 100 up to `MAX_TEAMS`,
+ * sorted by key.
  * Classic and OAuth tokens need `read:org` (GitHub also accepts `repo` or `user`); a
  * fine-grained token must be owned by an organization, with Members: read, and only sees that
  * organization's teams. Throws `GitHubError`.
@@ -62,10 +76,11 @@ export async function fetchViewerTeams(client: GitHubClient): Promise<Team[]> {
     if (!Array.isArray(batch)) {
       throw new GitHubError('server', 'GitHub returned an unexpected response.');
     }
-    teams.push(...batch.map(toTeam).filter((team) => team !== null));
+    teams.push(...batch.flatMap(toTeams));
     if (batch.length < PER_PAGE) break;
   }
-  return teams.slice(0, MAX_TEAMS).sort((a, b) => teamKey(a).localeCompare(teamKey(b)));
+  const unique = [...new Map(teams.map((team) => [teamKey(team), team])).values()];
+  return unique.slice(0, MAX_TEAMS).sort((a, b) => teamKey(a).localeCompare(teamKey(b)));
 }
 
 /** Discovery has to run: never for this account, a day after a success, an hour after a failure. */

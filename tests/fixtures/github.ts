@@ -296,7 +296,7 @@ export function teamJson(key = 'acme/core', name = 'Core') {
     privacy: 'closed',
     notification_setting: 'notifications_enabled',
     permission: 'pull',
-    parent: null,
+    parent: null as { slug: string; name: string } | null,
     members_count: 4,
     repos_count: 2,
     created_at: '2024-02-01T09:00:00Z',
