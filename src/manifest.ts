@@ -53,7 +53,7 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
     // A keyboard shortcut, handled in src/background/register.ts. Adds no permission.
     commands: {
       [OPEN_PANEL_COMMAND]: {
-        suggested_key: { default: 'Alt+Shift+P' },
+        suggested_key: { default: 'Ctrl+Shift+P', mac: 'Command+Shift+P' },
         description: 'Open Prowl',
       },
     },

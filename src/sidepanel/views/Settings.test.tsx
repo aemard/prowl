@@ -711,7 +711,7 @@ describe('SettingsView', () => {
       await open();
       const about = group('About');
       expect(about.getByText('Version 0.0.0-test')).toBeTruthy();
-      await waitFor(() => expect(about.getByText('Alt+Shift+P')).toBeTruthy());
+      await waitFor(() => expect(about.getByText('Ctrl+Shift+P')).toBeTruthy());
 
       const links = about.getAllByRole('link');
       expect(links.map((link) => link.textContent)).toEqual([

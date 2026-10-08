@@ -17,7 +17,10 @@ describe('toExtensionVersion', () => {
 describe('createManifest', () => {
   it('declares the open-panel shortcut and no other command', () => {
     expect(createManifest('production').commands).toEqual({
-      'open-panel': { suggested_key: { default: 'Alt+Shift+P' }, description: 'Open Prowl' },
+      'open-panel': {
+        suggested_key: { default: 'Ctrl+Shift+P', mac: 'Command+Shift+P' },
+        description: 'Open Prowl',
+      },
     });
   });
 

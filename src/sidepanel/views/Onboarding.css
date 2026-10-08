@@ -80,3 +80,9 @@
   gap: var(--space-1);
   font-weight: var(--weight-medium);
 }
+
+/* The About group of Settings, as a footer inside the screen's own padding. */
+.onboarding .settings-group {
+  padding: var(--space-4) 0 0;
+  border-top: var(--border-width) solid var(--color-border-subtle);
+}

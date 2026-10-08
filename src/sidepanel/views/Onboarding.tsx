@@ -4,6 +4,7 @@ import { env } from '../../lib/env';
 import { AUTH_DOCS_URL } from '../../lib/github/auth/deviceFlow';
 import { signInErrorMessage, TOKEN_URLS, validatePat } from '../../lib/github/auth/pat';
 import { LinkExternalIcon, MarkGithubIcon } from '../components/icons';
+import { lazy } from '../components/lazy';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -12,6 +13,9 @@ import { openGitHubUrl } from '../openUrl';
 import { completeSignIn } from '../state/session';
 import { DeviceFlow } from './DeviceFlow';
 import './Onboarding.css';
+
+/** Version, shortcut and links, as in Settings; loaded apart so sign-in does not wait for it. */
+const AboutSettings = lazy(() => import('./SettingsAccount').then((m) => m.AboutSettings));
 
 /** A link to a GitHub page; opens through the allowlisted helper, not in the panel itself. */
 function GitHubLink({ href, children }: { href: string; children: ComponentChildren }) {
@@ -122,6 +126,8 @@ export function OnboardingView() {
           <GitHubLink href={TOKEN_URLS.fineGrained}>Create a fine-grained token</GitHubLink>
         </article>
       </section>
+
+      <AboutSettings />
     </div>
   );
 }

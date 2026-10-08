@@ -32,7 +32,7 @@ reviews, merge state, notifications and actions. No backend.
 > - Get notified when CI fails or passes, a review arrives, or a PR is ready, merged or closed;
 >   open or snooze it from the notification. Quiet hours and a toolbar badge.
 > - Approve, request changes, comment, merge, turn on auto-merge, update a branch that is
->   behind, re-run failed checks, all without leaving your tab. Alt+Shift+P opens the panel.
+>   behind, re-run failed checks, all without leaving your tab. Ctrl+Shift+P (⌘⇧P on Mac) opens the panel.
 > - Hide stale, draft and bot PRs, and group them by repository.
 >
 > Private by design: no backend and no telemetry. Your token stays on your device, GitHub is the
