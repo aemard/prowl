@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   closedNode,
+  type FullPullRequestNode,
+  mergeStateResponse,
   nodesResponse,
   prId,
   prNode,
@@ -17,20 +19,34 @@ import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
 import { type FetchSettings, fetchPullRequests } from './fetchPullRequests';
 import { mapPullRequest } from './mapPullRequest';
-import type { PullRequestNode } from './queries';
+import type { PullRequestNode, SearchData } from './queries';
 import { MAX_TEAM_SEARCHES } from './teams';
 
 type Handler = (variables: Record<string, unknown>) => Response | Error | object;
 
-/** A client whose fetch answers each GraphQL operation with `handlers[name]`. */
+/**
+ * A client whose fetch answers each GraphQL operation with `handlers[name]`; `ProwlMergeState`
+ * defaults to the facts of the PRs the searches returned.
+ */
 function setup(handlers: Record<string, Handler>) {
   const calls: { operation: string; variables: Record<string, unknown> }[] = [];
+  const searched = new Map<string, FullPullRequestNode>();
   const fetch = vi.fn<FetchLike>(async (_url, init) => {
     const { query, variables } = JSON.parse(String(init.body));
     const operation = /query (\w+)/.exec(query)?.[1] ?? '';
     calls.push({ operation, variables });
-    const out = handlers[operation]?.(variables) ?? new Error(`unexpected ${operation}`);
+    const handler =
+      handlers[operation] ??
+      (operation === 'ProwlMergeState'
+        ? ({ ids }: Record<string, unknown>) => mergeStateResponse(ids, [...searched.values()])
+        : undefined);
+    const out = handler?.(variables) ?? new Error(`unexpected ${operation}`);
     if (out instanceof Error) throw out;
+    if (operation === 'ProwlSearch' && 'search' in out) {
+      for (const node of (out as SearchData).search.nodes ?? []) {
+        if (node && 'id' in node) searched.set(node.id, node as FullPullRequestNode);
+      }
+    }
     return out instanceof Response ? out : jsonResponse({ data: out });
   });
   const client = createGitHubClient({
@@ -92,12 +108,12 @@ describe('fetchPullRequests', () => {
     expect(queries()).toEqual([
       {
         query: 'is:pr is:open author:@me archived:false sort:updated-desc',
-        first: 50,
+        first: 25,
         after: null,
       },
       {
         query: 'is:pr is:open user-review-requested:@me archived:false sort:updated-desc',
-        first: 50,
+        first: 25,
         after: null,
       },
     ]);
@@ -106,7 +122,12 @@ describe('fetchPullRequests', () => {
       sections: { authored: [a.id, b.id], review_requested: [b.id, c.id] },
       sectionErrors: {},
       teamRequests: {},
-      rateLimit: { limit: 5000, remaining: 4321, resetAt: '2026-10-06T13:00:00.000Z' },
+      mergeStateAt: {
+        [a.id]: expect.any(String),
+        [b.id]: expect.any(String),
+        [c.id]: expect.any(String),
+      },
+      rateLimit: { limit: 5000, remaining: 4990, resetAt: '2026-10-06T13:00:00.000Z' },
     });
   });
 
@@ -126,15 +147,16 @@ describe('fetchPullRequests', () => {
 
     const result = await fetchPullRequests(client, settings({ maxPerSection: 70 }));
     expect(queries().map(({ first, after }) => [first, after])).toEqual([
-      [50, null],
+      [25, null],
+      [25, '25'],
       [20, '50'],
     ]);
     expect(result.sections.authored).toHaveLength(70);
 
-    const fewer = setup({ ProwlSearch: bySearch({ 'author:@me': nodes.slice(0, 30) }) });
+    const fewer = setup({ ProwlSearch: bySearch({ 'author:@me': nodes.slice(0, 20) }) });
     const small = await fetchPullRequests(fewer.client, settings({ maxPerSection: 100 }));
     expect(fewer.queries()).toHaveLength(1);
-    expect(small.sections.authored).toHaveLength(30);
+    expect(small.sections.authored).toHaveLength(20);
   });
 
   it('dedupes a PR that moved between two pages', async () => {
@@ -147,6 +169,7 @@ describe('fetchPullRequests', () => {
         },
         rateLimit: null,
       }),
+      ProwlMergeState: ({ ids }) => ({ ...mergeStateResponse(ids, pages), rateLimit: null }),
     });
     const result = await fetchPullRequests(client, settings({ maxPerSection: 100 }));
     expect(result.sections.authored).toEqual([prId(1), prId(2)]);
@@ -276,12 +299,112 @@ describe('fetchPullRequests', () => {
     expect((error as GitHubError).kind).toBe(kind);
   });
 
-  it('throws any failure of a preset section', async () => {
+  it('reports a preset search GitHub refused or gave up on, and loads the others', async () => {
+    const pr = prNode({ number: 1 });
     const { client } = setup({
-      ProwlSearch: () => jsonResponse({ message: 'Validation Failed' }, { status: 422 }),
+      ProwlSearch: ({ query }) =>
+        String(query).includes('author:@me')
+          ? jsonResponse({ message: 'Validation Failed' }, { status: 422 })
+          : String(query).includes('mentions:@me')
+            ? jsonResponse({ message: 'Bad gateway' }, { status: 502 })
+            : searchResponse([pr]),
     });
-    await expect(fetchPullRequests(client, settings())).rejects.toMatchObject({
-      kind: 'validation',
+    const result = await fetchPullRequests(
+      client,
+      settings({
+        sections: [section('authored'), section('mentioned'), section('review_requested')],
+      }),
+    );
+    expect(result.sections).toEqual({ review_requested: [pr.id] });
+    expect(Object.keys(result.sectionErrors)).toEqual(['authored', 'mentioned']);
+  });
+
+  it('fails the poll when every search timed out: GitHub itself is failing', async () => {
+    const { client } = setup({
+      ProwlSearch: () => jsonResponse({ message: 'Bad gateway' }, { status: 502 }),
+    });
+    await expect(
+      fetchPullRequests(
+        client,
+        settings({ sections: [section('authored'), section('mentioned')] }),
+      ),
+    ).rejects.toMatchObject({ kind: 'server' });
+  });
+
+  describe('merge facts', () => {
+    const MINUTE = 60_000;
+    const merge = (calls: { operation: string; variables: Record<string, unknown> }[]) =>
+      calls.filter((c) => c.operation === 'ProwlMergeState').map((c) => c.variables.ids);
+
+    it('reads them in batches of 10 for the PRs found', async () => {
+      const nodes = Array.from({ length: 12 }, (_, i) =>
+        prNode({ number: i + 1, mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }),
+      );
+      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const result = await fetchPullRequests(client, settings());
+      expect(merge(calls).map((ids) => (ids as string[]).length)).toEqual([10, 2]);
+      expect(result.pullRequests[prId(12)]).toMatchObject({
+        mergeStateStatus: 'clean',
+        reviewDecision: 'approved',
+      });
+      expect(Object.keys(result.mergeStateAt)).toHaveLength(12);
+    });
+
+    it('keeps them for an unchanged PR, and reads them again when it changed, is unknown or old', async () => {
+      const now = Date.now();
+      const node = (number: number) => prNode({ number, mergeStateStatus: 'CLEAN' });
+      const [one, two, three, four] = [node(1), node(2), node(3), node(4)];
+      const nodes = [one, two, three, four];
+      const behind = (node: PullRequestNode) => ({
+        ...mapped(node),
+        mergeStateStatus: 'behind' as const,
+      });
+      const previous = {
+        pullRequests: {
+          [prId(1)]: behind(one),
+          [prId(2)]: { ...behind(two), title: 'Renamed since' },
+          [prId(3)]: { ...behind(three), mergeable: 'unknown' as const },
+          [prId(4)]: behind(four),
+        },
+        mergeStateAt: {
+          [prId(1)]: new Date(now - 5 * MINUTE).toISOString(),
+          [prId(2)]: new Date(now - 5 * MINUTE).toISOString(),
+          [prId(3)]: new Date(now - 5 * MINUTE).toISOString(),
+          [prId(4)]: new Date(now - 15 * MINUTE).toISOString(),
+        },
+      };
+      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const result = await fetchPullRequests(client, settings(), previous);
+      expect(merge(calls)).toEqual([[prId(2), prId(3), prId(4)]]);
+      expect(result.pullRequests[prId(1)]?.mergeStateStatus).toBe('behind');
+      expect(result.mergeStateAt[prId(1)]).toBe(previous.mergeStateAt[prId(1)]);
+      expect(result.pullRequests[prId(4)]?.mergeStateStatus).toBe('clean');
+    });
+
+    it('keeps the previous facts of a batch GitHub gave up on, and reads them next time', async () => {
+      const node = prNode({ number: 1, mergeStateStatus: 'CLEAN' });
+      const previous = {
+        pullRequests: {
+          [node.id]: { ...mapped(node), title: 'Old', mergeStateStatus: 'behind' as const },
+        },
+      };
+      const { client } = setup({
+        ProwlSearch: bySearch({ 'author:@me': [node] }),
+        ProwlMergeState: () => jsonResponse({ message: 'Bad gateway' }, { status: 504 }),
+      });
+      const result = await fetchPullRequests(client, settings(), previous);
+      expect(result.pullRequests[node.id]?.mergeStateStatus).toBe('behind');
+      expect(result.mergeStateAt).toEqual({});
+    });
+
+    it('fails the poll on a rejected token', async () => {
+      const { client } = setup({
+        ProwlSearch: bySearch({ 'author:@me': [prNode()] }),
+        ProwlMergeState: () => jsonResponse({ message: 'Bad credentials' }, { status: 401 }),
+      });
+      await expect(fetchPullRequests(client, settings())).rejects.toMatchObject({
+        kind: 'unauthorized',
+      });
     });
   });
 
@@ -372,6 +495,7 @@ describe('fetchPullRequests', () => {
         sections: {},
         sectionErrors: {},
         teamRequests: {},
+        mergeStateAt: {},
         rateLimit: null,
       });
     });

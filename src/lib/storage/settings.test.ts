@@ -53,7 +53,7 @@ describe('DEFAULT_SETTINGS', () => {
       sections: presets(),
       repoInclude: [],
       repoExclude: [],
-      pollIntervalMinutes: 2,
+      pollIntervalMinutes: 5,
       maxPerSection: 50,
       notifications: {
         enabled: true,
@@ -184,19 +184,19 @@ describe('normalizeSettings', () => {
   });
 
   it.each([
-    [0, 1],
-    [-3, 1],
-    [0.4, 1],
-    [1, 1],
-    [2.4, 2],
+    [0, 2],
+    [-3, 2],
+    [0.4, 2],
+    [1, 2],
+    [2, 2],
     [2.6, 3],
     [45, 45],
     [61, 60],
     [1e9, 60],
-    [Number.NaN, 2],
-    [Number.POSITIVE_INFINITY, 2],
-    ['5', 2],
-    [null, 2],
+    [Number.NaN, 5],
+    [Number.POSITIVE_INFINITY, 5],
+    ['3', 5],
+    [null, 5],
   ])('repairs pollIntervalMinutes %j to %j', (value, expected) => {
     expect(normalizeSettings({ pollIntervalMinutes: value }).pollIntervalMinutes).toBe(expected);
   });
@@ -547,14 +547,14 @@ describe('settings storage', () => {
     await chrome.storage.local.set({ settings: { pollIntervalMinutes: 0, theme: 'dark' } });
     expect(await loadSettings()).toEqual({
       ...DEFAULT_SETTINGS,
-      pollIntervalMinutes: 1,
+      pollIntervalMinutes: 2,
       theme: 'dark',
     });
   });
 
   it('applies a patch, normalizes it and persists the result', async () => {
     const saved = await updateSettings({ pollIntervalMinutes: 0.2, sort: 'repo' });
-    expect(saved).toEqual({ ...DEFAULT_SETTINGS, pollIntervalMinutes: 1, sort: 'repo' });
+    expect(saved).toEqual({ ...DEFAULT_SETTINGS, pollIntervalMinutes: 2, sort: 'repo' });
     expect(fakeChrome().storage.local.data.get('settings')).toEqual(saved);
 
     const next = await updateSettings((current) => ({
@@ -601,7 +601,7 @@ describe('settings storage', () => {
     unsubscribe();
     await updateSettings({ theme: 'light' });
     expect(listener.mock.calls).toEqual([
-      [{ ...DEFAULT_SETTINGS, theme: 'dark', pollIntervalMinutes: 1 }],
+      [{ ...DEFAULT_SETTINGS, theme: 'dark', pollIntervalMinutes: 2 }],
       [DEFAULT_SETTINGS],
     ]);
   });

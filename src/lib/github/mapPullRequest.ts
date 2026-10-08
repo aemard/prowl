@@ -21,6 +21,7 @@ import type {
   CheckRunNode,
   ClosedPullRequestNode,
   DetailPullRequestNode,
+  MergeStateNode,
   Nodes,
   PullRequestNode,
   StateCount,
@@ -125,7 +126,24 @@ const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
   color: HEX_COLOR.test(color) ? color.toLowerCase() : NEUTRAL_LABEL_COLOR,
 });
 
-export function mapPullRequest(node: PullRequestNode): PullRequest {
+/** The fields `ProwlMergeState` reads (see `MERGE_STATE_QUERY`). */
+export type MergeFacts = Pick<
+  PullRequest,
+  'reviewDecision' | 'mergeable' | 'mergeStateStatus' | 'viewerCanUpdate'
+>;
+
+/** Merge facts of a node; what it does not carry is unknown (none, unknown, false). */
+export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
+  return {
+    reviewDecision: pick(REVIEW_DECISIONS, node.reviewDecision ?? null, 'none'),
+    mergeable: pick(MERGEABLE, node.mergeable ?? null, 'unknown'),
+    mergeStateStatus: pick(MERGE_STATE_STATUSES, node.mergeStateStatus ?? null, 'unknown'),
+    viewerCanUpdate: node.viewerCanUpdate === true,
+  };
+}
+
+/** A search result; its merge facts are unknown until `mapMergeState` fills them in. */
+export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>): PullRequest {
   const { repository: repo } = node;
   const head = node.commits.nodes?.at(-1)?.commit;
   const contexts = head?.statusCheckRollup?.contexts;
@@ -156,7 +174,7 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
       ...(contexts?.checkRunCountsByState ?? []),
       ...(contexts?.statusContextCountsByState ?? []),
     ]),
-    reviewDecision: pick(REVIEW_DECISIONS, node.reviewDecision, 'none'),
+    ...mapMergeState(node),
     reviews: present(node.latestReviews)
       .flatMap(({ id, state, submittedAt, author }) => {
         const mapped = pick(REVIEW_STATES, state, null);
@@ -168,8 +186,6 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     requestedReviewers: present(node.reviewRequests).flatMap(
       ({ requestedReviewer }) => requestedReviewer?.login ?? [],
     ),
-    mergeable: pick(MERGEABLE, node.mergeable, 'unknown'),
-    mergeStateStatus: pick(MERGE_STATE_STATUSES, node.mergeStateStatus, 'unknown'),
     labels: present(node.labels).map(mapLabel),
     // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
     unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
@@ -182,7 +198,6 @@ export function mapPullRequest(node: PullRequestNode): PullRequest {
     closedBy: node.mergedBy?.login ?? null,
     allowedMergeMethods: MERGE_METHODS.filter((_, index) => allowed[index]),
     defaultMergeMethod: pick(MERGE_METHODS, repo.viewerDefaultMergeMethod, 'merge'),
-    viewerCanUpdate: node.viewerCanUpdate,
     viewerCanMerge: CAN_MERGE.includes(repo.viewerPermission ?? ''),
     autoMergeAllowed: repo.autoMergeAllowed === true,
     autoMerge: node.autoMergeRequest

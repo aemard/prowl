@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { headCommit, prId, prNode, searchResponse, teamJson } from '../../tests/fixtures/github';
+import {
+  type FullPullRequestNode,
+  headCommit,
+  mergeStateResponse,
+  prId,
+  prNode,
+  searchResponse,
+  teamJson,
+} from '../../tests/fixtures/github';
 import { graphqlRateLimit, jsonResponse, rateLimitHeaders } from '../../tests/fixtures/http';
+import type { SearchData } from '../lib/github/queries';
 import type { AuthState, CheckState, PollState, Settings } from '../lib/model';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storage/storage';
@@ -27,13 +36,15 @@ let teamCalls = 0;
 
 /**
  * Stubs `fetch` as GitHub: every GraphQL request gets `reply(search query)`, every
- * `GET /user/teams` gets `teams()` (no team by default).
+ * `GET /user/teams` gets `teams()` (no team by default). `ProwlMergeState` gets the facts of the
+ * PRs the last search returned and stays out of `requests`, like the teams.
  */
 function github(
   reply: Reply = () => searchResponse([prNode()]),
   teams: () => Response | Promise<Response> = () => jsonResponse([]),
 ) {
   teamCalls = 0;
+  let searched: FullPullRequestNode[] = [];
   const requests: { operation: string; query?: string; token: string | null }[] = [];
   vi.stubGlobal(
     'fetch',
@@ -43,6 +54,9 @@ function github(
         return teams();
       }
       const { query, variables } = JSON.parse(String(init.body));
+      if (query.includes('query ProwlMergeState')) {
+        return jsonResponse({ data: mergeStateResponse(variables.ids, searched) });
+      }
       const token = new Headers(init.headers).get('authorization');
       requests.push({
         operation: /query (\w+)/.exec(query)?.[1] ?? '',
@@ -50,6 +64,9 @@ function github(
         token,
       });
       const out = await reply(variables.query);
+      if (!(out instanceof Response) && 'search' in out) {
+        searched = ((out as SearchData).search.nodes ?? []) as FullPullRequestNode[];
+      }
       return out instanceof Response ? out : jsonResponse({ data: out });
     }),
   );
@@ -118,7 +135,7 @@ describe('poll', () => {
       lastError: null,
       inFlight: false,
     });
-    expect(alarm()).toMatchObject({ periodInMinutes: 2, scheduledTime: NOW + 2 * MINUTE });
+    expect(alarm()).toMatchObject({ periodInMinutes: 5, scheduledTime: NOW + 5 * MINUTE });
   });
 
   it('marks the poll in flight while it runs', async () => {
@@ -377,6 +394,7 @@ describe('poll', () => {
   it('backs off exponentially after errors; a forced poll skips the backoff', async () => {
     const requests = github(fail(502, 'Bad gateway'));
     await signIn();
+    await setItem('settings', { ...defaultSettings(), pollIntervalMinutes: 2 });
     await poll();
     expect(await pollState()).toMatchObject({
       consecutiveFailures: 1,

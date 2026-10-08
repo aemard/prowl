@@ -17,7 +17,7 @@ import { isRecord } from './guards';
 import { getItem, subscribe, type Unsubscribe, updateItem } from './storage';
 
 export const SETTINGS_VERSION: Settings['version'] = 1;
-export const MIN_POLL_INTERVAL_MINUTES = 1;
+export const MIN_POLL_INTERVAL_MINUTES = 2;
 export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
@@ -79,7 +79,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   sections: BUILT_IN_SECTION_KINDS.map((kind) => builtInSection(kind)),
   repoInclude: [],
   repoExclude: [],
-  pollIntervalMinutes: 2,
+  pollIntervalMinutes: 5,
   maxPerSection: 50,
   notifications: {
     enabled: true,

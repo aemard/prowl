@@ -276,20 +276,20 @@ describe('SettingsView', () => {
     it('saves a new interval and explains what polling costs', async () => {
       await open();
       const refresh = group('Refresh');
-      expect(refresh.getByText(/about 120 points an hour/)).toBeTruthy();
+      expect(refresh.getByText(/about 48 points an hour/)).toBeTruthy();
       expect(refresh.getByText(/5,000 points an hour/)).toBeTruthy();
 
-      fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '1' } });
-      await waitFor(async () => expect((await saved()).pollIntervalMinutes).toBe(1));
-      expect(refresh.getByText(/about 240 points an hour/)).toBeTruthy();
+      fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '2' } });
+      await waitFor(async () => expect((await saved()).pollIntervalMinutes).toBe(2));
+      expect(refresh.getByText(/about 120 points an hour/)).toBeTruthy();
     });
 
-    it('does not accept less than one minute', async () => {
+    it('does not accept less than two minutes', async () => {
       await open();
       const field = group('Refresh').getByLabelText('Check every (minutes)');
-      fireEvent.input(field, { target: { value: '0' } });
-      expect(screen.getByText('Enter a whole number from 1 to 60.')).toBeTruthy();
-      expect((await saved()).pollIntervalMinutes).toBe(2);
+      fireEvent.input(field, { target: { value: '1' } });
+      expect(screen.getByText('Enter a whole number from 2 to 60.')).toBeTruthy();
+      expect((await saved()).pollIntervalMinutes).toBe(5);
     });
 
     it('saves how many pull requests to fetch per section', async () => {
@@ -304,10 +304,10 @@ describe('SettingsView', () => {
       await open({
         sections: defaultSettings().sections.map((s) => ({ ...s, enabled: true })),
         maxPerSection: 100,
-        pollIntervalMinutes: 1,
+        pollIntervalMinutes: 2,
       });
-      // Four presets at 480 points an hour; Team reviews searches nothing without a team.
-      expect(group('Refresh').getByText(/about 1,920 points an hour/)).toBeTruthy();
+      // Four presets at 240 points an hour; Team reviews searches nothing without a team.
+      expect(group('Refresh').getByText(/about 960 points an hour/)).toBeTruthy();
     });
 
     it('counts a search per followed team', async () => {
@@ -315,13 +315,13 @@ describe('SettingsView', () => {
         {
           sections: defaultSettings().sections.map((s) => ({ ...s, enabled: true })),
           maxPerSection: 100,
-          pollIntervalMinutes: 1,
+          pollIntervalMinutes: 2,
           unfollowedTeams: ['acme/ops'],
         },
         buildAuth(),
         { teams: teamsState() },
       );
-      expect(group('Refresh').getByText(/about 2,880 points an hour/)).toBeTruthy();
+      expect(group('Refresh').getByText(/about 1,440 points an hour/)).toBeTruthy();
     });
   });
 

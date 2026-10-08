@@ -4,16 +4,22 @@
  * values over time; `mapPullRequest.ts` maps unknown ones to safe defaults.
  *
  * Estimated cost (GitHub: requests needed for every connection / 100, rounded): a search page
- * of 50 PRs with its 7 nested connections is 1 + 50 x 7 = 351 requests, about 4 points;
- * `ProwlNodes` with 100 ids is 1 point. Lists use counts (`checkRunCountsByState`) instead of
- * check nodes, so the page stays light whatever the number of checks.
+ * of 25 PRs with its 7 nested connections is 1 + 25 x 7 = 176 requests, about 2 points;
+ * `ProwlNodes` with 100 ids and `ProwlMergeState` with 10 are 1 point. Lists use counts
+ * (`checkRunCountsByState`) instead of check nodes, so the page stays light whatever the number
+ * of checks.
+ *
+ * Points are not the limit, GitHub's 10 s execution time is: `mergeStateStatus` and
+ * `reviewDecision` take about half a second per PR on busy repositories (branch rules are
+ * evaluated each time), so they live in `ProwlMergeState`, asked for few PRs at a time.
  */
 
 const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
 
 /**
- * One page of a section's search. Team reviewers are left out on purpose: every `Team` field
- * needs the `read:org` scope, and selecting one fails the whole query for a `repo`-only token.
+ * One page of a section's search, without the merge facts of `MERGE_STATE_QUERY`. Team reviewers
+ * are left out on purpose: every `Team` field needs the `read:org` scope, and selecting one fails
+ * the whole query for a `repo`-only token.
  */
 export const SEARCH_QUERY = /* GraphQL */ `
 query ProwlSearch($query: String!, $first: Int!, $after: String) {
@@ -46,10 +52,6 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           autoMergeAllowed
         }
         autoMergeRequest { mergeMethod enabledBy { login } }
-        reviewDecision
-        mergeable
-        mergeStateStatus
-        viewerCanUpdate
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
         latestReviews(first: 20) { nodes { id state submittedAt author { login } } }
@@ -78,6 +80,21 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           }
         }
       }
+    }
+  }
+  ${RATE_LIMIT}
+}`;
+
+/** The merge facts of open PRs: what GitHub computes per PR on every read (see the top). */
+export const MERGE_STATE_QUERY = /* GraphQL */ `
+query ProwlMergeState($ids: [ID!]!) {
+  nodes(ids: $ids) {
+    ... on PullRequest {
+      id
+      reviewDecision
+      mergeable
+      mergeStateStatus
+      viewerCanUpdate
     }
   }
   ${RATE_LIMIT}
@@ -188,10 +205,6 @@ export interface PullRequestNode {
   };
   /** Null while auto-merge is off. */
   autoMergeRequest: { mergeMethod: string; enabledBy: Login | null } | null;
-  reviewDecision: string | null;
-  mergeable: string;
-  mergeStateStatus: string;
-  viewerCanUpdate: boolean;
   totalCommentsCount: number | null;
   labels: Nodes<{ name: string; color: string }> | null;
   latestReviews: Nodes<{
@@ -216,6 +229,20 @@ export interface PullRequestNode {
       } | null;
     };
   }>;
+}
+
+export interface MergeStateNode {
+  id: string;
+  reviewDecision: string | null;
+  mergeable: string;
+  mergeStateStatus: string;
+  viewerCanUpdate: boolean;
+}
+
+export interface MergeStateData {
+  /** Same order as the ids; null for a deleted or inaccessible PR. */
+  nodes: (MergeStateNode | Record<string, never> | null)[] | null;
+  rateLimit: GraphQLRateLimit | null;
 }
 
 export interface GraphQLRateLimit {

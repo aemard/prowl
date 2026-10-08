@@ -65,12 +65,18 @@ in-memory updates that the next snapshot replaces.
    `{ type: 'refreshTeams' }` from the panel. `fetchPullRequests` (see
    [Fetching pull requests](#fetching-pull-requests)) builds each
    enabled section's search query (`src/lib/github/search.ts`) and fetches it with
-   `query ProwlSearch` (pages of 50, cursor-paginated up to `maxPerSection`), selecting
-   `rateLimit { limit remaining resetAt cost }`.
+   `query ProwlSearch` (pages of 25, cursor-paginated up to `maxPerSection`), selecting
+   `rateLimit { limit remaining resetAt cost }`. A search GitHub refuses or gives up on (502/504
+   past its 10 s limit) fails its section only; the poll fails when every search did.
+   Merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`, `viewerCanUpdate`) are left
+   out of the search: GitHub evaluates branch rules for each on every read, about half a second
+   per PR on busy repositories. `query ProwlMergeState` reads them, 10 PRs at a time, only for
+   PRs that are new, changed in the search, unknown, or read more than 15 minutes ago
+   (`snapshot.mergeStateAt`); the others keep the previous poll's.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `teamRequests` and `settledChecks` to build the new `Snapshot`, and
+   `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt` and `settledChecks` to build the new `Snapshot`, and
    persists it with `pollState` (and the teams, when discovered) in one write. Local PR state of PRs no longer in the snapshot is pruned.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm).
@@ -226,8 +232,9 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 
 Team reviews run one `ProwlSearch` per followed team (at most 10), so each team costs what a
 section does; `GET /user/teams` is REST (the core budget, not GraphQL points), once a day.
-The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour of
-the 5,000; four sections of 100 PRs every minute stay under 2,000.
+The default settings (one section, 50 PRs, every 5 minutes) cost about 48 points an hour of
+the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
+about a point per 10 changed PRs.
 
 ## Pull request detail
 
@@ -725,7 +732,7 @@ signal (`state/store.ts`).
   `normalizeSettings`. Turning it on adopts an existing synced copy, else shares this one. Writes
   happen only when the copies differ, which stops the echo between the two areas.
 - Keyboard and notification actions (US-040): the manifest's `commands` has `open-panel`
-  (`OPEN_PANEL_COMMAND`, suggested Alt+Shift+P); `register.ts` answers `commands.onCommand` by
+  (`OPEN_PANEL_COMMAND`, suggested Ctrl+Shift+P, ⌘⇧P on Mac); `register.ts` answers `commands.onCommand` by
   calling `chrome.sidePanel.open({ windowId })` before any await (the shortcut is the user gesture
   it needs). A notification about one event gets the buttons "Open" (same as a click) and
   "Snooze 1 h" (`onNotificationButtonClicked`: snoozes the PR, whose id starts the event id, and

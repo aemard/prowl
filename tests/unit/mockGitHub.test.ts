@@ -23,8 +23,8 @@ const github = new MockGitHub();
 beforeAll(() => github.start(0));
 afterAll(() => github.stop());
 
-it('serves ProwlSearch and ProwlNodes over HTTP', async () => {
-  const open = prNode({ number: 1 });
+it('serves ProwlSearch, ProwlNodes and, by default, ProwlMergeState over HTTP', async () => {
+  const open = prNode({ number: 1, mergeStateStatus: 'CLEAN' });
   const merged = prNode({ number: 2 });
   github
     .onGraphQL('ProwlSearch', (variables) => searchResponse([open], variables))
@@ -43,9 +43,14 @@ it('serves ProwlSearch and ProwlNodes over HTTP', async () => {
   );
 
   expect(first.sections).toEqual({ authored: [open.id] });
+  expect(first.pullRequests[open.id]?.mergeStateStatus).toBe('clean');
   expect(first.rateLimit?.remaining).toBe(4990);
   expect(second.pullRequests[merged.id]).toMatchObject({ state: 'merged', closedBy: 'octocat' });
-  expect(github.requests.map((r) => r.operationName)).toEqual(['ProwlSearch', 'ProwlNodes']);
+  expect(github.requests.map((r) => r.operationName)).toEqual([
+    'ProwlSearch',
+    'ProwlMergeState',
+    'ProwlNodes',
+  ]);
   expect(github.requests[0]?.headers.authorization).toBe('Bearer e2e-token');
 });
 
