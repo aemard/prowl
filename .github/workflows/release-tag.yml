@@ -1,5 +1,6 @@
 # Fallback path: a maintainer pushes a v* tag by hand (for example when release-please
-# cannot open pull requests). Creates the release from CHANGELOG.md and attaches assets.
+# cannot open pull requests). Creates the release from CHANGELOG.md and attaches assets. Only a
+# tag on a commit of main is released: anything else would ship code that skipped review.
 name: Release from tag
 
 on:
@@ -21,6 +22,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check the tag is on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)
+          [[ "$status" == identical || "$status" == behind ]] || { echo "$TAG is not on main ($status)"; exit 1; }
+
       - name: Create release if missing
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,7 +40,7 @@ jobs:
             exit 0
           fi
           node scripts/release-notes.mjs "$TAG" > notes.md
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes-file notes.md --verify-tag
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes-file notes.md --verify-tag --draft
 
   assets:
     name: Release assets

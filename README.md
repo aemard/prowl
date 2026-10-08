@@ -13,22 +13,27 @@ browser and is only ever sent to GitHub.
   <img src="docs/screenshots/list-light.png" alt="Prowl's side panel listing pull requests with CI, review and merge status" width="400" height="760">
 </p>
 
+[Chrome Web Store](https://chromewebstore.google.com/detail/prowl/homnofbclfgoailffidcbgekohciglcf) ·
 [Website](https://aemard.github.io/prowl/) ·
 [Install guide](https://aemard.github.io/prowl/install/) ·
 [Sign-in guide](https://aemard.github.io/prowl/auth/) ·
 [Privacy](https://aemard.github.io/prowl/privacy/) ·
 [Changelog](CHANGELOG.md)
 
-## Install (about 2 minutes)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aemard/prowl/badge)](https://scorecard.dev/viewer/?uri=github.com/aemard/prowl)
 
-1. Download `prowl-vX.Y.Z.zip` from the [latest release](https://github.com/aemard/prowl/releases/latest) and unzip it.
-2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-3. Click **Load unpacked** and pick the unzipped folder.
-4. Pin Prowl from the puzzle-piece menu, then click its icon to open the side panel.
-5. Sign in: **Continue with GitHub**, or paste a token (see below).
+## Install
 
-Requires Chrome 116 or later. Each release also ships an SBOM and a build provenance
-attestation (`gh attestation verify prowl-vX.Y.Z.zip --repo aemard/prowl --signer-workflow aemard/prowl/.github/workflows/release-assets.yml`).
+1. Open [Prowl in the Chrome Web Store](https://chromewebstore.google.com/detail/prowl/homnofbclfgoailffidcbgekohciglcf) and click **Add to Chrome**. It updates itself.
+2. Pin Prowl from the puzzle-piece menu, then click its icon to open the side panel.
+3. Sign in: **Continue with GitHub**, or paste a token (see below).
+
+Requires Chrome 116 or later. A new version reaches the store a few days after its GitHub release,
+once Google has reviewed it. To run a release sooner or without the store, download
+`prowl-vX.Y.Z.zip` from the [latest release](https://github.com/aemard/prowl/releases/latest),
+unzip it, then **Load unpacked** in `chrome://extensions` with **Developer mode** on (no
+automatic updates; [install guide](https://aemard.github.io/prowl/install/)). Each release also ships an SBOM and a build provenance
+attestation, and rebuilds byte for byte: see [verify a release](docs/releasing.md#verify-a-release).
 
 ## Sign in
 

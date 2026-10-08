@@ -4,21 +4,21 @@ import light from '../../../docs/screenshots/list-light.png';
 import onboarding from '../../../docs/screenshots/onboarding.png';
 import Screenshot from '../components/Screenshot.astro';
 import Base from '../layouts/Base.astro';
-import { INSTALL, page, REPO } from '../links';
+import { page, RELEASES, REPO, STORE } from '../links';
 ---
 
 <Base
   title="Install: Prowl"
-  description="Install Prowl in under five minutes: download the zip from the latest release, unzip it, load it in Chrome as an unpacked extension, pin it and open the side panel."
+  description="Install Prowl from the Chrome Web Store in a minute, or load a release zip as an unpacked extension. Then pin it, open the side panel and sign in."
 >
   <article class="section wrap prose guide">
     <h1>Install Prowl</h1>
     <p class="lead">
-      Prowl is installed from a release zip: download it, unzip it and load it in Chrome. It takes
-      under five minutes and you need no account besides GitHub.
+      Install Prowl from the Chrome Web Store: it takes a minute and Prowl updates itself. You need
+      no account besides GitHub.
     </p>
     <p class="actions">
-      <a class="button" data-variant="primary" href={INSTALL}>Download the latest release</a>
+      <a class="button" data-variant="primary" href={STORE}>Add to Chrome</a>
     </p>
 
     <h2>Before you start</h2>
@@ -30,37 +30,11 @@ import { INSTALL, page, REPO } from '../links';
     <h2>Steps</h2>
     <ol class="guide-steps">
       <li>
-        <h3>Download the zip</h3>
+        <h3>Add Prowl to Chrome</h3>
         <p>
-          Open <a href={INSTALL}>the latest release</a> and download
-          <code>prowl-vX.Y.Z.zip</code> from the Assets list. Do not pick the "Source code"
-          archives.
-        </p>
-      </li>
-      <li>
-        <h3>Unzip it into a new folder</h3>
-        <p>
-          Choose a place you will keep. Chrome reads the extension from this folder every time it
-          starts, so do not move or delete it. On macOS and Linux, run this where you saved the zip:
-        </p>
-        <pre><code>unzip prowl-v*.zip -d ~/prowl-extension</code></pre>
-        <p>
-          On Windows, right-click the zip and choose Extract All. The folder must contain
-          <code>manifest.json</code> directly, not inside another folder.
-        </p>
-      </li>
-      <li>
-        <h3>Open the extensions page</h3>
-        <p>
-          Type <code>chrome://extensions</code> in the address bar. Turn on <strong>Developer
-          mode</strong>, the switch at the top right.
-        </p>
-      </li>
-      <li>
-        <h3>Load Prowl</h3>
-        <p>
-          Choose <strong>Load unpacked</strong> and select the folder from step 2. Prowl appears in
-          your list of extensions.
+          Open <a href={STORE}>Prowl in the Chrome Web Store</a> and choose
+          <strong>Add to Chrome</strong>. Chrome lists what Prowl may access; the
+          <a href={page('privacy/')}>privacy page</a> explains each permission.
         </p>
       </li>
       <li>
@@ -96,16 +70,67 @@ import { INSTALL, page, REPO } from '../links';
 
     <h2>Update</h2>
     <p>
-      Prowl does not update itself yet. When a new release comes out, download its zip and unzip it
-      over the same folder. Then open <code>chrome://extensions</code> and select the reload
-      button on Prowl's card. Use the same folder every time: Chrome ties your settings and your
-      sign-in to its location, and a new location starts as a fresh install.
+      Chrome updates Prowl from the store by itself. A new version reaches the store a few days
+      after its <a href={RELEASES}>GitHub release</a>, once Google has reviewed it.
+    </p>
+
+    <h2>Install from a release zip</h2>
+    <p>
+      To run a release before it reaches the store, or without the store, load the zip yourself.
+      Chrome does not update it: repeat these steps for each new release.
+    </p>
+    <ol class="guide-steps">
+      <li>
+        <h3>Download the zip</h3>
+        <p>
+          Open <a href={RELEASES}>the latest release</a> and download
+          <code>prowl-vX.Y.Z.zip</code> from the Assets list. Do not pick the "Source code"
+          archives.
+        </p>
+      </li>
+      <li>
+        <h3>Unzip it into a new folder</h3>
+        <p>
+          Choose a place you will keep. Chrome reads the extension from this folder every time it
+          starts, so do not move or delete it. On macOS and Linux, run this where you saved the zip:
+        </p>
+        <pre><code>unzip prowl-v*.zip -d ~/prowl-extension</code></pre>
+        <p>
+          On Windows, right-click the zip and choose Extract All. The folder must contain
+          <code>manifest.json</code> directly, not inside another folder.
+        </p>
+      </li>
+      <li>
+        <h3>Open the extensions page</h3>
+        <p>
+          Type <code>chrome://extensions</code> in the address bar. Turn on <strong>Developer
+          mode</strong>, the switch at the top right.
+        </p>
+      </li>
+      <li>
+        <h3>Load Prowl</h3>
+        <p>
+          Choose <strong>Load unpacked</strong> and select the folder from step 2. Prowl appears in
+          your list of extensions.
+        </p>
+      </li>
+      <li>
+        <h3>Pin it and sign in</h3>
+        <p>As in steps 2 and 3 above.</p>
+      </li>
+    </ol>
+    <p>
+      To update, unzip the new release over the same folder and select the reload button on
+      Prowl's card in <code>chrome://extensions</code>. Use the same folder every time: Chrome ties
+      your settings and your sign-in to its location, and a new location starts as a fresh install.
+      A zip install and a store install are separate extensions: keep only one.
     </p>
 
     <h2>If something does not work</h2>
     <ul>
       <li>
-        <strong>"Manifest file is missing or unreadable"</strong>: you selected the wrong folder.
+        <strong>"Manifest file is missing or unreadable"</strong> (zip install): you selected the
+        wrong folder.
         Pick the one that holds <code>manifest.json</code>.
       </li>
       <li>
@@ -124,6 +149,11 @@ import { INSTALL, page, REPO } from '../links';
       <a href="https://cli.github.com/">GitHub CLI</a>:
     </p>
     <pre><code>gh attestation verify prowl-v*.zip --repo aemard/prowl</code></pre>
+    <p>
+      The store install can be checked against the same zip, and any release can be rebuilt from
+      source to the same bytes: see
+      <a href={`${REPO}/blob/main/docs/releasing.md#verify-a-release`}>Verify a release</a>.
+    </p>
 
     <h2>Uninstall</h2>
     <p>
