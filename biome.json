@@ -17,7 +17,9 @@
       "!**/test-results",
       "!pnpm-lock.yaml",
       "!.release-please-manifest.json",
-      "!CHANGELOG.md"
+      "!**/*.md",
+      "!**/*.yml",
+      "!**/*.yaml"
     ]
   },
   "formatter": {
