@@ -303,6 +303,8 @@ describe('validateDeviceToken', () => {
       scopes: ['read:org', 'repo'],
       viewer: viewerNode(),
       createdAt: new Date(NOW).toISOString(),
+      // OAuth App tokens never expire.
+      expiresAt: null,
     });
     expect(warning).toBeNull();
     expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: `Bearer ${TOKEN}` });

@@ -304,6 +304,12 @@ export interface AuthState {
   scopes: string[];
   viewer: Viewer;
   createdAt: string;
+  /**
+   * When GitHub says the token expires (ISO), from `GitHub-Authentication-Token-Expiration`; null
+   * for a token that never does. Absent when unknown: a header Prowl could not read, or a sign-in
+   * stored before Prowl looked.
+   */
+  expiresAt?: string | null;
 }
 
 /** Local-only per-PR state. Never sent anywhere. */

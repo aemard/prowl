@@ -3,7 +3,13 @@ import { viewerNode } from '../../../../tests/fixtures/github';
 import { graphqlError, jsonResponse } from '../../../../tests/fixtures/http';
 import type { FetchLike } from '../client';
 import { GitHubError } from '../errors';
-import { detectTokenType, signInErrorMessage, TOKEN_URLS, validatePat } from './pat';
+import {
+  detectTokenType,
+  parseTokenExpiration,
+  signInErrorMessage,
+  TOKEN_URLS,
+  validatePat,
+} from './pat';
 
 const CLASSIC = 'ghp_ClassicTokenValue0123456789abcdefABCD';
 const FINE_GRAINED = 'github_pat_11ABCDEFG0abcdefghijklmn_FineGrainedTokenValue0123456789';
@@ -49,6 +55,20 @@ describe('detectTokenType', () => {
   });
 });
 
+describe('parseTokenExpiration', () => {
+  it.each([
+    ['2026-11-30 12:00:00 UTC', '2026-11-30T12:00:00.000Z'],
+    ['2026-11-30 12:00:00 +0100', '2026-11-30T11:00:00.000Z'],
+    ['2026-11-30 12:00:00 -07:00', '2026-11-30T19:00:00.000Z'],
+    [null, null],
+    ['', undefined],
+    ['2026-11-30', undefined],
+    ['2026-13-45 99:00:00 UTC', undefined],
+  ])('%j is %j', (header, expected) => {
+    expect(parseTokenExpiration(header)).toBe(expected);
+  });
+});
+
 describe('TOKEN_URLS', () => {
   it('pre-fill the classic scope and the fine-grained permissions', () => {
     const classic = new URL(TOKEN_URLS.classic);
@@ -86,6 +106,7 @@ describe('validatePat', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
       createdAt: NOW,
+      expiresAt: null,
     });
     expect(warning).toBeNull();
 
@@ -97,6 +118,24 @@ describe('validatePat', () => {
       ]),
     );
     expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: `Bearer ${CLASSIC}` });
+  });
+
+  it('records when GitHub says the token expires', async () => {
+    const user = jsonResponse(
+      { login: 'octocat' },
+      { headers: { 'github-authentication-token-expiration': '2026-11-30 12:00:00 UTC' } },
+    );
+    const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
+    expect(auth.expiresAt).toBe('2026-11-30T12:00:00.000Z');
+  });
+
+  it('leaves the expiry unknown when GitHub sends one it cannot read', async () => {
+    const user = jsonResponse(
+      { login: 'octocat' },
+      { headers: { 'github-authentication-token-expiration': 'soon' } },
+    );
+    const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
+    expect(auth).not.toHaveProperty('expiresAt');
   });
 
   it('honours a custom API URL', async () => {

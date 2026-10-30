@@ -1,8 +1,8 @@
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
-import { pollState, settings, snapshot } from '../state/store';
+import { auth, pollState, settings, snapshot } from '../state/store';
 import { AlertIcon, ClockIcon, CloudOfflineIcon, KeyIcon } from './icons';
-import { type BannerKind, describeStatus } from './StatusBannerModel';
+import { type BannerKind, describeStatus, describeTokenExpiry } from './StatusBannerModel';
 import { Button } from './ui/Button';
 import { useNow } from './useNow';
 import './StatusBanner.css';
@@ -13,22 +13,25 @@ const ICONS: Record<BannerKind, typeof AlertIcon> = {
   offline: CloudOfflineIcon,
   error: AlertIcon,
   stale: ClockIcon,
+  expiring: KeyIcon,
 };
 
 /**
- * Says why Prowl cannot update (rejected token, rate limit, offline, a GitHub error) or that the
- * list is stale, and what to do about it. It sits above the view and never replaces it: the last
+ * Says why Prowl cannot update (rejected token, rate limit, offline, a GitHub error), that the
+ * list is stale or that the token expires soon, and what to do about it. It sits above the view and never replaces it: the last
  * snapshot stays readable. A rejected token is an alert, everything else a polite status. The
  * age line stays out of that live region, so a ticking time is not announced again and again.
  */
 export function StatusBanner() {
   useNow(30_000); // re-renders as the minutes pass; the time itself is read fresh below
-  const banner = describeStatus(
-    pollState.value,
-    snapshot.value?.fetchedAt,
-    settings.value.pollIntervalMinutes,
-    Date.now(),
-  );
+  const now = Date.now();
+  const banner =
+    describeStatus(
+      pollState.value,
+      snapshot.value?.fetchedAt,
+      settings.value.pollIntervalMinutes,
+      now,
+    ) ?? describeTokenExpiry(auth.value?.expiresAt, now);
   if (!banner) return null;
   const Icon = ICONS[banner.kind];
   const { action } = banner;
