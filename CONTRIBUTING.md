@@ -7,8 +7,9 @@ details.
 
 ## Before you start
 
-Open an issue for anything bigger than a small fix, so we can agree on the approach before you
-write code. Prowl stays small on purpose: no backend, no telemetry, and GitHub is the only
+Report a bug or suggest a feature in [GitHub issues](https://github.com/aemard/prowl/issues/new/choose)
+(the templates ask for what helps: version, steps, what you expected). Open an issue for anything
+bigger than a small fix, so we can agree on the approach before you write code. Prowl stays small on purpose: no backend, no telemetry, and GitHub is the only
 remote host.
 
 ## Set up
@@ -43,7 +44,9 @@ tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once
 ## Conventions
 
 - TypeScript in strict mode, no `any`. Preact function components and signals.
-- Tests sit next to the code they cover. Test behavior, not every function.
+- Every new feature and every bug fix comes with tests: a fix with one that fails without it.
+  Tests sit next to the code they cover; test behavior, not every function. CI enforces coverage
+  (80% overall, 95% for `src/lib/github` and `src/lib/diff`).
 - Colors, spacing and type come from the tokens in `src/styles/tokens.css`.
 - Everything is keyboard accessible and labelled, and axe reports no violations.
 - Render GitHub text as text, never as HTML. Only open GitHub URLs.
@@ -67,5 +70,6 @@ policy, the changelog and this page are rendered from `docs/auth.md`, `docs/priv
 
 ## Security
 
-Do not post exploit details in a public issue. Open an issue that says you found a security
-problem, without the details, and a maintainer will arrange a private way to receive them.
+Never report a vulnerability in a public issue. Use GitHub's private reporting instead
+(**Security → Report a vulnerability**), as [`SECURITY.md`](https://github.com/aemard/prowl/blob/main/SECURITY.md)
+explains; you get an answer within 7 days.
