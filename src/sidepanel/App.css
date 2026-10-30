@@ -1,6 +1,8 @@
 /* A bar fixed at the bottom of the panel (the section bar) sets --app-inset-bottom while it is
-   shown: the page ends above it, and focus and scrollIntoView stop above it. */
+   shown: the page ends above it, and focus and scrollIntoView stop above it. The sticky header
+   sets --app-inset-top the same way. */
 html {
+  scroll-padding-top: var(--app-inset-top, 0px);
   scroll-padding-bottom: var(--app-inset-bottom, 0px);
 }
 

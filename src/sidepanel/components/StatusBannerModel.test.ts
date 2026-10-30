@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ErrorKind, PollState } from '../../lib/model';
 import { buildPollState } from '../../test/panel';
-import { describeStatus } from './StatusBannerModel';
+import { describeStatus, describeTokenExpiry } from './StatusBannerModel';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 const minutes = (n: number) => n * 60_000;
@@ -126,5 +126,33 @@ describe('describeStatus', () => {
     // Plenty left: a wait would not be about the rate limit.
     const plenty = { ...state, rateLimit: { limit: 5000, remaining: 4000, resetAt: at(0) } };
     expect(describeStatus(plenty, at(-minutes(1)), 2, NOW)).toBeNull();
+  });
+});
+
+describe('describeTokenExpiry', () => {
+  const days = (n: number) => n * 24 * minutes(60);
+
+  it('says nothing without a known expiry, a week or more ahead, or once it has passed', () => {
+    expect(describeTokenExpiry(undefined, NOW)).toBeNull();
+    expect(describeTokenExpiry(null, NOW)).toBeNull();
+    expect(describeTokenExpiry(at(days(7) + 1), NOW)).toBeNull();
+    expect(describeTokenExpiry(at(0), NOW)).toBeNull();
+    expect(describeTokenExpiry(at(-days(1)), NOW)).toBeNull();
+    expect(describeTokenExpiry('not a date', NOW)).toBeNull();
+  });
+
+  it.each([
+    [days(7), 'in 7 days'],
+    [days(1) + minutes(5), 'in 1 day'],
+    [minutes(90), 'in less than a day'],
+  ])('warns %d ms ahead: %s, with a way to sign in again', (offset, when) => {
+    expect(describeTokenExpiry(at(offset), NOW)).toEqual({
+      kind: 'expiring',
+      tone: 'warning',
+      title: `Your GitHub token expires ${when}`,
+      detail: 'Create a new one and sign in with it to keep Prowl refreshing.',
+      age: '',
+      action: { type: 'reauthenticate', label: 'Renew token' },
+    });
   });
 });

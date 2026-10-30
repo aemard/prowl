@@ -86,13 +86,18 @@ describe('notifyEvents', () => {
     expect(await stored()).toBeUndefined();
   });
 
-  it('remembers the 300 most recent event ids, with their URLs', async () => {
+  it('remembers the 300 most recent ids, with their URLs', async () => {
     await notify(...events(305));
     const notified = (await stored()) ?? {};
     expect(Object.keys(notified)).toHaveLength(300);
     expect(notified[prEvent({ number: 305 }).id]).toBe('https://github.com/acme/widgets/pull/305');
-    expect(notified[prEvent({ number: 5 }).id]).toBeUndefined();
-    expect(notified[prEvent({ number: 6 }).id]).toBeDefined();
+    // The summary they were shown in takes the last place.
+    expect(Object.entries(notified).at(-1)).toEqual([
+      expect.stringMatching(/^summary:\d+$/),
+      'https://github.com/pulls',
+    ]);
+    expect(notified[prEvent({ number: 6 }).id]).toBeUndefined();
+    expect(notified[prEvent({ number: 7 }).id]).toBeDefined();
   });
 
   it('never rejects: a notification that fails is logged', async () => {
@@ -131,13 +136,19 @@ describe('onNotificationClicked', () => {
     expect(shown().size).toBe(0);
   });
 
-  it('only clears a notification it has no URL for, such as a summary', async () => {
+  it('opens your pull requests on GitHub from a summary', async () => {
     await notify(...events(4));
     const [id] = [...shown().keys()] as [string];
     await onNotificationClicked(id);
-    await onNotificationClicked('constructor');
-    expect(fakeChrome().__state.createdTabs).toEqual([]);
+    expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/pulls' }]);
     expect(shown().size).toBe(0);
+  });
+
+  it('only clears a notification it has no URL for', async () => {
+    await notify(prEvent());
+    await onNotificationClicked('constructor');
+    await onNotificationClicked('summary:1');
+    expect(fakeChrome().__state.createdTabs).toEqual([]);
   });
 
   it('never rejects', async () => {

@@ -30,6 +30,25 @@ const failWith = (kind: 'unauthorized' | 'network' | 'server', overrides = {}) =
 };
 
 describe('StatusBanner', () => {
+  it('warns politely that the token expires soon, and opens the sign-in screen', () => {
+    snapshot.value = buildSnapshot('2026-10-06T11:59:00.000Z');
+    pollState.value = buildPollState();
+    auth.value = { ...buildAuth(), expiresAt: '2026-10-09T13:00:00.000Z' };
+    render(<StatusBanner />);
+    expect(screen.getByRole('status').textContent).toContain('Your GitHub token expires in 3 days');
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Renew token' }));
+    expect(route.value).toBe('onboarding');
+  });
+
+  it('lets a poll problem speak before the expiry', () => {
+    auth.value = { ...buildAuth(), expiresAt: '2026-10-09T13:00:00.000Z' };
+    failWith('unauthorized');
+    render(<StatusBanner />);
+    expect(screen.getByRole('alert').textContent).toContain('revoked or expired');
+    expect(screen.queryByText(/expires in/)).toBeNull();
+  });
+
   it('renders nothing while all is well', () => {
     snapshot.value = buildSnapshot('2026-10-06T11:59:00.000Z');
     pollState.value = buildPollState();

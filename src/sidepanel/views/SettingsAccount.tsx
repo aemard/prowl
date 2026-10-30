@@ -9,14 +9,15 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { auth } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
-import { TOKEN_TYPES } from './SettingsModel';
+import { TOKEN_TYPES, tokenExpiry } from './SettingsModel';
 
 /** Where Prowl's code and docs live. Opened through `openGitHubUrl`, so on the GitHub origin. */
 const REPO_URL = `${env.webUrl}/aemard/prowl`;
 /** The permission table of the privacy policy. */
 export const PRIVACY_URL = `${REPO_URL}/blob/main/docs/privacy.md`;
 const ABOUT_LINKS = [
-  { label: 'Documentation', href: `${REPO_URL}/tree/main/docs` },
+  // The README is the user's guide; docs/ is written for contributors.
+  { label: 'Documentation', href: `${REPO_URL}#readme` },
   { label: 'Privacy', href: PRIVACY_URL },
   { label: 'Source code', href: REPO_URL },
 ];
@@ -27,6 +28,7 @@ export function AccountSettings() {
   const account = auth.value;
   if (!account) return null;
   const { viewer, tokenType, scopes } = account;
+  const expiry = tokenExpiry(account.expiresAt, Date.now());
 
   return (
     <SettingsGroup title="Account">
@@ -60,6 +62,12 @@ export function AccountSettings() {
             )}
           </dd>
         </div>
+        {expiry && (
+          <div>
+            <dt>Expires</dt>
+            <dd>{expiry}</dd>
+          </div>
+        )}
       </dl>
       <Button class="settings-add" icon={<SignOutIcon />} onClick={() => setConfirming(true)}>
         Sign out

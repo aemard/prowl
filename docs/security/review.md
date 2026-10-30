@@ -68,3 +68,21 @@ GitHub's public schema.
 `pnpm audit --prod`: no known vulnerabilities.
 
 **Verdict: APPROVE**, once `Verify` is a required check on `main` (F7).
+
+## 2026-10-30 — audit of v1.3.1 (author review)
+
+Scope: `src/`, the manifest and CSP, the website, workflows and Dependabot, dependencies
+(`pnpm audit`), at `baa49e5`. Method: code audit against [threat-model.md](threat-model.md), the
+open Dependabot pull requests and their CI runs.
+
+| # | Severity | Finding | Resolution |
+|---|---|---|---|
+| F1 | Low | Known advisories in tools, none shipped: undici (astro > unifont) and zod (astro) in the site build, fast-uri (lighthouse > ajv), happy-dom in unit tests | Fixed: astro 7.4.2 (#27), happy-dom 21.0.4 (#28), lockfile refresh to undici 8.12.3 and fast-uri 3.1.9. Accepted: zod 3.25.76 under lighthouse > chromium-bidi (no fixed 3.x; Lighthouse only audits the built site in CI). `pnpm audit --prod`: no known vulnerabilities |
+| F2 | Low | CodeQL `init` and `analyze` stuck on 4.38.2: Dependabot opened one pull request each, and a mismatched pair fails the job, so neither could ever merge | Fixed: both pinned to 4.39.1 like `upload-sarif`; `github/codeql-action*` grouped in `dependabot.yml` |
+| F3 | Info | The ban on HTML sinks was a lint rule only | Fixed: the CSP enforces Trusted Types; E2E checks Chrome refuses an `innerHTML` string |
+| F4 | Info | The website had no CSP while rendering Markdown, which may hold raw HTML | Fixed: a CSP meta tag without scripts on every page; Lighthouse still 100 |
+| F5 | Info | A token's expiry was unknown until GitHub answered 401 | Fixed: `GitHub-Authentication-Token-Expiration` is stored with the sign-in, shown in Settings and announced a week ahead |
+| F6 | Info | The E2E checks that the token never shows used `innerText`, which skips hidden text | Fixed: `textContent` |
+| F7 | Info | Pull requests of an organization that enforces SAML vanished silently | Fixed: the section says why and how to authorize the token |
+
+**Verdict: APPROVE** (no critical or high findings).

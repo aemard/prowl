@@ -107,7 +107,7 @@ test.describe('sign in with the OAuth device flow', () => {
     expect(github.requestsFor('ProwlViewer')[0]?.headers.authorization).toBe(
       `Bearer ${OAUTH_TOKEN}`,
     );
-    expect(await panel.locator('body').innerText()).not.toContain(OAUTH_TOKEN);
+    expect(await panel.locator('body').textContent()).not.toContain(OAUTH_TOKEN);
   });
 
   test('tells the user when access was denied on GitHub and lets them start again', async ({

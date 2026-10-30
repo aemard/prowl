@@ -114,6 +114,18 @@ One-time setup (needs admin rights; without it the workflow fails or merges too 
 
 To keep one pull request from merging by itself, press "Disable auto-merge" on it.
 
+A Dependabot pull request that stays open is one of these:
+
+- **Left for a person on purpose**: a runtime dependency (Astro, Preact…) or a major update. The
+  workflow does not turn auto-merge on; review and merge it by hand.
+- **A red required check**: auto-merge waits for green. A new tool version that reformats or
+  lints differently (Biome) needs a fix on `main` first; Dependabot then rebases its pull request.
+  Actions that must move together (`github/codeql-action` `init` and `analyze`) are grouped in
+  `dependabot.yml` for that reason.
+- **Auto-merge turned off by GitHub** although every check is green: the pull request's timeline
+  says so ("disabled auto-merge"). Merge it by hand, or comment `@dependabot rebase` to run it
+  again.
+
 ## Toolchain
 
 - **Node** follows the newest Active LTS release: `.nvmrc` (used by CI, Pages, releases and the

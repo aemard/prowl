@@ -14,3 +14,16 @@ test('loads the extension and renders the side panel', async ({
   await expect(panel.getByRole('heading', { name: 'Prowl' })).toBeVisible();
   await expectNoA11yViolations(panel);
 });
+
+test('Chrome refuses HTML strings in the panel (Trusted Types)', async ({ openPanel }) => {
+  const panel = await openPanel();
+  const refused = await panel.evaluate(() => {
+    try {
+      document.createElement('div').innerHTML = '<img src=x>';
+      return false;
+    } catch (error) {
+      return error instanceof TypeError;
+    }
+  });
+  expect(refused).toBe(true);
+});

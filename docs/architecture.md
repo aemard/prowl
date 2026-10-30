@@ -54,7 +54,7 @@ in-memory updates that the next snapshot replaces.
 
 ## Data flow of a poll
 
-1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 1, default 2). The
+1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 5). The
    worker also polls on `runtime.onInstalled` / `onStartup`, and a forced poll on the panel's
    `{ type: 'poll', force: true }`.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
@@ -136,7 +136,8 @@ GraphQL answers 200 even when a field failed. `graphql` throws on the first entr
 `NOT_FOUND` -> `not_found`, `UNPROCESSABLE` -> `validation`, anything else -> `graphql`), with the
 reset taken from the response headers. Reads that tolerate holes (`nodes(ids:)` with a deleted
 PR, a search over an org that needs SAML) pass `{ partial: true }` to get the data that did come
-back; mutations stay strict because their payload is null when they fail.
+back, and may pass `onPartialErrors` to read the errors' messages (token masked); mutations stay
+strict because their payload is null when they fail.
 `parseRateLimit(headers | rateLimit object)` (`rateLimit.ts`) normalizes both sources to the
 model's `RateLimit`.
 
@@ -200,8 +201,10 @@ returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
   latest `ClosedEvent`), so the diff can emit `merged` / `closed`. Still-open ones only
   stopped matching and are dropped; merged or closed ones are never looked up again.
 - Both queries pass `{ partial: true }`: an org that requires SAML or a deleted PR leaves a
-  null node, which is skipped. `search` is non-null in the schema, so a search that fails as a
-  whole nulls `data` and still throws.
+  null node, which is skipped. A search whose errors mention SAML also gets a `sectionErrors`
+  entry for its section (an organization requires single sign-on the token is not authorized
+  for), shown above the PRs that did load; a deleted PR is skipped silently. `search` is
+  non-null in the schema, so a search that fails as a whole nulls `data` and still throws.
 
 Mapping (`mapPullRequest`):
 
@@ -419,12 +422,13 @@ the end of every poll that ran (never rejects: a failure is logged and the poll 
    one summary ("5 pull request updates", the first PRs listed). The notification id of a
    single event is its event id; a summary's is `summary:<time>`.
 4. Every reported event id is stored in `chrome.storage.session` under `notified` (event id ->
-   PR URL, newest 300, cleared with the browser session and on sign-out). That is the dedupe
-   (ids repeat for a re-run that fails again on the same commit) and how a click finds its PR.
+   PR URL, newest 300, cleared with the browser session and on sign-out), and a summary's id with
+   `<webUrl>/pulls`. That is the dedupe (ids repeat for a re-run that fails again on the same
+   commit) and how a click finds where to go.
 
 A click (`notifications.onClicked`, registered in `register.ts`) clears the notification and
-opens the stored URL in a tab when it is on the `env.webUrl` origin; a summary has no URL, so
-a click only clears it.
+opens the stored URL in a tab when it is on the `env.webUrl` origin: the PR, or for a summary the
+viewer's pull requests on GitHub.
 
 ## Storage
 
@@ -499,7 +503,10 @@ signal (`state/store.ts`).
   and `GET /user` in parallel (`client.restResponse` returns the headers; `x-oauth-scopes` is
   the only place GitHub reports a classic token's scopes). The token type comes from the prefix
   (`ghp_` classic, `github_pat_` fine-grained, `gho_` oauth, else `unknown`); `scopes` is empty
-  for tokens whose response carries no scopes header (fine-grained). It returns the `AuthState`
+  for tokens whose response carries no scopes header (fine-grained). `expiresAt` comes from
+  `GitHub-Authentication-Token-Expiration` on the same response (`parseTokenExpiration`: no header
+  is null, a token that never expires; one Prowl cannot read leaves it out, unknown). Settings,
+  Account shows it, and a week before it the status banner says so. It returns the `AuthState`
   plus an optional warning, and throws only `GitHubError`; `signInErrorMessage(error)` turns it
   into the text onboarding shows inline (never the token: the client masks it in GitHub's
   messages and our own messages do not contain it).
@@ -618,6 +625,7 @@ signal (`state/store.ts`).
   | `network` | "Offline — retrying in N min" (`nextAllowedAt`, else "retrying soon"; warning) | Retry (forced poll, which skips a backoff) |
   | any other error | "GitHub error — retrying in N min" and GitHub's message (danger) | Retry |
   | none, snapshot older than max(10 min, 5 intervals), no poll running | "Pull requests may be out of date" (warning) | Refresh now |
+  | none of the above, `auth.expiresAt` within 7 days (`describeTokenExpiry`) | "Your GitHub token expires in 3 days" (warning) | Renew token: `navigate('onboarding')` |
 
   Every banner adds "Last updated 14 min ago." when the snapshot is at least a minute old. Only
   the title and detail are in the live region (`role="status"`, or `alert` for a rejected token):
@@ -638,7 +646,8 @@ signal (`state/store.ts`).
   selection, and the card's `keydown` handler folds an expanded card on Escape and focuses its
   chevron. Both are native listeners on the `li`, because the card itself is not a control. Chips
   and the sentence come from `components/prStatus.ts` (pure, table-tested; ready-to-merge reuses
-  `isReadyToMerge` from the diff engine). The unseen dot comes from `isSeen`, like the badge, and
+  `isReadyToMerge` from the diff engine). The footer names who opened it ("Opened 9 d ago by
+  alice"), except on the viewer's own PRs. The unseen dot comes from `isSeen`, like the badge, and
   `data-pr-id` / `data-unseen` sit on the summary, which is what the seen observer watches (an
   expanded card is as tall as it likes). Relative times take `now` from `useNow` in the list.
 - Actions (`components/PullRequestDetails.tsx`, `ReviewActions.tsx`): an expanded card has an
@@ -659,7 +668,8 @@ signal (`state/store.ts`).
   the first allowed) and an optional commit title (not offered for a rebase). Focus starts on the
   method, never on the button that merges. It sends `ProwlMerge` with `headSha` of the PR as the
   panel last polled it. Readiness is not enforced by the panel (an admin may bypass rules, and
-  GitHub knows better): the Merge group above lists the blockers, and GitHub's refusal comes back
+  GitHub knows better): the Merge group above lists the blockers, the dialog (which covers them)
+  repeats them in one line ("Not ready: changes requested by alice; …"), and GitHub's refusal comes back
   in a toast after the dialog closed, with the method and title kept for the next try, plus a
   forced poll because a refusal usually means the PR changed (a moved head, new conflicts). On
   success the toast and forced poll follow the usual route: the merged PR is in no search result
@@ -741,7 +751,10 @@ signal (`state/store.ts`).
 - The section bar (`components/SectionTabs.tsx`) is fixed at the bottom of the list: up to five
   sections as tabs, past five the first four and a "More" menu with the rest. While it is shown
   `:root` gets `--app-inset-bottom`, which the shell, toasts and focus scrolling keep clear of;
-  `Menu` and the seen observer measure the element marked `data-bottom-bar` instead.
+  `Menu` and the seen observer measure the element marked `data-bottom-bar` instead. The sticky
+  header sets `--app-inset-top` the same way, so focus and jumps never land under it.
+- Settings opens with links to each group ("Settings sections"). The hash is the route, so a
+  link scrolls to its group and focuses the group's title instead of following its `href`.
 
 ## Site access lock
 

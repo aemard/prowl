@@ -47,6 +47,11 @@ const NO_TEAM =
   'GitHub lists no team for your account. An organization that requires single sign-on, or ' +
   'restricts OAuth apps, lists its teams only once it has approved your token or Prowl.';
 const NO_FOLLOWED_TEAM = 'You follow none of your teams. Follow one in Settings.';
+/** A search came back with holes where an organization's SAML enforcement refused the token. */
+const SSO_REQUIRED =
+  'An organization requires single sign-on (SAML) that this token is not authorized for, so ' +
+  'its pull requests are missing. Authorize the token for that organization on GitHub.';
+const SAML = /\bSAML\b/i;
 
 /** Search page size: about 4 s on busy organizations, inside GitHub's 10 s execution limit. */
 const PAGE_SIZE = 25;
@@ -114,13 +119,19 @@ export async function fetchPullRequests(
   let searched = false;
   let serverError: GitHubError | undefined;
 
-  // Holes (an org that requires SAML, a deleted PR) leave null nodes and are skipped.
-  // ponytail: they are skipped silently; no "some PRs could not be loaded" notice yet.
+  // Holes (an org that requires SAML, a deleted PR) leave null nodes and are skipped. A SAML hole
+  // in a search is reported on its section, which `samlHoles` tells (reset before each search).
+  let samlHoles = false;
   async function read<T extends { rateLimit: unknown }>(
     query: string,
     variables: Record<string, unknown>,
   ): Promise<T> {
-    const data = await client.graphql<T>(query, variables, { partial: true });
+    const data = await client.graphql<T>(query, variables, {
+      partial: true,
+      onPartialErrors: (messages) => {
+        if (messages.some((message) => SAML.test(message))) samlHoles = true;
+      },
+    });
     result.rateLimit = parseRateLimit(data.rateLimit) ?? result.rateLimit;
     return data;
   }
@@ -207,6 +218,7 @@ export async function fetchPullRequests(
       return;
     }
     const problems: string[] = [];
+    samlHoles = false;
     /** PR id -> the PR and the keys of the teams whose search returned it. */
     const found = new Map<string, { pr: PullRequest; keys: string[] }>();
     for (const team of followed.slice(0, MAX_TEAM_SEARCHES)) {
@@ -223,6 +235,7 @@ export async function fetchPullRequests(
         problems.push(`GitHub refused the search for ${key}: ${error.message}`);
       }
     }
+    if (samlHoles) problems.push(SSO_REQUIRED);
     const skipped = followed.length - MAX_TEAM_SEARCHES;
     if (skipped > 0) {
       problems.push(
@@ -254,10 +267,12 @@ export async function fetchPullRequests(
       continue;
     }
     const query = buildSearchQuery(section, settings);
+    samlHoles = false;
     try {
       const prs = await search(HAS_SORT.test(query) ? query : `${query} sort:updated-desc`);
       for (const pr of prs) result.pullRequests[pr.id] = pr;
       result.sections[section.id] = [...new Set(prs.map(({ id }) => id))];
+      if (samlHoles) result.sectionErrors[section.id] = SSO_REQUIRED;
     } catch (error) {
       if (!sectionLevel(error)) throw error;
       result.sectionErrors[section.id] = error.message;

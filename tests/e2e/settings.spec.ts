@@ -327,7 +327,7 @@ test.describe('account and about', () => {
     await expect(group(panel, 'About')).toContainText('Change it at chrome://extensions/shortcuts');
 
     for (const [name, path] of [
-      ['Documentation', '/aemard/prowl/tree/main/docs'],
+      ['Documentation', '/aemard/prowl#readme'],
       ['Privacy', '/aemard/prowl/blob/main/docs/privacy.md'],
       ['Source code', '/aemard/prowl'],
     ] as const) {

@@ -29,6 +29,8 @@ trap focus and return it to the control that opened them.
 
 - Cards: the title is a link named after the PR; the expand button describes every fact on the
   card (CI, reviews, merge state, labels, activity), so status is never only a color or an icon.
+  Who opened a pull request is written out ("Opened 9 d ago by alice"), not only shown as an
+  avatar.
 - Grouped lists keep list semantics: the section's list holds one item per repository, each with
   a heading button ("acme/web 2 pull requests", expanded or collapsed) and a list named after the
   repository, so a screen reader can jump by heading and hears how many cards are inside.
@@ -44,6 +46,9 @@ trap focus and return it to the control that opened them.
   against the table in `docs/design.md`); a label's own color only fills a dot beside its name,
   which uses the muted text token.
 - Visible focus ring on every control; `prefers-reduced-motion` turns off non-essential motion.
+- A focused element is never hidden under the sticky header or the section bar: both keep
+  scrolling clear of them (`scroll-padding`).
+- Settings starts with links to each of its groups; following one moves focus to the group's title.
 - Layout works from 320 px to full width without horizontal scrolling.
 
 ## How it is tested

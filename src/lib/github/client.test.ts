@@ -152,6 +152,28 @@ describe('graphql', () => {
       });
     });
 
+    it('hands the partial errors over, with the token masked, when asked to', async () => {
+      const body = {
+        data: { nodes: [null, null, { id: 'a' }] },
+        errors: [
+          graphqlError('FORBIDDEN', `Resource protected by SAML enforcement for ${TOKEN}`),
+          graphqlError('NOT_FOUND', 'gone'),
+          'not an error object',
+        ],
+      };
+      const { client } = setup(jsonResponse(body));
+      const onPartialErrors = vi.fn();
+      await client.graphql('query V { x }', {}, { partial: true, onPartialErrors });
+      expect(onPartialErrors).toHaveBeenCalledExactlyOnceWith([
+        'Resource protected by SAML enforcement for [redacted]',
+        'gone',
+      ]);
+      onPartialErrors.mockClear();
+      const clean = setup(jsonResponse({ data: { nodes: [] } }));
+      await clean.client.graphql('query V { x }', {}, { partial: true, onPartialErrors });
+      expect(onPartialErrors).not.toHaveBeenCalled();
+    });
+
     it('still throws in partial mode when there is no data at all', async () => {
       const body = { data: null, errors: [graphqlError('FORBIDDEN', 'SAML enforcement')] };
       const { client } = setup(jsonResponse(body));

@@ -57,6 +57,22 @@ const NO_READ_ORG_SCOPE =
 const NO_CHECKS_PERMISSION =
   'GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing. A classic token with the repo scope shows it in full.';
 
+const EXPIRATION = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (UTC|[+-]\d{2}:?\d{2})$/;
+
+/**
+ * `GitHub-Authentication-Token-Expiration` ("2026-11-30 12:00:00 UTC", or with a "+0100" offset)
+ * as an ISO time. GitHub sends it for tokens that expire: no header is null (never expires), a
+ * header Prowl cannot read is undefined (unknown).
+ */
+export function parseTokenExpiration(header: string | null): string | null | undefined {
+  if (header === null) return null;
+  const [, date, time, zone] = EXPIRATION.exec(header.trim()) ?? [];
+  if (!date || !time || !zone) return undefined;
+  const offset = zone === 'UTC' ? 'Z' : `${zone.slice(0, 3)}:${zone.slice(-2)}`;
+  const ms = Date.parse(`${date}T${time}${offset}`);
+  return Number.isNaN(ms) ? undefined : new Date(ms).toISOString();
+}
+
 /** Why the token works but not fully; null when nothing is known to be missing. */
 function warningFor(tokenType: TokenType, scopes: string[] | null): string | null {
   if (tokenType === 'fine_grained') return NO_CHECKS_PERMISSION;
@@ -109,6 +125,9 @@ export async function validatePat(
 
   const tokenType = detectTokenType(trimmed);
   const scopes = parseScopes(user.headers.get('x-oauth-scopes'));
+  const expiresAt = parseTokenExpiration(
+    user.headers.get('github-authentication-token-expiration'),
+  );
   return {
     auth: {
       method: 'pat',
@@ -117,6 +136,7 @@ export async function validatePat(
       scopes: scopes ?? [],
       viewer: toViewer(data.viewer),
       createdAt: new Date().toISOString(),
+      ...(expiresAt === undefined ? {} : { expiresAt }),
     },
     warning: warningFor(tokenType, scopes),
   };

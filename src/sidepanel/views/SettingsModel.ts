@@ -76,6 +76,22 @@ export const TOKEN_TYPES: Record<AuthState['tokenType'], string> = {
   unknown: 'Unknown',
 };
 
+const DAY = 24 * 60 * 60_000;
+
+/**
+ * When the token expires, for the Account facts: "Never", "Nov 30, 2026 (in 31 days)" or
+ * "Expired on …"; null when Prowl does not know (an older sign-in), so the row stays out.
+ */
+export function tokenExpiry(expiresAt: string | null | undefined, now: number): string | null {
+  if (expiresAt === undefined) return null;
+  if (expiresAt === null) return 'Never';
+  const date = new Date(expiresAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  const left = Date.parse(expiresAt) - now;
+  if (left <= 0) return `Expired on ${date}`;
+  const days = Math.floor(left / DAY);
+  return `${date} (in ${days === 0 ? 'less than a day' : `${days} day${days === 1 ? '' : 's'}`})`;
+}
+
 /** What each named permission lets Prowl do, in the order Settings lists them. */
 const NAMED_PERMISSIONS: Record<string, { title: string; detail: string }> = {
   sidePanel: { title: 'Side panel', detail: "Show Prowl in Chrome's side panel." },

@@ -165,6 +165,9 @@
 
 .pr-card__age {
   margin-left: auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

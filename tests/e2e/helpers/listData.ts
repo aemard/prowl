@@ -25,7 +25,8 @@ function avatar(login: string, fill: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-const PEOPLE = {
+/** The avatars of the people in the data; octocat is also the signed-in viewer. */
+export const PEOPLE = {
   octocat: avatar('octocat', '#8250df'),
   alice: avatar('alice', '#bf3989'),
   bob: avatar('bob', '#0969da'),

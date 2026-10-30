@@ -24,6 +24,14 @@ const current = (path: string) => (Astro.url.pathname === page(path) ? 'page' : 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- The site ships no script, and Markdown pages (the changelog, the guides) may hold raw HTML:
+         nothing may run, load from elsewhere or post a form. Styles are inlined at build time;
+         connect-src lets crawlers' in-page checks (Lighthouse reads robots.txt) reach this origin. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; script-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />

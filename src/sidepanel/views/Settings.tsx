@@ -13,7 +13,7 @@ import { Switch } from '../components/ui/Switch';
 import { saveSettings } from '../state/settings';
 import { settings, teams } from '../state/store';
 import { AboutSettings, AccountSettings } from './SettingsAccount';
-import { SettingsGroup } from './SettingsGroup';
+import { SettingsGroup, settingsGroupId } from './SettingsGroup';
 import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
@@ -134,11 +134,54 @@ function AppearanceSettings() {
   );
 }
 
+/** The groups below, in order, as the section links name them. */
+const SECTIONS = [
+  ['Pull requests', 'Pull requests'],
+  ['Teams', 'Teams'],
+  ['Refresh', 'Refresh'],
+  ['Notifications', 'Notifications'],
+  ['Appearance', 'Appearance'],
+  ['Account', 'Account'],
+  ['Privacy and permissions', 'Privacy'],
+  ['About', 'About'],
+] as const;
+
+/**
+ * Links to each group of a long screen. The hash is the route, so a link scrolls to its group and
+ * moves focus to the group's title instead of following its href.
+ */
+function SectionLinks() {
+  return (
+    <nav class="settings__nav" aria-label="Settings sections">
+      <ul class="settings-links">
+        {SECTIONS.map(([title, label]) => (
+          <li key={title}>
+            <a
+              href={`#${settingsGroupId(title)}`}
+              onClick={(event) => {
+                event.preventDefault();
+                const heading = document.querySelector<HTMLElement>(
+                  `#${settingsGroupId(title)} > h3`,
+                );
+                heading?.scrollIntoView({ block: 'start' });
+                heading?.focus({ preventScroll: true });
+              }}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 /** Everything the user can configure. Every control saves as soon as it changes. */
 export function SettingsView() {
   return (
     <div class="settings">
       <h2 class="settings__title">Settings</h2>
+      <SectionLinks />
       <ScopeSettings />
       <TeamsSettings />
       <PollingSettings />

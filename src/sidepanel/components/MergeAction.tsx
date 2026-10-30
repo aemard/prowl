@@ -4,8 +4,10 @@ import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
+import { details } from '../state/prDetail';
 import { auth } from '../state/store';
-import { GitMergeIcon } from './icons';
+import { AlertIcon, GitMergeIcon } from './icons';
+import { mergeReadiness } from './mergeReadiness';
 import { Button } from './ui/Button';
 import { Dialog } from './ui/Dialog';
 import { Select } from './ui/Select';
@@ -46,8 +48,16 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
 
   const ref = prRef(pr);
   const pending = pendingActions.value[pr.id];
+  const ready = isReadyToMerge(pr);
   // GitHub only takes auto-merge for a PR that cannot merge yet (checks or reviews to come).
-  const offerAutoMerge = pr.autoMergeAllowed && !pr.autoMerge && !isReadyToMerge(pr);
+  const offerAutoMerge = pr.autoMergeAllowed && !pr.autoMerge && !ready;
+  // The modal hides the blockers listed above the button: the dialog repeats them.
+  const blockers = ready
+    ? []
+    : mergeReadiness(pr, details.value[pr.id]?.detail)
+        .filter(({ tone }) => tone !== 'neutral' && tone !== 'success')
+        .map(({ text }) => text.replace(/^Blocked: /, ''))
+        .map((text) => text.charAt(0).toLowerCase() + text.slice(1));
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async () => {
@@ -70,7 +80,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
     <>
       <Button
         size="sm"
-        variant={isReadyToMerge(pr) ? 'primary' : 'secondary'}
+        variant={ready ? 'primary' : 'secondary'}
         icon={<GitMergeIcon size={12} />}
         aria-label={`${MERGE} ${ref}`}
         loading={pending === MERGE}
@@ -131,6 +141,12 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
           }
         >
           <p class="merge-dialog__pr">{pr.title}</p>
+          {blockers.length > 0 && (
+            <p class="merge-dialog__blockers">
+              <AlertIcon size={12} />
+              <span>Not ready: {blockers.join('; ')}.</span>
+            </p>
+          )}
           <Select
             label="Merge method"
             value={method}

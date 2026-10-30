@@ -1,9 +1,18 @@
-/** What the status banner says about the last poll. Pure: the component only renders it. */
+/**
+ * What the status banner says about the last poll, or about a token that expires soon. Pure: the
+ * component only renders it.
+ */
 import type { PollState } from '../../lib/model';
 import { isWaiting, LOW_RATE_LIMIT } from '../../lib/time/backoff';
 import { formatRelativeTime } from '../../lib/time/relative';
 
-export type BannerKind = 'unauthorized' | 'rate_limited' | 'offline' | 'error' | 'stale';
+export type BannerKind =
+  | 'unauthorized'
+  | 'rate_limited'
+  | 'offline'
+  | 'error'
+  | 'stale'
+  | 'expiring';
 
 export interface Banner {
   kind: BannerKind;
@@ -19,6 +28,9 @@ export interface Banner {
 }
 
 const MINUTE = 60_000;
+const DAY = 24 * 60 * MINUTE;
+/** A token GitHub says expires within this many days gets a banner. */
+const EXPIRY_WARNING_DAYS = 7;
 /** With no error to explain it, a snapshot older than this many poll intervals is stale. */
 const STALE_INTERVALS = 5;
 const STALE_MIN_MS = 10 * MINUTE;
@@ -115,4 +127,27 @@ export function describeStatus(
         action: RETRY,
       };
   }
+}
+
+/**
+ * A week before GitHub stops accepting the token, a banner that says when and leads to the sign-in
+ * screen, so a new token replaces it before the list stops refreshing. Null otherwise: no known
+ * expiry, or already past it (the next poll's 401 then says so).
+ */
+export function describeTokenExpiry(
+  expiresAt: string | null | undefined,
+  now: number,
+): Banner | null {
+  const left = expiresAt ? Date.parse(expiresAt) - now : Number.NaN;
+  if (!(left > 0 && left <= EXPIRY_WARNING_DAYS * DAY)) return null;
+  const days = Math.floor(left / DAY);
+  const when = days === 0 ? 'in less than a day' : `in ${days} day${days === 1 ? '' : 's'}`;
+  return {
+    kind: 'expiring',
+    tone: 'warning',
+    title: `Your GitHub token expires ${when}`,
+    detail: 'Create a new one and sign in with it to keep Prowl refreshing.',
+    age: '',
+    action: { type: 'reauthenticate', label: 'Renew token' },
+  };
 }

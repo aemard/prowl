@@ -2,3 +2,19 @@
 .merge-dialog__pr {
   font-weight: var(--weight-medium);
 }
+
+/* Why GitHub may refuse it, repeated from the card's merge lines that the dialog covers. */
+.merge-dialog__blockers {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--color-attention-fg);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  text-wrap: pretty;
+}
+
+.merge-dialog__blockers .icon {
+  flex: none;
+  margin-top: var(--space-0-5);
+}

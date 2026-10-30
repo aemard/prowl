@@ -3,7 +3,8 @@
 Prowl is a Manifest V3 extension that holds a GitHub token able to read private repositories,
 approve, merge and re-run CI. That token is the asset worth protecting. Method: STRIDE over the
 data flows below. Last reviewed: 2026-10-06, for the v1.0.0 release; the site-access lock below was
-added on 2026-10-07 (US-032).
+added on 2026-10-07 (US-032); Trusted Types, the site's CSP and token expiry on 2026-10-30
+(review.md).
 
 ## Assets
 
@@ -37,12 +38,13 @@ another extension or web page could send.
 |---|---|---|---|
 | S | A web page or another extension sends Prowl messages to trigger polls or sign-out | No `externally_connectable`, no `onMessageExternal`; `onMessage` drops any sender whose `id` is not Prowl's | `src/background/messages.ts`, manifest test |
 | S | A phishing page imitates the device-flow screen | Device flow only talks to `env.webUrl` (`github.com`); the user enters the code on github.com itself | `src/lib/github/auth/deviceFlow.ts` |
-| T | Script injection through PR titles, labels, branch names | Preact renders text only; `dangerouslySetInnerHTML` is a lint error; no `innerHTML`, `eval` or `new Function` anywhere | Biome `security/noDangerouslySetInnerHtml` |
+| T | Script injection through PR titles, labels, branch names | Preact renders text only; `dangerouslySetInnerHTML` is a lint error; no `innerHTML`, `eval` or `new Function` anywhere; the CSP enforces Trusted Types (`require-trusted-types-for 'script'; trusted-types 'none'`), so Chrome itself refuses a string in an HTML or script sink (E2E checks it) | Biome `security/noDangerouslySetInnerHtml`, `src/manifest.ts`, `tests/e2e/smoke.spec.ts` |
 | T | Malicious label color breaks out of a style attribute | Colors validated as 6 hex digits by the mapper, fallback neutral | `src/lib/github/mapPullRequest.ts` |
 | T | A push lands just before Approve, so unseen code gets approved or merged | Reviews pass `commitOID` and merges `expectedHeadOid` = the head the panel showed | `src/lib/github/actions.ts` |
 | T | A branch name with shell syntax runs code when pasted into a terminal | "Copy branch name" warns when the name holds characters outside `[\w./+@-]` or bidi controls | `PrMenu.tsx` |
 | I | A snapshot from a previous account shows its private PRs to the next one | The list ignores a snapshot whose viewer is not the signed-in account; sign-in clears a foreign snapshot | `List.tsx`, `session.ts` |
-| T | Remote code loaded into extension pages | CSP `script-src 'self'; object-src 'none'; base-uri 'none'`; MV3 forbids remote code; no CDN assets | `src/manifest.ts` |
+| T | Remote code loaded into extension pages | CSP `script-src 'self'; object-src 'none'; base-uri 'none'` plus Trusted Types; MV3 forbids remote code; no CDN assets | `src/manifest.ts` |
+| T | Raw HTML in a Markdown page of the website (changelog, guides) runs script or loads from elsewhere | The site ships no JS; every page carries a CSP with `script-src 'none'`, `default-src 'none'` and only same-origin images and connections | `site/src/layouts/Base.astro` |
 | R | Actions taken without the user's intent | Merge and request changes need a confirmation dialog; every action is a user click; GitHub's audit log records them as the user | `src/sidepanel/components/*Actions*` |
 | I | Token leaks into logs, errors, UI or notifications | Client masks the token in every message it builds or relays (tested on message, stack, JSON, inspect); the token is never rendered; sign-in errors never echo input | `src/lib/github/client.ts`, `errors.ts`, `pat.ts` |
 | I | Token sent to a non-GitHub host | The only Bearer requests go to `env.apiUrl`; CSP `connect-src` allows only `api.github.com` and `github.com`; host permission only `api.github.com` | `client.ts`, manifest |
@@ -64,6 +66,10 @@ another extension or web page could send.
 - **Local attacker or malware with access to the browser profile** can read the token from
   extension storage. Encrypting it with a key stored next to it would not help; use a
   fine-grained token limited to a few repositories, or revoke the token, to bound the risk.
+- **Tokens from Continue with GitHub never expire** (OAuth Apps), and a classic token may be
+  created without an expiry. Prowl shows the expiry GitHub reports (Settings, Account) and warns a
+  week before a token stops working, which encourages tokens that expire; revoking one stays the
+  user's call (auth.md).
 - **The `repo` scope is broad** for classic tokens and the OAuth App (GitHub offers nothing
   narrower that still reads private PRs and CI). Fine-grained tokens narrow it but lose CI status
   (no Checks permission for tokens).

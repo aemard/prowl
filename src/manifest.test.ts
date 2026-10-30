@@ -47,6 +47,7 @@ describe('createManifest', () => {
       expect(csp).toMatch(/script-src 'self'(;|$)/);
       expect(csp).toContain("object-src 'none'");
       expect(csp).not.toMatch(/unsafe-(inline|eval)/);
+      expect(csp).toContain("require-trusted-types-for 'script'; trusted-types 'none'");
     }
   });
 });

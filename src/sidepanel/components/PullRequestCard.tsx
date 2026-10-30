@@ -3,6 +3,7 @@ import type { PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
+import { auth } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -97,6 +98,10 @@ export function PullRequestCard({
   const hidden = pr.labels.slice(MAX_LABELS);
   const teamRequest =
     teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
+  // Who opened it, in words: the avatar alone is a 16 px picture with a tooltip. Not for your own.
+  const author = pr.author?.login;
+  const by =
+    author && author.toLowerCase() !== auth.value?.viewer.login.toLowerCase() ? author : null;
 
   // Two conveniences on top of the chevron button, which is the keyboard and screen reader path:
   // a click on the card's summary (not on a link or button, nor a selection made to copy text)
@@ -244,13 +249,15 @@ export function PullRequestCard({
                 {pr.unresolvedThreads} unresolved
               </span>
             )}
-            <time
-              class="pr-card__age"
-              dateTime={pr.createdAt}
-              title={`Opened ${new Date(pr.createdAt).toLocaleString()}`}
-            >
-              Opened {formatRelativeTime(pr.createdAt, now)}
-            </time>
+            <span class="pr-card__age" title={by ? `Opened by ${by}` : undefined}>
+              <time
+                dateTime={pr.createdAt}
+                title={`Opened ${new Date(pr.createdAt).toLocaleString()}`}
+              >
+                Opened {formatRelativeTime(pr.createdAt, now)}
+              </time>
+              {by && ` by ${by}`}
+            </span>
           </span>
         </span>
         <span id={`${detailId}-facts`} hidden>

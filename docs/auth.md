@@ -116,6 +116,14 @@ owned by your own account sees none.
   Authorize the token for the organization (classic) or ask an owner to approve it.
 - **A private repository is missing**: the token has no `repo` scope, or it is not authorized
   for that organization.
+- **"An organization requires single sign-on (SAML)…"** above a section: some pull requests are
+  in an organization that enforces SAML and has not authorized this token. For a classic token:
+  GitHub, Settings, Developer settings, Personal access tokens, **Configure SSO** next to the
+  token, then authorize the organization. For Continue with GitHub, authorize Prowl when GitHub
+  offers it, or ask an organization owner. The section keeps what did load.
+- **"Your GitHub token expires in 3 days"**: GitHub said when the token you pasted stops working
+  (Settings, Account shows the date). Create a new one and choose **Renew token** to sign in with
+  it before then; your settings stay.
 - **No CI status on a pull request**: you use a fine-grained token (see above).
 - **Team reviews says "GitHub would not list your teams"**: sign in again with the `read:org`
   scope (Continue with GitHub asks for it; tick it on a classic token), or give a fine-grained

@@ -125,11 +125,23 @@ describe('PullRequestCard', () => {
     expect(screen.getByText('#42')).toBeTruthy();
     expect(screen.getByText('5 min ago').getAttribute('datetime')).toBe('2026-10-06T11:55:00.000Z');
     expect(screen.getByText('Opened 3 d ago')).toBeTruthy();
+    expect(screen.getByTitle('Opened by alice').textContent).toBe('Opened 3 d ago by alice');
     for (const chip of ['Draft', '1 failing', 'Changes requested', 'Conflicts'])
       expect(screen.getByText(chip)).toBeTruthy();
     expect(screen.getByText('2 unresolved')).toBeTruthy();
     expect(screen.getByTitle('4 comments').textContent).toBe('4');
     expect(screen.getByTitle('Fix the flaky test').textContent).toBe('Fix the flaky test');
+  });
+
+  it('names no author on your own pull requests', () => {
+    renderCard({
+      author: {
+        login: 'OctoCat',
+        avatarUrl: 'https://avatars.githubusercontent.com/o',
+        isBot: false,
+      },
+    });
+    expect(screen.getByText(/^Opened /).parentElement?.textContent).not.toMatch(/ by /);
   });
 
   it('marks unseen changes with a dot and in the description', () => {

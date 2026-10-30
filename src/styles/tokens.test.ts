@@ -13,7 +13,9 @@ type Tokens = Map<string, string>;
 /** Returns the declarations of every rule whose selector is exactly `selector`, in order. */
 function blocks(selector: string): Tokens[] {
   const out: Tokens[] = [];
-  const pattern = new RegExp(`${selector.replace(/[[\]().:"=]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'g');
+  // Every regex metacharacter, backslash included (CodeQL js/incomplete-sanitization).
+  const literal = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`${literal}\\s*\\{([^}]*)\\}`, 'g');
   for (const match of css.matchAll(pattern)) {
     const tokens: Tokens = new Map();
     for (const decl of (match[1] ?? '').split(';')) {

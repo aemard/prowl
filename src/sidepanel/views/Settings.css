@@ -5,6 +5,18 @@
   font-weight: var(--weight-semibold);
 }
 
+.settings__nav {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+/* Focused by a section link: the title is where the reader landed, not a control. */
+.settings-group__title:focus {
+  outline: none;
+}
+
 .settings-group {
   display: flex;
   flex-direction: column;
