@@ -44,7 +44,8 @@ attestation, and rebuilds byte for byte: see [verify a release](docs/releasing.m
 | Fine-grained token | Pull requests, Contents, Actions (read and write), Commit statuses and Metadata (read) | Can be missing |
 
 Fine-grained tokens cannot read check runs (GitHub only grants the Checks permission to Apps), so
-CI status may be missing with them. Details: [sign-in guide](docs/auth.md).
+CI status may be missing with them. Prowl shows when your token expires and warns a week before.
+Details: [sign-in guide](docs/auth.md).
 
 ## Features
 

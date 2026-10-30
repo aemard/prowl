@@ -14,7 +14,8 @@ Prowl keeps its data in the extension storage of your browser profile (`chrome.s
 which Chrome does not sync to other devices. Prowl does not encrypt it, so anyone who can read
 your browser profile can read your token.
 
-- **Account:** your GitHub token, its type and scopes, and your login, name and avatar address.
+- **Account:** your GitHub token, its type, scopes and expiry date (when GitHub gives one), and
+  your login, name and avatar address.
   Removed when you sign out.
 - **Pull requests:** the pull requests last fetched, with title, author, labels, branches, CI,
   review and merge state. Removed when you sign out.
