@@ -202,6 +202,8 @@ test.describe('with a rich set of pull requests', () => {
     await panel.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     const top = await barTop(panel);
 
+    const cards = panel.locator('.pr-list .pr-card');
+    const count = await cards.count();
     // The last card's menu has no room below it above the bar: it opens upward.
     const trigger = panel.getByRole('button', { name: /^More actions for / }).last();
     await trigger.click();
@@ -219,6 +221,10 @@ test.describe('with a rich set of pull requests', () => {
     await expect(toast).toContainText('Snoozed');
     const toastBox = await box(toast);
     expect(toastBox.y + toastBox.height).toBeLessThanOrEqual(top);
+    // The snoozed card leaves the list once storage tells the panel. Until it has, the last toggle
+    // below is still its own: removed late, the next one (focused below to start from) becomes
+    // the last, and focusing it again scrolls nothing.
+    await expect(cards).toHaveCount(count - 1);
 
     // Focus never hides behind the bar: a control focused while under it scrolls above it,
     // whether focus came from Tab or from j on the card before.

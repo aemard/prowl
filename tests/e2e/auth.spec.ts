@@ -119,7 +119,7 @@ test.describe('sign in', () => {
     for (const request of [github.requestsFor('ProwlViewer')[0], github.requestsFor('/user')[0]]) {
       expect(request?.headers.authorization).toBe(`Bearer ${CLASSIC}`);
     }
-    expect(await panel.locator('body').innerText()).not.toContain(CLASSIC);
+    expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
     await expectNoA11yViolations(panel);
   });
 
@@ -170,7 +170,7 @@ test.describe('sign in', () => {
     await expect(tokenField(panel)).toBeFocused();
     await expect(tokenField(panel)).toHaveAttribute('aria-invalid', 'true');
     await expect(panel.getByRole('button', { name: 'Sign in' })).not.toHaveAttribute('aria-busy');
-    expect(await panel.locator('body').innerText()).not.toContain(CLASSIC);
+    expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
     expect(await stored(serviceWorker)).not.toHaveProperty('auth');
     expect(await messages()).toEqual([]);
     await expectNoA11yViolations(panel);
