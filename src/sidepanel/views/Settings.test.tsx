@@ -579,6 +579,34 @@ describe('SettingsView', () => {
     });
   });
 
+  describe('section links', () => {
+    it('list every group and move focus to the one chosen, leaving the route alone', async () => {
+      await open();
+      const nav = within(screen.getByRole('navigation', { name: 'Settings sections' }));
+      const links = nav.getAllByRole('link');
+      expect(links.map((link) => link.textContent)).toEqual([
+        'Pull requests',
+        'Teams',
+        'Refresh',
+        'Notifications',
+        'Appearance',
+        'Account',
+        'Privacy',
+        'About',
+      ]);
+      // Every link has its group.
+      for (const link of links) {
+        expect(document.querySelector(link.getAttribute('href') ?? '-')).toBeTruthy();
+      }
+      const hash = location.hash;
+      fireEvent.click(nav.getByRole('link', { name: 'Privacy' }));
+      expect(document.activeElement).toBe(
+        screen.getByRole('heading', { level: 3, name: 'Privacy and permissions' }),
+      );
+      expect(location.hash).toBe(hash);
+    });
+  });
+
   describe('account', () => {
     it('shows who is signed in, the kind of token and its scopes', async () => {
       await open({}, { ...buildAuth(), scopes: ['repo', 'read:org'] });
@@ -593,6 +621,17 @@ describe('SettingsView', () => {
       await open({}, { ...buildAuth(), tokenType: 'fine_grained', scopes: [] });
       expect(group('Account').getByText('Fine-grained personal access token')).toBeTruthy();
       expect(group('Account').getByText(/per-repository permissions/)).toBeTruthy();
+    });
+
+    it('says when the token expires, when GitHub told', async () => {
+      await open({}, { ...buildAuth(), expiresAt: null });
+      expect(group('Account').getByText('Expires')).toBeTruthy();
+      expect(group('Account').getByText('Never')).toBeTruthy();
+    });
+
+    it('leaves the expiry out for a sign-in that predates it', async () => {
+      await open();
+      expect(group('Account').queryByText('Expires')).toBeNull();
     });
 
     it('names the other kinds of token', async () => {
@@ -721,7 +760,7 @@ describe('SettingsView', () => {
       ]);
       for (const link of links) fireEvent.click(link);
       expect(fakeChrome().__state.createdTabs).toEqual([
-        { url: 'https://github.com/aemard/prowl/tree/main/docs' },
+        { url: 'https://github.com/aemard/prowl#readme' },
         { url: 'https://github.com/aemard/prowl/blob/main/docs/privacy.md' },
         { url: 'https://github.com/aemard/prowl' },
       ]);

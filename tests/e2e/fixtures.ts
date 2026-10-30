@@ -8,6 +8,7 @@ import {
   type Worker,
 } from '@playwright/test';
 import type { AuthState } from '../../src/lib/model';
+import { PEOPLE } from './helpers/listData';
 import { MockGitHub } from './mock-github/server';
 
 const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
@@ -40,7 +41,8 @@ export const E2E_AUTH: AuthState = {
   scopes: ['repo'],
   viewer: {
     login: 'octocat',
-    avatarUrl: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg"/>')}`,
+    // A visible avatar, as in the screenshots and store images: an empty one looks broken there.
+    avatarUrl: PEOPLE.octocat,
     name: 'The Octocat',
   },
   createdAt: '2026-10-06T08:00:00.000Z',

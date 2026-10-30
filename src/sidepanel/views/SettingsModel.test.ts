@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { describePermissions, estimatedPointsPerHour, quietHoursNote } from './SettingsModel';
+import {
+  describePermissions,
+  estimatedPointsPerHour,
+  quietHoursNote,
+  tokenExpiry,
+} from './SettingsModel';
 
 describe('estimatedPointsPerHour', () => {
   it.each([
@@ -65,5 +70,30 @@ describe('describePermissions', () => {
 
   it('copes with nothing granted', () => {
     expect(describePermissions({})).toEqual([]);
+  });
+});
+
+describe('tokenExpiry', () => {
+  const NOW = Date.parse('2026-10-30T12:00:00.000Z');
+  const date = (iso: string) =>
+    new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+
+  it('stays out when unknown and says Never for a token that does not expire', () => {
+    expect(tokenExpiry(undefined, NOW)).toBeNull();
+    expect(tokenExpiry(null, NOW)).toBe('Never');
+  });
+
+  it.each([
+    ['2026-11-30T12:00:00.000Z', 'in 31 days'],
+    ['2026-10-31T13:00:00.000Z', 'in 1 day'],
+    ['2026-10-30T18:00:00.000Z', 'in less than a day'],
+  ])('dates %s, %s from now', (iso, left) => {
+    expect(tokenExpiry(iso, NOW)).toBe(`${date(iso)} (${left})`);
+  });
+
+  it('says when an expired token stopped working', () => {
+    expect(tokenExpiry('2026-10-01T00:00:00.000Z', NOW)).toBe(
+      `Expired on ${date('2026-10-01T00:00:00.000Z')}`,
+    );
   });
 });

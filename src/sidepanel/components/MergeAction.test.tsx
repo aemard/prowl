@@ -106,6 +106,27 @@ describe('the confirmation', () => {
     expect(sent).toEqual([]);
   });
 
+  it('repeats what still blocks the merge, which the dialog hides on the card', () => {
+    show({
+      reviewDecision: 'changes_requested',
+      reviews: [
+        { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },
+      ],
+      mergeable: 'conflicting',
+      mergeStateStatus: 'dirty',
+    });
+    fireEvent.click(opener());
+    expect(dialog().textContent).toContain(
+      'Not ready: changes requested by alice; conflicts with release.',
+    );
+  });
+
+  it('says nothing more when the pull request is ready to merge', () => {
+    show({ mergeStateStatus: 'clean', mergeable: 'mergeable' });
+    fireEvent.click(opener());
+    expect(dialog().textContent).not.toContain('Not ready');
+  });
+
   it('lists only the methods the repository allows, starting on its default', () => {
     show({ allowedMergeMethods: ['squash', 'rebase'], defaultMergeMethod: 'rebase' });
     fireEvent.click(opener());
