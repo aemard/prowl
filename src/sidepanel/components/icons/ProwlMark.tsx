@@ -9,7 +9,7 @@ export interface ProwlMarkProps {
   class?: string;
 }
 
-/** The Prowl logo (src/assets/logo.svg): a white cat peeking out of a mint circle. */
+/** The Prowl logo (src/assets/logo.svg): a watchful ink cat on a mint tile. */
 export function ProwlMark({ size = 20, label, class: className }: ProwlMarkProps) {
   return (
     <img

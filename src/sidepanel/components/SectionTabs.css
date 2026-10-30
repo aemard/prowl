@@ -16,7 +16,7 @@
   /* Items share at most 480 px, centred, so they stay together in a wide panel. */
   padding: 0 max(var(--space-1), (100% - 480px) / 2);
   border-top: var(--border-width) solid var(--color-border-subtle);
-  background: var(--color-bg);
+  background: var(--color-bg-subtle);
 }
 
 .section-tabs__list {

@@ -20,24 +20,40 @@ submits packages; the listing text, images and privacy answers are edited in the
 
 ## Listing text
 
-**Summary** (132 characters at most): Follow your GitHub pull requests in the side panel: CI,
-reviews, merge state, notifications and actions. No backend.
+**Title**: Prowl — GitHub Pull Request Manager
+
+**Summary** (132 characters at most): Open source GitHub pull request manager for Chrome. Track CI, reviews and merge status in your side panel. No tracking.
 
 **Description**:
 
-> Prowl follows your GitHub pull requests from Chrome's side panel.
->
-> - See CI, reviews, conflicts and merge readiness on every card, for what you opened, what asks
->   for your review or your teams' review, where you are mentioned, or any GitHub search.
-> - Get notified when CI fails or passes, a review arrives, or a PR is ready, merged or closed;
->   open or snooze it from the notification. Quiet hours and a toolbar badge.
-> - Approve, request changes, comment, merge, turn on auto-merge, update a branch that is
->   behind, re-run failed checks, all without leaving your tab. Ctrl+Shift+P (⌘⇧P on Mac) opens the panel.
-> - Hide stale, draft and bot PRs, and group them by repository.
->
-> Private by design: no backend and no telemetry. Your token stays on your device, GitHub is the
-> only server Prowl talks to, and it cannot read or change the pages you visit. Settings can
-> sync through your Chrome profile if you turn it on; the token never does.
+Prowl is a free, open source Chrome extension for managing GitHub pull requests from your browser’s side panel.
+
+Keep an eye on CI, reviews and merge readiness while you work. Catch changes that need your attention and act without switching tabs.
+
+- YOUR PR INBOX: follow pull requests you authored, personal and team review requests, mentions, assignments or a custom GitHub search.
+- CLEAR STATUS: see failing checks, approvals, requested changes, conflicts and merge readiness. Expand a PR to understand what blocks it.
+- ACTIONS BESIDE YOUR WORK: approve, request changes, comment, merge, manage auto-merge, update a branch or re-run failed checks.
+- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, snooze PRs and hide stale, draft or bot PRs.
+- YOUR PREFERRED VIEW: light and dark themes, keyboard navigation, repository grouping and optional settings sync.
+
+FREE AND OPEN SOURCE
+
+Prowl is MIT licensed. Inspect the source, build it yourself, report an issue or contribute:
+https://github.com/aemard/prowl
+
+PRIVATE BY DESIGN
+
+No Prowl account, no backend and no telemetry. Your GitHub token stays on your device and is sent only to GitHub. Prowl cannot read or change the pages you visit. Optional Chrome settings sync never includes your token or PR data.
+
+GET STARTED
+
+Add Prowl to Chrome, open the side panel and sign in with GitHub or a personal access token. Requires Chrome 116 or later.
+
+Website: https://aemard.github.io/prowl/
+Privacy: https://aemard.github.io/prowl/privacy/
+Support: https://github.com/aemard/prowl/issues
+
+Prowl is an independent project and is not affiliated with GitHub.
 
 ## One-time setup
 

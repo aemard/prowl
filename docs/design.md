@@ -27,14 +27,10 @@ and color only where it means something.
 ## Brand
 
 - **Name:** Prowl, a cat on the prowl, quietly keeping an eye on your pull requests.
-- **Mark:** a white cat peeking out of a mint circle with an ink ring (`src/assets/logo.svg`).
-  The face fills most of the circle, so it still reads at 16 px. The ink ring carries the mark on
-  light toolbars and the mint disc on dark ones.
-- **Colors:** ink `#1e1e24` (also the light theme's text, `--gray-12`), mint `#a8dacd` (the dark
-  theme's accent is a step more saturated), fur white. They live in the SVG only: the logo is one
-  file, so they are not tokens.
-- **Artwork:** traced from the 1024 px illustration into one circle and two paths (mint, white);
-  the ink lines are the circle showing through. About 12 KB, 5 KB gzipped.
+- **Mark:** a watchful ink cat on a rounded mint tile (`src/assets/logo.svg`). Two clear eyes
+  and a small nose keep the silhouette readable at toolbar sizes.
+- **Colors:** ink `#1e1e24` and mint `#a8dacd`, shared across the logo, site and store images.
+- **Artwork:** original vector geometry, with no embedded raster image or external font.
 - **Icons:** `pnpm icons` rasterizes the SVG to `public/icons/icon-{16,32,48,128}.png`. 16–48 px
   use the full canvas; 128 px has 16 px of transparent padding around 96 px of artwork, as the
   Chrome Web Store asks. The panel shows the same SVG through `ProwlMark` (an `<img>`), and the

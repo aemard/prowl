@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/preact';
 import { describe, expect, it } from 'vitest';
+import logoUrl from '../../../assets/logo.svg';
 import { createIcon } from './Icon';
 import * as icons from './index';
 import { ProwlMark } from './ProwlMark';
@@ -52,7 +53,7 @@ describe('ProwlMark', () => {
     const img = container.querySelector('img');
     expect(img?.getAttribute('alt')).toBe('');
     expect(img?.getAttribute('width')).toBe('20');
-    expect(img?.getAttribute('src')).toMatch(/logo\.svg$/);
+    expect(img?.getAttribute('src')).toBe(logoUrl);
   });
 
   it('can stand alone with a name', () => {

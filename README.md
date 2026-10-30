@@ -1,6 +1,13 @@
-# Prowl
+<p align="center">
+  <img src="src/assets/logo.svg" alt="Prowl cat logo" width="88" height="88">
+</p>
 
-**Your GitHub pull requests, at a glance, in Chrome's side panel.**
+# Prowl — GitHub Pull Request Manager
+
+**The open source Chrome extension that keeps an eye on your pull requests.**
+
+Free to use, inspect and improve. [MIT licensed](LICENSE), with no backend and no telemetry.
+[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/prowl/homnofbclfgoailffidcbgekohciglcf) · [Explore the website](https://aemard.github.io/prowl/) · [Contribute](CONTRIBUTING.md)
 
 Prowl shows the live state of the pull requests you care about (CI, reviews, conflicts, draft,
 labels, activity), notifies you when something changes, and lets you act (approve, request

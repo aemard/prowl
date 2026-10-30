@@ -37,9 +37,10 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
 
   return {
     manifest_version: 3,
-    name: e2e ? 'Prowl (e2e)' : 'Prowl',
+    name: e2e ? 'Prowl (e2e)' : 'Prowl — GitHub Pull Request Manager',
     short_name: 'Prowl',
-    description: 'Follow your GitHub pull requests at a glance, right in the browser side panel.',
+    description:
+      'Open source GitHub pull request manager for Chrome. Track CI, reviews and merge status in your side panel. No tracking.',
     version: toExtensionVersion(pkg.version),
     minimum_chrome_version: '116',
     icons,

@@ -45,7 +45,7 @@ const panel = (name, height = 720) =>
 const screenshot = (title, text, panels) => `
   <div class="canvas" style="gap:72px;padding:0 96px">
     <div class="copy" style="flex:1">
-      <div class="brand"><img src="${logo}" width="44" height="44" alt="">Prowl</div>
+      <div class="brand"><img src="${logo}" width="44" height="44" alt="">Prowl <span style="font-size:14px;letter-spacing:0.08em;margin-left:auto">OPEN SOURCE</span></div>
       <h1>${title}</h1>
       <p>${text}</p>
     </div>
@@ -54,11 +54,21 @@ const screenshot = (title, text, panels) => `
 
 const IMAGES = [
   {
+    file: 'promo-social.png',
+    size: [1200, 630],
+    html: `<div class="canvas" style="padding:48px 64px;gap:64px">
+      <div class="copy" style="flex:1"><div class="brand"><img src="${logo}" width="72" height="72" alt="">Prowl</div>
+      <h1 style="font-size:60px">A quiet eye on your pull requests.</h1>
+      <p>Open source. GitHub PRs.<br>Right in Chrome’s side panel.</p></div>
+      ${panel('list-light', 530)}
+    </div>`,
+  },
+  {
     file: 'screenshot-1-list.png',
     size: [1280, 800],
     html: screenshot(
-      'Your pull requests at a glance',
-      'CI, reviews and merge state for what you opened, review or are mentioned in.',
+      'A quiet eye on your pull requests.',
+      'The open source GitHub PR manager for Chrome. CI, reviews and merge status, right beside your work.',
       panel('list-light', 760),
     ),
   },
@@ -86,7 +96,7 @@ const IMAGES = [
     html: `
       <div class="canvas" style="gap:56px;padding:0 64px 0 80px">
         <div class="copy" style="flex:1">
-          <div class="brand"><img src="${logo}" width="44" height="44" alt="">Prowl</div>
+          <div class="brand"><img src="${logo}" width="44" height="44" alt="">Prowl <span style="font-size:14px;letter-spacing:0.08em;margin-left:auto">OPEN SOURCE</span></div>
           <h1 style="font-size:46px">Follows your theme</h1>
           <p style="font-size:20px">Light or dark, like your system. Change it in Settings.</p>
         </div>
@@ -97,8 +107,8 @@ const IMAGES = [
     file: 'screenshot-5-sign-in.png',
     size: [1280, 800],
     html: screenshot(
-      'Private by design',
-      'Sign in with GitHub. Your token stays in this browser and only talks to GitHub. No servers, no tracking.',
+      'Your PRs. Your data.',
+      'Sign in with GitHub. No Prowl backend, no telemetry. Your token stays on your device and is sent only to GitHub.',
       panel('device-flow'),
     ),
   },
@@ -120,7 +130,7 @@ const IMAGES = [
           <div class="brand" style="font-size:44px;gap:20px">
             <img src="${logo}" width="88" height="88" alt="">Prowl
           </div>
-          <p style="font-size:30px">Your GitHub pull requests in Chrome's side panel.</p>
+          <p style="font-size:30px">Your GitHub pull requests in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
         </div>
         <div style="display:flex;gap:24px;align-self:flex-start;margin-top:72px">
           ${panel('list-light', 560)}${panel('list-dark', 560)}
