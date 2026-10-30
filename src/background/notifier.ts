@@ -3,8 +3,11 @@
  * survive lives in `chrome.storage.session` (cleared when the browser closes): `notified`
  * maps the id of every event already reported to its PR's URL. It dedupes events (ids are
  * stable per change, see the diff engine) and tells a click where to go; a notification for
- * one event has that event's id as its id.
+ * one event has that event's id as its id. A summary of several events is recorded under its
+ * own id too, pointing at the viewer's pull requests on GitHub.
  */
+
+import { env } from '../lib/env';
 import type { NotificationSettings, PrEvent, PrLocalState } from '../lib/model';
 import { filterEvents } from '../lib/notify/filterEvents';
 import {
@@ -61,12 +64,14 @@ export async function notifyEvents(
     const fresh = events.filter((event) => !Object.hasOwn(notified, event.id));
     const shown = filterEvents(fresh, settings, local);
     if (shown.length === 0) return;
+    const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
     if (shown.length <= MAX_SEPARATE) {
       for (const event of shown) await show(event.id, notificationContent(event), BUTTONS);
     } else {
-      await show(`summary:${Date.now()}`, summaryContent(shown));
+      const id = `summary:${Date.now()}`;
+      await show(id, summaryContent(shown));
+      kept.push([id, `${env.webUrl}/pulls`]);
     }
-    const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
     await chrome.storage.session.set({ [NOTIFIED]: Object.fromEntries(kept.slice(-MAX_NOTIFIED)) });
   } catch (error) {
     console.error('Prowl: notifying failed', error);
