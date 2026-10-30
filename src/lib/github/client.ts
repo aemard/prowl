@@ -21,13 +21,14 @@ export interface GitHubClient {
   /**
    * Runs a GraphQL operation and returns its `data`. GitHub answers 200 even when a field
    * failed, so any entry in `errors` throws, unless `partial` is set and `data` came back
-   * too (a deleted node, an org that requires SAML): then the partial data is returned.
+   * too (a deleted node, an org that requires SAML): then the partial data is returned, and
+   * `onPartialErrors` gets the errors' messages (token masked) to tell the holes apart.
    * Mutations must stay strict, their payload is null when they fail.
    */
   graphql<T>(
     query: string,
     variables?: Record<string, unknown>,
-    options?: { partial?: boolean },
+    options?: { partial?: boolean; onPartialErrors?: (messages: string[]) => void },
   ): Promise<T>;
   /** Calls a REST endpoint (`path` starts with `/`). Resolves to `undefined` for empty bodies. */
   rest<T = void>(method: HttpMethod, path: string, body?: unknown): Promise<T>;
@@ -144,13 +145,23 @@ export function createGitHubClient({
     async graphql<T>(
       query: string,
       variables: Record<string, unknown> = {},
-      { partial = false }: { partial?: boolean } = {},
+      {
+        partial = false,
+        onPartialErrors,
+      }: { partial?: boolean; onPartialErrors?: (messages: string[]) => void } = {},
     ) {
       const { response, payload } = await send('POST', '/graphql', { query, variables }, false);
       const { status, headers } = response;
       if (!isRecord(payload)) throw fail('server', UNEXPECTED, status, headers);
       const { data, errors } = payload;
       const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
+      if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
+        onPartialErrors?.(
+          errors.flatMap((error) =>
+            isRecord(error) && typeof error.message === 'string' ? [clean(error.message)] : [],
+          ),
+        );
+      }
       if (first !== undefined && !(partial && isRecord(data))) {
         const { type, message } = isRecord(first) ? first : ({} as Record<string, unknown>);
         throw fail(

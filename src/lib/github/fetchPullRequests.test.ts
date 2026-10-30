@@ -205,6 +205,8 @@ describe('fetchPullRequests', () => {
     });
     const result = await fetchPullRequests(client, settings());
     expect(result.sections.authored).toEqual([pr.id]);
+    // The section still lists what loaded, and says why the rest is missing.
+    expect(result.sectionErrors.authored).toMatch(/^An organization requires single sign-on/);
     const empty = setup({
       ProwlSearch: () => ({
         search: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: null },
@@ -469,6 +471,8 @@ describe('fetchPullRequests', () => {
         pullRequests: { [deleted.id]: deleted, [closed.id]: closed },
       });
       expect(Object.keys(result.pullRequests)).toEqual([closed.id]);
+      // A deleted PR is no reason to warn about the section.
+      expect(result.sectionErrors).toEqual({});
     });
 
     it('asks for at most 100 ids per query', async () => {
@@ -616,6 +620,36 @@ describe('fetchPullRequests', () => {
       expect(result.sectionErrors).toEqual({
         team_review_requested: 'GitHub refused the search for acme/gone: Validation Failed',
       });
+    });
+
+    it("says when an organization's SAML enforcement left holes in a team search", async () => {
+      const pr = prNode();
+      const { client } = setup({
+        ProwlSearch: (variables) =>
+          jsonResponse({
+            data: searchResponse([pr], variables),
+            ...(String(variables.query).includes('acme/sso')
+              ? {
+                  errors: [
+                    graphqlError(
+                      'FORBIDDEN',
+                      'Resource protected by organization SAML enforcement.',
+                    ),
+                  ],
+                }
+              : {}),
+          }),
+      });
+      const result = await fetchPullRequests(
+        client,
+        settings({ sections: [teamSection] }),
+        null,
+        discovered('acme/core', 'acme/sso'),
+      );
+      expect(result.sections).toEqual({ team_review_requested: [pr.id] });
+      expect(result.sectionErrors.team_review_requested).toMatch(
+        /^An organization requires single sign-on \(SAML\)/,
+      );
     });
 
     it('throws what fails the whole poll', async () => {
