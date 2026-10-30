@@ -4,7 +4,7 @@ Prowl is a Manifest V3 extension that holds a GitHub token able to read private 
 approve, merge and re-run CI. That token is the asset worth protecting. Method: STRIDE over the
 data flows below. Last reviewed: 2026-10-06, for the v1.0.0 release; the site-access lock below was
 added on 2026-10-07 (US-032); Trusted Types, the site's CSP and token expiry on 2026-10-30
-(review.md).
+(review.md); the assurance case on 2026-10-30.
 
 ## Assets
 
@@ -60,6 +60,39 @@ another extension or web page could send.
 | T | A team slug turns into a search qualifier | Discovered teams are kept only when `org/slug` matches the same rule as `unfollowedTeams` (`TEAM_KEY`) before it reaches `team-review-requested:` | `teams.ts`, `settings.ts` |
 | E | Supply-chain compromise of a dependency or action | Two direct runtime dependencies (Preact, @preact/signals, which pulls @preact/signals-core); the release job builds without a shared dependency cache; lockfile; Dependabot; CodeQL; dependency review; Scorecard; actions pinned to commit SHAs with least-privilege `permissions` and `persist-credentials: false`; releases ship an SBOM and provenance | `.github/workflows` |
 | T | A release built from code that skipped review reaches users | `main` needs a pull request with `Verify` and CodeQL and signed commits; `v*` tags cannot move or be deleted and `release-tag.yml` refuses a tag that is not on `main`; releases are immutable once published; a maintainer approves each store submission, and the job only uploads the release's zip after `gh attestation verify` ties it to `release-assets.yml`; anyone can rebuild a tag and get the same bytes (docs/releasing.md) | `.github/workflows`, repository rulesets, `scripts/zip.mjs` |
+
+## Assurance case
+
+The claim: a third party cannot read or use the user's token, run code in the extension, or act
+on GitHub in the user's name. The argument rests on the threat model above (assets, data flows,
+the STRIDE table), its trust boundaries (anything GitHub returns that a third party can write is
+untrusted), the design principles and the weaknesses countered below. The evidence is the tests
+and files in the "Where" column, CodeQL on every pull request, Scorecard, and the reviews in
+[review.md](review.md).
+
+| Design principle (Saltzer and Schroeder) | How Prowl applies it |
+|---|---|
+| Economy of mechanism | Two direct runtime dependencies, no backend, one remote host |
+| Fail-safe defaults | URLs, label colors, team keys and settings are rejected or reset to a default unless they match an allowlist; `github.com` access is off unless the device flow runs |
+| Complete mediation | Every opened URL goes through `isGitHubUrl`, every message through the sender check, every stored or synced setting through `normalizeSettings` |
+| Open design | Open source with this threat model; nothing relies on a secret other than the user's token |
+| Separation of privilege | A store release needs a tag on `main`, an attestation that `gh attestation verify` accepts, and a person's approval |
+| Least privilege | Four permissions and one host (manifest lock); fine-grained tokens supported; workflows default to read-only `permissions` |
+| Least common mechanism | No shared server: each user's data stays in their own browser profile |
+| Psychological acceptability | Sign-in is one click or one paste; Settings lists the live permissions; only merge and request changes ask for confirmation |
+
+| Common weakness | Countered by |
+|---|---|
+| CWE-79 cross-site scripting | Text-only rendering, the lint rule, Trusted Types |
+| CWE-94, CWE-829 code injection, remote code | CSP `script-src 'self'`, MV3, no CDN assets |
+| CWE-601 open redirect | `isGitHubUrl` on every tab, link and notification click |
+| CWE-200, CWE-532 token exposure | Token masked in every error, never rendered, never sent outside `env.apiUrl` |
+| CWE-346 origin validation | `onMessage` drops senders other than Prowl |
+| CWE-20 input validation | Mappers allowlist label colors, `validatePat` the token characters, `TEAM_KEY` the team slugs |
+| CWE-367 time-of-check to time-of-use | Approve and merge pin the head commit the panel showed |
+| CWE-400 resource exhaustion | Result caps, request timeout, backoff, rate-limit awareness |
+| CWE-78 command injection in CI | Workflow inputs reach shells only through `env:` |
+| CWE-1357 untrusted components | Lockfile, pinned actions, Dependabot, dependency review, SBOM and provenance |
 
 ## Residual risks (accepted)
 
