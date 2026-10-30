@@ -74,6 +74,10 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
         `connect-src ${connectSrc}`,
         "object-src 'none'",
         "base-uri 'none'",
+        // Chrome itself refuses strings in HTML and script sinks (innerHTML, eval, script.src):
+        // the lint rule against them becomes a browser guarantee.
+        "require-trusted-types-for 'script'",
+        "trusted-types 'none'",
       ].join('; '),
     },
   };
