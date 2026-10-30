@@ -73,7 +73,11 @@ these trailers, naming the model you actually run as (`Claude Opus 5.5`, `Claude
 ```
 Co-Authored-By: Claude <Model> <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01JeYEyGSNpL2hJRVh3LUrtD
+Signed-off-by: Arthur Emard <arthur@emard.fr>
 ```
+
+The sign-off is the maintainer's DCO (`CONTRIBUTING.md`), who submits and answers for the
+agents' work; CI fails a pull request with a commit that lacks one.
 
 Never rewrite history, never force-push, never skip hooks or weaken a quality gate.
 

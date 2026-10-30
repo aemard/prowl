@@ -3,7 +3,8 @@
 Prowl is open source under the MIT License, and fixes, features and docs are welcome. This page
 is the short version. [`CLAUDE.md`](https://github.com/aemard/prowl/blob/main/CLAUDE.md) and
 [`docs/architecture.md`](https://github.com/aemard/prowl/blob/main/docs/architecture.md) hold the
-details.
+details. Who decides and who holds which access is in
+[`GOVERNANCE.md`](https://github.com/aemard/prowl/blob/main/GOVERNANCE.md).
 
 ## Before you start
 
@@ -50,8 +51,16 @@ tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once
 - Colors, spacing and type come from the tokens in `src/styles/tokens.css`.
 - Everything is keyboard accessible and labelled, and axe reports no violations.
 - Render GitHub text as text, never as HTML. Only open GitHub URLs.
-- A new runtime dependency needs a line in `docs/decisions.md` and has to fit the size budget.
 - Write the least code that works: reuse what exists, prefer the platform, keep the diff short.
+
+## Dependencies
+
+Packages come from npm through pnpm, pinned by `pnpm-lock.yaml` (CI installs with
+`--frozen-lockfile`); GitHub Actions are pinned to commit SHAs. Add a dependency only when the
+platform and the existing ones do not cover the need: a runtime one needs a line in
+`docs/decisions.md` and has to fit the size budget, and one with an install script must be allowed
+in `pnpm-workspace.yaml`. Dependabot proposes updates every week, dependency review fails a pull
+request that adds a known-vulnerable package, and every release ships an SBOM.
 
 ## Commits and pull requests
 
@@ -59,6 +68,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:
 `test:`, `ci:`, `refactor:`, `perf:` or `chore:`, with an optional scope. Release notes and
 version numbers are generated from them. Keep a pull request to one change, say what it does and
 why, and add a screenshot for anything users see.
+
+Sign off every commit (`git commit -s`). The `Signed-off-by` line certifies the
+[Developer Certificate of Origin](https://developercertificate.org/): you wrote the change, or
+otherwise have the right to submit it under the MIT License. CI fails a pull request with a commit
+that is not signed off (bots excepted); `git rebase --signoff main` adds the line to commits you
+already made. A change written with an AI assistant is signed off by the person who submits it,
+who answers for it.
 
 ## The website
 

@@ -13,7 +13,10 @@ Every release ships its zip, an SBOM and a provenance attestation, and rebuilds 
 2. **Dependabot alerts and security updates** on (Settings, Advanced Security): the weekly
    version updates do not cover an advisory published against a lockfile that has not changed.
 
-## Next
+## Roadmap
+
+What Prowl plans to do from November 2026 to October 2027, in priority order. It is a plan, not a
+promise: issues track the progress.
 
 1. Verify against live GitHub what the mock cannot: branch-protection fields readable by
    non-admin tokens ("1 approval required"), exact merge refusal wording, the Chrome permission
@@ -22,3 +25,6 @@ Every release ships its zip, an SBOM and a provenance attestation, and rebuilds 
 2. GitHub Enterprise Server support (custom API/web origins as optional host permissions).
 3. Merge queues (today GitHub's refusal is shown as is).
 4. Localization (strings are in components; English only).
+
+What Prowl will not do: run a backend or any server of its own, collect telemetry, talk to a host
+other than GitHub, or read the pages you browse.

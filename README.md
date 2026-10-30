@@ -20,6 +20,7 @@ browser and is only ever sent to GitHub.
 [Privacy](https://aemard.github.io/prowl/privacy/) ·
 [Changelog](CHANGELOG.md)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16092/badge)](https://www.bestpractices.dev/projects/16092)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aemard/prowl/badge)](https://scorecard.dev/viewer/?uri=github.com/aemard/prowl)
 
 ## Install
@@ -119,7 +120,8 @@ server (`tests/e2e/mock-github`).
 | `docs/` | Architecture, decisions, design, security, auth, releasing |
 
 Start with [`docs/architecture.md`](docs/architecture.md) and
-[`CONTRIBUTING.md`](CONTRIBUTING.md). Security issues: see [`SECURITY.md`](SECURITY.md).
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Security issues: see [`SECURITY.md`](SECURITY.md). Who
+decides and the roadmap: [`GOVERNANCE.md`](GOVERNANCE.md).
 
 ## License
 
