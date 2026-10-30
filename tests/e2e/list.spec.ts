@@ -62,7 +62,7 @@ test.describe('with a rich set of pull requests', () => {
     github.onGraphQL('ProwlSearch', (variables) =>
       searchResponse(nodesFor(variables.query), variables),
     );
-    await seedStorage({ settings: { sections: allSections() } });
+    await seedStorage({ settings: { groupByRepo: false, sections: allSections() } });
     await signIn();
     await poll();
     // `poll()` leaves the page it sent from open, and it would mark cards seen like a panel.
@@ -120,7 +120,7 @@ test.describe('with a rich set of pull requests', () => {
       query: 'label:none',
     });
     const long = custom('custom-1', 'Needs attention from the platform team this week');
-    await seedStorage({ settings: { sections: [...allSections(), long] } });
+    await seedStorage({ settings: { groupByRepo: false, sections: [...allSections(), long] } });
     const panel = await openPanel();
     const fits = () =>
       panel.evaluate(() => {
@@ -150,7 +150,10 @@ test.describe('with a rich set of pull requests', () => {
 
     // A sixth: the fifth slot becomes "More", a menu with the rest and their counts.
     await seedStorage({
-      settings: { sections: [...allSections(), long, custom('custom-2', 'Docs')] },
+      settings: {
+        groupByRepo: false,
+        sections: [...allSections(), long, custom('custom-2', 'Docs')],
+      },
     });
     await expect(panel.getByRole('tab')).toHaveCount(4);
     const more = panel.getByRole('button', { name: /^More sections/ });
@@ -806,7 +809,7 @@ test.describe('other states', () => {
     await expectNoA11yViolations(panel);
 
     const off = defaultSettings().sections.map((section) => ({ ...section, enabled: false }));
-    await seedStorage({ settings: { sections: off } });
+    await seedStorage({ settings: { groupByRepo: false, sections: off } });
     await expect(panel.getByRole('heading', { name: 'No sections turned on' })).toBeVisible();
     await expectNoA11yViolations(panel);
     await panel.getByRole('button', { name: 'Open settings' }).click();
@@ -831,7 +834,9 @@ test.describe('other states', () => {
       enabled: true,
       query: 'is:issue stale',
     };
-    await seedStorage({ settings: { sections: [...allSections().slice(0, 1), custom] } });
+    await seedStorage({
+      settings: { groupByRepo: false, sections: [...allSections().slice(0, 1), custom] },
+    });
     await signIn();
     await poll();
 

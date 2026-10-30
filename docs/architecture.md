@@ -72,14 +72,22 @@ in-memory updates that the next snapshot replaces.
    out of the search: GitHub evaluates branch rules for each on every read, about half a second
    per PR on busy repositories. `query ProwlMergeState` reads them, 10 PRs at a time, only for
    PRs that are new, changed in the search, unknown, or read more than 15 minutes ago
-   (`snapshot.mergeStateAt`); the others keep the previous poll's.
+   (`snapshot.mergeStateAt`); unchanged hidden or snoozed PRs use a one-hour interval.
+   Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
+   currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
+   Deferred PRs keep their previous facts without a freshness timestamp so they stay due;
+   new PRs have unknown merge facts until read. Search updates continue for all PRs.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
    `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt` and `settledChecks` to build the new `Snapshot`, and
-   persists it with `pollState` (and the teams, when discovered) in one write. Local PR state of PRs no longer in the snapshot is pruned.
+   publishes it before merge reads and after each completed batch. Each publication updates
+   the badge and diffs against the preceding publication, so notifications do not repeat. The
+   first poll suppresses events across all phases. `inFlight` remains true until enrichment
+   finishes; on enrichment failure the published list stays available. The final snapshot is
+   stored with `pollState` (and teams, when discovered). Local PR state is then pruned.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
-   produces none (no notification storm).
+   produces none (no notification storm), including its merge-enrichment publications.
 7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
    rest (per-event toggles, mute, snooze, quiet hours) and creates `chrome.notifications`.
    Clicking opens the PR.
@@ -343,8 +351,8 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 - `poll({ force, refreshTeams })` runs at most one poll at a time (an in-memory promise;
   concurrent callers share it, except `refreshTeams`, which waits for the poll in flight and
   then runs its own so the teams are discovered again) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
-  stored a snapshot, null otherwise. The badge and notifications hook in at the end of the poll
-  itself, once per poll, not in its callers.
+  stored a snapshot, null otherwise. The badge and notifications update at each progressive
+  publication inside the poll; callers sharing it do not repeat those events.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
   with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
@@ -409,7 +417,8 @@ settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/back
 ### Notifications
 
 `notifyEvents(events, settings.notifications, prLocal)` (`src/background/notifier.ts`) runs at
-the end of every poll that ran (never rejects: a failure is logged and the poll result stands).
+each progressive snapshot publication and targeted merge refresh (never rejects: a failure
+is logged and the published snapshot stands).
 
 1. Events whose `id` is already in `notified` are dropped.
 2. `filterEvents` (`src/lib/notify/filterEvents.ts`, pure) drops everything when notifications are
@@ -810,3 +819,17 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
   them. The setting applies at once (the list and the badge follow
   the settings in storage; nothing is fetched again). `HiddenReason` is a union (`draft`, `bot`,
   `stale`), so one more reason joins the same button and count.
+
+### Merge state when a card is consulted
+
+Opening a card sends `refreshMergeState` with its id and polled head SHA. The worker
+prioritizes it in any remaining merge batch, then, if needed, reads only that PR under the
+same lock as polls. Known merge facts younger than one minute are shared across reopens and
+panels. This does not search teams or advance the list's `fetchedAt`; account/head checks drop
+stale answers and rate-limit/backoff waits are respected. Badge and notification updates use
+the same snapshot diff.
+
+The list reuses its IntersectionObserver to send `mergePriority` hints for cards on screen
+(including already seen cards), renewing them on new snapshots. Folded groups have no
+rendered cards. Hints never start a network request; they are per document, expire after a
+minute, and are removed when the panel is hidden or unmounted.

@@ -135,6 +135,16 @@ function useMarkSeen(
     };
   }, [renderedKey]);
 
+  // Scrolling and folding only adjust the next poll's order; they never fetch on their own.
+  const onScreenKey = onScreen.join('\n');
+  const fetchedAt = snapshot.value?.fetchedAt;
+  useEffect(() => {
+    void sendToBackground({ type: 'mergePriority', prIds: panelVisible ? onScreen : [] });
+    return () => {
+      void sendToBackground({ type: 'mergePriority', prIds: [] });
+    };
+  }, [panelVisible, onScreenKey, fetchedAt]);
+
   useEffect(() => {
     const unseen = new Set(unseenKey.split('\n'));
     const prIds = onScreen.filter((id) => unseen.has(id));

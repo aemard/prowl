@@ -8,6 +8,7 @@ import { filterEvents } from './filterEvents';
 const NOW = new Date(2026, 9, 6, 12, 0);
 const settings = (change: (s: NotificationSettings) => void = () => {}): NotificationSettings => {
   const { notifications } = defaultSettings();
+  notifications.enabled = true;
   change(notifications);
   return notifications;
 };
@@ -16,9 +17,15 @@ const approved = prEvent({ type: 'approved', actor: 'hubot' });
 const other = prEvent({ type: 'comment_new', number: 2 });
 
 describe('filterEvents', () => {
-  it('keeps everything by default, in order', () => {
+  it('keeps enabled event types in order', () => {
     const events = [failed, approved, other];
     expect(filterEvents(events, settings(), emptyPrLocal(), NOW)).toEqual(events);
+  });
+
+  it('does not notify with the default settings', () => {
+    expect(filterEvents([failed], defaultSettings().notifications, emptyPrLocal(), NOW)).toEqual(
+      [],
+    );
   });
 
   it('drops every event when notifications are off', () => {

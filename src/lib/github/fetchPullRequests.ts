@@ -1,10 +1,12 @@
 /**
  * One poll's worth of GitHub reads: every enabled section's search, the merge facts of the PRs
- * that changed, then the final state of the PRs that left all of them. Requests run one after another, as GitHub asks of clients
+ * that left all sections, then merge facts of the PRs that changed. Requests run one after another, as GitHub asks of clients
  * to stay clear of secondary rate limits.
  */
+import { hiddenReasons } from '../hidden';
 import type {
   ErrorKind,
+  PrLocalState,
   PullRequest,
   RateLimit,
   Section,
@@ -12,6 +14,7 @@ import type {
   Snapshot,
   TeamsState,
 } from '../model';
+import { isSnoozed } from '../storage/prLocal';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
 import { type MergeFacts, mapClosedState, mapMergeState, mapPullRequest } from './mapPullRequest';
@@ -40,7 +43,14 @@ export interface FetchResult extends Pick<Snapshot, 'pullRequests' | 'sections'>
 
 export type FetchSettings = Pick<
   Settings,
-  'sections' | 'repoInclude' | 'repoExclude' | 'maxPerSection' | 'unfollowedTeams'
+  | 'sections'
+  | 'repoInclude'
+  | 'repoExclude'
+  | 'maxPerSection'
+  | 'unfollowedTeams'
+  | 'hideDrafts'
+  | 'hideBots'
+  | 'hideStaleAfterDays'
 >;
 
 const NO_TEAM =
@@ -59,6 +69,9 @@ const PAGE_SIZE = 25;
 const MERGE_STATE_BATCH = 10;
 /** Merge facts no search field gives away (a base branch that moved on) are read again after this. */
 const MERGE_STATE_MAX_AGE_MS = 15 * 60 * 1000;
+/** Bound expensive GitHub computations even on a cold cache. Remaining PRs wait for a poll. */
+const MERGE_STATE_PER_POLL = 20;
+const HIDDEN_MERGE_STATE_MAX_AGE_MS = 60 * 60 * 1000;
 /** GitHub's maximum for `nodes(ids:)`. */
 const IDS_PER_QUERY = 100;
 const HAS_SORT = /(?:^|[\s(])sort:/i;
@@ -98,15 +111,21 @@ const isNode = <T extends { id: string }>(
  * is the team section without `teams` to search. Any other failure throws the `GitHubError`, and
  * so does a `server` error when no search succeeded. Merge facts are read again only for PRs that
  * changed since `previous`, whose facts are unknown or older than `MERGE_STATE_MAX_AGE_MS`; the
- * others keep theirs. Open PRs of `previous` that are no longer in any section are looked up by
+ * others keep theirs. At most 20 merge states are fetched per poll, visible PRs first,
+ * oldest reads first within each priority. Hidden/snoozed facts last one hour when unchanged;
+ * deferred facts keep their values but are marked due for the next poll. Open PRs of `previous` that are no longer in any section are looked up by
  * id: merged or closed ones are kept (in no section) so the diff can tell who merged or closed
- * them; still-open ones are dropped.
+ * them; still-open ones are dropped. `onProgress` publishes the list before merge reads,
+ * then after each batch, while this call stays alive until enrichment finishes.
  */
 export async function fetchPullRequests(
   client: GitHubClient,
   settings: FetchSettings,
   previous: Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> | null = null,
   teams: Pick<TeamsState, 'teams' | 'error'> | null = null,
+  local: PrLocalState = { snoozed: {}, muted: {}, seen: {} },
+  onProgress?: (result: FetchResult) => Promise<void>,
+  priorityIds: () => readonly string[] = () => [],
 ): Promise<FetchResult> {
   const result: FetchResult = {
     pullRequests: {},
@@ -164,25 +183,44 @@ export async function fetchPullRequests(
   async function readMergeState(): Promise<void> {
     const now = Date.now();
     const stale: PullRequest[] = [];
+    const hidden = (pr: PullRequest) =>
+      hiddenReasons(pr, settings, now).length > 0 || isSnoozed(local, pr.id, now);
     for (const pr of Object.values(result.pullRequests)) {
+      if (pr.state !== 'open') continue;
       const before = previous?.pullRequests[pr.id];
       const readAt = previous?.mergeStateAt?.[pr.id];
       const valid =
         before !== undefined &&
         readAt !== undefined &&
-        now - Date.parse(readAt) < MERGE_STATE_MAX_AGE_MS &&
+        now - Date.parse(readAt) <
+          (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
         before.mergeable !== 'unknown' &&
         before.mergeStateStatus !== 'unknown' &&
         searchFacts(before) === searchFacts(pr);
+      // Preserve the baseline even when this poll has no budget left for its refresh.
+      if (before) result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
       if (valid) {
-        result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
         result.mergeStateAt[pr.id] = readAt;
       } else {
         stale.push(pr);
       }
     }
-    for (let start = 0; start < stale.length; start += MERGE_STATE_BATCH) {
-      const batch = stale.slice(start, start + MERGE_STATE_BATCH);
+    // Visible PRs first, then the oldest successful read so deferred PRs get a turn.
+    const age = (pr: PullRequest) => Date.parse(previous?.mergeStateAt?.[pr.id] ?? '') || 0;
+    stale.sort((a, b) => Number(hidden(a)) - Number(hidden(b)) || age(a) - age(b));
+    await onProgress?.(result);
+    for (
+      let count = 0;
+      stale.length > 0 && count < MERGE_STATE_PER_POLL;
+      count += MERGE_STATE_BATCH
+    ) {
+      const priority = new Map(priorityIds().map((id, index) => [id, index]));
+      stale.sort(
+        (a, b) =>
+          (priority.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+          (priority.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      );
+      const batch = stale.splice(0, MERGE_STATE_BATCH);
       let nodes: MergeStateData['nodes'] = null;
       try {
         ({ nodes } = await read<MergeStateData>(MERGE_STATE_QUERY, {
@@ -202,6 +240,7 @@ export async function fetchPullRequests(
           result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
         }
       });
+      await onProgress?.(result);
     }
   }
 
@@ -280,8 +319,6 @@ export async function fetchPullRequests(
   }
   // GitHub itself is failing, not one heavy search: the poll backs off.
   if (!searched && serverError) throw serverError;
-  await readMergeState();
-
   const gone = filterByRepo(
     Object.values(previous?.pullRequests ?? {}).filter(
       ({ id, state }) => state === 'open' && !(id in result.pullRequests),
@@ -298,5 +335,6 @@ export async function fetchPullRequests(
       if (closed) result.pullRequests[pr.id] = closed;
     });
   }
+  await readMergeState();
   return result;
 }

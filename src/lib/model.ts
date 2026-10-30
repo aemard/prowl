@@ -405,6 +405,10 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean }
   | { type: 'markSeen'; prIds: string[] }
+  /** Refresh only the merge facts of a consulted PR, without searching again. */
+  | { type: 'refreshMergeState'; prId: string; headSha: string }
+  /** Hints from visible cards; changes priority only, never starts a GitHub request. */
+  | { type: 'mergePriority'; prIds: string[] }
   | { type: 'signedOut' }
   /** Discover the viewer's teams again now, then poll; answered once that poll is done. */
   | { type: 'refreshTeams' };

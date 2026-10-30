@@ -410,7 +410,7 @@ describe('SettingsView', () => {
 
   describe('notifications', () => {
     it('turns every kind of notification on or off on its own', async () => {
-      await open();
+      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       const notifications = group('Notifications');
       fireEvent.click(toggle('CI passes', notifications));
       fireEvent.click(toggle('Merged', notifications));
@@ -424,7 +424,7 @@ describe('SettingsView', () => {
     });
 
     it('greys out what depends on the master switch', async () => {
-      await open();
+      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       const notifications = group('Notifications');
       fireEvent.click(toggle('Desktop notifications', notifications));
       await waitFor(() =>
@@ -439,7 +439,7 @@ describe('SettingsView', () => {
     });
 
     it('sets quiet hours that cross midnight', async () => {
-      await open();
+      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       const notifications = group('Notifications');
       expect((notifications.getByLabelText('From') as HTMLInputElement).disabled).toBe(true);
 
@@ -474,7 +474,7 @@ describe('SettingsView', () => {
     });
 
     it('shows a test notification with the Prowl icon and says so', async () => {
-      await open();
+      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: 'Send test notification' }));
       });
@@ -489,7 +489,7 @@ describe('SettingsView', () => {
     });
 
     it('says when Chrome could not show it', async () => {
-      await open();
+      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       vi.spyOn(chrome.notifications, 'create').mockRejectedValue(new Error('denied'));
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: 'Send test notification' }));
@@ -549,7 +549,7 @@ describe('SettingsView', () => {
     });
 
     it('groups by repository with its own switch, apart from the sort order', async () => {
-      await open();
+      await open({ groupByRepo: false });
       const appearance = group('Appearance');
       const grouping = toggle('Group pull requests by repository', appearance);
       expect(grouping.getAttribute('aria-checked')).toBe('false');

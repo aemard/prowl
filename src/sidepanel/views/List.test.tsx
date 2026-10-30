@@ -151,6 +151,7 @@ describe('one section', () => {
   });
 
   it('has no tabs, a labelled list and the quick filter', () => {
+    settings.value = { ...settings.value, groupByRepo: false };
     render(<ListView />);
     expect(screen.queryByRole('tablist')).toBeNull();
     const list = screen.getByRole('list', { name: 'Created by me pull requests' });
@@ -360,6 +361,21 @@ describe('unseen changes', () => {
 
     act(() => void vi.advanceTimersByTime(10_000));
     expect(markSeen(send)).toHaveLength(1);
+  });
+
+  it('reports cards on screen as priority without forcing a poll, then clears it when hidden', async () => {
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    render(<ListView />);
+    observer().show([a.id]);
+    await act(async () => {});
+    expect(send).toHaveBeenCalledWith({ type: 'mergePriority', prIds: [a.id] });
+    expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'poll' }));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await act(async () => {});
+    expect(send).toHaveBeenLastCalledWith({ type: 'mergePriority', prIds: [] });
   });
 
   it('waits again after a scroll, and skips cards that left the screen', () => {

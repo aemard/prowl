@@ -56,7 +56,7 @@ describe('DEFAULT_SETTINGS', () => {
       pollIntervalMinutes: 5,
       maxPerSection: 50,
       notifications: {
-        enabled: true,
+        enabled: false,
         events: {
           ci_failed: true,
           ci_passed: true,
@@ -73,7 +73,7 @@ describe('DEFAULT_SETTINGS', () => {
       badge: 'attention',
       theme: 'system',
       sort: 'updated',
-      groupByRepo: false,
+      groupByRepo: true,
       hideStaleAfterDays: 20,
       hideDrafts: false,
       hideBots: false,
@@ -172,7 +172,7 @@ describe('normalizeSettings', () => {
       ...DEFAULT_SETTINGS,
       theme: 'light',
       notifications: {
-        enabled: true,
+        enabled: false,
         events: { ...DEFAULT_SETTINGS.notifications.events, merged: false },
         quietHours: { enabled: true, start: '22:00', end: '08:00' },
       },
@@ -229,15 +229,15 @@ describe('normalizeSettings', () => {
   });
 
   it.each(['groupByRepo', 'hideDrafts', 'hideBots'] as const)(
-    'repairs %s: a boolean, else off',
+    'repairs %s: a boolean, else its default',
     (key) => {
       expect(normalizeSettings({ [key]: true })[key]).toBe(true);
       expect(normalizeSettings({ [key]: false })[key]).toBe(false);
       for (const value of ['yes', 1, null, undefined]) {
-        expect(normalizeSettings({ [key]: value })[key]).toBe(false);
+        expect(normalizeSettings({ [key]: value })[key]).toBe(DEFAULT_SETTINGS[key]);
       }
       // Settings stored before the switches existed.
-      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(false);
+      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(DEFAULT_SETTINGS[key]);
     },
   );
 
@@ -249,7 +249,7 @@ describe('normalizeSettings', () => {
         quietHours: { enabled: 1, start: '7:05', end: '24:00' },
       },
     });
-    expect(notifications.enabled).toBe(true);
+    expect(notifications.enabled).toBe(false);
     expect(notifications.events.ci_failed).toBe(true);
     expect(notifications.events.approved).toBe(false);
     expect(notifications.events.closed).toBe(true);
