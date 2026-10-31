@@ -8,6 +8,10 @@
 
 /* Theme-independent tokens */
 :root {
+  --color-brand-mint: #a8dacd;
+  --color-brand-ink: #1e1e24;
+  --color-brand-surface: color-mix(in srgb, var(--color-brand-mint) 22%, var(--color-bg));
+
   /* Typography: a compact scale for a narrow side panel */
   --font-sans:
     system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
@@ -45,6 +49,7 @@
   /* Sizes */
   --control-sm: 24px;
   --control-md: 28px;
+  --glass-blur: blur(22px) saturate(1.15);
   --icon-sm: 12px;
   --icon-md: 16px;
   --icon-lg: 20px;
@@ -157,6 +162,16 @@
   --color-neutral-border: var(--gray-6);
   --color-neutral-solid: var(--gray-11);
 
+  --glass-canvas: #f3f6f4;
+  --glass-card: rgba(255, 255, 255, 0.8);
+  --glass-chrome: rgba(255, 255, 255, 0.8);
+  --glass-solid: #f8fcfa;
+  --glass-edge: rgba(88, 119, 103, 0.15);
+  --glass-rim: rgba(255, 255, 255, 0.64);
+  --glass-shadow: 0 4px 12px rgba(15, 62, 46, 0.065), 0 1px 3px rgba(27, 67, 52, 0.035);
+  --glass-mint: rgba(58, 183, 139, 0.15);
+  --glass-blue: rgba(92, 153, 225, 0.12);
+
   --shadow-sm: 0 1px 2px rgb(18 18 21 / 0.08);
   --shadow-md: 0 1px 2px rgb(18 18 21 / 0.04), 0 8px 24px rgb(18 18 21 / 0.08);
   --shadow-lg: 0 2px 6px rgb(18 18 21 / 0.04), 0 16px 48px rgb(18 18 21 / 0.14);
@@ -236,6 +251,16 @@
     --color-neutral-bg: var(--gray-3);
     --color-neutral-border: var(--gray-6);
     --color-neutral-solid: var(--gray-7);
+
+    --glass-canvas: #121816;
+    --glass-card: rgba(29, 39, 33, 0.86);
+    --glass-chrome: rgba(30, 41, 34, 0.86);
+    --glass-solid: #1b2520;
+    --glass-edge: rgba(210, 240, 221, 0.14);
+    --glass-rim: rgba(227, 255, 240, 0.23);
+    --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --glass-mint: rgba(19, 117, 74, 0.15);
+    --glass-blue: rgba(31, 76, 151, 0.12);
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow-md: 0 0 0 1px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.4);
@@ -317,7 +342,34 @@
   --color-neutral-border: var(--gray-6);
   --color-neutral-solid: var(--gray-7);
 
+  --glass-canvas: #121816;
+  --glass-card: rgba(29, 39, 33, 0.86);
+  --glass-chrome: rgba(30, 41, 34, 0.86);
+  --glass-solid: #1b2520;
+  --glass-edge: rgba(210, 240, 221, 0.14);
+  --glass-rim: rgba(227, 255, 240, 0.23);
+  --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-mint: rgba(19, 117, 74, 0.15);
+  --glass-blue: rgba(31, 76, 151, 0.12);
+
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 0 0 1px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 0 0 1px rgb(0 0 0 / 0.2), 0 16px 48px rgb(0 0 0 / 0.55);
+}
+
+/* Opaque surfaces remain readable without backdrop filtering or transparency. */
+@supports not (backdrop-filter: blur(1px)) {
+  :root[data-theme],
+  :root:not([data-theme]) {
+    --glass-card: var(--glass-solid);
+    --glass-chrome: var(--glass-solid);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-theme],
+  :root:not([data-theme]) {
+    --glass-blur: none;
+    --glass-card: var(--glass-solid);
+    --glass-chrome: var(--glass-solid);
+  }
 }

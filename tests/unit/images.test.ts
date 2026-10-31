@@ -30,6 +30,7 @@ it('renders the store listing images at the exact sizes the store asks for', () 
   const sizes: Record<string, [number, number]> = {
     'promo-small.png': [440, 280],
     'promo-marquee.png': [1400, 560],
+    'promo-social.png': [1200, 630],
   };
   const files = pngs('store');
   expect(files.length).toBeGreaterThan(0);

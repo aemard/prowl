@@ -27,17 +27,16 @@ and color only where it means something.
 ## Brand
 
 - **Name:** Prowl, a cat on the prowl, quietly keeping an eye on your pull requests.
-- **Mark:** a white cat peeking out of a mint circle with an ink ring (`src/assets/logo.svg`).
-  The face fills most of the circle, so it still reads at 16 px. The ink ring carries the mark on
-  light toolbars and the mint disc on dark ones.
-- **Colors:** ink `#1e1e24` (also the light theme's text, `--gray-12`), mint `#a8dacd` (the dark
-  theme's accent is a step more saturated), fur white. They live in the SVG only: the logo is one
-  file, so they are not tokens.
-- **Artwork:** traced from the 1024 px illustration into one circle and two paths (mint, white);
-  the ink lines are the circle showing through. About 12 KB, 5 KB gzipped.
-- **Icons:** `pnpm icons` rasterizes the SVG to `public/icons/icon-{16,32,48,128}.png`. 16–48 px
+- **Mark:** a friendly, round ivory cat with green eyes on a transparent background
+  (`src/assets/logo.png`). The simple face stays recognizable in small sizes.
+- **Colors:** ivory fur, green eyes, charcoal contours and warm pink details. The transparent
+  artwork sits on the shared mint marketing surfaces or the application’s light and dark themes.
+- **Artwork:** the approved cat artwork is stored in `src/assets/logo.png` with an alpha channel.
+  `pnpm icons` resizes it without adding a background. The full-resolution transparent artwork
+  is kept in `docs/brand/prowl-logo-transparent.png` for future marketing assets.
+- **Icons:** `pnpm icons` rasterizes the artwork to `public/icons/icon-{16,32,48,128}.png`. 16–48 px
   use the full canvas; 128 px has 16 px of transparent padding around 96 px of artwork, as the
-  Chrome Web Store asks. The panel shows the same SVG through `ProwlMark` (an `<img>`), and the
+  Chrome Web Store asks. The panel shows the same artwork through `ProwlMark` (an `<img>`), and the
   website uses it as its favicon and header logo.
 - Use the word "Prowl" next to the mark in the panel header; don't recolor, outline or stretch it.
 
@@ -264,7 +263,7 @@ attributes (`data-variant`, `data-size`, `data-tone`) styled in the component's 
 | `Select` | Short single-choice lists in forms | `label`, `value`, `options`, `onValueChange`, `hint`, `error` | Native `<select>`: keyboard and screen readers for free |
 | `ToastRegion`, `showToast`, `dismissToast` | Action outcomes ("Approved #42", "Copied") | `message`, `tone` info / success / danger, `action`, `durationMs` | One polite `aria-live` region, always mounted; max 3; 5 s (8 s for errors), paused on hover and focus; `durationMs: 0` stays until dismissed |
 | `EmptyState` | Empty lists and filtered-out results | `title`, `description`, `icon`, `action`, `headingLevel` | Real heading at the level you choose |
-| `ProwlMark` | Logo in the header | `size` (20), `label` | An `<img>` of `logo.svg`; decorative (`alt=""`) next to the word "Prowl", named by `label` alone |
+| `ProwlMark` | Logo in the header | `size` (20), `label` | An `<img>` of `logo.png`; decorative (`alt=""`) next to the word "Prowl", named by `label` alone |
 
 `Field` (label, hint, error layout plus `.ui-control` chrome) is internal to `TextField` and
 `Select`. `cx.ts` has `cx()` for class names, the shared `Tone` type and `focusableIn()`.
@@ -305,3 +304,13 @@ Conflicts (warning) or Ready to merge (success, replaces Approved because it imp
   data and spin the refresh `IconButton` (`loading`).
 - **Feedback:** use a toast for results of actions, inline `TextField` errors for validation, and
   banners (`StatusBanner`) for persistent problems.
+
+## Soft Liquid Glass
+
+The panel uses a quiet mint/blue background, translucent rounded PR cards and a floating
+section bar. Glass colors live in `tokens.css` for system and forced light/dark themes.
+Only the header, search and navigation use backdrop blur; cards need no per-card filter.
+The search and header meet as one island, with the search remaining sticky above the cards.
+Titles use the 13 px token; states keep their icon, text and semantic tint. There are no
+pointer-tracking reflections or hover lifts. Reduced transparency and unsupported blur use
+opaque surfaces. Menus, dialogs and expanded details keep stable reading surfaces.

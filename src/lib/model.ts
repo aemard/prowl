@@ -290,7 +290,11 @@ export interface PollState {
   consecutiveFailures: number;
   rateLimit: RateLimit | null;
   lastError: { kind: ErrorKind; message: string } | null;
+  /** True while the serialized poll runs, including background merge enrichment. */
   inFlight: boolean;
+  /** Present once the list is published; ids of the merge batch currently being read.
+   * An empty array means enrichment is finishing. Absent while searching or idle. */
+  mergePending?: string[];
 }
 
 export type AuthMethod = 'pat' | 'oauth';
@@ -405,6 +409,10 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean }
   | { type: 'markSeen'; prIds: string[] }
+  /** Refresh only the merge facts of a consulted PR, without searching again. */
+  | { type: 'refreshMergeState'; prId: string; headSha: string }
+  /** Hints from visible cards; changes priority only, never starts a GitHub request. */
+  | { type: 'mergePriority'; prIds: string[] }
   | { type: 'signedOut' }
   /** Discover the viewer's teams again now, then poll; answered once that poll is done. */
   | { type: 'refreshTeams' };

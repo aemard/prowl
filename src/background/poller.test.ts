@@ -16,7 +16,7 @@ import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storag
 import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState } from '../test/panel';
 import { BADGE_COLORS } from './badge';
-import { clearSignedOut, POLL_ALARM, poll, scheduleAlarm } from './poller';
+import { clearSignedOut, POLL_ALARM, poll, refreshMergeState, scheduleAlarm } from './poller';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 const MINUTE = 60_000;
@@ -42,6 +42,7 @@ let teamCalls = 0;
 function github(
   reply: Reply = () => searchResponse([prNode()]),
   teams: () => Response | Promise<Response> = () => jsonResponse([]),
+  merge?: (ids: string[], nodes: FullPullRequestNode[]) => Response | Promise<Response>,
 ) {
   teamCalls = 0;
   let searched: FullPullRequestNode[] = [];
@@ -55,7 +56,9 @@ function github(
       }
       const { query, variables } = JSON.parse(String(init.body));
       if (query.includes('query ProwlMergeState')) {
-        return jsonResponse({ data: mergeStateResponse(variables.ids, searched) });
+        return merge
+          ? merge(variables.ids, searched)
+          : jsonResponse({ data: mergeStateResponse(variables.ids, searched) });
       }
       const token = new Headers(init.headers).get('authorization');
       requests.push({
@@ -138,6 +141,99 @@ describe('poll', () => {
     expect(alarm()).toMatchObject({ periodInMinutes: 5, scheduledTime: NOW + 5 * MINUTE });
   });
 
+  it('publishes search changes before a slow merge read and does not repeat their events', async () => {
+    let checks: CheckState = 'pending';
+    github(() => searchWith(checks)());
+    await signIn();
+    await setItem('settings', {
+      ...defaultSettings(),
+      notifications: { ...defaultSettings().notifications, enabled: true },
+    });
+    await poll();
+    checks = 'failure';
+    let reached = () => {};
+    let release = () => {};
+    const started = new Promise<void>((resolve) => {
+      reached = resolve;
+    });
+    github(
+      () => searchWith(checks)(),
+      undefined,
+      (ids, nodes) =>
+        new Promise((resolve) => {
+          release = () => resolve(jsonResponse({ data: mergeStateResponse(ids, nodes) }));
+          reached();
+        }),
+    );
+    const loading = poll();
+    await started;
+    try {
+      expect((await getItem('snapshot'))?.pullRequests[PR]?.checks.state).toBe('failure');
+      expect(await pollState()).toMatchObject({ inFlight: true, mergePending: [PR] });
+      expect(fakeChrome().__state.notifications.size).toBe(1);
+    } finally {
+      release();
+    }
+    const result = await loading;
+    expect(result?.events.map(({ type }) => type)).toEqual(['ci_failed']);
+    expect(fakeChrome().__state.notifications.size).toBe(1);
+    expect(await pollState()).toMatchObject({ inFlight: false });
+    expect(await pollState()).not.toHaveProperty('mergePending');
+  });
+
+  it('keeps the published list when merge enrichment fails and backs off', async () => {
+    github(undefined, undefined, () =>
+      jsonResponse({ message: 'Bad credentials' }, { status: 401 }),
+    );
+    await signIn();
+    expect(await poll()).toBeNull();
+    expect((await getItem('snapshot'))?.sections.authored).toEqual([PR]);
+    expect(await pollState()).toMatchObject({
+      inFlight: false,
+      lastError: { kind: 'unauthorized' },
+    });
+    expect(alarm()).toBeUndefined();
+    expect(await pollState()).not.toHaveProperty('mergePending');
+  });
+
+  it('does not restore a progressively published list after sign-out during enrichment', async () => {
+    github(undefined, undefined, async (ids, nodes) => {
+      expect((await getItem('snapshot'))?.sections.authored).toEqual([PR]);
+      await removeItems('auth', 'snapshot');
+      return jsonResponse({ data: mergeStateResponse(ids, nodes) });
+    });
+    await signIn();
+    expect(await poll()).toBeNull();
+    expect(await getItems(['snapshot', 'pollState'])).toEqual({});
+  });
+
+  it('prioritizes an opened PR in the next batch without a redundant targeted read', async () => {
+    const nodes = Array.from({ length: 25 }, (_, i) =>
+      prNode({ number: i + 1, mergeStateStatus: 'CLEAN' }),
+    );
+    let opened: Promise<void> | undefined;
+    const batches: string[][] = [];
+    github(
+      () => searchResponse(nodes),
+      undefined,
+      async (ids, found) => {
+        batches.push(ids);
+        if (batches.length === 1) {
+          opened = refreshMergeState(prId(25), 'a'.repeat(40));
+          // Let the open request register its priority while this batch is in flight.
+          await Promise.resolve();
+          await Promise.resolve();
+        }
+        return jsonResponse({ data: mergeStateResponse(ids, found) });
+      },
+    );
+    await signIn();
+    await poll();
+    await opened;
+    expect(batches).toHaveLength(2);
+    expect(batches[1]?.[0]).toBe(prId(25));
+  });
+
   it('marks the poll in flight while it runs', async () => {
     let seen: PollState | undefined;
     github(async () => {
@@ -199,6 +295,11 @@ describe('poll', () => {
   it('notifies about what changed, once, unless the PR is muted', async () => {
     let checks: CheckState = 'pending';
     github(() => searchWith(checks)());
+    await setItem('settings', {
+      ...defaultSettings(),
+      ...(await getItem('settings')),
+      notifications: { ...defaultSettings().notifications, enabled: true },
+    });
     await signIn();
     await poll();
     expect(fakeChrome().__state.notifications.size).toBe(0);
@@ -225,6 +326,7 @@ describe('poll', () => {
       ...defaultSettings(),
       notifications: {
         ...defaultSettings().notifications,
+        enabled: true,
         events: { ...defaultSettings().notifications.events, ci_passed: false },
       },
     });
@@ -240,6 +342,11 @@ describe('poll', () => {
     let checks: CheckState = 'pending';
     const lastCommit = new Date(NOW - 35 * 24 * 60 * MINUTE).toISOString();
     github(() => searchResponse([prNode({ commits: headCommit(CHECKS[checks], {}, lastCommit) })]));
+    await setItem('settings', {
+      ...defaultSettings(),
+      ...(await getItem('settings')),
+      notifications: { ...defaultSettings().notifications, enabled: true },
+    });
     await signIn();
     await poll();
     checks = 'failure';
@@ -259,6 +366,11 @@ describe('poll', () => {
         prNode({ isDraft: true, author: dependabot, commits: headCommit(CHECKS[checks]) }),
       ]),
     );
+    await setItem('settings', {
+      ...defaultSettings(),
+      ...(await getItem('settings')),
+      notifications: { ...defaultSettings().notifications, enabled: true },
+    });
     await signIn();
     await poll();
     checks = 'failure';

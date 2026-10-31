@@ -17,7 +17,7 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 | `pnpm e2e` | Builds `dist-e2e/` then runs Playwright against the mock GitHub server |
 | `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` at 2x, 800 px wide (only way they change) |
 | `pnpm build` / `pnpm size` / `pnpm zip` | Production build, perf budget (`perf-budget.json`), release zip |
-| `pnpm icons` | Re-rasterize `src/assets/logo.svg` into `public/icons/*.png` |
+| `pnpm icons` | Re-rasterize `src/assets/logo.png` into `public/icons/*.png` |
 | `pnpm lint:fix` | Biome format + safe fixes |
 
 Needs Node 24 (`.nvmrc`) and pnpm 12 (`packageManager`; pnpm fetches that exact version). E2E runs

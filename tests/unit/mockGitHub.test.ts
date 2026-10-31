@@ -30,7 +30,15 @@ it('serves ProwlSearch, ProwlNodes and, by default, ProwlMergeState over HTTP', 
     .onGraphQL('ProwlSearch', (variables) => searchResponse([open], variables))
     .onGraphQL('ProwlNodes', ({ ids }) => nodesResponse(ids, [closedNode(merged.id)]));
   const client = createGitHubClient({ token: 'e2e-token', apiUrl: github.origin });
-  const settings = { repoInclude: [], repoExclude: [], maxPerSection: 50, unfollowedTeams: [] };
+  const settings = {
+    repoInclude: [],
+    repoExclude: [],
+    maxPerSection: 50,
+    unfollowedTeams: [],
+    hideDrafts: false,
+    hideBots: false,
+    hideStaleAfterDays: 0,
+  };
 
   const first = await fetchPullRequests(client, {
     ...settings,

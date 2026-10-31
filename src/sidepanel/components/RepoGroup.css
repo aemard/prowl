@@ -49,3 +49,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.repo-group__toggle {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: transparent;
+}
+.repo-group__toggle:hover {
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-md);
+}

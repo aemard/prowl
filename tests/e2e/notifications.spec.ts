@@ -37,6 +37,10 @@ function serve(github: Parameters<Parameters<typeof test>[2]>[0]['github'], coun
   return state;
 }
 
+test.beforeEach(async ({ seedStorage }) => {
+  await seedStorage({ settings: { notifications: { enabled: true } } });
+});
+
 test('CI going from pending to failed notifies once per commit', async ({
   github,
   signIn,
@@ -89,7 +93,9 @@ test('switched-off events and quiet hours produce no notification', async ({
   await signIn();
   await poll();
 
-  await seedStorage({ settings: { notifications: { events: { ci_failed: false } } } });
+  await seedStorage({
+    settings: { notifications: { enabled: true, events: { ci_failed: false } } },
+  });
   state.checks = 'failure';
   await poll();
   expect(await shown(serviceWorker)).toEqual([]);
@@ -98,7 +104,12 @@ test('switched-off events and quiet hours produce no notification', async ({
   const hour = (offset: number) =>
     `${String((new Date().getHours() + offset + 24) % 24).padStart(2, '0')}:00`;
   await seedStorage({
-    settings: { notifications: { quietHours: { enabled: true, start: hour(-1), end: hour(1) } } },
+    settings: {
+      notifications: {
+        enabled: true,
+        quietHours: { enabled: true, start: hour(-1), end: hour(1) },
+      },
+    },
   });
   state.checks = 'pending';
   await poll();

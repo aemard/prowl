@@ -1,6 +1,7 @@
 ---
 import dark from '../../../docs/screenshots/list-dark.png';
 import light from '../../../docs/screenshots/list-light.png';
+import logo from '../../../src/assets/logo.png';
 import Icon from '../components/Icon.astro';
 import Screenshot from '../components/Screenshot.astro';
 import Base from '../layouts/Base.astro';
@@ -32,36 +33,37 @@ const features = [
 ---
 
 <Base
-  title="Prowl: your GitHub pull requests in a Chrome side panel"
+  title="Prowl — Open source GitHub pull request manager for Chrome"
   description="Prowl is a free, open source Chrome side panel that follows your GitHub pull requests: live CI, review and merge state, notifications and one-click actions. No backend, no telemetry."
 >
   <section class="hero">
     <div class="wrap hero-grid">
       <div class="hero-copy">
-        <h1>Your pull requests, at a glance</h1>
+        <a class="eyebrow" href={`${REPO}/blob/main/LICENSE`}>OPEN SOURCE · MIT LICENSED <span aria-hidden="true">↗</span></a>
+        <h1>A quiet eye on<br />your <span>pull requests.</span></h1>
         <p class="lead">
-          Prowl is a Chrome side panel that follows your GitHub pull requests. See CI, reviews
-          and merge state live, get a notification when something changes, and act without
-          leaving your tab.
+          Your GitHub pull requests, right beside your work. Track CI, catch reviews and
+          merge when you’re ready. All from Chrome’s side panel.
         </p>
         <p class="actions">
           <a class="button" data-variant="primary" href={STORE}>Add to Chrome</a>
-          <a class="button" href={REPO}>View on GitHub</a>
+          <a class="button" href={REPO}>Explore the source <span aria-hidden="true">↗</span></a>
         </p>
-        <p class="note">Free and open source. No Prowl account, no backend, no telemetry.</p>
+        <p class="note">Free. No Prowl account. No tracking. Just you and GitHub.</p>
+        <div class="hero-facts" aria-label="Highlights"><span>CI &amp; reviews</span><span>Merge actions</span><span>Local data</span></div>
       </div>
-      <Screenshot
-        light={light}
-        dark={dark}
-        alt="The Prowl side panel listing pull requests with their CI, review and merge status."
-        priority
-      />
+      <div class="hero-preview">
+        <p class="preview-label"><span aria-hidden="true">●</span> YOUR PRS. ONE CALM PLACE.</p>
+        <Screenshot light={light} dark={dark} alt="The Prowl side panel listing pull requests with their CI, review and merge status." priority />
+        <p class="preview-caption">A little less tab hopping. A lot more focus.</p>
+      </div>
     </div>
   </section>
 
   <section class="section" aria-labelledby="features">
     <div class="wrap">
-      <h2 id="features" class="section-title">Stay on top of every pull request</h2>
+      <p class="eyebrow">LESS CHECKING. MORE SHIPPING.</p>
+      <h2 id="features" class="section-title">Know what needs you.<br />Keep everything else quiet.</h2>
       <ul class="features">
         {
           features.map((feature) => (
@@ -83,10 +85,11 @@ const features = [
     <div class="wrap prose">
       <h2 id="permissions" class="section-title">Prowl cannot read the pages you visit</h2>
       <p class="lead">
-        Prowl has no access to your tabs or their content. Chrome enforces that, not a promise:
-        an extension can only touch a page if its manifest asks for it, and Prowl's manifest asks
-        for the six things below and nothing else. A test fails the build if that list grows.
+        Your token and PR data stay on your device. Prowl talks directly to GitHub, with no
+        backend and no telemetry. It has no permission to read your tabs or their content.
       </p>
+      <details class="permission-details">
+        <summary>See exactly which permissions Prowl uses</summary>
       <table>
         <thead>
           <tr>
@@ -128,12 +131,26 @@ const features = [
           </tr>
         </tbody>
       </table>
+      </details>
       <p>
         Prowl can never read, inject code into or change a page, list your tabs or history, see
         other sites' requests or cookies, or be driven by a web page: it has none of the
         permissions for that.
         <a href={page('privacy/#what-prowl-can-never-do')}>See everything it can never do</a>.
       </p>
+    </div>
+  </section>
+
+  <section class="section open-source" aria-labelledby="open-source">
+    <div class="wrap open-source-grid">
+      <div>
+        <p class="eyebrow">BUILT IN THE OPEN</p>
+        <h2 id="open-source" class="section-title">Your workflow.<br />Your software.</h2>
+        <p class="lead">Read the code. Build it yourself. Make it better for everyone. Prowl is free and open source under the MIT License.</p>
+        <p class="actions"><a class="button" data-variant="primary" href={REPO}>Explore GitHub <span aria-hidden="true">↗</span></a><a class="button" href={page('contributing/')}>Make your first contribution</a></p>
+        <p class="note"><a href={`${REPO}/blob/main/docs/status.md#roadmap`}>Roadmap</a> · <a href={`${REPO}/issues`}>Ideas &amp; issues</a> · <a href={`${REPO}/blob/main/LICENSE`}>MIT License</a></p>
+      </div>
+      <div class="mascot-card"><img src={logo.src} alt="Prowl’s watchful cat mascot" width="240" height="240" loading="lazy" /><p>Small companion. Open source.</p></div>
     </div>
   </section>
 

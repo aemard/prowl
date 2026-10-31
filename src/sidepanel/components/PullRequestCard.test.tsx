@@ -4,9 +4,9 @@ import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import { buildAuth, buildPollState, buildPullRequest } from '../../test/panel';
 import { details, expandedIds } from '../state/prDetail';
-import { auth } from '../state/store';
+import { auth, pollState } from '../state/store';
 import { PullRequestCard } from './PullRequestCard';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
@@ -37,11 +37,31 @@ beforeEach(() => {
 
 afterEach(() => {
   auth.value = undefined;
+  pollState.value = undefined;
   expandedIds.value = [];
   details.value = {};
 });
 
 describe('PullRequestCard', () => {
+  it('shows a static merge indicator only while this card is actually being refreshed', () => {
+    const pr = pr42();
+    pollState.value = buildPollState({ inFlight: true, mergePending: ['another-pr'] });
+    renderCard();
+    expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
+    act(() => {
+      pollState.value = buildPollState({ inFlight: true, mergePending: [pr.id] });
+    });
+    expect(screen.getByTitle('Checking the latest merge status on GitHub').textContent).toBe(
+      'Updating merge status',
+    );
+    expect(toggleOf().description).toContain('Updating merge status');
+    act(() => {
+      pollState.value = buildPollState({ inFlight: false });
+    });
+    expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
+    expect(toggleOf().description).not.toContain('Updating merge status');
+  });
+
   it('shows the repository next to the number, unless it sits under its repository header', () => {
     const { rerender } = render(
       <ul>

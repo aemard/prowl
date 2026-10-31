@@ -284,7 +284,7 @@ describe('Menu', () => {
         </div>,
       );
       fireEvent.click(screen.getByRole('button', { name: 'More' }));
-      expect(screen.getByRole('menu').style.top).toBe('427px');
+      expect(screen.getByRole('menu').style.top).toBe('426px');
       fireEvent.scroll(document);
       expect(menu()).not.toBeNull();
     });

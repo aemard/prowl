@@ -173,6 +173,39 @@ describe('RefreshAnnouncer', () => {
     expect(region.textContent).toBe('Updated. 0 pull requests.');
     expect(refreshRequested.value).toBeNull();
 
+    // The user is done refreshing as soon as the list is ready, even while merge reads run.
+    await act(() => {
+      refreshRequested.value = Date.now();
+      pollState.value = buildPollState({ inFlight: true });
+    });
+    await act(() => {
+      pollState.value = buildPollState({ inFlight: true, mergePending: ['PR_1'] });
+    });
+    expect(region.textContent).toBe('Updated. 0 pull requests.');
+    expect(refreshRequested.value).toBeNull();
+    await act(() => {
+      pollState.value = buildPollState({ inFlight: false });
+    });
+
+    // A second click during enrichment shares that poll and is acknowledged when it finishes.
+    const earlier = new Date(Date.now() - 10_000).toISOString();
+    await act(() => {
+      pollState.value = buildPollState({
+        inFlight: true,
+        mergePending: ['PR_1'],
+        lastAttemptAt: earlier,
+      });
+      refreshRequested.value = Date.now();
+    });
+    expect(refreshRequested.value).not.toBeNull();
+    await act(() => {
+      pollState.value = buildPollState({
+        lastAttemptAt: earlier,
+        lastSuccessAt: new Date(Date.now() + 10).toISOString(),
+      });
+    });
+    expect(refreshRequested.value).toBeNull();
+
     // A poll so fast the panel never saw it running still counts once it started after the ask.
     await act(() => {
       refreshRequested.value = Date.now();

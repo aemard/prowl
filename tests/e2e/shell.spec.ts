@@ -129,7 +129,8 @@ test.describe('signed in', () => {
       const received: unknown[] = [];
       Object.assign(globalThis, { received });
       chrome.runtime.onMessage.addListener((message) => {
-        received.push(message);
+        // Visibility hints may accompany rendering; only a poll starts a refresh.
+        if (message?.type === 'poll') received.push(message);
       });
     });
     const panel = await openPanel();

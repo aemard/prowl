@@ -20,6 +20,7 @@ import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
 import { panelId, SectionTabs } from '../components/SectionTabs';
+import { StatusBanner } from '../components/StatusBanner';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -117,7 +118,10 @@ function useMarkSeen(
 
   useEffect(() => {
     const visible = new Set<string>();
-    const bar = document.querySelector<HTMLElement>('[data-bottom-bar]')?.offsetHeight ?? 0;
+    const barElement = document.querySelector<HTMLElement>('[data-bottom-bar]');
+    const bar = barElement
+      ? barElement.offsetHeight + (Number.parseFloat(getComputedStyle(barElement).bottom) || 0)
+      : 0;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const { target, isIntersecting } of entries) {
@@ -134,6 +138,16 @@ function useMarkSeen(
       setOnScreen([]);
     };
   }, [renderedKey]);
+
+  // Scrolling and folding only adjust the next poll's order; they never fetch on their own.
+  const onScreenKey = onScreen.join('\n');
+  const fetchedAt = snapshot.value?.fetchedAt;
+  useEffect(() => {
+    void sendToBackground({ type: 'mergePriority', prIds: panelVisible ? onScreen : [] });
+    return () => {
+      void sendToBackground({ type: 'mergePriority', prIds: [] });
+    };
+  }, [panelVisible, onScreenKey, fetchedAt]);
 
   useEffect(() => {
     const unseen = new Set(unseenKey.split('\n'));
@@ -241,26 +255,34 @@ export function ListView() {
 
   if (!selected) {
     return (
-      <EmptyState
-        icon={<InboxIcon size={24} />}
-        title="No sections turned on"
-        description="Choose which pull requests Prowl follows in Settings."
-        action={<Button onClick={() => navigate('settings')}>Open settings</Button>}
-      />
+      <>
+        <StatusBanner />
+        <EmptyState
+          icon={<InboxIcon size={24} />}
+          title="No sections turned on"
+          description="Choose which pull requests Prowl follows in Settings."
+          action={<Button onClick={() => navigate('settings')}>Open settings</Button>}
+        />
+      </>
     );
   }
 
   if (!snap) {
     const failure = pollState.value;
     // The banner above has the reason and the way out (retry, re-authenticate).
-    return failure?.lastError && !failure.inFlight ? (
-      <EmptyState
-        icon={<AlertIcon size={24} />}
-        title="Could not load pull requests"
-        description="Nothing has been fetched yet. The notice above says why."
-      />
-    ) : (
-      <ListSkeleton />
+    return (
+      <>
+        <StatusBanner />
+        {failure?.lastError && !failure.inFlight ? (
+          <EmptyState
+            icon={<AlertIcon size={24} />}
+            title="Could not load pull requests"
+            description="Nothing has been fetched yet. The notice above says why."
+          />
+        ) : (
+          <ListSkeleton />
+        )}
+      </>
     );
   }
 
@@ -317,6 +339,7 @@ export function ListView() {
           />
         </div>
       )}
+      <StatusBanner />
       {/* Fixed at the bottom of the panel, but before the list in the DOM: the tabs come before the
           panel they control, and the keyboard reaches them without going through every card. */}
       {tabs.length > 1 && (

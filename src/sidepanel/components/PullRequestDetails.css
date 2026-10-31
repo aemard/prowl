@@ -139,3 +139,8 @@
   flex-direction: column;
   gap: var(--space-1-5);
 }
+
+.pr-detail {
+  border-radius: 0 0 21px 21px;
+  background: var(--glass-solid);
+}

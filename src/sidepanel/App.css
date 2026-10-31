@@ -29,3 +29,31 @@ html {
 .app-loading__lines {
   flex: 1;
 }
+
+/* Soft color lives behind the reading surfaces; only chrome needs blur. */
+body {
+  background-image:
+    radial-gradient(ellipse 370px 430px at -15% 25%, var(--glass-mint), transparent),
+    radial-gradient(ellipse 360px 580px at 120% 74%, var(--glass-blue), transparent),
+    linear-gradient(var(--glass-canvas), var(--glass-canvas));
+  background-attachment: fixed;
+}
+@media (prefers-reduced-transparency: reduce) {
+  body {
+    background-image: linear-gradient(var(--glass-canvas), var(--glass-canvas));
+  }
+}
+
+/* A separate backdrop avoids making fixed menus relative to the glass container. */
+.header::after,
+.list__filter::after,
+.section-tabs::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--glass-chrome);
+  backdrop-filter: var(--glass-blur);
+}

@@ -193,6 +193,7 @@ test.describe('refresh', () => {
 test.describe('notifications', () => {
   test('a test notification appears with the Prowl icon', async ({ openPanel, serviceWorker }) => {
     const panel = await openPanel('#/settings');
+    await panel.getByRole('switch', { name: 'Desktop notifications' }).click();
     await panel.getByRole('button', { name: 'Send test notification' }).click();
     await expect(panel.getByText('Test notification sent.')).toBeVisible();
     await expect.poll(async () => (await notificationIds(serviceWorker)).length).toBe(1);
@@ -205,6 +206,7 @@ test.describe('notifications', () => {
       searchResponse([prNode({ number: 1, commits: headCommit(checks) })], variables),
     );
     const panel = await openPanel('#/settings');
+    await panel.getByRole('switch', { name: 'Desktop notifications' }).click();
     const poll = () =>
       panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
     await poll();
@@ -230,6 +232,7 @@ test.describe('notifications', () => {
 
   test('quiet hours can cross midnight', async ({ openPanel, serviceWorker }) => {
     const panel = await openPanel('#/settings');
+    await panel.getByRole('switch', { name: 'Desktop notifications' }).click();
     const from = panel.getByLabel('From');
     await expect(from).toBeDisabled();
     await panel.getByRole('switch', { name: 'Quiet hours' }).click();

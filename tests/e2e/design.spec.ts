@@ -90,3 +90,45 @@ test('ships toolbar icons at every manifest size', async ({ openPanel, serviceWo
     ['128', 128],
   ]);
 });
+
+test('keeps glass surfaces opaque when reduced transparency is requested', async ({
+  github,
+  signIn,
+  poll,
+  openPanel,
+  expectNoA11yViolations,
+}) => {
+  const { prNode, searchResponse } = await import('../fixtures/github');
+  github.onGraphQL('ProwlSearch', (variables) => searchResponse([prNode()], variables));
+  await signIn();
+  await poll();
+  const panel = await openPanel();
+  await expect(panel.locator('.pr-card')).toHaveCount(1);
+  const session = await panel.context().newCDPSession(panel);
+  await session.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
+  });
+  for (const theme of ['light', 'dark'] as const) {
+    await setTheme(panel, theme);
+    const surfaces = await panel.evaluate(() => {
+      const sample = document.createElement('span');
+      sample.style.backgroundColor = 'var(--glass-solid)';
+      document.body.append(sample);
+      const solid = getComputedStyle(sample).backgroundColor;
+      sample.remove();
+      const card = document.querySelector('.pr-card');
+      const header = document.querySelector('.header');
+      return {
+        solid,
+        card: card && getComputedStyle(card).backgroundColor,
+        chrome: header && getComputedStyle(header, '::after').backgroundColor,
+        blur: header && getComputedStyle(header, '::after').backdropFilter,
+      };
+    });
+    expect(surfaces.card).toBe(surfaces.solid);
+    expect(surfaces.chrome).toBe(surfaces.solid);
+    expect(surfaces.blur).toBe('none');
+    await expectNoA11yViolations(panel);
+    await panel.screenshot({ path: test.info().outputPath(`glass-opaque-${theme}.png`) });
+  }
+});
