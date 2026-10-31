@@ -66,9 +66,9 @@ test behaviour, not every function. Keep reports short: what changed, what was s
 ## Commits
 
 Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`, `perf:`),
-scope optional, story id in the subject when working a PRD story, e.g.
-`feat(github): US-005 fetch pull requests with check rollup`. End every commit message with
-these trailers, naming the model you actually run as (`Claude Opus 5.5`, `Claude Sonnet 5.5`...):
+scope optional, e.g. `feat(github): fetch pull requests with check rollup`. End every commit
+message with these trailers, naming the model you actually run as (`Claude Opus 5.5`,
+`Claude Sonnet 5.5`...):
 
 ```
 Co-Authored-By: Claude <Model> <noreply@anthropic.com>
@@ -81,9 +81,9 @@ agents' work; CI fails a pull request with a commit that lacks one.
 
 Never rewrite history, never force-push, never skip hooks or weaken a quality gate.
 
-## Ralph loop
+## Working knowledge
 
-Work is tracked in `prd.json` (stories, `passes`; `node scripts/ralph/story.mjs` prints the next
-one and records results) and `progress.txt` ("Codebase patterns" at the top, the latest entries
-below, older ones in `progress-archive.txt`). One story per iteration; see
-`scripts/ralph/prompt.md`. Specialist roles are in `.claude/agents/`.
+`docs/patterns.md` lists where things live, which helper to call, the test builders and the
+gotchas: read the entries for the area you change, and add what you learn. Specialist roles are
+in `.claude/agents/`. Ids such as `US-037` in docs and comments name the stories of the original
+build; `git log --grep US-037` finds their commits.
