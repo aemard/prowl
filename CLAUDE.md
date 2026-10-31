@@ -66,9 +66,10 @@ test behaviour, not every function. Keep reports short: what changed, what was s
 ## Commits
 
 Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`, `perf:`),
-scope optional, e.g. `feat(github): fetch pull requests with check rollup`. End every commit
-message with these trailers, naming the model you actually run as (`Claude Opus 5.5`,
-`Claude Sonnet 5.5`...):
+scope optional, e.g. `feat(github): fetch pull requests with check rollup`. Pull request titles
+follow it too: `main` takes squash merges titled after the PR, and release-please reads that
+title. End every commit message with these trailers, naming the model you actually run as
+(`Claude Opus 5.5`, `Claude Sonnet 5.5`...):
 
 ```
 Co-Authored-By: Claude <Model> <noreply@anthropic.com>
