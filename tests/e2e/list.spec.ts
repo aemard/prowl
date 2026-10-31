@@ -57,6 +57,38 @@ async function recordMessages(worker: Worker) {
     );
 }
 
+test('captures a ready-to-merge pull request for the store marquee', async ({
+  github,
+  seedStorage,
+  signIn,
+  poll,
+  openPanel,
+}) => {
+  github.onGraphQL('ProwlSearch', (variables) =>
+    searchResponse(
+      String(variables.query).includes('author:@me')
+        ? authored.filter((node) => node.id === AUTHORED.rateLimit)
+        : [],
+      variables,
+    ),
+  );
+  await seedStorage({
+    settings: { groupByRepo: false, sections: allSections() },
+    prLocal: {
+      snoozed: {},
+      muted: {},
+      seen: { [AUTHORED.rateLimit]: new Date().toISOString() },
+    },
+  });
+  await signIn();
+  await poll();
+  const panel = await openPanel();
+  await panel.emulateMedia({ colorScheme: 'light' });
+  await expect(panel.locator('.pr-card')).toHaveCount(1);
+  await expect(panel.getByText('Ready to merge', { exact: true })).toBeVisible();
+  await saveScreenshot(panel, 'list-ready');
+});
+
 test.describe('with a rich set of pull requests', () => {
   test.beforeEach(async ({ context, github, seedStorage, signIn, poll }) => {
     github.onGraphQL('ProwlSearch', (variables) =>
