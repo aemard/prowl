@@ -90,12 +90,17 @@ export function RefreshAnnouncer() {
   const wasBusy = useRef(false);
   useSignalEffect(() => {
     const state = pollState.value;
-    const busy = state?.inFlight === true;
+    const busy = state?.inFlight === true && state.mergePending === undefined;
     const requested = refreshRequested.value;
-    // Done once no poll runs and one ran since the request: seen running, or started after it
-    // (a fast poll can finish before the panel ever sees it running).
+    // The list is ready before merge enrichment finishes. A poll shared with a second click
+    // also counts once it succeeds after that request.
     const attempted = state?.lastAttemptAt ? Date.parse(state.lastAttemptAt) : 0;
-    if (requested !== null && !busy && (wasBusy.current || attempted >= requested - 1000)) {
+    const succeeded = state?.lastSuccessAt ? Date.parse(state.lastSuccessAt) : 0;
+    if (
+      requested !== null &&
+      !busy &&
+      (wasBusy.current || attempted >= requested - 1000 || succeeded >= requested)
+    ) {
       const error = state?.lastError;
       const count = Object.keys(snapshot.value?.pullRequests ?? {}).length;
       setMessage(

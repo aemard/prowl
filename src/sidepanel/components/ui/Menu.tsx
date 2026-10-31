@@ -61,9 +61,12 @@ function place(menu: HTMLElement, trigger: HTMLElement, align: 'start' | 'end'):
   const floor = floorFor(trigger);
   if (t.bottom < 0 || t.top > floor) return false;
   const m = menu.getBoundingClientRect();
+  // Floating bars inset their buttons: menus must clear the whole bar, including its padding.
+  const bar = trigger.closest('[data-bottom-bar]');
+  const anchorTop = bar ? Math.min(t.top, bar.getBoundingClientRect().top) : t.top;
   const fitsBelow = t.bottom + GAP + m.height <= floor - MARGIN;
   const top =
-    fitsBelow || t.top - GAP - m.height < MARGIN ? t.bottom + GAP : t.top - GAP - m.height;
+    fitsBelow || anchorTop - GAP - m.height < MARGIN ? t.bottom + GAP : anchorTop - GAP - m.height;
   const preferred = align === 'end' ? t.right - m.width : t.left;
   const left = Math.max(MARGIN, Math.min(preferred, window.innerWidth - MARGIN - m.width));
   menu.style.top = `${Math.round(top)}px`;

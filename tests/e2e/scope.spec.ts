@@ -51,6 +51,7 @@ test('every scope preset, a custom search and the repo filters reach GitHub’s 
   // The excluded repository is filtered out client-side too. Six sections: four tabs and More.
   const panel = await openPanel();
   await expect(panel.getByRole('tab')).toHaveCount(4);
-  const repos = panel.locator('.pr-card__repo-name');
-  await expect(repos).toHaveText(['acme/web']);
+  // Grouping is on by default: the repository appears in the group heading.
+  await expect(panel.locator('.repo-group__name')).toHaveText(['acme/web']);
+  await expect(panel.locator('.pr-card')).toHaveCount(1);
 });

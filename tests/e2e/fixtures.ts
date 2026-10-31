@@ -112,6 +112,12 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
         timeout: 5_000,
       })
       .toBe(true);
+    // Drain the installation poll while signed out before tests inject account snapshots.
+    // Otherwise startup can overwrite seeded timestamps or make unexpected GitHub requests.
+    const startup = await context.newPage();
+    await startup.goto(`chrome-extension://${new URL(worker.url()).host}/sidepanel/index.html`);
+    await startup.evaluate(() => chrome.runtime.sendMessage({ type: 'poll' }));
+    await startup.close();
     await use(worker);
   },
 

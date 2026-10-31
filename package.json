@@ -2,7 +2,7 @@
   "name": "prowl",
   "version": "1.3.1",
   "private": true,
-  "description": "Minimalist Chrome side panel to follow your GitHub pull requests at a glance.",
+  "description": "Open source Chrome extension to manage GitHub pull requests: CI, reviews and merge actions in your side panel.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.10.1",

@@ -23,9 +23,12 @@ test('a forced poll fetches from GitHub, stores a snapshot and schedules the nex
 }) => {
   github.onGraphQL('ProwlSearch', (variables) => searchResponse([prNode()], variables));
   await signIn();
+  // Settle the first poll: Chrome may also poll on install/startup after auth was seeded.
+  await poll();
+  const before = github.requestsFor('ProwlSearch').length;
   await poll();
 
-  const [search, ...more] = github.requestsFor('ProwlSearch');
+  const [search, ...more] = github.requestsFor('ProwlSearch').slice(before);
   expect(more).toEqual([]);
   expect(search?.headers.authorization).toBe('Bearer ghp_e2e');
   expect(search?.body).toMatchObject({

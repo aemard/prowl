@@ -7,6 +7,8 @@ on:
     branches: [main]
     paths:
       - site/**
+      - src/assets/**
+      - src/styles/tokens.css
       - docs/**
       - CHANGELOG.md
       - CONTRIBUTING.md
@@ -40,7 +42,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      # The site shares src/styles/tokens.css, src/assets/logo.svg and docs/screenshots with the
+      # The site shares src/styles/tokens.css, src/assets/logo.png and docs/screenshots with the
       # extension, so those files are in the checkout; only the site's dependencies are installed.
       - name: Install
         run: pnpm install --frozen-lockfile --filter site

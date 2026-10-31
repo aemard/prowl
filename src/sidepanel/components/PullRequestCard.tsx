@@ -3,7 +3,7 @@ import type { PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
-import { auth } from '../state/store';
+import { auth, pollState } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -21,6 +21,7 @@ import {
   GitMergeIcon,
   GitPullRequestDraftIcon,
   PeopleIcon,
+  SyncIcon,
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
@@ -94,6 +95,7 @@ export function PullRequestCard({
   const card = useRef<HTMLLIElement>(null);
   const expanded = expandedIds.value.includes(pr.id);
   const statuses = pullRequestStatuses(pr);
+  const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const labels = pr.labels.slice(0, MAX_LABELS);
   const hidden = pr.labels.slice(MAX_LABELS);
   const teamRequest =
@@ -184,8 +186,17 @@ export function PullRequestCard({
         >
           {pr.title}
         </GitHubLink>
-        {(hiddenBecause || teamRequest || statuses.length > 0) && (
+        {(refreshingMerge || hiddenBecause || teamRequest || statuses.length > 0) && (
           <span class="pr-card__chips">
+            {refreshingMerge && (
+              <Badge
+                variant="plain"
+                icon={<SyncIcon size={12} />}
+                title="Checking the latest merge status on GitHub"
+              >
+                Updating merge status
+              </Badge>
+            )}
             {hiddenBecause && (
               <Badge
                 variant="plain"
@@ -262,6 +273,7 @@ export function PullRequestCard({
         </span>
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
+          {refreshingMerge && `. Updating merge status`}
           {teamRequest && `. ${teamRequest}`}
           {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
         </span>

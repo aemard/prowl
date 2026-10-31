@@ -4,7 +4,7 @@
  * as a new snapshot, show up without any message). The panel only reads these; the service
  * worker owns `snapshot` and `pollState`.
  */
-import { batch, signal } from '@preact/signals';
+import { batch, computed, signal } from '@preact/signals';
 import {
   type AuthState,
   type PollState,
@@ -25,6 +25,10 @@ export const settings = signal<Settings>(defaultSettings());
 export const auth = signal<AuthState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
+/** The global loader covers searching only; merge batches carry their own card indicators. */
+export const listRefreshing = computed(
+  () => pollState.value?.inFlight === true && pollState.value.mergePending === undefined,
+);
 export const prLocal = signal<PrLocalState>(emptyPrLocal());
 /** The viewer's teams as the worker last discovered them; undefined until then. */
 export const teams = signal<TeamsState | undefined>(undefined);

@@ -4,7 +4,7 @@ import { formatRelativeTime } from '../../lib/time/relative';
 import { openGitHubUrl } from '../openUrl';
 import { navigate, route } from '../state/router';
 import { requestRefresh } from '../state/shortcuts';
-import { auth, pollState, snapshot } from '../state/store';
+import { auth, listRefreshing, snapshot } from '../state/store';
 import {
   ArrowLeftIcon,
   GearIcon,
@@ -25,9 +25,7 @@ function UpdatedAt() {
   useNow(15_000);
   const fetchedAt = snapshot.value?.fetchedAt;
   if (!fetchedAt) {
-    return (
-      <p class="header__updated">{pollState.value?.inFlight ? 'Updating…' : 'Not updated yet'}</p>
-    );
+    return <p class="header__updated">{listRefreshing.value ? 'Updating…' : 'Not updated yet'}</p>;
   }
   return (
     <p class="header__updated">
@@ -53,7 +51,7 @@ export function Header() {
       </div>
       {viewer && (
         <div class="header__actions">
-          <IconButton label="Refresh" loading={pollState.value?.inFlight} onClick={requestRefresh}>
+          <IconButton label="Refresh" loading={listRefreshing.value} onClick={requestRefresh}>
             <SyncIcon />
           </IconButton>
           <IconButton

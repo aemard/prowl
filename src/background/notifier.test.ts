@@ -11,7 +11,7 @@ import {
   onNotificationClicked,
 } from './notifier';
 
-const settings = () => defaultSettings().notifications;
+const settings = () => ({ ...defaultSettings().notifications, enabled: true });
 const shown = () => fakeChrome().__state.notifications;
 const notify = (...events: ReturnType<typeof prEvent>[]) =>
   notifyEvents(events, settings(), emptyPrLocal());

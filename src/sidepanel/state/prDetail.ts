@@ -9,7 +9,8 @@ import { createGitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
 import { fetchPullRequestDetail } from '../../lib/github/fetchPullRequestDetail';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
-import { auth } from './store';
+import { sendToBackground } from './background';
+import { auth, snapshot } from './store';
 
 export interface DetailEntry {
   /** What the entry was fetched for (`detailKey`); another key means the PR has changed since. */
@@ -35,6 +36,10 @@ export const detailKey = (pr: PullRequest) =>
 export function toggleExpanded(id: string): void {
   const open = expandedIds.value;
   expandedIds.value = open.includes(id) ? open.filter((other) => other !== id) : [...open, id];
+  const pr = snapshot.value?.pullRequests[id];
+  if (!open.includes(id) && pr) {
+    void sendToBackground({ type: 'refreshMergeState', prId: id, headSha: pr.headSha });
+  }
 }
 
 export function collapse(id: string): void {

@@ -1,11 +1,11 @@
-// Rasterizes src/assets/logo.svg into the PNG icons Chrome requires.
+// Generates the Chrome icons from the approved logo artwork.
 // Usage: pnpm icons   (commit the generated PNGs)
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const root = resolve(import.meta.dirname, '..');
-const svg = readFileSync(resolve(root, 'src/assets/logo.svg'), 'utf8');
+const logo = `data:image/png;base64,${readFileSync(resolve(root, 'src/assets/logo.png')).toString('base64')}`;
 const outDir = resolve(root, 'public/icons');
 mkdirSync(outDir, { recursive: true });
 
@@ -19,9 +19,8 @@ try {
     const page = await browser.newPage({ viewport: { width: size, height: size } });
     const pad = padding[size] ?? 0;
     const art = size - 2 * pad;
-    const sized = svg.replace('<svg', `<svg width="${art}" height="${art}" style="display:block"`);
     await page.setContent(
-      `<!doctype html><html><body style="margin:0;padding:${pad}px;background:transparent">${sized}</body></html>`,
+      `<!doctype html><html><body style="margin:0;padding:${pad}px;background:transparent"><img src="${logo}" width="${art}" height="${art}" style="display:block" alt=""></body></html>`,
     );
     await page.screenshot({ path: resolve(outDir, `icon-${size}.png`), omitBackground: true });
     await page.close();

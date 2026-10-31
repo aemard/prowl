@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/preact';
 import { describe, expect, it } from 'vitest';
+import logoUrl from '../../../assets/logo.png';
 import { createIcon } from './Icon';
 import * as icons from './index';
 import { ProwlMark } from './ProwlMark';
@@ -52,7 +53,7 @@ describe('ProwlMark', () => {
     const img = container.querySelector('img');
     expect(img?.getAttribute('alt')).toBe('');
     expect(img?.getAttribute('width')).toBe('20');
-    expect(img?.getAttribute('src')).toMatch(/logo\.svg$/);
+    expect(img?.getAttribute('src')).toBe(logoUrl);
   });
 
   it('can stand alone with a name', () => {
@@ -62,9 +63,10 @@ describe('ProwlMark', () => {
     expect(img.getAttribute('height')).toBe('32');
   });
 
-  it('ships a square, named logo that pnpm icons can rasterize', () => {
-    const logo = readFileSync(resolve(root, 'src/assets/logo.svg'), 'utf8');
-    expect(logo).toMatch(/^<svg [^>]*viewBox="0 0 128 128"/);
-    expect(logo).toContain('<title>Prowl</title>');
+  it('ships square high-resolution artwork that pnpm icons can rasterize', () => {
+    const logo = readFileSync(resolve(root, 'src/assets/logo.png'));
+    expect(logo.subarray(1, 4).toString()).toBe('PNG');
+    expect(logo.readUInt32BE(16)).toBe(logo.readUInt32BE(20));
+    expect(logo.readUInt32BE(16)).toBeGreaterThanOrEqual(256);
   });
 });

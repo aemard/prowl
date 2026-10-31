@@ -29,6 +29,9 @@ describe('handleMessage', () => {
       { type: 'poll', force: 'yes' },
       { type: 'markSeen', prIds: 'PR_1' },
       { type: 'markSeen', prIds: [1] },
+      { type: 'refreshMergeState', prId: '', headSha: 'a'.repeat(40) },
+      { type: 'refreshMergeState', prId: 'PR_1', headSha: 'bad' },
+      { type: 'refreshMergeState', prId: 1, headSha: 'a'.repeat(40) },
     ])
       expect(await send(message)).toBe(false);
   });

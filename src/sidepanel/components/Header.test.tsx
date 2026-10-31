@@ -57,6 +57,24 @@ describe('Header', () => {
     expect(screen.getByText('Updating…')).toBeTruthy();
   });
 
+  it('stops the global loader when the list arrives even if merge enrichment is blocked', () => {
+    signIn();
+    pollState.value = buildPollState({ inFlight: true });
+    render(<Header />);
+    const refresh = screen.getByRole('button', { name: 'Refresh' });
+    expect(refresh.getAttribute('aria-busy')).toBe('true');
+    act(() => {
+      snapshot.value = buildSnapshot();
+      pollState.value = buildPollState({ inFlight: true, mergePending: ['PR_1'] });
+    });
+    expect(refresh.getAttribute('aria-busy')).toBeNull();
+    expect((refresh as HTMLButtonElement).disabled).toBe(false);
+    act(() => {
+      pollState.value = buildPollState({ inFlight: true, mergePending: [] });
+    });
+    expect(refresh.getAttribute('aria-busy')).toBeNull();
+  });
+
   it('asks the service worker for a forced poll and shows progress while it runs', () => {
     signIn();
     const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');

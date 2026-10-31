@@ -130,6 +130,10 @@ function contrastTable(): string {
 }
 
 describe('design tokens', () => {
+  it('keeps brand text readable on the mint logo background', () => {
+    expect(ratio(light, 'brand-ink', 'brand-mint')).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('parses the shared, light and both dark blocks', () => {
     expect(shared.get('--space-1')).toBe('4px');
     expect(light.get('--color-bg')).toBe('var(--gray-1)');

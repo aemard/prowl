@@ -38,10 +38,15 @@ test('drives the list from the keyboard', async ({ context, github, openPanel })
   await panel.keyboard.press('Escape');
   await expect(toggles(panel).nth(1)).toHaveAttribute('aria-expanded', 'false');
 
-  // o opens the focused pull request on GitHub.
+  // o opens the focused card, whose position also depends on repository grouping.
+  const focusedUrl = await panel
+    .locator('.pr-card')
+    .nth(1)
+    .locator('.pr-card__title')
+    .getAttribute('href');
   const opened = context.waitForEvent('page');
   await panel.keyboard.press('o');
-  expect((await opened).url()).toMatch(/\/acme\/api\/pull\/912$/);
+  await expect(await opened).toHaveURL(focusedUrl ?? '');
   await panel.bringToFront();
 
   // / jumps to the filter, and typing there is not a shortcut.

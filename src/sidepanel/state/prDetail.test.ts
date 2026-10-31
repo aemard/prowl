@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import { buildAuth, buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import { collapse, detailKey, details, expandedIds, loadDetail, toggleExpanded } from './prDetail';
-import { auth } from './store';
+import { auth, snapshot } from './store';
 
 const pr = buildPullRequest({ number: 7 });
 
@@ -14,6 +14,7 @@ beforeEach(() => {
 
 afterEach(() => {
   auth.value = undefined;
+  snapshot.value = undefined;
 });
 
 describe('expanded cards', () => {
@@ -26,6 +27,19 @@ describe('expanded cards', () => {
     collapse('b');
     collapse('never-open');
     expect(expandedIds.value).toEqual([]);
+  });
+
+  it('requests only the opened PR merge state, without a full poll or a request on collapse', () => {
+    snapshot.value = buildSnapshotOf({ authored: [pr] });
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    toggleExpanded(pr.id);
+    expect(send).toHaveBeenCalledExactlyOnceWith({
+      type: 'refreshMergeState',
+      prId: pr.id,
+      headSha: pr.headSha,
+    });
+    toggleExpanded(pr.id);
+    expect(send).toHaveBeenCalledTimes(1);
   });
 
   it('are forgotten, with their details, when another account signs in or out', async () => {

@@ -65,6 +65,17 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   await expect(card(panel)).toBeVisible();
   await panel.emulateMedia({ colorScheme: 'light' });
   await expectNoA11yViolations(panel);
+  const headerBox = await panel.locator('.header').boundingBox();
+  const filterBox = await panel.locator('.list__filter').boundingBox();
+  const bannerBox = await panel.locator('.status-banner').boundingBox();
+  expect(headerBox).not.toBeNull();
+  expect(filterBox).not.toBeNull();
+  expect(bannerBox).not.toBeNull();
+  if (!headerBox || !filterBox || !bannerBox) throw new Error('Missing panel chrome');
+  expect(filterBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1);
+  expect(bannerBox.y).toBeGreaterThanOrEqual(filterBox.y + filterBox.height);
+  expect(bannerBox.x).toBe(headerBox.x);
+  expect(bannerBox.width).toBe(headerBox.width);
   await saveScreenshot(panel, 'banner-token');
   await panel.emulateMedia({ colorScheme: 'dark' });
   await expectNoA11yViolations(panel);

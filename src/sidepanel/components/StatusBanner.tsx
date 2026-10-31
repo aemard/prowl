@@ -1,6 +1,6 @@
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
-import { auth, pollState, settings, snapshot } from '../state/store';
+import { auth, listRefreshing, pollState, settings, snapshot } from '../state/store';
 import { AlertIcon, ClockIcon, CloudOfflineIcon, KeyIcon } from './icons';
 import { type BannerKind, describeStatus, describeTokenExpiry } from './StatusBannerModel';
 import { Button } from './ui/Button';
@@ -50,7 +50,7 @@ export function StatusBanner() {
         <Button
           size="sm"
           variant={action.type === 'reauthenticate' ? 'primary' : 'secondary'}
-          loading={action.type === 'retry' && pollState.value?.inFlight}
+          loading={action.type === 'retry' && listRefreshing.value}
           onClick={() =>
             action.type === 'reauthenticate'
               ? navigate('onboarding')

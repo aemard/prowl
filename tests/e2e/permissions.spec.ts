@@ -38,7 +38,7 @@ test('the production build can touch no page and no site but GitHub', async () =
       })
       .toBe(true);
     const access = await worker.evaluate(READ_ACCESS);
-    expect(access.manifest.name).toBe('Prowl');
+    expect(access.manifest.name).toBe('Prowl — GitHub Pull Request Manager');
     expectLocked(access, 'production');
   } finally {
     await context.close();

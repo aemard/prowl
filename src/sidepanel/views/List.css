@@ -56,3 +56,36 @@
 .list__aside:last-child {
   padding-bottom: var(--space-2);
 }
+
+.list__filter {
+  position: sticky;
+  top: 69px;
+  z-index: var(--z-sticky);
+  margin: 0 var(--space-3) var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--glass-edge);
+  border-top: 0;
+  border-radius: 0 0 23px 23px;
+  background: transparent;
+}
+.list__filter .ui-control {
+  min-height: 34px;
+  border-radius: 15px;
+}
+.list__skeleton-row {
+  margin: var(--space-2) var(--space-3);
+  background: var(--glass-card);
+  border-radius: var(--radius-lg);
+}
+.pr-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+}
+.pr-list > .repo-group {
+  margin: 0 calc(-1 * var(--space-3));
+}
+.list__aside .pr-list {
+  padding-top: var(--space-2);
+}
