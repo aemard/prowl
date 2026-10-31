@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/aemard/prowl/compare/v1.3.1...v1.4.0) (2026-10-31)
+
+
+### Features
+
+* refresh PRs faster and renew Prowl's open source identity ([#38](https://github.com/aemard/prowl/issues/38)) ([de778cb](https://github.com/aemard/prowl/commit/de778cbbd39ddd344bc694be9c1e9cdcd28e17a9))
+
 ## [1.3.1](https://github.com/aemard/prowl/compare/v1.3.0...v1.3.1) (2026-10-08)
 
 
