@@ -78,11 +78,10 @@ The API cannot create items, so the first version is uploaded in the
      `docs/store/promo-marquee.png`. `pnpm store-images` rebuilds them from `docs/screenshots/`
      (run `pnpm screenshots` first when the UI changed).
      Layouts and text are HTML/CSS in `scripts/store-images.mjs`, using the light mint
-     `--color-accent-bg` token and `docs/brand/prowl-logo-transparent.png`. The marquee uses
-     `list-ready.png`, captured from the real extension with a ready-to-merge demo PR by
-     `tests/e2e/store-images.spec.ts`; its preview crops one screenshot, without rearranging UI
-     elements. This artwork-only scenario runs with `pnpm screenshots` and is skipped during
-     ordinary E2E runs.
+     `--color-accent-bg` token and `docs/brand/prowl-logo-transparent.png`. The marquee uses the
+     committed `list-ready.png` reference capture; its preview crops one screenshot, without
+     rotating or rearranging UI elements. Refresh that reference image separately when the
+     panel UI changes: `pnpm screenshots` does not overwrite it.
    - Homepage: <https://aemard.github.io/prowl/>. Support: <https://github.com/aemard/prowl/issues>.
 4. **Privacy**
    - Single purpose: "Show the user's GitHub pull requests and their status in the side panel,
