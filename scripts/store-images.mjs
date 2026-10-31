@@ -47,8 +47,7 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .hero-label { font-size: 12px; letter-spacing: 0.15em; color: var(--color-fg-muted);
   margin: 0 0 27px 19px; }
 .hero-preview { width: 452px; padding: 15px; border: 1px solid var(--color-border);
-  border-radius: 30px; background: var(--color-bg); box-shadow: var(--shadow-lg);
-  transform: rotate(-2deg); }
+  border-radius: 30px; background: var(--color-bg); box-shadow: var(--shadow-lg); }
 .hero-crop { height: 290px; overflow: hidden; border-radius: 20px; }
 .hero-crop img { display: block; }
 .hero-caption { display: flex; justify-content: space-between; font-size: 12px;
