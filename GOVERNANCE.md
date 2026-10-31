@@ -33,12 +33,20 @@ Workload Identity Federation, and every other workflow uses `GITHUB_TOKEN`.
 
 ## Continuity
 
-If the maintainer dies or can no longer work on Prowl:
+As of 2026-10-31, no successor or emergency access procedure has been established. The
+project does not yet meet the OpenSSF Silver `access_continuity` criterion, which requires
+issues, changes and releases to continue within one week after loss of its only maintainer.
 
-- The maintainer's GitHub account names a successor (Settings → Account → Successor settings).
-  Once GitHub confirms the loss, the successor can take over the repository and then triage issues,
-  merge pull requests and publish releases: the workflows, rulesets and the release process
-  ([`docs/releasing.md`](docs/releasing.md)) all live in the repository.
+To close this gap, the maintainer must designate a trusted person and document and validate
+how that person obtains the necessary authority and access to the repository and publishing
+accounts. Credentials and recovery material must not be stored in this repository. Naming a
+GitHub successor alone does not demonstrate recovery of all publishing access within a week.
+
+Until that is in place:
+
+- The workflows, rulesets and release process ([`docs/releasing.md`](docs/releasing.md)) are
+  public, so another person can build and release a fork; this does not grant control of the
+  existing repository or accounts.
 - The Chrome Web Store listing belongs to the maintainer's developer account. Until a second
   publisher is added, a successor ships releases on GitHub (zip, SBOM, provenance) and can publish
   them under a new store listing.
