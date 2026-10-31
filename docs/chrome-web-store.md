@@ -80,7 +80,9 @@ The API cannot create items, so the first version is uploaded in the
      Layouts and text are HTML/CSS in `scripts/store-images.mjs`, using the light mint
      `--color-accent-bg` token and `docs/brand/prowl-logo-transparent.png`. The marquee uses
      `list-ready.png`, captured from the real extension with a ready-to-merge demo PR by
-     `tests/e2e/list.spec.ts`; its preview crops one screenshot, without rearranging UI elements.
+     `tests/e2e/store-images.spec.ts`; its preview crops one screenshot, without rearranging UI
+     elements. This artwork-only scenario runs with `pnpm screenshots` and is skipped during
+     ordinary E2E runs.
    - Homepage: <https://aemard.github.io/prowl/>. Support: <https://github.com/aemard/prowl/issues>.
 4. **Privacy**
    - Single purpose: "Show the user's GitHub pull requests and their status in the side panel,
