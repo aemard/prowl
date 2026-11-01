@@ -50,7 +50,6 @@
   --control-sm: 24px;
   --control-md: 28px;
   --glass-blur: blur(22px) saturate(1.15);
-  --glass-card-blur: blur(18px) saturate(1.12);
   --icon-sm: 12px;
   --icon-md: 16px;
   --icon-lg: 20px;
@@ -418,7 +417,6 @@
   :root[data-theme],
   :root:not([data-theme]) {
     --glass-blur: none;
-    --glass-card-blur: none;
     --glass-reflect: transparent;
     --glass-detail: var(--glass-solid);
     --glass-card: var(--glass-solid);
