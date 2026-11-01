@@ -166,6 +166,7 @@ export async function fetchPullRequests(
     const problems: string[] = [];
     let after: string | null = null;
     let hasMore = false;
+    let cut = false;
     let total: number | undefined;
     let examined = 0;
     // Local repo intersections may reject whole pages. Bound scanned work independently of
@@ -191,6 +192,7 @@ export async function fetchPullRequests(
         if (!hasMore) break;
         if (!cursor || cursor === after) {
           problems.push('GitHub did not provide a usable next-page cursor.');
+          cut = true;
           break;
         }
         after = cursor;
@@ -198,6 +200,7 @@ export async function fetchPullRequests(
         if (!sectionLevel(error)) throw error;
         if (examined === 0) throw error;
         problems.push(error.message);
+        cut = true;
         break;
       }
     } while (hasMore && found.size < settings.maxPerSection && examined < scanBudget);
@@ -207,6 +210,7 @@ export async function fetchPullRequests(
         hasMore,
         queries: [{ query, cursor: hasMore ? after : null, total }],
         ...(problems.length ? { partial: true } : {}),
+        ...(cut ? { stale: true } : {}),
       },
       problems,
     };
@@ -224,25 +228,21 @@ export async function fetchPullRequests(
       ? { ...pr, ...(before.headSha === pr.headSha ? mergeFacts(before) : mapMergeState({})) }
       : pr;
   };
+  /**
+   * A search cut short (or refused) cannot tell which PRs left the section: keeps the cached
+   * members up to `maxPerSection`, never over a copy this poll loaded.
+   */
   const preserve = (section: Section) => {
-    const ids = previous?.sections?.[section.id] ?? [];
-    const kept = filterByRepo(
-      ids.flatMap((id) => previous?.pullRequests[id] ?? []),
-      settings,
-    )
-      .filter((pr) => pr.state === 'open')
-      .slice(0, settings.maxPerSection);
-    const merged = new Set(result.sections[section.id] ?? []);
-    for (const pr of kept) {
-      if (merged.size >= settings.maxPerSection) break;
-      if (!merged.has(pr.id)) {
-        put(pr);
-        merged.add(pr.id);
-      }
+    const members = new Set(result.sections[section.id]);
+    const cached = (previous?.sections?.[section.id] ?? []).flatMap(
+      (id) => previous?.pullRequests[id] ?? [],
+    );
+    for (const pr of filterByRepo(cached, settings)) {
+      if (members.size >= settings.maxPerSection) break;
+      members.add(pr.id);
+      result.pullRequests[pr.id] ??= pr;
     }
-    if (merged.size || section.id in result.sections || section.id in (previous?.sections ?? {})) {
-      result.sections[section.id] = [...merged];
-    }
+    if (members.size) result.sections[section.id] = [...members];
   };
   const problemText = (problems: string[]) =>
     [...new Set(problems.map((message) => (SAML.test(message) ? SSO_REQUIRED : message)))]
@@ -366,6 +366,7 @@ export async function fetchPullRequests(
     const problems: string[] = [];
     const queries: SectionCoverage['queries'] = [];
     let hasMore = false;
+    let stale = false;
     const found = new Map<string, { pr: PullRequest; keys: string[] }>();
     for (const team of followed.slice(0, MAX_TEAM_SEARCHES)) {
       const key = teamKey(team);
@@ -374,6 +375,7 @@ export async function fetchPullRequests(
         const page = await search(`${query} sort:updated-desc`);
         queries.push(...page.coverage.queries);
         hasMore ||= page.coverage.hasMore;
+        stale ||= page.coverage.stale === true;
         problems.push(...page.problems);
         for (const pr of page.prs) {
           const entry = found.get(pr.id) ?? { pr, keys: [] };
@@ -383,6 +385,7 @@ export async function fetchPullRequests(
       } catch (error) {
         if (!sectionLevel(error)) throw error;
         problems.push(`GitHub refused the search for ${key}: ${error.message}`);
+        stale = true;
       }
     }
     if (followed.length > MAX_TEAM_SEARCHES) {
@@ -399,14 +402,13 @@ export async function fetchPullRequests(
       result.teamRequests[pr.id] = keys;
     }
     result.sections[section.id] = kept.map(({ pr }) => pr.id);
-    if (problems.length > 0) {
-      result.sectionErrors[section.id] = problemText(problems);
-      preserve(section);
-    }
+    if (problems.length > 0) result.sectionErrors[section.id] = problemText(problems);
+    if (stale) preserve(section);
     coverageFor(section.id, {
       hasMore,
       queries,
-      ...(problems.length ? { partial: true, stale: true } : {}),
+      ...(problems.length ? { partial: true } : {}),
+      ...(stale ? { stale: true } : {}),
     });
   }
 
@@ -424,12 +426,9 @@ export async function fetchPullRequests(
         try {
           const page = await search(HAS_SORT.test(query) ? query : `${query} sort:updated-desc`);
           for (const pr of page.prs) put(pr);
-          result.sections[section.id] = [...new Set(page.prs.map(({ id }) => id))];
-          if (page.problems.length) {
-            result.sectionErrors[section.id] = problemText(page.problems);
-            preserve(section);
-            page.coverage.stale = true;
-          }
+          result.sections[section.id] = page.prs.map(({ id }) => id);
+          if (page.problems.length) result.sectionErrors[section.id] = problemText(page.problems);
+          if (page.coverage.stale) preserve(section);
           coverageFor(section.id, page.coverage);
         } catch (error) {
           if (!sectionLevel(error)) throw error;

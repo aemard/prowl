@@ -874,6 +874,70 @@ describe('bounded and partial section coverage', () => {
     expect(result.sectionErrors.authored).toContain('search.nodes.0');
   });
 
+  it('does not let a failed section overwrite the fresh copy another section loaded', async () => {
+    const [old, fresh] = [prNode({ title: 'Old' }), prNode({ title: 'Fresh' })];
+    const { client } = setup({
+      ProwlSearch: (variables) =>
+        String(variables.query).includes('mentions:')
+          ? jsonResponse({ message: 'Bad gateway' }, { status: 502 })
+          : searchResponse([fresh], variables),
+    });
+    const result = await fetchPullRequests(
+      client,
+      settings({ sections: [section('authored'), section('mentioned')] }),
+      { pullRequests: { [old.id]: mapped(old) }, sections: { mentioned: [old.id] } },
+    );
+    expect(result.sections).toEqual({ authored: [fresh.id], mentioned: [fresh.id] });
+    expect(result.pullRequests[fresh.id]?.title).toBe('Fresh');
+  });
+
+  it('does not keep PRs that left a search which only had unreadable nodes', async () => {
+    const [kept, gone] = [prNode({ number: 1 }), prNode({ number: 2 })];
+    const { client } = setup({
+      ProwlSearch: (variables) =>
+        jsonResponse({
+          data: searchResponse([null, kept], variables),
+          errors: [graphqlError('FORBIDDEN', 'SAML enforcement', ['search', 'nodes', 0])],
+        }),
+      ProwlNodes: ({ ids }) => nodesResponse(ids, [closedNode(gone.id, { state: 'CLOSED' })]),
+    });
+    const result = await fetchPullRequests(client, settings(), {
+      pullRequests: { [gone.id]: mapped(gone) },
+      sections: { authored: [gone.id] },
+    });
+    expect(result.sections.authored).toEqual([kept.id]);
+    expect(result.pullRequests[gone.id]?.state).toBe('closed');
+    expect(result.sectionCoverage?.authored).toMatchObject({ partial: true });
+    expect(result.sectionCoverage?.authored?.stale).toBeUndefined();
+  });
+
+  it('stops at a cursor that does not advance and keeps the cached members, closed ones too', async () => {
+    const loaded = prNode({ number: 1 });
+    const cached: PullRequest = { ...mapped(prNode({ number: 2 })), state: 'merged' };
+    const { client } = setup({
+      ProwlSearch: () => ({
+        search: {
+          issueCount: 99,
+          pageInfo: { hasNextPage: true, endCursor: null },
+          nodes: [loaded],
+        },
+        rateLimit: graphqlRateLimit(),
+      }),
+    });
+    const result = await fetchPullRequests(
+      client,
+      settings({ sections: [section('custom', { query: 'is:merged' })] }),
+      { pullRequests: { [cached.id]: cached }, sections: { custom: [cached.id] } },
+    );
+    expect(result.sections.custom).toEqual([loaded.id, cached.id]);
+    expect(result.sectionErrors.custom).toBe('GitHub did not provide a usable next-page cursor.');
+    expect(result.sectionCoverage?.custom).toMatchObject({
+      hasMore: true,
+      partial: true,
+      stale: true,
+    });
+  });
+
   it('publishes a completed section while the next team search is still blocked', async () => {
     const mine = prNode();
     const publications: string[][] = [];
