@@ -48,6 +48,8 @@ export function classifyHttpStatus(
 }
 
 const GRAPHQL_KINDS: Record<string, ErrorKind> = {
+  UNAUTHENTICATED: 'unauthorized',
+  UNAUTHORIZED: 'unauthorized',
   RATE_LIMITED: 'rate_limited',
   FORBIDDEN: 'forbidden',
   INSUFFICIENT_SCOPES: 'forbidden',

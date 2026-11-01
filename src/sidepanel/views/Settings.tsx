@@ -1,3 +1,4 @@
+import { useEffect } from 'preact/hooks';
 import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
 import {
   MAX_HIDE_STALE_DAYS,
@@ -10,7 +11,7 @@ import {
 import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
 import { Switch } from '../components/ui/Switch';
-import { saveSettings } from '../state/settings';
+import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
 import { settings, teams } from '../state/store';
 import { AboutSettings, AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
@@ -54,7 +55,17 @@ function PollingSettings() {
   const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
   return (
     <SettingsGroup title="Refresh">
-      <div class="settings-pair">
+      <NumberField
+        id={PR_LIMIT_ID}
+        label="Maximum PRs loaded per section"
+        value={maxPerSection}
+        min={MIN_PER_SECTION}
+        max={MAX_PER_SECTION}
+        hint="Loaded before hiding and snooze. PRs outside every loaded section are not monitored."
+        onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
+      />
+      <details class="settings-details">
+        <summary>Refresh options</summary>
         <NumberField
           label="Check every (minutes)"
           value={pollIntervalMinutes}
@@ -62,20 +73,13 @@ function PollingSettings() {
           max={MAX_POLL_INTERVAL_MINUTES}
           onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
         />
-        <NumberField
-          label="Pull requests per section"
-          value={maxPerSection}
-          min={MIN_PER_SECTION}
-          max={MAX_PER_SECTION}
-          onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
-        />
-      </div>
-      <p class="settings-note">
-        GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
-        check of every section spends some: more pull requests and shorter intervals cost more.
-        Right now Prowl uses about {points.toLocaleString('en-US')} points an hour, and it waits for
-        the limit to reset if you run low.
-      </p>
+        <p class="settings-note">
+          GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
+          check of every section spends some: more pull requests and shorter intervals cost more. A
+          baseline estimate is about {points.toLocaleString('en-US')} points an hour; extra pages,
+          merge reads and actions can cost more. Prowl waits for the limit to reset if you run low.
+        </p>
+      </details>
     </SettingsGroup>
   );
 }
@@ -178,6 +182,13 @@ function SectionLinks() {
 
 /** Everything the user can configure. Every control saves as soon as it changes. */
 export function SettingsView() {
+  useEffect(() => {
+    if (settingsFocus.peek() !== 'pr-limit') return;
+    settingsFocus.value = undefined;
+    const field = document.getElementById(PR_LIMIT_ID);
+    field?.scrollIntoView({ block: 'center' });
+    field?.focus({ preventScroll: true });
+  }, []);
   return (
     <div class="settings">
       <h2 class="settings__title">Settings</h2>

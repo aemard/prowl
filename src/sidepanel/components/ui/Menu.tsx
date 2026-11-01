@@ -17,6 +17,8 @@ export interface MenuItem {
   danger?: boolean;
   /** Makes the item a `menuitemradio` with this checked state (single-choice groups). */
   checked?: boolean;
+  /** Independent toggles use checkbox semantics; single-choice menus keep radio semantics. */
+  checkRole?: 'menuitemcheckbox';
 }
 
 export type MenuEntry = MenuItem | 'separator';
@@ -230,6 +232,10 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
             );
             return item.checked === undefined ? (
               <button role="menuitem" {...common}>
+                {content}
+              </button>
+            ) : item.checkRole === 'menuitemcheckbox' ? (
+              <button role="menuitemcheckbox" aria-checked={item.checked} {...common}>
                 {content}
               </button>
             ) : (

@@ -173,12 +173,21 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
       // A theme switch or a new dialog starts transitions and animations (colors, opacity), and
       // axe computes contrast from whatever it finds mid-flight, so a slow runner reports
       // violations that are gone 120 ms later. Scan the settled page. Endless animations (spinner,
-      // skeleton shimmer) never settle and do not change colors.
+      // skeleton shimmer) never settle and do not change colors. Chrome also suspends finite
+      // transitions inside closed details: their finished promise never resolves while hidden.
       await page.evaluate(() =>
         Promise.all(
           document
             .getAnimations()
-            .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+            .filter((animation) => {
+              const effect = animation.effect;
+              const target = effect instanceof KeyframeEffect ? effect.target : null;
+              return (
+                animation.playState !== 'paused' &&
+                effect?.getComputedTiming().endTime !== Infinity &&
+                (!target || target.checkVisibility())
+              );
+            })
             .map((animation) => animation.finished.catch(() => undefined)),
         ),
       );

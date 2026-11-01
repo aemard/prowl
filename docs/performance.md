@@ -6,12 +6,14 @@
 every build, in `pnpm verify` and in CI. It follows each entry's static imports, so lazy chunks
 do not count toward first load.
 
-| Budget | Limit (gzip) | v1.0.0 |
-|---|---|---|
-| Side panel JS loaded at startup | 60 KB | 39.1 KB |
-| Side panel CSS | 12 KB | 5.8 KB |
-| Service worker JS | 30 KB | 11.6 KB |
-| Whole extension | 400 KB | 66.8 KB |
+| Budget | Limit (gzip) |
+|---|---|
+| Side panel JS loaded at startup | 60 KB |
+| Side panel CSS | 12 KB |
+| Service worker JS | 30 KB |
+| Whole extension | 400 KB |
+
+`pnpm size` prints the current size next to each limit.
 
 `tests/e2e/performance.spec.ts` opens the side panel three times with a cached snapshot and
 asserts that the first list render (`performance.mark('prowl:list-rendered')`, measured from

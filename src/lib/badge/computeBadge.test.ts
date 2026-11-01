@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { headCommit, prNode, viewerNode } from '../../../tests/fixtures/github';
+import { activityKey } from '../activity';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
-import { emptyPrLocal, markSeen, mute, snooze } from '../storage/prLocal';
+import { emptyPrLocal, markSeen, mute, setAlwaysShown, snooze } from '../storage/prLocal';
 import { DEFAULT_SETTINGS } from '../storage/settings';
 import { BADGE_TITLE, computeBadge, NO_BADGE } from './computeBadge';
 
@@ -17,7 +18,8 @@ const quiet = (number: number, overrides: Node = {}) =>
 const failing = (number: number) => quiet(number, { commits: headCommit({ FAILURE: 1 }) });
 const changes = (number: number) => quiet(number, { reviewDecision: 'CHANGES_REQUESTED' });
 const conflicting = (number: number) => quiet(number, { mergeable: 'CONFLICTING' });
-const ready = (number: number) => quiet(number, { mergeStateStatus: 'CLEAN' });
+const ready = (number: number) =>
+  quiet(number, { mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 
 function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) => id) }): Snapshot {
   return {
@@ -30,6 +32,23 @@ function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) =>
 
 const badge = (prs: PullRequest[], mode: BadgeMode = 'attention', local = emptyPrLocal()) =>
   computeBadge(snapshot(prs), local, mode, DEFAULT_SETTINGS, NOW);
+
+it('counts an always-shown hidden PR, but still honors snooze', () => {
+  const pr = failing(1);
+  pr.lastCommitAt = '2020-01-01T00:00:00Z';
+  expect(badge([pr]).text).toBe('');
+  const pinned = setAlwaysShown(emptyPrLocal(), pr.id, true);
+  expect(badge([pr], 'attention', pinned).text).toBe('1');
+  expect(badge([pr], 'attention', snooze(pinned, pr.id, NOW + HOUR)).text).toBe('');
+});
+
+it('counts unseen CI changes even when updatedAt stays the same', () => {
+  const before = quiet(1);
+  const local = markSeen(emptyPrLocal(), before.id, before.updatedAt, activityKey(before));
+  expect(badge([before], 'unseen', local).text).toBe('');
+  const after = { ...before, checks: failing(1).checks };
+  expect(badge([after], 'unseen', local).text).toBe('1');
+});
 
 describe('computeBadge: attention', () => {
   it('counts failing CI, requested changes, conflicts and ready to merge, not quiet PRs', () => {

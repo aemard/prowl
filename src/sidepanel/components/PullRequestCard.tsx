@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import type { PullRequest } from '../../lib/model';
+import { isAlwaysShown } from '../../lib/storage/prLocal';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
-import { auth, pollState } from '../state/store';
+import { auth, pollState, prLocal } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -154,6 +155,12 @@ export function PullRequestCard({
             <span class="pr-card__flag" title="Notifications muted">
               <BellSlashIcon size={12} />
               <span class="sr-only">Notifications muted</span>
+            </span>
+          )}
+          {isAlwaysShown(prLocal.value, pr.id) && (
+            <span class="pr-card__flag" title="Always shown despite automatic hiding">
+              <EyeIcon size={12} />
+              <span class="sr-only">Always shown</span>
             </span>
           )}
           {snoozedUntil && (

@@ -148,14 +148,17 @@ export async function mergePullRequest(
  * Actions workflow run (re-run only its failed jobs) or another app's suite (ask it to run again).
  */
 export const FAILED_SUITES_QUERY = /* GraphQL */ `
-query ProwlFailedSuites($id: ID!) {
+query ProwlFailedSuites($id: ID!, $after: String) {
   node(id: $id) {
     ... on PullRequest {
+      headRefOid
       repository { owner { login } name }
       commits(last: 1) {
         nodes {
           commit {
-            checkSuites(first: 50) {
+            checkSuites(first: 50, after: $after) {
+              totalCount
+              pageInfo { hasNextPage endCursor }
               nodes { databaseId conclusion workflowRun { databaseId } }
             }
           }
@@ -165,19 +168,24 @@ query ProwlFailedSuites($id: ID!) {
   }
 }`;
 
+interface FailedSuitesConnection {
+  totalCount?: number;
+  pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+  nodes: Array<{
+    databaseId: number;
+    conclusion: string | null;
+    workflowRun: { databaseId: number } | null;
+  } | null>;
+}
+
 interface FailedSuitesData {
   node: {
+    headRefOid?: string;
     repository?: { owner: { login: string }; name: string };
     commits?: {
       nodes: Array<{
         commit: {
-          checkSuites: {
-            nodes: Array<{
-              databaseId: number;
-              conclusion: string | null;
-              workflowRun: { databaseId: number } | null;
-            } | null>;
-          } | null;
+          checkSuites: FailedSuitesConnection | null;
         };
       } | null>;
     };
@@ -193,19 +201,43 @@ const RERUNNABLE = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE']);
  * runs and suites restarted. When some restarts fail, it throws with how many worked.
  */
 export async function rerunFailedChecks(client: GitHubClient, prId: string): Promise<number> {
-  const { node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, { id: prId });
+  let { node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, {
+    id: prId,
+    after: null,
+  });
   if (!node?.repository)
     throw new GitHubError('not_found', 'GitHub did not find the pull request.');
   const repo = `/repos/${encodeURIComponent(node.repository.owner.login)}/${encodeURIComponent(node.repository.name)}`;
-  const suites = node.commits?.nodes[0]?.commit.checkSuites?.nodes ?? [];
+  const head = node.headRefOid;
+  const cursors = new Set<string>();
   const paths = new Set<string>();
-  for (const suite of suites) {
-    if (!suite || !RERUNNABLE.has(suite.conclusion ?? '')) continue;
-    paths.add(
-      suite.workflowRun
-        ? `${repo}/actions/runs/${suite.workflowRun.databaseId}/rerun-failed-jobs`
-        : `${repo}/check-suites/${suite.databaseId}/rerequest`,
-    );
+  for (let page = 0; ; page++) {
+    if (!node || (head && node.headRefOid && head !== node.headRefOid)) {
+      throw new GitHubError('validation', 'The head commit changed. Refresh and try again.');
+    }
+    const suites: FailedSuitesConnection | null | undefined =
+      node.commits?.nodes[0]?.commit.checkSuites;
+    for (const suite of suites?.nodes ?? []) {
+      if (!suite || !RERUNNABLE.has(suite.conclusion ?? '')) continue;
+      paths.add(
+        suite.workflowRun
+          ? `${repo}/actions/runs/${suite.workflowRun.databaseId}/rerun-failed-jobs`
+          : `${repo}/check-suites/${suite.databaseId}/rerequest`,
+      );
+    }
+    if (!suites?.pageInfo?.hasNextPage) break;
+    const cursor: string | null = suites.pageInfo.endCursor;
+    if (page >= 4 || !cursor || cursors.has(cursor)) {
+      throw new GitHubError(
+        'validation',
+        'Not all check suites could be loaded. Re-run checks on GitHub.',
+      );
+    }
+    cursors.add(cursor);
+    ({ node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, {
+      id: prId,
+      after: cursor,
+    }));
   }
   if (paths.size === 0) throw new GitHubError('validation', 'No failed checks to re-run.');
 

@@ -75,7 +75,7 @@ describe('StatusBanner', () => {
     render(<StatusBanner />);
     expect(screen.queryByRole('alert')).toBeNull();
     const status = screen.getByRole('status');
-    expect(status.textContent).toContain('Offline — retrying in 3 min');
+    expect(status.textContent).toContain('Could not reach GitHub — retrying in 3 min');
     expect(status.textContent).toContain('Could not reach GitHub.');
     // The age is outside the live region: it ticks and must not be announced each time.
     expect(status.textContent).not.toContain('Last updated');

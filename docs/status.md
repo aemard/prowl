@@ -1,7 +1,7 @@
 # Status
 
-**Latest release**: [v1.3.1](https://github.com/aemard/prowl/releases/tag/v1.3.1) (2026-10-08),
-on the [Chrome Web Store](https://chromewebstore.google.com/detail/prowl/homnofbclfgoailffidcbgekohciglcf).
+**Latest release**: [on GitHub](https://github.com/aemard/prowl/releases/latest) and on the
+[Chrome Web Store](https://chromewebstore.google.com/detail/prowl/homnofbclfgoailffidcbgekohciglcf).
 Every release ships its zip, an SBOM and a provenance attestation, and rebuilds byte for byte
 ([verify a release](releasing.md#verify-a-release)). What changed is in the
 [changelog](../CHANGELOG.md); this page tracks what is left, in priority order.

@@ -20,7 +20,8 @@ function blocks(selector: string): Tokens[] {
     const tokens: Tokens = new Map();
     for (const decl of (match[1] ?? '').split(';')) {
       const [name, ...value] = decl.split(':');
-      if (name?.trim().startsWith('--')) tokens.set(name.trim(), value.join(':').trim());
+      if (name?.trim().startsWith('--'))
+        tokens.set(name.trim(), value.join(':').trim().replace(/\s+/g, ' '));
     }
     out.push(tokens);
   }

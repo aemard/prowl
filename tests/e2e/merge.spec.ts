@@ -240,4 +240,27 @@ test.describe('merge', () => {
     await expect(card(panel, API.title)).toHaveCount(0);
     expect(github.requestsFor(MERGE)).toHaveLength(2);
   });
+  test('offers only methods permitted by the applied branch rules', async ({
+    github,
+    openPanel,
+    expectNoA11yViolations,
+  }) => {
+    github.on('GET', '/repos/acme/api/rules/branches/main', () => ({
+      body: [
+        {
+          type: 'pull_request',
+          parameters: { allowed_merge_methods: ['squash'], required_approving_review_count: 0 },
+        },
+      ],
+    }));
+    const panel = await openPanel();
+    const api = await expand(panel, API.title);
+    await api.getByRole('button', { name: `Merge ${API.ref}`, exact: true }).click();
+    const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
+    const method = dialog.getByRole('combobox', { name: 'Merge method' });
+    await expect(method.locator('option')).toHaveText(['Squash and merge']);
+    await expect(method).toHaveValue('squash');
+    await expectNoA11yViolations(panel);
+    expect(github.requestsFor(MERGE)).toHaveLength(0);
+  });
 });

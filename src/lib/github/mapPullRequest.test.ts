@@ -195,7 +195,7 @@ describe('mapPullRequest', () => {
     ['CHANGES_REQUESTED', 'changes_requested'],
     ['REVIEW_REQUIRED', 'review_required'],
     [null, 'none'],
-    ['SOMETHING_NEW', 'none'],
+    ['SOMETHING_NEW', 'unknown'],
   ] as const)('maps reviewDecision %s to %s', (reviewDecision, expected) => {
     expect(mapPullRequest(prNode({ reviewDecision })).reviewDecision).toBe(expected);
   });
@@ -518,7 +518,7 @@ describe('mapPullRequestDetail', () => {
     ).toMatchObject({ requiredApprovals: 2, requiresConversationResolution: true });
     expect(
       rules({ requiredApprovingReviewCount: 0, requiresConversationResolution: false }),
-    ).toMatchObject({ requiredApprovals: null, requiresConversationResolution: false });
+    ).toMatchObject({ requiredApprovals: 0, requiresConversationResolution: false });
     expect(rules(null)).toMatchObject({
       requiredApprovals: null,
       requiresConversationResolution: false,
@@ -532,4 +532,22 @@ describe('mapPullRequestDetail', () => {
     ]);
     expect(detail.reviewers).toEqual([]);
   });
+});
+
+it('reports nested connection limits instead of treating a bounded slice as complete', () => {
+  const pr = mapPullRequest(
+    prNode({
+      latestReviews: { nodes: [], totalCount: 21, pageInfo: { hasNextPage: true } },
+      reviewRequests: { nodes: [], totalCount: 22 },
+      reviewThreads: { nodes: [], totalCount: 101 },
+    }),
+  );
+  expect(pr.incomplete).toEqual(['reviews', 'review requests', 'conversations']);
+});
+
+it('keeps an inaccessible check requirement unknown', () => {
+  const detail = mapPullRequestDetail([
+    detailNode({ checks: [checkRunNode('CI', 'FAILURE', { isRequired: null })] }),
+  ]);
+  expect(detail.checks[0]?.required).toBeNull();
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptyPrLocal, snooze } from '../../lib/storage/prLocal';
+import { emptyPrLocal, setAlwaysShown, snooze } from '../../lib/storage/prLocal';
 import { DEFAULT_SETTINGS } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
 import { filterPullRequests, groupByRepo, sortPullRequests, splitSection } from './ListModel';
@@ -33,6 +33,16 @@ const prs = [
   }),
 ];
 const numbers = (list: typeof prs) => list.map((pr) => pr.number);
+
+it('restores an automatically hidden PR with always-show, retaining snooze precedence', () => {
+  const pr = buildPullRequest({ isDraft: true });
+  const hide = { ...DEFAULT_SETTINGS, hideDrafts: true };
+  const pinned = setAlwaysShown(emptyPrLocal(), pr.id, true);
+  expect(splitSection([pr], pinned, hide, Date.now()).shown).toEqual([pr]);
+  expect(
+    splitSection([pr], snooze(pinned, pr.id, Date.now() + 60_000), hide, Date.now()).snoozed,
+  ).toEqual([pr]);
+});
 
 describe('filterPullRequests', () => {
   it.each([

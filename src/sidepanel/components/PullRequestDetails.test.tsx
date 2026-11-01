@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkRunNode,
   detailNode,
+  detailResponse,
   detailReview,
   requestedReviewer,
   statusContextNode,
@@ -121,7 +122,10 @@ describe('PullRequestDetails', () => {
     expect(link.getAttribute('href')).toBe(
       'https://github.com/acme/widgets/actions/runs/1/job/build',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'View changes on GitHub' }).getAttribute('href')).toBe(
+      'https://github.com/acme/widgets/pull/1/files',
+    );
     expect(screen.getByText('ci/jenkins').getAttribute('href')).toBeNull();
     expect(screen.getByText('nolink').closest('a')).toBeNull();
 
@@ -190,19 +194,40 @@ describe('PullRequestDetails', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('loads again when the PR changes, keeping what it shows meanwhile', async () => {
+  it('loads details and branch rules again only when the PR changes', async () => {
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     const { rerender } = show();
     await waitFor(() => expect(details.value[pr.id]?.detail).toBeDefined());
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(<PullRequestDetails pr={{ ...pr, fetchedLater: true } as PullRequest} id="detail" />);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(
       <PullRequestDetails pr={{ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' }} id="detail" />,
     );
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
     expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
   });
+});
+
+it('does not display old-head checks while a new-head detail request is pending', async () => {
+  stubDetailFetch(() => detailNode({ checks: [checkRunNode('old-head-check')] }));
+  const view = show();
+  await screen.findByText('old-head-check');
+  let release: (response: Response) => void = () => {};
+  stubDetailFetch(
+    () =>
+      new Promise<Response>((resolve) => {
+        release = resolve;
+      }),
+  );
+  view.rerender(<PullRequestDetails pr={{ ...pr, headSha: 'b'.repeat(40) }} id="detail" />);
+  await waitFor(() => expect(screen.queryByText('old-head-check')).toBeNull());
+  release(
+    jsonResponse({
+      data: detailResponse(detailNode({ checks: [checkRunNode('new-head-check')] })),
+    }),
+  );
+  await screen.findByText('new-head-check');
 });
