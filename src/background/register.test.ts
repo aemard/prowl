@@ -54,7 +54,7 @@ describe('registerBackground', () => {
   });
 
   it('paints the stored snapshot at startup and follows storage changes', async () => {
-    const pr = mapPullRequest(prNode({ mergeStateStatus: 'CLEAN' }));
+    const pr = mapPullRequest(prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }));
     const snapshot = {
       fetchedAt: '2026-10-06T11:59:00Z',
       viewer: viewerNode(),

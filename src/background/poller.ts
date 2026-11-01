@@ -299,7 +299,7 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
           latestPr.headSha !== headSha
         )
           return;
-        if (node && node.id === id) {
+        if (node && node.id === id && (!node.headRefOid || node.headRefOid === headSha)) {
           const next: Snapshot = {
             ...latest,
             pullRequests: {

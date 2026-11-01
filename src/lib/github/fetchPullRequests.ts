@@ -199,7 +199,11 @@ export async function fetchPullRequests(
         before.mergeStateStatus !== 'unknown' &&
         searchFacts(before) === searchFacts(pr);
       // Preserve the baseline even when this poll has no budget left for its refresh.
-      if (before) result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
+      if (before?.headSha === pr.headSha) {
+        result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
+      } else if (before) {
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
+      }
       if (valid) {
         result.mergeStateAt[pr.id] = readAt;
       } else {
@@ -237,10 +241,13 @@ export async function fetchPullRequests(
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
         const before = previous?.pullRequests[pr.id];
-        if (isNode(node)) {
+        if (isNode(node) && node.headRefOid && node.headRefOid !== pr.headSha) {
+          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
+          delete result.mergeStateAt[pr.id];
+        } else if (isNode(node)) {
           result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
           result.mergeStateAt[pr.id] = readAt;
-        } else if (before) {
+        } else if (before?.headSha === pr.headSha) {
           result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
         }
       });
