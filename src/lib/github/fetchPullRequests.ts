@@ -10,10 +10,12 @@ import type {
   PullRequest,
   RateLimit,
   Section,
+  SectionCoverage,
   Settings,
   Snapshot,
   TeamsState,
 } from '../model';
+import { jsonEqual } from '../storage/guards';
 import { isSnoozed } from '../storage/prLocal';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
@@ -30,7 +32,11 @@ import { parseRateLimit } from './rateLimit';
 import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
 import { MAX_TEAM_SEARCHES, teamKey } from './teams';
 
-export interface FetchResult extends Pick<Snapshot, 'pullRequests' | 'sections'> {
+export interface FetchResult
+  extends Pick<
+    Snapshot,
+    'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending' | 'mergeStateDue'
+  > {
   /** PR id -> when its merge facts were read (see `Snapshot.mergeStateAt`). */
   mergeStateAt: Record<string, string>;
   /** Sections that were skipped or loaded in part, section id -> readable reason. */
@@ -90,14 +96,16 @@ const mergeFacts = ({
 }: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
 
 /** What the search says about a PR, for telling whether anything changed since the last poll. */
-const searchFacts = (pr: PullRequest) =>
-  JSON.stringify({
-    ...pr,
-    reviewDecision: null,
-    mergeable: null,
-    mergeStateStatus: null,
-    viewerCanUpdate: null,
-  });
+const searchFacts = (pr: PullRequest) => ({
+  ...pr,
+  reviewDecision: null,
+  mergeable: null,
+  mergeStateStatus: null,
+  viewerCanUpdate: null,
+});
+// Chrome storage may reorder keys, including nested ones. Serialization order is not activity.
+const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
+  jsonEqual(searchFacts(a), searchFacts(b));
 
 /** False for a hole (null) and for `{}`, what a fragment on another type selects. */
 const isNode = <T extends { id: string }>(
@@ -122,7 +130,10 @@ const isNode = <T extends { id: string }>(
 export async function fetchPullRequests(
   client: GitHubClient,
   settings: FetchSettings,
-  previous: Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> | null = null,
+  previous:
+    | (Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
+        Partial<Pick<Snapshot, 'sections' | 'sectionCoverage'>>)
+    | null = null,
   teams: Pick<TeamsState, 'teams' | 'error'> | null = null,
   local: PrLocalState = { snoozed: {}, muted: {}, seen: {} },
   onProgress?: (result: FetchResult, mergePending: string[]) => Promise<void>,
@@ -139,36 +150,115 @@ export async function fetchPullRequests(
   let searched = false;
   let serverError: GitHubError | undefined;
 
-  // Holes (an org that requires SAML, a deleted PR) leave null nodes and are skipped. A SAML hole
-  // in a search is reported on its section, which `samlHoles` tells (reset before each search).
-  let samlHoles = false;
+  let partialMessages: string[] = [];
   async function read<T extends { rateLimit: unknown }>(
     query: string,
     variables: Record<string, unknown>,
   ): Promise<T> {
+    partialMessages = [];
     const data = await client.graphql<T>(query, variables, {
       partial: true,
       onPartialErrors: (messages) => {
-        if (messages.some((message) => SAML.test(message))) samlHoles = true;
+        partialMessages = messages;
       },
     });
     result.rateLimit = parseRateLimit(data.rateLimit) ?? result.rateLimit;
     return data;
   }
 
-  async function search(query: string): Promise<PullRequest[]> {
-    const found: PullRequest[] = [];
+  type SearchResult = { prs: PullRequest[]; coverage: SectionCoverage; problems: string[] };
+  async function search(query: string): Promise<SearchResult> {
+    const found = new Map<string, PullRequest>();
+    const problems: string[] = [];
     let after: string | null = null;
-    for (let offset = 0; offset < settings.maxPerSection; offset += PAGE_SIZE) {
-      const first = Math.min(PAGE_SIZE, settings.maxPerSection - offset);
-      const { search: page }: SearchData = await read(SEARCH_QUERY, { query, first, after });
-      searched = true;
-      found.push(...(page.nodes ?? []).filter(isNode).map(mapPullRequest));
-      if (!page.pageInfo.hasNextPage) break;
-      after = page.pageInfo.endCursor;
-    }
-    return filterByRepo(found, settings);
+    let hasMore = false;
+    let cut = false;
+    let total: number | undefined;
+    let examined = 0;
+    let pages = 0;
+    // Bound both requests and examined nodes: tiny retained limits must not cause hundreds
+    // of one-result pages when local repository filters reject every result.
+    const scanBudget = Math.min(500, Math.max(100, settings.maxPerSection * 5));
+    do {
+      const first = Math.min(PAGE_SIZE, settings.maxPerSection - found.size, scanBudget - examined);
+      pages++;
+      try {
+        const data: SearchData = await read<SearchData>(SEARCH_QUERY, { query, first, after });
+        const page: SearchData['search'] = data.search;
+        searched = true;
+        examined += first;
+        total = page.issueCount;
+        for (const pr of filterByRepo(
+          (page.nodes ?? []).filter(isNode).map(mapPullRequest),
+          settings,
+        )) {
+          found.set(pr.id, pr);
+        }
+        hasMore = page.pageInfo.hasNextPage;
+        if (partialMessages.length) problems.push(...partialMessages);
+        const cursor: string | null = page.pageInfo.endCursor;
+        if (!hasMore) break;
+        if (!cursor || cursor === after) {
+          problems.push('GitHub did not provide a usable next-page cursor.');
+          cut = true;
+          break;
+        }
+        after = cursor;
+      } catch (error) {
+        if (!sectionLevel(error)) throw error;
+        if (examined === 0) throw error;
+        problems.push(error.message);
+        cut = true;
+        break;
+      }
+    } while (hasMore && found.size < settings.maxPerSection && examined < scanBudget && pages < 20);
+    return {
+      prs: [...found.values()],
+      coverage: {
+        hasMore,
+        queries: [{ query, cursor: hasMore ? after : null, total }],
+        ...(problems.length ? { partial: true } : {}),
+        ...(cut ? { stale: true } : {}),
+      },
+      problems,
+    };
   }
+
+  const coverageFor = (id: string, coverage: SectionCoverage) => {
+    if (coverage.hasMore || coverage.partial || coverage.stale) {
+      result.sectionCoverage ??= {};
+      result.sectionCoverage[id] = coverage;
+    }
+  };
+  const put = (pr: PullRequest) => {
+    const before = previous?.pullRequests[pr.id];
+    result.pullRequests[pr.id] = before
+      ? {
+          ...pr,
+          ...(sameSearchFacts(before, pr) ? mergeFacts(before) : mapMergeState({})),
+        }
+      : pr;
+  };
+  /**
+   * A search cut short (or refused) cannot tell which PRs left the section: keeps the cached
+   * members up to `maxPerSection`, never over a copy this poll loaded.
+   */
+  const preserve = (section: Section) => {
+    const members = new Set(result.sections[section.id]);
+    const cached = (previous?.sections?.[section.id] ?? []).flatMap(
+      (id) => previous?.pullRequests[id] ?? [],
+    );
+    for (const pr of filterByRepo(cached, settings)) {
+      if (members.size >= settings.maxPerSection) break;
+      members.add(pr.id);
+      result.pullRequests[pr.id] ??= pr;
+    }
+    if (members.size) result.sections[section.id] = [...members];
+  };
+  const problemText = (problems: string[]) =>
+    [...new Set(problems.map((message) => (SAML.test(message) ? SSO_REQUIRED : message)))]
+      .slice(0, 5)
+      .join(' ');
 
   /** A refusal or a timeout that only concerns this search; anything else fails the poll. */
   function sectionLevel(error: unknown): error is GitHubError {
@@ -185,24 +275,25 @@ export async function fetchPullRequests(
     const now = Date.now();
     const stale: PullRequest[] = [];
     const hidden = (pr: PullRequest) =>
-      hiddenReasons(pr, settings, now).length > 0 || isSnoozed(local, pr.id, now);
+      hiddenReasons(pr, settings, now, local).length > 0 || isSnoozed(local, pr.id, now);
     for (const pr of Object.values(result.pullRequests)) {
       if (pr.state !== 'open') continue;
       const before = previous?.pullRequests[pr.id];
       const readAt = previous?.mergeStateAt?.[pr.id];
+      // `put` kept the facts only if the search facts are unchanged; their date goes with them.
+      const carried = before !== undefined && sameSearchFacts(before, pr);
       const valid =
-        before !== undefined &&
+        carried &&
         readAt !== undefined &&
         now - Date.parse(readAt) <
           (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
         before.mergeable !== 'unknown' &&
         before.mergeStateStatus !== 'unknown' &&
-        searchFacts(before) === searchFacts(pr);
-      // Preserve the baseline even when this poll has no budget left for its refresh.
-      if (before) result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-      if (valid) {
-        result.mergeStateAt[pr.id] = readAt;
-      } else {
+        before.reviewDecision !== 'unknown';
+      if (carried && readAt) result.mergeStateAt[pr.id] = readAt;
+      if (!valid) {
+        result.mergeStateDue ??= [];
+        result.mergeStateDue.push(pr.id);
         stale.push(pr);
       }
     }
@@ -220,7 +311,18 @@ export async function fetchPullRequests(
           (priority.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
           (priority.get(b.id) ?? Number.MAX_SAFE_INTEGER),
       );
-      const batch = stale.splice(0, MERGE_STATE_BATCH);
+      // Reserve the last two slots for the oldest reads, even under continuous visible hints.
+      const fair =
+        count + MERGE_STATE_BATCH >= MERGE_STATE_PER_POLL
+          ? [...stale].sort((a, b) => age(a) - age(b)).slice(0, 2)
+          : [];
+      const chosen = new Set(
+        fair.concat(
+          stale.filter((pr) => !fair.includes(pr)).slice(0, MERGE_STATE_BATCH - fair.length),
+        ),
+      );
+      const batch = stale.filter((pr) => chosen.has(pr));
+      for (const pr of batch) stale.splice(stale.indexOf(pr), 1);
       await onProgress?.(
         result,
         batch.map(({ id }) => id),
@@ -233,18 +335,36 @@ export async function fetchPullRequests(
       } catch (error) {
         if (!(error instanceof GitHubError) || error.kind !== 'server') throw error;
       }
+      if (partialMessages.length) {
+        for (const [sectionId, ids] of Object.entries(result.sections)) {
+          if (batch.some((pr) => ids.includes(pr.id))) {
+            result.sectionErrors[sectionId] =
+              `Some merge requirements could not be read: ${problemText(partialMessages)}`;
+            coverageFor(sectionId, {
+              hasMore: false,
+              queries: [],
+              ...result.sectionCoverage?.[sectionId],
+              partial: true,
+            });
+          }
+        }
+      }
       const readAt = new Date().toISOString();
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
-        const before = previous?.pullRequests[pr.id];
-        if (isNode(node)) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
+        // A hole or a failed batch keeps the facts `put` carried over. A node computed for
+        // another head, or read beside errors (a null `reviewDecision` would mean "no review
+        // required"), is unknown and unread, so the next poll asks again.
+        if (!isNode(node)) return;
+        const readable = node.headRefOid === pr.headSha && partialMessages.length === 0;
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState(readable ? node : {}) };
+        if (readable) {
           result.mergeStateAt[pr.id] = readAt;
-        } else if (before) {
-          result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
+          result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
         }
       });
     }
+    if (result.mergeStateDue?.length === 0) delete result.mergeStateDue;
     await onProgress?.(result, []);
   }
 
@@ -261,14 +381,20 @@ export async function fetchPullRequests(
       return;
     }
     const problems: string[] = [];
-    samlHoles = false;
-    /** PR id -> the PR and the keys of the teams whose search returned it. */
+    const queries: SectionCoverage['queries'] = [];
+    let hasMore = false;
+    let stale = false;
     const found = new Map<string, { pr: PullRequest; keys: string[] }>();
     for (const team of followed.slice(0, MAX_TEAM_SEARCHES)) {
       const key = teamKey(team);
       try {
         const query = buildSearchQuery(section, settings, key);
-        for (const pr of await search(`${query} sort:updated-desc`)) {
+        const page = await search(`${query} sort:updated-desc`);
+        queries.push(...page.coverage.queries);
+        hasMore ||= page.coverage.hasMore;
+        stale ||= page.coverage.stale === true;
+        problems.push(...page.problems);
+        for (const pr of page.prs) {
           const entry = found.get(pr.id) ?? { pr, keys: [] };
           entry.keys.push(key);
           found.set(pr.id, entry);
@@ -276,49 +402,82 @@ export async function fetchPullRequests(
       } catch (error) {
         if (!sectionLevel(error)) throw error;
         problems.push(`GitHub refused the search for ${key}: ${error.message}`);
+        stale = true;
       }
     }
-    if (samlHoles) problems.push(SSO_REQUIRED);
-    const skipped = followed.length - MAX_TEAM_SEARCHES;
-    if (skipped > 0) {
+    if (followed.length > MAX_TEAM_SEARCHES) {
       problems.push(
-        `Prowl searches ${MAX_TEAM_SEARCHES} teams at most, ${skipped} more were skipped. ` +
-          'Unfollow teams in Settings to choose which.',
+        `Partial results: ${MAX_TEAM_SEARCHES} of ${followed.length} followed teams searched. Choose teams in Settings.`,
       );
     }
+    hasMore ||= found.size > settings.maxPerSection;
     const kept = [...found.values()]
       .sort((a, b) => Date.parse(b.pr.updatedAt) - Date.parse(a.pr.updatedAt))
       .slice(0, settings.maxPerSection);
     for (const { pr, keys } of kept) {
-      result.pullRequests[pr.id] = pr;
+      put(pr);
       result.teamRequests[pr.id] = keys;
     }
     result.sections[section.id] = kept.map(({ pr }) => pr.id);
-    if (problems.length > 0) result.sectionErrors[section.id] = problems.join(' ');
+    if (problems.length > 0) result.sectionErrors[section.id] = problemText(problems);
+    if (stale) preserve(section);
+    coverageFor(section.id, {
+      hasMore,
+      queries,
+      ...(problems.length ? { partial: true } : {}),
+      ...(stale ? { stale: true } : {}),
+    });
   }
 
-  for (const section of settings.sections) {
-    if (!section.enabled) continue;
+  const enabled = settings.sections.filter((section) => section.enabled);
+  const pending = new Set(enabled.map(({ id }) => id));
+  for (const section of enabled) {
     if (section.kind === 'team_review_requested') {
       await searchTeams(section);
-      continue;
+    } else {
+      const problems = section.kind === 'custom' ? validateCustomQuery(section.query ?? '') : [];
+      if (problems.length > 0) {
+        result.sectionErrors[section.id] = problems.join(' ');
+      } else {
+        const query = buildSearchQuery(section, settings);
+        try {
+          const page = await search(HAS_SORT.test(query) ? query : `${query} sort:updated-desc`);
+          for (const pr of page.prs) put(pr);
+          result.sections[section.id] = page.prs.map(({ id }) => id);
+          if (page.problems.length) result.sectionErrors[section.id] = problemText(page.problems);
+          if (page.coverage.stale) preserve(section);
+          coverageFor(section.id, page.coverage);
+        } catch (error) {
+          if (!sectionLevel(error)) throw error;
+          result.sectionErrors[section.id] = error.message;
+          preserve(section);
+          coverageFor(section.id, {
+            hasMore: previous?.sectionCoverage?.[section.id]?.hasMore ?? false,
+            partial: true,
+            stale: true,
+            queries: previous?.sectionCoverage?.[section.id]?.queries ?? [],
+          });
+        }
+      }
     }
-    const custom = section.kind === 'custom';
-    const problems = custom ? validateCustomQuery(section.query ?? '') : [];
-    if (problems.length > 0) {
-      result.sectionErrors[section.id] = problems.join(' ');
-      continue;
-    }
-    const query = buildSearchQuery(section, settings);
-    samlHoles = false;
-    try {
-      const prs = await search(HAS_SORT.test(query) ? query : `${query} sort:updated-desc`);
-      for (const pr of prs) result.pullRequests[pr.id] = pr;
-      result.sections[section.id] = [...new Set(prs.map(({ id }) => id))];
-      if (samlHoles) result.sectionErrors[section.id] = SSO_REQUIRED;
-    } catch (error) {
-      if (!sectionLevel(error)) throw error;
-      result.sectionErrors[section.id] = error.message;
+    pending.delete(section.id);
+    if (pending.size > 0 && onProgress) {
+      // The sections still to search keep their cached cards, without claiming they were searched.
+      const publishing: FetchResult = {
+        ...result,
+        pullRequests: { ...result.pullRequests },
+        sections: { ...result.sections },
+        sectionsPending: [...pending],
+      };
+      for (const id of pending) {
+        const ids = previous?.sections?.[id] ?? [];
+        publishing.sections[id] = ids;
+        for (const prId of ids) {
+          const pr = previous?.pullRequests[prId];
+          if (pr && !publishing.pullRequests[prId]) publishing.pullRequests[prId] = pr;
+        }
+      }
+      await onProgress(publishing, []);
     }
   }
   // GitHub itself is failing, not one heavy search: the poll backs off.

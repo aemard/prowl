@@ -32,7 +32,7 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
 }
 
 /** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
-export function DeviceFlow() {
+export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }) {
   const [code, setCode] = useState<DeviceCode>();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string>();
@@ -53,11 +53,12 @@ export function DeviceFlow() {
   }, [showingCode]);
 
   /** Back to the start button, with `message` as the reason when there is one. */
-  function reset(message?: string) {
+  function reset(message?: string, offerToken = false) {
     flow.current = undefined;
     setCode(undefined);
     setStarting(false);
     setError(message);
+    if (offerToken) onTokenFallback?.();
   }
 
   async function start() {
@@ -70,7 +71,7 @@ export function DeviceFlow() {
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) return reset(PERMISSION_DENIED);
+      if (!(await permission)) return reset(PERMISSION_DENIED, true);
       const device = await requestDeviceCode({ signal: controller.signal });
       setCode(device);
       void openGitHubUrl(device.verificationUri);
@@ -80,7 +81,11 @@ export function DeviceFlow() {
       await completeSignIn(auth, warning);
     } catch (failure) {
       if (controller.signal.aborted) return;
-      reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
+      const known = failure instanceof DeviceFlowError;
+      reset(
+        known ? failure.message : signInErrorMessage(failure),
+        known && failure.reason === 'unsupported',
+      );
     } finally {
       // github.com is only needed while the flow runs; give the permission back afterwards.
       void releaseGitHubWebAccess();

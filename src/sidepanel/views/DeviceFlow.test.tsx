@@ -180,7 +180,7 @@ describe('DeviceFlow', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(toasts.value).toEqual([]);
     expect(urls(fetch).filter((url) => url.endsWith('/access_token'))).toHaveLength(2);
   });
@@ -200,7 +200,8 @@ describe('DeviceFlow', () => {
   it('explains why access to github.com is needed when it is not granted', async () => {
     vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
     const fetch = stubGitHub();
-    render(<DeviceFlow />);
+    const fallback = vi.fn();
+    render(<DeviceFlow onTokenFallback={fallback} />);
 
     await begin();
 
@@ -209,6 +210,22 @@ describe('DeviceFlow', () => {
     );
     expect(fetch).not.toHaveBeenCalled();
     expect(start().getAttribute('aria-busy')).toBeNull();
+    expect(fallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for the token form when the device flow cannot work, not after a denial', async () => {
+    const fallback = vi.fn();
+    stubGitHub({ code: jsonResponse({ error: 'device_flow_disabled' }) });
+    render(<DeviceFlow onTokenFallback={fallback} />);
+    await begin();
+    expect(screen.getByRole('alert').textContent).toMatch(/not available for this build/);
+    expect(fallback).toHaveBeenCalledTimes(1);
+
+    stubGitHub({ polls: [{ error: 'access_denied' }] });
+    await begin();
+    await advance(1_000);
+    expect(screen.getByRole('alert').textContent).toMatch(/Access was denied on GitHub/);
+    expect(fallback).toHaveBeenCalledTimes(1);
   });
 
   it('shows the denial, goes back to the start button and lets the user try again', async () => {

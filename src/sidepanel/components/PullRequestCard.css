@@ -181,20 +181,25 @@
 }
 
 .pr-card {
+  position: relative;
   border: var(--border-width) solid var(--glass-edge);
   border-radius: 21px;
-  background: var(--glass-card);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 var(--glass-rim);
+  background: var(--glass-spot), var(--glass-card);
+  box-shadow: var(--glass-shadow);
 }
 .pr-card__summary {
   padding: 14px;
   gap: var(--space-2);
   border-radius: inherit;
 }
+/* The pointer light is the hover cue; where it is off, the summary keeps a tint. */
 .pr-card__summary:hover {
-  background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .pr-card__summary:hover {
+    background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
+  }
 }
 .pr-card__title {
   font-size: var(--text-lg);

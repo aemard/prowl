@@ -1,15 +1,20 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
-import type { PullRequest } from '../../lib/model';
+import type { MergeMethod, PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import { buildAuth, buildDetail, buildPullRequest } from '../../test/panel';
 import { pendingActions } from '../state/prActions';
+import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
 import { toasts } from './ui/Toast';
 
-const pr = buildPullRequest({ title: 'Improve the widgets', baseRefName: 'release' });
+const pr = buildPullRequest({
+  title: 'Improve the widgets',
+  baseRefName: 'release',
+  mergeStateStatus: 'clean',
+});
 const merged = { mergePullRequest: { pullRequest: { merged: true } } };
 
 interface Sent {
@@ -41,7 +46,7 @@ const commitTitle = () => within(dialog()).getByRole('textbox', { name: /Commit 
 const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
 const choose = (value: string) => fireEvent.change(method(), { target: { value } });
 const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-const poll = { type: 'poll', force: true };
+const poll = { type: 'poll', force: true, afterCurrent: true };
 
 beforeEach(() => {
   auth.value = buildAuth('octocat');
@@ -50,12 +55,21 @@ beforeEach(() => {
 afterEach(() => {
   auth.value = undefined;
   pendingActions.value = {};
+  details.value = {};
   toasts.value = [];
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe('when the button shows', () => {
+  it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
+    show({ reviewDecision: 'approved', mergeStateStatus: 'blocked', autoMergeAllowed: true });
+    expect(opener().getAttribute('data-variant')).toBe('secondary');
+    fireEvent.click(opener());
+    expect(within(dialog()).getByText(/Not ready: blocked by the base branch/)).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
+  });
+
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
@@ -166,6 +180,38 @@ describe('the confirmation', () => {
     choose('rebase');
     expect(within(dialog()).queryByRole('textbox')).toBeNull();
     expect(dialog().textContent).toContain('Commits are kept as they are');
+  });
+});
+
+describe('the methods the branch rules allow', () => {
+  const all: MergeMethod[] = ['merge', 'squash', 'rebase'];
+  const offered = () =>
+    within(method())
+      .getAllByRole('option')
+      .map(({ textContent }) => textContent);
+  /** What the expanded card read, as `loadDetail` stores it for `readFor`. */
+  const read = (readFor: Partial<PullRequest>) => {
+    details.value = {
+      [pr.id]: {
+        key: detailKey({ ...pr, allowedMergeMethods: all, ...readFor }),
+        loading: false,
+        detail: buildDetail({ allowedMergeMethods: ['squash'] }),
+      },
+    };
+  };
+
+  it('narrow the repository methods once read for this pull request', () => {
+    read({});
+    show({ allowedMergeMethods: all });
+    fireEvent.click(opener());
+    expect(offered()).toEqual(['Squash and merge']);
+  });
+
+  it('are not taken from a read made for another head', () => {
+    read({ headSha: 'c'.repeat(40) });
+    show({ allowedMergeMethods: all });
+    fireEvent.click(opener());
+    expect(offered()).toEqual(['Create a merge commit', 'Squash and merge', 'Rebase and merge']);
   });
 });
 

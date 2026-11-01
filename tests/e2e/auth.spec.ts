@@ -38,6 +38,12 @@ async function recordMessages(worker: Worker) {
 
 const stored = (worker: Worker) => worker.evaluate(() => chrome.storage.local.get(null));
 
+async function openTokenPanel(openPanel: (hash?: string) => Promise<Page>) {
+  const panel = await openPanel();
+  await panel.getByRole('button', { name: 'Use a personal access token' }).click();
+  return panel;
+}
+
 const tokenField = (panel: Page) => panel.getByLabel('Personal access token');
 
 async function signInWith(panel: Page, token: string) {
@@ -46,13 +52,36 @@ async function signInWith(panel: Page, token: string) {
 }
 
 test.describe('onboarding', () => {
-  test('explains both token types, accessible in light and dark', async ({
+  test('keeps GitHub primary and reveals token details on request at 320px', async ({
     openPanel,
     expectNoA11yViolations,
   }) => {
     const panel = await openPanel();
+    await panel.setViewportSize({ width: 320, height: 760 });
+    await expect(panel.getByRole('button', { name: 'Continue with GitHub' })).toBeVisible();
+    await expect(tokenField(panel)).not.toBeVisible();
+    await expectNoA11yViolations(panel);
+    await panel.getByRole('button', { name: 'Use a personal access token' }).click();
+    await expect(tokenField(panel)).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
+    await expect(panel.getByRole('heading', { name: 'Classic token' })).toBeVisible();
+    const overflow = await panel.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    await expectNoA11yViolations(panel);
+  });
+
+  test('explains both token types, accessible in light and dark', async ({
+    openPanel,
+    expectNoA11yViolations,
+  }) => {
+    const panel = await openTokenPanel(openPanel);
     await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
     await expect(tokenField(panel)).toHaveAttribute('type', 'password');
+    await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'Fine-grained token' })).toBeVisible();
     await expect(panel.getByText(/does not offer the Checks permission/)).toBeVisible();
@@ -68,7 +97,8 @@ test.describe('onboarding', () => {
     context,
     openPanel,
   }) => {
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
+    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
 
     const classic = context.waitForEvent('page');
     await panel.getByRole('link', { name: 'Create a classic token' }).click();
@@ -98,7 +128,7 @@ test.describe('sign in', () => {
   }) => {
     serveAccount(github);
     const messages = await recordMessages(serviceWorker);
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
 
     await signInWith(panel, `  ${CLASSIC}  `);
 
@@ -114,7 +144,7 @@ test.describe('sign in', () => {
         viewer,
       },
     });
-    await expect.poll(messages).toContainEqual({ type: 'poll', force: true });
+    await expect.poll(messages).toContainEqual({ type: 'poll', force: true, afterCurrent: true });
 
     for (const request of [github.requestsFor('ProwlViewer')[0], github.requestsFor('/user')[0]]) {
       expect(request?.headers.authorization).toBe(`Bearer ${CLASSIC}`);
@@ -125,7 +155,7 @@ test.describe('sign in', () => {
 
   test('warns when a classic token has no repo scope', async ({ github, openPanel }) => {
     serveAccount(github, 'read:user');
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
 
     await signInWith(panel, CLASSIC);
 
@@ -141,7 +171,7 @@ test.describe('sign in', () => {
     serviceWorker,
   }) => {
     serveAccount(github, null);
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
 
     await signInWith(panel, FINE_GRAINED);
 
@@ -161,7 +191,7 @@ test.describe('sign in', () => {
   }) => {
     rejectTokens(github);
     const messages = await recordMessages(serviceWorker);
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
 
     await signInWith(panel, CLASSIC);
 
@@ -185,7 +215,7 @@ test.describe('sign in', () => {
     github,
     openPanel,
   }) => {
-    const panel = await openPanel();
+    const panel = await openTokenPanel(openPanel);
 
     await panel.getByRole('button', { name: 'Sign in' }).click();
     await expect(panel.getByText('Paste a token to sign in.')).toBeVisible();

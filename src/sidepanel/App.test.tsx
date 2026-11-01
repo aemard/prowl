@@ -1,8 +1,9 @@
-import { act, fireEvent, render, screen } from '@testing-library/preact';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildAuth, buildPollState, buildPullRequest, buildSnapshotOf } from '../test/panel';
 import { App } from './App';
 import { navigate } from './state/router';
+import { changePrLimit } from './state/settings';
 import { hydrated, hydrateStore } from './state/store';
 
 let stop: (() => void) | undefined;
@@ -111,5 +112,26 @@ describe('App', () => {
   it('mounts the toast region once', async () => {
     await open();
     expect(screen.getAllByRole('region', { name: 'Messages' })).toHaveLength(1);
+  });
+});
+
+describe('App, after "Change limit"', () => {
+  it('focuses the PR limit when asked, the first time and once the settings view is loaded', async () => {
+    await open({ auth: buildAuth() });
+    const limit = () => screen.getByLabelText('Maximum PRs loaded per section');
+
+    act(() => changePrLimit());
+    await screen.findByLabelText('Maximum PRs loaded per section');
+    await waitFor(() => expect(document.activeElement).toBe(limit()));
+
+    await act(() => navigate('list'));
+    act(() => changePrLimit());
+    await waitFor(() => expect(document.activeElement).toBe(limit()));
+
+    // The request is one-shot: a later visit to Settings lands on the view, not on the field.
+    await act(() => navigate('list'));
+    await act(() => navigate('settings'));
+    expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Settings' }));
+    await act(() => navigate('list'));
   });
 });

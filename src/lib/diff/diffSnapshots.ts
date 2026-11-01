@@ -20,17 +20,17 @@ const REVIEW_EVENTS: Partial<Record<ReviewState, PrEventType>> = {
 };
 
 /**
- * Open, not a draft, and GitHub reports `clean`, or it is approved (or needs no review) with
- * passing or no checks and no conflicts.
+ * Open, not a draft, mergeable, and GitHub's verdict lets it through (`clean`; `unstable` means
+ * only a check that is not required fails; `has_hooks`) with its review requirement met or
+ * absent. Local facts never override a `blocked`, `behind` or `unknown` verdict.
  */
 export function isReadyToMerge(pr: PullRequest): boolean {
   return (
     pr.state === 'open' &&
     !pr.isDraft &&
-    (pr.mergeStateStatus === 'clean' ||
-      ((pr.reviewDecision === 'approved' || pr.reviewDecision === 'none') &&
-        (pr.checks.state === 'success' || pr.checks.state === 'none') &&
-        pr.mergeable === 'mergeable'))
+    pr.mergeable === 'mergeable' &&
+    ['clean', 'unstable', 'has_hooks'].includes(pr.mergeStateStatus) &&
+    (pr.reviewDecision === 'approved' || pr.reviewDecision === 'none')
   );
 }
 

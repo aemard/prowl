@@ -30,11 +30,13 @@ html {
   flex: 1;
 }
 
-/* Soft color lives behind the reading surfaces; only chrome needs blur. */
+/* The complete softened proposal: mint/blue, a faint violet edge and diffused central light. */
 body {
   background-image:
     radial-gradient(ellipse 370px 430px at -15% 25%, var(--glass-mint), transparent),
     radial-gradient(ellipse 360px 580px at 120% 74%, var(--glass-blue), transparent),
+    radial-gradient(ellipse 320px 220px at 92% -8%, var(--glass-violet), transparent),
+    radial-gradient(ellipse 250px 390px at 48% 48%, var(--glass-light), transparent),
     linear-gradient(var(--glass-canvas), var(--glass-canvas));
   background-attachment: fixed;
 }
@@ -42,6 +44,19 @@ body {
   body {
     background-image: linear-gradient(var(--glass-canvas), var(--glass-canvas));
   }
+}
+
+/* The pointer light: useGlassReflection sets --light-x, --light-y and --light-strength on the
+   hovered surface. Defined on each surface so var() resolves there, not once on :root. */
+.header,
+.list__filter,
+.section-tabs,
+.pr-card {
+  --glass-spot: radial-gradient(
+    ellipse 180px 85px at var(--light-x, 20%) var(--light-y, 0%),
+    color-mix(in srgb, var(--glass-reflect) calc(var(--light-strength, 0.15) * 100%), transparent),
+    transparent 76%
+  );
 }
 
 /* A separate backdrop avoids making fixed menus relative to the glass container. */
@@ -54,6 +69,44 @@ body {
   z-index: -1;
   pointer-events: none;
   border-radius: inherit;
-  background: var(--glass-chrome);
+  background: var(--glass-spot), var(--glass-chrome);
   backdrop-filter: var(--glass-blur);
+}
+
+/* A thin decorative rim must neither catch clicks nor contain fixed-position menus. */
+.header::before,
+.list__filter::before,
+.section-tabs::before,
+.pr-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 0.7px;
+  background: linear-gradient(
+    138deg,
+    var(--glass-rim),
+    var(--glass-rim-mid) 35%,
+    var(--glass-rim-end) 76%,
+    var(--glass-rim-mid)
+  );
+  -webkit-mask:
+    linear-gradient(var(--glass-solid) 0 0) content-box,
+    linear-gradient(var(--glass-solid) 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(var(--glass-solid) 0 0) content-box,
+    linear-gradient(var(--glass-solid) 0 0);
+  mask-composite: exclude;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .header::before,
+  .list__filter::before,
+  .section-tabs::before,
+  .pr-card::after {
+    display: none;
+  }
 }

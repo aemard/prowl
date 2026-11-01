@@ -154,21 +154,35 @@ export function createGitHubClient({
       const { status, headers } = response;
       if (!isRecord(payload)) throw fail('server', UNEXPECTED, status, headers);
       const { data, errors } = payload;
-      const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
-      if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
-        onPartialErrors?.(
-          errors.flatMap((error) =>
-            isRecord(error) && typeof error.message === 'string' ? [clean(error.message)] : [],
-          ),
-        );
-      }
-      if (first !== undefined && !(partial && isRecord(data))) {
-        const { type, message } = isRecord(first) ? first : ({} as Record<string, unknown>);
+      const list: unknown[] = Array.isArray(errors) ? errors : [];
+      const partialData = partial && isRecord(data) && list.length > 0;
+      // Partial data never hides a refusal about the token or the budget.
+      const refusal = partialData
+        ? list.find(
+            (error) =>
+              isRecord(error) &&
+              ['unauthorized', 'rate_limited'].includes(classifyGraphQLType(error.type)),
+          )
+        : list[0];
+      if (refusal !== undefined) {
+        const { type, message } = isRecord(refusal) ? refusal : ({} as Record<string, unknown>);
         throw fail(
           classifyGraphQLType(type),
           typeof message === 'string' && message ? clean(message) : 'GitHub returned an error.',
           status,
           headers,
+        );
+      }
+      if (partialData) {
+        onPartialErrors?.(
+          list.flatMap((error) =>
+            isRecord(error) && typeof error.message === 'string'
+              ? [
+                  clean(error.message) +
+                    (Array.isArray(error.path) ? ` (${clean(error.path.join('.'))})` : ''),
+                ]
+              : [],
+          ),
         );
       }
       if (!isRecord(data)) throw fail('server', 'GitHub returned no data.', status, headers);

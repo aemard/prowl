@@ -32,6 +32,7 @@ const comments = (commentCount: number, author?: string, createdAt = COMMENTED) 
   lastComment: author ? { author, createdAt } : null,
 });
 const ready = (overrides: Partial<PullRequest> = {}): Partial<PullRequest> => ({
+  reviewDecision: 'approved',
   mergeStateStatus: 'clean',
   ...overrides,
 });
@@ -137,17 +138,12 @@ const cases: Case[] = [
   ],
   // Ready to merge
   ['ready_to_merge: mergeStateStatus clean', {}, ready(), [['ready_to_merge']]],
+  ['nothing: approved but blocked by GitHub', {}, { reviewDecision: 'approved' }, []],
   [
-    'ready_to_merge: approved, checks pass, mergeable',
-    {},
-    { reviewDecision: 'approved' },
-    [['ready_to_merge']],
-  ],
-  [
-    'ready_to_merge: no review needed, no checks',
+    'nothing: no reviews or checks but blocked by GitHub',
     {},
     { reviewDecision: 'none', ...ci('none') },
-    [['ready_to_merge']],
+    [],
   ],
   [
     'ready_to_merge: draft marked ready',
@@ -322,6 +318,27 @@ describe('checks across pending polls', () => {
 });
 
 describe('isReadyToMerge', () => {
+  it.each(['blocked', 'behind', 'dirty', 'draft', 'unknown'] as const)(
+    'never overrides GitHub %s with passing local facts',
+    (mergeStateStatus) => {
+      expect(isReadyToMerge(pr({ ...ready(), mergeStateStatus }))).toBe(false);
+    },
+  );
+  it.each(['clean', 'unstable', 'has_hooks'] as const)('accepts GitHub %s', (mergeStateStatus) => {
+    expect(isReadyToMerge(pr(ready({ mergeStateStatus })))).toBe(true);
+    expect(isReadyToMerge(pr(ready({ mergeStateStatus, reviewDecision: 'none' })))).toBe(true);
+  });
+  it.each([
+    { reviewDecision: 'unknown' },
+    { reviewDecision: 'review_required' },
+    { reviewDecision: 'changes_requested' },
+    { mergeable: 'conflicting' },
+    { mergeable: 'unknown' },
+    { isDraft: true },
+  ] as const)('is false for %j even when GitHub says clean', (overrides) => {
+    expect(isReadyToMerge(pr(ready(overrides)))).toBe(false);
+  });
+
   it('is false once the PR is merged or closed', () => {
     expect(isReadyToMerge(pr(ready()))).toBe(true);
     expect(isReadyToMerge(pr(ready({ state: 'merged' })))).toBe(false);

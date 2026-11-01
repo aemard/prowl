@@ -163,11 +163,26 @@
   --color-neutral-solid: var(--gray-11);
 
   --glass-canvas: #f3f6f4;
-  --glass-card: rgba(255, 255, 255, 0.8);
-  --glass-chrome: rgba(255, 255, 255, 0.8);
+  --glass-card: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.84),
+    rgba(250, 253, 251, 0.73) 58%,
+    rgba(245, 250, 253, 0.8)
+  );
+  --glass-chrome: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.85),
+    rgba(249, 253, 250, 0.72) 53%,
+    rgba(248, 251, 253, 0.81)
+  );
   --glass-solid: #f8fcfa;
   --glass-edge: rgba(88, 119, 103, 0.15);
   --glass-rim: rgba(255, 255, 255, 0.64);
+  --glass-rim-mid: rgba(255, 255, 255, 0.025);
+  --glass-rim-end: rgba(244, 255, 252, 0.48);
+  --glass-violet: rgba(190, 166, 213, 0.055);
+  --glass-light: rgba(255, 255, 255, 0.26);
+  --glass-reflect: rgba(255, 255, 255, 0.36);
   --glass-shadow: 0 4px 12px rgba(15, 62, 46, 0.065), 0 1px 3px rgba(27, 67, 52, 0.035);
   --glass-mint: rgba(58, 183, 139, 0.15);
   --glass-blue: rgba(92, 153, 225, 0.12);
@@ -253,11 +268,26 @@
     --color-neutral-solid: var(--gray-7);
 
     --glass-canvas: #121816;
-    --glass-card: rgba(29, 39, 33, 0.86);
-    --glass-chrome: rgba(30, 41, 34, 0.86);
+    --glass-card: linear-gradient(
+      135deg,
+      rgba(36, 46, 40, 0.87),
+      rgba(25, 36, 30, 0.79) 58%,
+      rgba(29, 38, 45, 0.84)
+    );
+    --glass-chrome: linear-gradient(
+      130deg,
+      rgba(42, 55, 47, 0.86),
+      rgba(24, 35, 28, 0.8) 53%,
+      rgba(31, 41, 48, 0.84)
+    );
     --glass-solid: #1b2520;
     --glass-edge: rgba(210, 240, 221, 0.14);
     --glass-rim: rgba(227, 255, 240, 0.23);
+    --glass-rim-mid: rgba(219, 255, 236, 0.02);
+    --glass-rim-end: rgba(164, 209, 239, 0.13);
+    --glass-violet: rgba(102, 61, 122, 0.06);
+    --glass-light: rgba(95, 151, 111, 0.05);
+    --glass-reflect: rgba(216, 255, 237, 0.11);
     --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
     --glass-mint: rgba(19, 117, 74, 0.15);
     --glass-blue: rgba(31, 76, 151, 0.12);
@@ -343,11 +373,26 @@
   --color-neutral-solid: var(--gray-7);
 
   --glass-canvas: #121816;
-  --glass-card: rgba(29, 39, 33, 0.86);
-  --glass-chrome: rgba(30, 41, 34, 0.86);
+  --glass-card: linear-gradient(
+    135deg,
+    rgba(36, 46, 40, 0.87),
+    rgba(25, 36, 30, 0.79) 58%,
+    rgba(29, 38, 45, 0.84)
+  );
+  --glass-chrome: linear-gradient(
+    130deg,
+    rgba(42, 55, 47, 0.86),
+    rgba(24, 35, 28, 0.8) 53%,
+    rgba(31, 41, 48, 0.84)
+  );
   --glass-solid: #1b2520;
   --glass-edge: rgba(210, 240, 221, 0.14);
   --glass-rim: rgba(227, 255, 240, 0.23);
+  --glass-rim-mid: rgba(219, 255, 236, 0.02);
+  --glass-rim-end: rgba(164, 209, 239, 0.13);
+  --glass-violet: rgba(102, 61, 122, 0.06);
+  --glass-light: rgba(95, 151, 111, 0.05);
+  --glass-reflect: rgba(216, 255, 237, 0.11);
   --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
   --glass-mint: rgba(19, 117, 74, 0.15);
   --glass-blue: rgba(31, 76, 151, 0.12);
@@ -369,6 +414,7 @@
   :root[data-theme],
   :root:not([data-theme]) {
     --glass-blur: none;
+    --glass-reflect: transparent;
     --glass-card: var(--glass-solid);
     --glass-chrome: var(--glass-solid);
   }

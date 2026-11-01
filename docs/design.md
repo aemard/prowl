@@ -311,6 +311,9 @@ The panel uses a quiet mint/blue background, translucent rounded PR cards and a 
 section bar. Glass colors live in `tokens.css` for system and forced light/dark themes.
 Only the header, search and navigation use backdrop blur; cards need no per-card filter.
 The search and header meet as one island, with the search remaining sticky above the cards.
-Titles use the 13 px token; states keep their icon, text and semantic tint. There are no
-pointer-tracking reflections or hover lifts. Reduced transparency and unsupported blur use
-opaque surfaces. Menus, dialogs and expanded details keep stable reading surfaces.
+Titles use the 13 px token; states keep their icon, text and semantic tint. A soft light
+follows the pointer over the hovered card or chrome surface (`useGlassReflection`); there are
+no hover lifts. Reduced motion, reduced transparency and touch turn the light off, and the
+card summary then keeps a hover tint. Reduced transparency and unsupported blur use opaque
+surfaces (reduced transparency also drops the rims). Menus, dialogs and expanded details keep
+stable reading surfaces.

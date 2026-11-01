@@ -35,15 +35,45 @@ const submit = async (token: string) => {
   });
 };
 
+function renderTokens() {
+  render(<OnboardingView />);
+  const alternative = screen.queryByRole('button', { name: 'Use a personal access token' });
+  if (alternative) fireEvent.click(alternative);
+  fireEvent.click(screen.getByRole('button', { name: 'Help choosing a token' }));
+}
+
 describe('OnboardingView', () => {
   it('offers to sign in from the browser first, and the token form as the alternative', () => {
     render(<OnboardingView />);
     expect(screen.getByRole('button', { name: 'Continue with GitHub' })).toBeTruthy();
-    expect(screen.getByText('or paste a token')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
+    const alternative = screen.getByRole('button', { name: 'Use a personal access token' });
+    expect(alternative.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(alternative);
+    expect(alternative.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.queryByRole('heading', { name: 'Classic token' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
       'secondary',
     );
     expect(screen.queryByText(/not available in this build/)).toBeNull();
+  });
+
+  it('shows the token form when Chrome access to github.com is refused', async () => {
+    vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
+    render(<OnboardingView />);
+    expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Continue with GitHub' }));
+    });
+
+    expect(screen.getByRole('alert').textContent).toMatch(/paste a token below/);
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'Use a personal access token' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
   });
 
   it('ends with the version, the shortcut and the links of Settings', async () => {
@@ -53,7 +83,7 @@ describe('OnboardingView', () => {
   });
 
   it('explains both token types and links to pre-filled creation pages', () => {
-    render(<OnboardingView />);
+    renderTokens();
     expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Classic token' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Fine-grained token' })).toBeTruthy();
@@ -67,7 +97,7 @@ describe('OnboardingView', () => {
   });
 
   it('opens a creation page in a tab instead of navigating the panel', () => {
-    render(<OnboardingView />);
+    renderTokens();
     const click = fireEvent.click(screen.getByRole('link', { name: 'Create a classic token' }));
     expect(click).toBe(false); // default prevented
     expect(fakeChrome().__state.createdTabs).toEqual([{ url: TOKEN_URLS.classic }]);
@@ -75,7 +105,7 @@ describe('OnboardingView', () => {
 
   it('keeps the token hidden and asks for one when the field is empty', async () => {
     const fetch = stubGitHub();
-    render(<OnboardingView />);
+    renderTokens();
     expect(field().type).toBe('password');
 
     await act(async () => {
@@ -91,7 +121,7 @@ describe('OnboardingView', () => {
     stubGitHub();
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
     location.hash = '#/onboarding';
-    render(<OnboardingView />);
+    renderTokens();
 
     await submit(`  ${TOKEN} `);
 
@@ -104,13 +134,13 @@ describe('OnboardingView', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(toasts.value).toEqual([]);
   });
 
   it('signs in with a warning when the classic token lacks the repo scope', async () => {
     stubGitHub('read:user');
-    render(<OnboardingView />);
+    renderTokens();
 
     await submit(TOKEN);
 
@@ -127,7 +157,7 @@ describe('OnboardingView', () => {
       vi.fn(async () => jsonResponse({ message: `Bad credentials ${TOKEN}` }, { status: 401 })),
     );
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    render(<OnboardingView />);
+    renderTokens();
 
     await submit(TOKEN);
 
@@ -153,7 +183,7 @@ describe('OnboardingView', () => {
         : jsonResponse({}, { headers: { 'x-oauth-scopes': 'repo' } });
     });
     vi.stubGlobal('fetch', fetch);
-    render(<OnboardingView />);
+    renderTokens();
 
     await submit(TOKEN);
     const button = screen.getByRole('button', { name: 'Sign in' });
@@ -168,7 +198,7 @@ describe('OnboardingView', () => {
   it('fails visibly when the account cannot be stored', async () => {
     stubGitHub();
     vi.spyOn(chrome.storage.local, 'set').mockRejectedValue(new Error('quota'));
-    render(<OnboardingView />);
+    renderTokens();
 
     await submit(TOKEN);
 
@@ -195,7 +225,8 @@ describe('OnboardingView in a build without an OAuth client id', () => {
       screen.getByRole('link', { name: 'How to sign in with a token' }).getAttribute('href'),
     ).toBe(AUTH_DOCS_URL);
     expect(screen.queryByRole('button', { name: 'Continue with GitHub' })).toBeNull();
-    expect(screen.queryByText('or paste a token')).toBeNull();
+    // The token form is the only way in, so it is shown without a disclosure button.
+    expect(screen.queryByRole('button', { name: 'Use a personal access token' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
       'primary',
     );

@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../test/chrome';
+import { buildPullRequest } from '../../test/panel';
+import { activityKey } from '../activity';
 import type { PrLocalState } from '../model';
 import {
+  baselineSeenFacts,
   emptyPrLocal,
+  isAlwaysShown,
   isMuted,
   isSeen,
   isSnoozed,
@@ -11,6 +15,7 @@ import {
   mute,
   normalizePrLocal,
   pruneExpired,
+  setAlwaysShown,
   snooze,
   subscribePrLocal,
   unmute,
@@ -140,6 +145,49 @@ describe('markSeen / isSeen', () => {
     const empty = state();
     expect(markSeen(empty, 'PR_a', 'yesterday')).toBe(empty);
   });
+
+  it('detects useful changed facts on the same timestamp without inventing reload activity', () => {
+    const pr = buildPullRequest({ updatedAt });
+    const seen = markSeen(state(), pr.id, updatedAt, activityKey(pr));
+    const changed = { ...pr, checks: { ...pr.checks, state: 'failure' as const, failed: 1 } };
+    expect(isSeen(seen, pr.id, updatedAt, activityKey({ ...pr }))).toBe(true);
+    expect(isSeen(seen, pr.id, updatedAt, activityKey(changed))).toBe(false);
+    expect(
+      isSeen(
+        seen,
+        pr.id,
+        updatedAt,
+        activityKey({ ...pr, reviewDecision: 'unknown', mergeable: 'unknown' }),
+      ),
+    ).toBe(true);
+    const next = markSeen(seen, pr.id, updatedAt, activityKey(changed));
+    expect(isSeen(next, pr.id, updatedAt, activityKey(changed))).toBe(true);
+    expect(markSeen(next, pr.id, updatedAt, activityKey(changed))).toBe(next);
+    expect(baselineSeenFacts(markSeen(state(), pr.id, updatedAt), { [pr.id]: pr })).toEqual(seen);
+    expect(baselineSeenFacts(seen, { [pr.id]: changed })).toBe(seen);
+  });
+});
+
+it('keeps always-show and observed facts until the PR is confirmed gone, and repairs them', () => {
+  const pr = buildPullRequest();
+  const pinned = setAlwaysShown(
+    markSeen(state(), pr.id, pr.updatedAt, activityKey(pr)),
+    pr.id,
+    true,
+  );
+  expect(isAlwaysShown(pinned, pr.id)).toBe(true);
+  expect(isAlwaysShown(pinned, 'toString')).toBe(false);
+  expect(setAlwaysShown(pinned, pr.id, true)).toBe(pinned);
+  expect(isAlwaysShown(setAlwaysShown(pinned, pr.id, false), pr.id)).toBe(false);
+  expect(pruneExpired(pinned, NOW)).toBe(pinned);
+  expect(pruneExpired(pinned, NOW, [])).toMatchObject({ seenFacts: {}, alwaysShown: {}, seen: {} });
+  expect(
+    normalizePrLocal({
+      ...pinned,
+      alwaysShown: { [pr.id]: true, bad: false },
+      seenFacts: { [pr.id]: activityKey(pr), bad: 'x'.repeat(16_385) },
+    }),
+  ).toEqual(pinned);
 });
 
 describe('pruneExpired', () => {

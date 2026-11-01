@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkRunNode,
   detailNode,
+  detailResponse,
   detailReview,
   requestedReviewer,
   statusContextNode,
@@ -11,9 +12,9 @@ import { jsonResponse } from '../../../tests/fixtures/http';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import { buildAuth, buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import { details } from '../state/prDetail';
-import { auth } from '../state/store';
+import { auth, snapshot } from '../state/store';
 import { PullRequestDetails } from './PullRequestDetails';
 
 const pr = buildPullRequest({
@@ -33,6 +34,7 @@ beforeEach(() => {
 afterEach(() => {
   auth.value = undefined;
   details.value = {};
+  snapshot.value = undefined;
 });
 
 const list = (name: string) => within(screen.getByRole('list', { name }));
@@ -121,7 +123,10 @@ describe('PullRequestDetails', () => {
     expect(link.getAttribute('href')).toBe(
       'https://github.com/acme/widgets/actions/runs/1/job/build',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'View changes on GitHub' }).getAttribute('href')).toBe(
+      'https://github.com/acme/widgets/pull/1/files',
+    );
     expect(screen.getByText('ci/jenkins').getAttribute('href')).toBeNull();
     expect(screen.getByText('nolink').closest('a')).toBeNull();
 
@@ -190,19 +195,78 @@ describe('PullRequestDetails', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('loads again when the PR changes, keeping what it shows meanwhile', async () => {
+  it('loads details and branch rules again only when the PR changes', async () => {
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     const { rerender } = show();
     await waitFor(() => expect(details.value[pr.id]?.detail).toBeDefined());
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(<PullRequestDetails pr={{ ...pr, fetchedLater: true } as PullRequest} id="detail" />);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(
       <PullRequestDetails pr={{ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' }} id="detail" />,
     );
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
     expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
+  });
+});
+
+it('does not display old-head checks while a new-head detail request is pending', async () => {
+  stubDetailFetch(() => detailNode({ checks: [checkRunNode('old-head-check')] }));
+  const view = show();
+  await screen.findByText('old-head-check');
+  let release: (response: Response) => void = () => {};
+  stubDetailFetch(
+    () =>
+      new Promise<Response>((resolve) => {
+        release = resolve;
+      }),
+  );
+  view.rerender(<PullRequestDetails pr={{ ...pr, headSha: 'b'.repeat(40) }} id="detail" />);
+  await waitFor(() => expect(screen.queryByText('old-head-check')).toBeNull());
+  release(
+    jsonResponse({
+      data: detailResponse(detailNode({ checks: [checkRunNode('new-head-check')] })),
+    }),
+  );
+  await screen.findByText('new-head-check');
+});
+
+describe('what the card says about the merge facts', () => {
+  const agoMs = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+  const stored = (extra: Parameters<typeof buildSnapshotOf>[1]) => {
+    snapshot.value = buildSnapshotOf({ authored: [pr] }, extra);
+  };
+  const freshness = () => document.querySelector('.pr-detail__freshness')?.textContent;
+
+  it('gives the date they were read, and that cached ones are due', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({ mergeStateAt: { [pr.id]: agoMs(20) }, mergeStateDue: [pr.id] });
+    show();
+    expect(freshness()).toBe('Merge facts verified 20 min ago · cached, verification due.');
+  });
+
+  it('gives no due mark to facts that were just read', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({ mergeStateAt: { [pr.id]: agoMs(2) } });
+    show();
+    expect(freshness()).toBe('Merge facts verified 2 min ago.');
+  });
+
+  it('says they were not verified for this commit when there is no date', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({});
+    show();
+    expect(freshness()).toBe('Merge facts have not been verified for this commit.');
+  });
+
+  it('sends to GitHub for the connections and details it could not load', async () => {
+    stubDetailFetch(() => detailNode({ latestReviews: { nodes: [], totalCount: 21 } }));
+    show({ incomplete: ['conversations'] });
+    const note = () => screen.getByRole('note');
+    expect(note().textContent).toContain('Some conversations are not loaded.');
+    await waitFor(() => expect(note().textContent).toContain('Some reviews are not loaded.'));
+    expect(within(note()).getByRole('link', { name: 'View full details on GitHub' })).toBeTruthy();
   });
 });

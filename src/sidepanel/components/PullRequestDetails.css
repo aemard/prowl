@@ -22,6 +22,14 @@
   gap: var(--space-2);
 }
 
+/* A link among buttons: underlined and in the accent color, or it reads as a label. */
+.pr-detail .pr-actions__link {
+  align-self: center;
+  color: var(--color-accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .pr-detail__list {
   display: flex;
   flex-direction: column;
@@ -143,4 +151,9 @@
 .pr-detail {
   border-radius: 0 0 21px 21px;
   background: var(--glass-solid);
+}
+.pr-detail__freshness {
+  margin: var(--space-2) 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
 }
