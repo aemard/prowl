@@ -884,8 +884,7 @@ Panel setting changes, completed mutations and sign-in request `poll` with `afte
 While a poll is active, these requests share one trailing promise, using the latest saved
 configuration; further changes during that trailing run can schedule one more run. Ordinary
 refreshes still share the current poll. Team rediscovery is coalesced into the trailing request.
-Quota/backoff checks remain in `runPoll`. A worker reconnect hint requests an ordinary poll
-only after a network error and does not bypass those waits.
+Quota/backoff checks remain in `runPoll`.
 
 The short origin-shared `prowl:session` Web Lock serializes sign-in/sign-out with the session
 check and writes of progressive snapshots, final snapshots/teams, targeted facts, poll state
