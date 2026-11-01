@@ -31,7 +31,7 @@ test('first-time setup configures scopes and notifications then opens the list',
   });
   expect(state.onboarding).toEqual({ status: 'completed', nextStep: 0 });
   expect(
-    state.settings.sections.find((s: { kind: string }) => s.kind === 'review_requested').enabled,
+    state.settings.sections.find((s: { kind: string }) => s.kind === 'review_requested')?.enabled,
   ).toBe(true);
   expect(state.settings.notifications.enabled).toBe(true);
 });
