@@ -968,29 +968,40 @@ describe('bounded and partial section coverage', () => {
     });
   });
 
-  it('publishes a completed section while the next team search is still blocked', async () => {
-    const mine = prNode();
-    const publications: string[][] = [];
+  it('publishes a completed section before the next search starts, keeping the pending one cached', async () => {
+    const [mine, cached] = [prNode({ number: 1 }), prNode({ number: 2 })];
+    const publications: unknown[] = [];
     const { client } = setup({
       ProwlSearch: (variables) => {
         if (String(variables.query).includes('mentions:')) {
-          expect(publications).toContainEqual(['mentioned']);
+          expect(publications).toEqual([
+            {
+              sections: { authored: [mine.id], mentioned: [cached.id] },
+              pending: ['mentioned'],
+              cards: [mine.id, cached.id],
+            },
+          ]);
           return searchResponse([], variables);
         }
         return searchResponse([mine], variables);
       },
+      ProwlNodes: ({ ids }) => nodesResponse(ids, [closedNode(cached.id, { state: 'OPEN' })]),
     });
     const result = await fetchPullRequests(
       client,
       settings({ sections: [section('authored'), section('mentioned')] }),
-      null,
+      { pullRequests: { [cached.id]: mapped(cached) }, sections: { mentioned: [cached.id] } },
       null,
       undefined,
-      async (snapshot) => {
-        if (snapshot.sectionsPending) publications.push([...snapshot.sectionsPending]);
+      async ({ sections, sectionsPending, pullRequests }) => {
+        publications.push({
+          sections: { ...sections },
+          pending: sectionsPending && [...sectionsPending],
+          cards: Object.keys(pullRequests),
+        });
       },
     );
-    expect(result.sections.authored).toEqual([mine.id]);
+    expect(result.sections).toEqual({ authored: [mine.id], mentioned: [] });
     expect(result.sectionsPending).toBeUndefined();
   });
 });

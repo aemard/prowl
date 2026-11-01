@@ -433,12 +433,12 @@ export async function fetchPullRequests(
     }
     pending.delete(section.id);
     if (pending.size > 0 && onProgress) {
-      result.sectionsPending = [...pending];
-      // Preserve other sections' cached cards without claiming they have been searched.
+      // The sections still to search keep their cached cards, without claiming they were searched.
       const publishing: FetchResult = {
         ...result,
         pullRequests: { ...result.pullRequests },
         sections: { ...result.sections },
+        sectionsPending: [...pending],
       };
       for (const id of pending) {
         const ids = previous?.sections?.[id] ?? [];
@@ -451,7 +451,6 @@ export async function fetchPullRequests(
       await onProgress(publishing, []);
     }
   }
-  delete result.sectionsPending;
   // GitHub itself is failing, not one heavy search: the poll backs off.
   if (!searched && serverError) throw serverError;
   const gone = filterByRepo(
