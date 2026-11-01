@@ -32,7 +32,7 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
 }
 
 /** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
-export function DeviceFlow() {
+export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }) {
   const [code, setCode] = useState<DeviceCode>();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string>();
@@ -70,7 +70,10 @@ export function DeviceFlow() {
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) return reset(PERMISSION_DENIED);
+      if (!(await permission)) {
+        onTokenFallback?.();
+        return reset(PERMISSION_DENIED);
+      }
       const device = await requestDeviceCode({ signal: controller.signal });
       setCode(device);
       void openGitHubUrl(device.verificationUri);
@@ -80,6 +83,8 @@ export function DeviceFlow() {
       await completeSignIn(auth, warning);
     } catch (failure) {
       if (controller.signal.aborted) return;
+      if (failure instanceof DeviceFlowError && failure.reason === 'unsupported')
+        onTokenFallback?.();
       reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
     } finally {
       // github.com is only needed while the flow runs; give the permission back afterwards.

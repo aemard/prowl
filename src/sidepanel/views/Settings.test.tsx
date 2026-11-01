@@ -426,19 +426,22 @@ describe('SettingsView', () => {
       expect(notifications.getAllByRole('switch')).toHaveLength(1 + 9 + 1);
     });
 
-    it('greys out what depends on the master switch', async () => {
+    it('reveals notification options only when enabled, retaining the saved choices', async () => {
       await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       const notifications = group('Notifications');
+      const before = (await saved()).notifications;
       fireEvent.click(toggle('Desktop notifications', notifications));
       await waitFor(() =>
-        expect((toggle('CI fails', notifications) as HTMLButtonElement).disabled).toBe(true),
+        expect(notifications.queryByRole('switch', { name: 'CI fails' })).toBeNull(),
       );
-      expect((toggle('Quiet hours', notifications) as HTMLButtonElement).disabled).toBe(true);
-      expect(
-        (notifications.getByRole('button', { name: 'Send test notification' }) as HTMLButtonElement)
-          .disabled,
-      ).toBe(true);
+      expect(notifications.queryByRole('switch', { name: 'Quiet hours' })).toBeNull();
+      expect(notifications.queryByRole('button', { name: 'Send test notification' })).toBeNull();
       expect((await saved()).notifications.enabled).toBe(false);
+      fireEvent.click(toggle('Desktop notifications', notifications));
+      await waitFor(() =>
+        expect(notifications.getByRole('switch', { name: 'CI fails' })).toBeTruthy(),
+      );
+      expect((await saved()).notifications).toEqual(before);
     });
 
     it('sets quiet hours that cross midnight', async () => {
@@ -469,6 +472,7 @@ describe('SettingsView', () => {
       await open({
         notifications: {
           ...defaultSettings().notifications,
+          enabled: true,
           quietHours: { enabled: true, start: '22:00', end: '08:00' },
         },
       });

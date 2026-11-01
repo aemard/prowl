@@ -87,6 +87,7 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   await panel.getByRole('button', { name: 'Re-authenticate' }).click();
   await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Use a personal access token' }).click();
   await panel.getByLabel('Personal access token').fill(TOKEN);
   await panel.getByRole('button', { name: 'Sign in' }).click();
 

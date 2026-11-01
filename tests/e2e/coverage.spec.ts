@@ -30,6 +30,8 @@ for (const count of [50, 51]) {
       await expect(coverage.getByRole('button', { name: 'Change limit' })).toBeVisible();
       await panel.getByRole('searchbox').fill('unloaded-result');
       await expect(panel.getByText(/This search only covers the loaded PRs/)).toBeVisible();
+      await coverage.getByRole('button', { name: 'Change limit' }).click();
+      await expect(panel.getByLabel('Maximum PRs loaded per section')).toBeFocused();
     }
     await expectNoA11yViolations(panel);
   });

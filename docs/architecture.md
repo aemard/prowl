@@ -728,7 +728,7 @@ signal (`state/store.ts`).
     cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
     Appearance also has the "Hide draft PRs" and "Hide PRs opened by bots" switches (the list,
     counts and badge follow at once; nothing is fetched again).
-  - Notifications: master switch (greys out the event switches, quiet hours and the test button),
+  - Notifications: master switch (reveals event switches, quiet hours and the test button only when enabled),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
     which calls `chrome.notifications.create` from the panel with id `test:<ms>` and
@@ -945,3 +945,13 @@ One passive delegated pointer listener paints only the current surface, at most 
 scrolling and preference changes clear it. Reduced motion or a coarse/touch pointer disables
 the moving reflection; reduced transparency uses opaque surfaces and removes blur/reflection.
 No new dependency, timer, network call or loading state is introduced.
+
+## Progressive sign-in and settings
+
+When OAuth is available, GitHub sign-in is primary and PAT is an explicit disclosure. Without
+OAuth, or when GitHub rejects device-flow availability, the token form is shown directly.
+Token creation guides are revealed separately. Disabled notifications show only the master
+switch and a short explanation; enabling them restores the saved event/quiet-hour choices.
+The loaded-PR maximum stays visible. Check interval and approximate API cost sit in native
+Refresh options, without changing stored preferences. Change limit navigates with a one-shot
+focus request consumed by the lazily loaded settings view, focusing the actual number field.

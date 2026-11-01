@@ -1,6 +1,6 @@
 import { env } from '../../lib/env';
 import type { SectionCoverage } from '../../lib/model';
-import { navigate } from '../state/router';
+import { changePrLimit } from '../state/settings';
 import { GitHubLink } from './GitHubLink';
 import { Button } from './ui/Button';
 
@@ -21,7 +21,7 @@ export function SectionCoverageNotice({
       </p>
       <p class="list__coverage-help">Only loaded PRs are monitored in this section.</p>
       <div class="list__coverage-actions">
-        <Button size="sm" variant="ghost" onClick={() => navigate('settings')}>
+        <Button size="sm" variant="ghost" onClick={changePrLimit}>
           Change limit
         </Button>
         {query && (

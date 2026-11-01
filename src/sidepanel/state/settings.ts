@@ -1,10 +1,21 @@
 /** Writing settings from the panel: saved at once, and the list refreshed when the scope changed. */
+
+import { signal } from '@preact/signals';
 import { updateSettings } from '../../lib/storage/settings';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
+import { navigate } from './router';
 
 /** Quiet time after the last scope change before the list is refreshed. */
 export const REFRESH_DELAY_MS = 800;
+/** A one-shot focus request consumed when the lazily loaded settings view mounts. */
+export const settingsFocus = signal<'pr-limit' | undefined>(undefined);
+export const PR_LIMIT_ID = 'settings-pr-limit';
+
+export function changePrLimit(): void {
+  settingsFocus.value = 'pr-limit';
+  navigate('settings');
+}
 
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
