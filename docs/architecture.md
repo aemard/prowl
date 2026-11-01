@@ -934,3 +934,14 @@ but their wording does not claim the browser is necessarily offline.
 
 Observed `seenFacts` may include PR metadata: sign-in, sign-out and signed-out worker cleanup
 clear them under the session lock, retaining the existing timestamps and local choices.
+
+## Softened Liquid Glass rendering
+
+The background reproduces all four mint/blue/violet/light ellipses of the approved softened
+proposal. Cards and chrome use its translucent gradients, thin masked rims and subtle pointer
+reflection. Blur belongs to a decorative pseudo-element: cards, summaries and details never
+introduce a transform, isolation, filter or stacking context that would trap their fixed menus.
+One passive delegated pointer listener paints only the current surface, at most once per frame;
+scrolling and preference changes clear it. Reduced motion or a coarse/touch pointer disables
+the moving reflection; reduced transparency uses opaque surfaces and removes blur/reflection.
+No new dependency, timer, network call or loading state is introduced.
