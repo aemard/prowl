@@ -34,142 +34,140 @@ function serveDeviceFlow(github: MockGitHub, decide: () => object) {
 const pending = () => ({ error: 'authorization_pending' });
 const startButton = (panel: Page) => panel.getByRole('button', { name: 'Continue with GitHub' });
 const stored = (worker: Worker) => worker.evaluate(() => chrome.storage.local.get(null));
+test('sign in with the OAuth device flow › shows the code, opens GitHub and signs in once the user approves', async ({
+  context,
+  github,
+  openPanel,
+  serviceWorker,
+  expectNoA11yViolations,
+}) => {
+  let approved = false;
+  serveDeviceFlow(github, () =>
+    approved
+      ? { access_token: OAUTH_TOKEN, token_type: 'bearer', scope: 'read:org,repo' }
+      : pending(),
+  );
+  const panel = await openPanel();
+  await expect(startButton(panel)).toBeVisible();
+  await expect(panel.getByText('or paste a token')).toBeVisible();
+  await panel.emulateMedia({ colorScheme: 'light' });
+  await expectNoA11yViolations(panel);
 
-test.describe('sign in with the OAuth device flow', () => {
-  test('shows the code, opens GitHub and signs in once the user approves', async ({
-    context,
-    github,
-    openPanel,
-    serviceWorker,
-    expectNoA11yViolations,
-  }) => {
-    let approved = false;
-    serveDeviceFlow(github, () =>
-      approved
-        ? { access_token: OAUTH_TOKEN, token_type: 'bearer', scope: 'read:org,repo' }
-        : pending(),
-    );
-    const panel = await openPanel();
-    await expect(startButton(panel)).toBeVisible();
-    await expect(panel.getByText('or paste a token')).toBeVisible();
-    await panel.emulateMedia({ colorScheme: 'light' });
-    await expectNoA11yViolations(panel);
+  const verification = context.waitForEvent('page');
+  await startButton(panel).click();
 
-    const verification = context.waitForEvent('page');
-    await startButton(panel).click();
+  // GitHub's page opens in a tab, the panel shows what to type there.
+  expect((await verification).url()).toBe(`${MOCK_ORIGIN}/login/device`);
+  await panel.bringToFront();
+  await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
+  await expect(panel.getByRole('timer')).toHaveText(/^Code expires in 1[45]:\d\d$/);
+  await expect(panel.getByText(/Waiting for you to approve Prowl on GitHub/)).toBeVisible();
+  await expect(panel.getByRole('region', { name: 'Authorize Prowl on GitHub' })).toBeFocused();
+  await expectNoA11yViolations(panel);
+  await saveScreenshot(panel, 'device-flow');
+  await panel.emulateMedia({ colorScheme: 'dark' });
+  await expectNoA11yViolations(panel);
 
-    // GitHub's page opens in a tab, the panel shows what to type there.
-    expect((await verification).url()).toBe(`${MOCK_ORIGIN}/login/device`);
-    await panel.bringToFront();
-    await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
-    await expect(panel.getByRole('timer')).toHaveText(/^Code expires in 1[45]:\d\d$/);
-    await expect(panel.getByText(/Waiting for you to approve Prowl on GitHub/)).toBeVisible();
-    await expect(panel.getByRole('region', { name: 'Authorize Prowl on GitHub' })).toBeFocused();
-    await expectNoA11yViolations(panel);
-    await saveScreenshot(panel, 'device-flow');
-    await panel.emulateMedia({ colorScheme: 'dark' });
-    await expectNoA11yViolations(panel);
+  await panel.getByRole('button', { name: 'Copy code WDJB-MJHT' }).click();
+  await expect(panel.getByText('Code copied')).toBeVisible();
 
-    await panel.getByRole('button', { name: 'Copy code WDJB-MJHT' }).click();
-    await expect(panel.getByText('Code copied')).toBeVisible();
+  // Still waiting while GitHub says "pending".
+  await expect
+    .poll(() => github.requestsFor('/login/oauth/access_token').length)
+    .toBeGreaterThan(0);
+  await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
 
-    // Still waiting while GitHub says "pending".
-    await expect
-      .poll(() => github.requestsFor('/login/oauth/access_token').length)
-      .toBeGreaterThan(0);
-    await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
-
-    approved = true;
-    await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
-    expect(await stored(serviceWorker)).toMatchObject({
-      auth: {
-        method: 'oauth',
-        token: OAUTH_TOKEN,
-        tokenType: 'oauth',
-        scopes: ['read:org', 'repo'],
-        viewer,
-      },
-    });
-
-    // What was sent: the public client id and the scope, then the device code, then the token.
-    expect(github.requestsFor('/login/device/code')[0]?.body).toEqual({
-      client_id: 'e2e-client-id',
-      scope: 'repo read:org',
-    });
-    expect(github.requestsFor('/login/oauth/access_token')[0]?.body).toEqual({
-      client_id: 'e2e-client-id',
-      device_code: DEVICE.device_code,
-      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    });
-    expect(github.requestsFor('ProwlViewer')[0]?.headers.authorization).toBe(
-      `Bearer ${OAUTH_TOKEN}`,
-    );
-    expect(await panel.locator('body').textContent()).not.toContain(OAUTH_TOKEN);
+  approved = true;
+  await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
+  expect(await stored(serviceWorker)).toMatchObject({
+    auth: {
+      method: 'oauth',
+      token: OAUTH_TOKEN,
+      tokenType: 'oauth',
+      scopes: ['read:org', 'repo'],
+      viewer,
+    },
   });
 
-  test('tells the user when access was denied on GitHub and lets them start again', async ({
-    github,
-    openPanel,
-    serviceWorker,
-    expectNoA11yViolations,
-  }) => {
-    serveDeviceFlow(github, () => ({ error: 'access_denied' }));
-    const panel = await openPanel();
-
-    await startButton(panel).click();
-
-    const alert = panel.getByRole('alert');
-    await expect(alert).toContainText('Access was denied on GitHub', { timeout: 10_000 });
-    await expect(panel.getByText('WDJB-MJHT')).toHaveCount(0);
-    await panel.bringToFront(); // GitHub's tab opened in front of it
-    await expect(startButton(panel)).toBeFocused();
-    expect(await stored(serviceWorker)).not.toHaveProperty('auth');
-    await panel.emulateMedia({ colorScheme: 'light' });
-    await expectNoA11yViolations(panel);
-    await panel.emulateMedia({ colorScheme: 'dark' });
-    await expectNoA11yViolations(panel);
-
-    // A second try works from the same screen.
-    serveDeviceFlow(github, () => ({ access_token: OAUTH_TOKEN, token_type: 'bearer' }));
-    await startButton(panel).click();
-    await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible({
-      timeout: 10_000,
-    });
+  // What was sent: the public client id and the scope, then the device code, then the token.
+  expect(github.requestsFor('/login/device/code')[0]?.body).toEqual({
+    client_id: 'e2e-client-id',
+    scope: 'repo read:org',
   });
-
-  test('says so when the OAuth App cannot use the device flow', async ({ github, openPanel }) => {
-    github.on('POST', '/login/device/code', () => ({ body: { error: 'device_flow_disabled' } }));
-    const panel = await openPanel();
-
-    await startButton(panel).click();
-
-    await expect(panel.getByRole('alert')).toContainText('not available for this build of Prowl');
-    await expect(panel.getByLabel('Personal access token')).toBeVisible();
+  expect(github.requestsFor('/login/oauth/access_token')[0]?.body).toEqual({
+    client_id: 'e2e-client-id',
+    device_code: DEVICE.device_code,
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
   });
+  expect(github.requestsFor('ProwlViewer')[0]?.headers.authorization).toBe(`Bearer ${OAUTH_TOKEN}`);
+  expect(await panel.locator('body').textContent()).not.toContain(OAUTH_TOKEN);
+});
 
-  test('cancel stops polling and returns to the start', async ({
-    github,
-    openPanel,
-    serviceWorker,
-  }) => {
-    serveDeviceFlow(github, pending);
-    const panel = await openPanel();
-    await startButton(panel).click();
-    await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
-    await expect
-      .poll(() => github.requestsFor('/login/oauth/access_token').length)
-      .toBeGreaterThan(0);
+test('sign in with the OAuth device flow › tells the user when access was denied on GitHub and lets them start again', async ({
+  github,
+  openPanel,
+  serviceWorker,
+  expectNoA11yViolations,
+}) => {
+  serveDeviceFlow(github, () => ({ error: 'access_denied' }));
+  const panel = await openPanel();
 
-    await panel.getByRole('button', { name: 'Cancel' }).click();
+  await startButton(panel).click();
 
-    await expect(startButton(panel)).toBeFocused();
-    await expect(panel.getByText('WDJB-MJHT')).toHaveCount(0);
-    const polled = github.requestsFor('/login/oauth/access_token').length;
-    await panel.waitForTimeout(2_500); // two polling intervals
-    expect(github.requestsFor('/login/oauth/access_token')).toHaveLength(polled);
-    expect(await stored(serviceWorker)).not.toHaveProperty('auth');
+  const alert = panel.getByRole('alert');
+  await expect(alert).toContainText('Access was denied on GitHub', { timeout: 10_000 });
+  await expect(panel.getByText('WDJB-MJHT')).toHaveCount(0);
+  await panel.bringToFront(); // GitHub's tab opened in front of it
+  await expect(startButton(panel)).toBeFocused();
+  expect(await stored(serviceWorker)).not.toHaveProperty('auth');
+  await panel.emulateMedia({ colorScheme: 'light' });
+  await expectNoA11yViolations(panel);
+  await panel.emulateMedia({ colorScheme: 'dark' });
+  await expectNoA11yViolations(panel);
+
+  // A second try works from the same screen.
+  serveDeviceFlow(github, () => ({ access_token: OAUTH_TOKEN, token_type: 'bearer' }));
+  await startButton(panel).click();
+  await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible({
+    timeout: 10_000,
   });
+});
+
+test('sign in with the OAuth device flow › says so when the OAuth App cannot use the device flow', async ({
+  github,
+  openPanel,
+}) => {
+  github.on('POST', '/login/device/code', () => ({ body: { error: 'device_flow_disabled' } }));
+  const panel = await openPanel();
+
+  await startButton(panel).click();
+
+  await expect(panel.getByRole('alert')).toContainText('not available for this build of Prowl');
+  await expect(panel.getByLabel('Personal access token')).toBeVisible();
+});
+
+test('sign in with the OAuth device flow › cancel stops polling and returns to the start', async ({
+  github,
+  openPanel,
+  serviceWorker,
+}) => {
+  serveDeviceFlow(github, pending);
+  const panel = await openPanel();
+  await startButton(panel).click();
+  await expect(panel.getByText('WDJB-MJHT')).toBeVisible();
+  await expect
+    .poll(() => github.requestsFor('/login/oauth/access_token').length)
+    .toBeGreaterThan(0);
+
+  await panel.getByRole('button', { name: 'Cancel' }).click();
+
+  await expect(startButton(panel)).toBeFocused();
+  await expect(panel.getByText('WDJB-MJHT')).toHaveCount(0);
+  const polled = github.requestsFor('/login/oauth/access_token').length;
+  await panel.waitForTimeout(2_500); // two polling intervals
+  expect(github.requestsFor('/login/oauth/access_token')).toHaveLength(polled);
+  expect(await stored(serviceWorker)).not.toHaveProperty('auth');
 });

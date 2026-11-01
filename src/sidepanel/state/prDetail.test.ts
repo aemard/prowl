@@ -73,90 +73,88 @@ describe('detailKey', () => {
   });
 });
 
-describe('loadDetail', () => {
-  it('fetches the PR once, and not again while the entry is current', async () => {
-    const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
-    const loading = loadDetail(pr);
-    expect(details.value[pr.id]).toMatchObject({ loading: true, key: detailKey(pr) });
-    await Promise.all([loading, loadDetail(pr)]);
-    await loadDetail(pr);
+it('loadDetail fetches the PR once, and not again while the entry is current', async () => {
+  const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
+  const loading = loadDetail(pr);
+  expect(details.value[pr.id]).toMatchObject({ loading: true, key: detailKey(pr) });
+  await Promise.all([loading, loadDetail(pr)]);
+  await loadDetail(pr);
 
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(String(fetch.mock.calls[0]?.[1].body)).variables).toEqual({
-      id: pr.id,
-      after: null,
-    });
-    expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: 'Bearer ghp_test' });
-    expect(details.value[pr.id]).toMatchObject({ loading: false });
-    expect(details.value[pr.id]?.detail?.checks.map((c) => c.name)).toEqual(['lint']);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1].body)).variables).toEqual({
+    id: pr.id,
+    after: null,
   });
+  expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: 'Bearer ghp_test' });
+  expect(details.value[pr.id]).toMatchObject({ loading: false });
+  expect(details.value[pr.id]?.detail?.checks.map((c) => c.name)).toEqual(['lint']);
+});
 
-  it('does nothing when signed out', async () => {
-    const fetch = stubDetailFetch();
-    auth.value = undefined;
-    await loadDetail(pr);
-    expect(fetch).not.toHaveBeenCalled();
-    expect(details.value).toEqual({});
+it('loadDetail does nothing when signed out', async () => {
+  const fetch = stubDetailFetch();
+  auth.value = undefined;
+  await loadDetail(pr);
+  expect(fetch).not.toHaveBeenCalled();
+  expect(details.value).toEqual({});
+});
+
+it('loadDetail refetches when the PR changed, showing the old detail meanwhile', async () => {
+  let release: () => void = () => {};
+  const fetch = stubDetailFetch((variables) => {
+    void variables;
+    return fetch.mock.calls.length === 1
+      ? detailNode({ checks: [checkRunNode('old')] })
+      : new Promise((resolve) => {
+          release = () => resolve(detailNode({ checks: [checkRunNode('new')] }));
+        });
   });
+  await loadDetail(pr);
+  const changed = { ...pr, updatedAt: '2026-10-07T00:00:00.000Z' };
+  const reloading = loadDetail(changed);
+  expect(details.value[pr.id]).toMatchObject({ loading: true });
+  expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('old');
+  release();
+  await reloading;
+  expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('new');
+  expect(details.value[pr.id]?.key).toBe(detailKey(changed));
+});
 
-  it('refetches when the PR changed, showing the old detail meanwhile', async () => {
-    let release: () => void = () => {};
-    const fetch = stubDetailFetch((variables) => {
-      void variables;
-      return fetch.mock.calls.length === 1
-        ? detailNode({ checks: [checkRunNode('old')] })
-        : new Promise((resolve) => {
-            release = () => resolve(detailNode({ checks: [checkRunNode('new')] }));
-          });
-    });
-    await loadDetail(pr);
-    const changed = { ...pr, updatedAt: '2026-10-07T00:00:00.000Z' };
-    const reloading = loadDetail(changed);
-    expect(details.value[pr.id]).toMatchObject({ loading: true });
-    expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('old');
-    release();
-    await reloading;
-    expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('new');
-    expect(details.value[pr.id]?.key).toBe(detailKey(changed));
-  });
+it('loadDetail drops an answer that a newer request has overtaken', async () => {
+  const releases: (() => void)[] = [];
+  stubDetailFetch(
+    () =>
+      new Promise((resolve) => {
+        const name = `run-${releases.length}`;
+        releases.push(() => resolve(detailNode({ checks: [checkRunNode(name)] })));
+      }),
+  );
+  const first = loadDetail(pr);
+  const second = loadDetail({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' });
+  releases[1]?.();
+  await second;
+  releases[0]?.();
+  await first;
+  expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('run-1');
+});
 
-  it('drops an answer that a newer request has overtaken', async () => {
-    const releases: (() => void)[] = [];
-    stubDetailFetch(
-      () =>
-        new Promise((resolve) => {
-          const name = `run-${releases.length}`;
-          releases.push(() => resolve(detailNode({ checks: [checkRunNode(name)] })));
-        }),
-    );
-    const first = loadDetail(pr);
-    const second = loadDetail({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' });
-    releases[1]?.();
-    await second;
-    releases[0]?.();
-    await first;
-    expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('run-1');
-  });
+it('loadDetail keeps GitHub’s message on a failure and tries again on the next load', async () => {
+  stubDetailFetch(() => jsonResponse({ message: 'Bad credentials' }, { status: 401 }));
+  await loadDetail(pr);
+  expect(details.value[pr.id]).toMatchObject({ loading: false, error: 'Bad credentials' });
 
-  it('keeps GitHub’s message on a failure and tries again on the next load', async () => {
-    stubDetailFetch(() => jsonResponse({ message: 'Bad credentials' }, { status: 401 }));
-    await loadDetail(pr);
-    expect(details.value[pr.id]).toMatchObject({ loading: false, error: 'Bad credentials' });
+  const fetch = stubDetailFetch();
+  await loadDetail(pr);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(details.value[pr.id]?.error).toBeUndefined();
+  expect(details.value[pr.id]?.detail).toBeDefined();
+});
 
-    const fetch = stubDetailFetch();
-    await loadDetail(pr);
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(details.value[pr.id]?.error).toBeUndefined();
-    expect(details.value[pr.id]?.detail).toBeDefined();
-  });
-
-  it('keeps the last detail when a refresh fails, and words a bug generically', async () => {
-    stubDetailFetch();
-    await loadDetail(pr);
-    // A malformed answer is not a GitHubError: the panel says so without GitHub's words.
-    stubDetailFetch(() => ({ commits: null }) as never);
-    await loadDetail({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' });
-    expect(details.value[pr.id]?.detail).toBeDefined();
-    expect(details.value[pr.id]?.error).toBe('Could not load the details.');
-  });
+it('loadDetail keeps the last detail when a refresh fails, and words a bug generically', async () => {
+  stubDetailFetch();
+  await loadDetail(pr);
+  // A malformed answer is not a GitHubError: the panel says so without GitHub's words.
+  stubDetailFetch(() => ({ commits: null }) as never);
+  await loadDetail({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' });
+  expect(details.value[pr.id]?.detail).toBeDefined();
+  expect(details.value[pr.id]?.error).toBe('Could not load the details.');
 });

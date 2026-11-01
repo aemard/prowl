@@ -47,9 +47,10 @@ tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once
 
 - TypeScript in strict mode, no `any`. Preact function components and signals.
 - Biome enforces 300 code lines per file and 50 per function body, excluding blank and
-  comment-only lines. Test files may contain 600 lines and have no function limit because
-  their callbacks group scenarios. Shared test helpers keep the normal limits. Lint warnings fail locally
-  and in CI. Split by responsibility rather than compressing code or adding suppressions.
+  comment-only lines. The same limits apply to test files, test callbacks and shared helpers.
+  Keep scenarios focused and split suites by behavior; remove redundant grouping callbacks.
+  Lint warnings fail locally and in CI. Split by responsibility rather than compressing code
+  or adding suppressions.
 - Every new feature and every bug fix comes with tests: a fix with one that fails without it.
   Tests sit next to the code they cover; test behavior, not every function. CI enforces coverage
   (80% overall, 95% for `src/lib/github` and `src/lib/diff`).

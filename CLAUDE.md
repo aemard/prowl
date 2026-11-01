@@ -30,7 +30,8 @@ Load the built extension: `chrome://extensions` → Developer mode → Load unpa
 
 - TypeScript strict, no `any` (use `unknown` + narrowing). Named exports. ES modules.
 - Biome: 300 code lines per file, 50 per function body (blank/comment-only lines excluded).
-  Test files: 600 lines, no function cap (suite callbacks); test helpers retain 300/50. Warnings fail.
+  The same limits apply to tests and shared test helpers. Warnings fail.
+  Keep test scenarios focused; remove redundant suite wrappers and split files by behavior.
   Split by responsibility, never compress code or suppress a limit to pass it.
 - Tests are colocated: `foo.ts` → `foo.test.ts`. Use the `chrome` fake from `src/test/chrome.ts`
   (installed globally before each test); extend the fake rather than mocking per test.

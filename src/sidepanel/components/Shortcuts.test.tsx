@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/preact';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vitest';
 import { buildPollState } from '../../test/panel';
 import { refreshRequested } from '../state/shortcuts';
 import { pollState, snapshot } from '../state/store';
@@ -68,166 +68,158 @@ afterEach(() => {
   snapshot.value = undefined;
 });
 
-describe('useShortcuts', () => {
-  it('moves focus between cards with j/k and arrows, clamped at the ends', () => {
-    render(<Harness />);
-    press('j');
-    expect(focusedText()).toBe('Details 1');
-    press('ArrowDown', document.activeElement as Element);
-    expect(focusedText()).toBe('Details 2');
-    press('j');
-    press('j');
-    expect(focusedText()).toBe('Details 3');
-    press('k');
-    press('ArrowUp', document.activeElement as Element);
-    press('k');
-    expect(focusedText()).toBe('Details 1');
-  });
-
-  it('moves through a grouped list: cards only, folded groups skipped, headers as starting points', () => {
-    render(<GroupedHarness />);
-    const header = (repo: string) => screen.getByRole('button', { name: new RegExp(`^${repo}`) });
-    press('j');
-    expect(focusedText()).toBe('Web 1');
-    press('j');
-    press('j');
-    // The folded acme/api group has no cards to stop at.
-    expect(focusedText()).toBe('Docs 1');
-    press('k');
-    expect(focusedText()).toBe('Web 2');
-
-    // From a header: the card after it, or the one before it.
-    header('acme/api').focus();
-    press('j', document.activeElement as Element);
-    expect(focusedText()).toBe('Docs 1');
-    header('acme/api').focus();
-    press('k');
-    expect(focusedText()).toBe('Web 2');
-    header('acme/docs').focus();
-    press('ArrowDown', document.activeElement as Element);
-    expect(focusedText()).toBe('Docs 1');
-
-    // Nothing after the last header, nothing before the first: focus stays put.
-    header('acme/old').focus();
-    press('j');
-    expect(document.activeElement).toBe(header('acme/old'));
-    header('acme/web').focus();
-    press('k');
-    expect(document.activeElement).toBe(header('acme/web'));
-  });
-
-  it('opens the focused card, focuses the filter and shows the shortcuts', () => {
-    render(<Harness />);
-    let opened = '';
-    for (const link of document.querySelectorAll('a')) {
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
-        opened = link.textContent ?? '';
-      });
-    }
-    press('j');
-    press('j');
-    press('o', document.activeElement as Element);
-    expect(opened).toBe('PR 2');
-    press('/');
-    expect(document.activeElement?.getAttribute('aria-label')).toBe('Filter');
-    press('?');
-    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy();
-    expect(screen.getAllByRole('definition').length).toBeGreaterThan(5);
-    // A dialog is open: list keys do nothing until it closes.
-    press('j');
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(shortcutsOpen.value).toBe(false);
-  });
-
-  it('refreshes on r, and does nothing when disabled', () => {
-    const { unmount } = render(<Harness enabled={false} />);
-    press('r');
-    expect(refreshRequested.value).toBeNull();
-    unmount();
-    render(<Harness />);
-    press('r');
-    expect(refreshRequested.value).toBeTypeOf('number');
-  });
+it('useShortcuts moves focus between cards with j/k and arrows, clamped at the ends', () => {
+  render(<Harness />);
+  press('j');
+  expect(focusedText()).toBe('Details 1');
+  press('ArrowDown', document.activeElement as Element);
+  expect(focusedText()).toBe('Details 2');
+  press('j');
+  press('j');
+  expect(focusedText()).toBe('Details 3');
+  press('k');
+  press('ArrowUp', document.activeElement as Element);
+  press('k');
+  expect(focusedText()).toBe('Details 1');
 });
 
-describe('RefreshAnnouncer', () => {
-  it('reads out the result of a refresh the user asked for, not background polls', async () => {
-    render(<RefreshAnnouncer />);
-    const region = screen.getByRole('status');
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: true });
-    });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
-    expect(region.textContent).toBe('');
+it('useShortcuts moves through a grouped list: cards only, folded groups skipped, headers as starting points', () => {
+  render(<GroupedHarness />);
+  const header = (repo: string) => screen.getByRole('button', { name: new RegExp(`^${repo}`) });
+  press('j');
+  expect(focusedText()).toBe('Web 1');
+  press('j');
+  press('j');
+  // The folded acme/api group has no cards to stop at.
+  expect(focusedText()).toBe('Docs 1');
+  press('k');
+  expect(focusedText()).toBe('Web 2');
 
-    await act(() => {
-      refreshRequested.value = Date.now();
-      pollState.value = buildPollState({ inFlight: true });
-    });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
-    expect(region.textContent).toBe('Updated. 0 pull requests.');
-    expect(refreshRequested.value).toBeNull();
+  // From a header: the card after it, or the one before it.
+  header('acme/api').focus();
+  press('j', document.activeElement as Element);
+  expect(focusedText()).toBe('Docs 1');
+  header('acme/api').focus();
+  press('k');
+  expect(focusedText()).toBe('Web 2');
+  header('acme/docs').focus();
+  press('ArrowDown', document.activeElement as Element);
+  expect(focusedText()).toBe('Docs 1');
 
-    // The user is done refreshing as soon as the list is ready, even while merge reads run.
-    await act(() => {
-      refreshRequested.value = Date.now();
-      pollState.value = buildPollState({ inFlight: true });
-    });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: true, mergePending: ['PR_1'] });
-    });
-    expect(region.textContent).toBe('Updated. 0 pull requests.');
-    expect(refreshRequested.value).toBeNull();
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
+  // Nothing after the last header, nothing before the first: focus stays put.
+  header('acme/old').focus();
+  press('j');
+  expect(document.activeElement).toBe(header('acme/old'));
+  header('acme/web').focus();
+  press('k');
+  expect(document.activeElement).toBe(header('acme/web'));
+});
 
-    // A second click during enrichment shares that poll and is acknowledged when it finishes.
-    const earlier = new Date(Date.now() - 10_000).toISOString();
-    await act(() => {
-      pollState.value = buildPollState({
-        inFlight: true,
-        mergePending: ['PR_1'],
-        lastAttemptAt: earlier,
-      });
-      refreshRequested.value = Date.now();
+it('useShortcuts opens the focused card, focuses the filter and shows the shortcuts', () => {
+  render(<Harness />);
+  let opened = '';
+  for (const link of document.querySelectorAll('a')) {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      opened = link.textContent ?? '';
     });
-    expect(refreshRequested.value).not.toBeNull();
-    await act(() => {
-      pollState.value = buildPollState({
-        lastAttemptAt: earlier,
-        lastSuccessAt: new Date(Date.now() + 10).toISOString(),
-      });
-    });
-    expect(refreshRequested.value).toBeNull();
+  }
+  press('j');
+  press('j');
+  press('o', document.activeElement as Element);
+  expect(opened).toBe('PR 2');
+  press('/');
+  expect(document.activeElement?.getAttribute('aria-label')).toBe('Filter');
+  press('?');
+  expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy();
+  expect(screen.getAllByRole('definition').length).toBeGreaterThan(5);
+  // A dialog is open: list keys do nothing until it closes.
+  press('j');
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(shortcutsOpen.value).toBe(false);
+});
 
-    // A poll so fast the panel never saw it running still counts once it started after the ask.
-    await act(() => {
-      refreshRequested.value = Date.now();
-    });
-    await act(() => {
-      pollState.value = buildPollState({
-        inFlight: false,
-        lastAttemptAt: new Date(Date.now() + 10).toISOString(),
-      });
-    });
-    expect(refreshRequested.value).toBeNull();
+it('useShortcuts refreshes on r, and does nothing when disabled', () => {
+  const { unmount } = render(<Harness enabled={false} />);
+  press('r');
+  expect(refreshRequested.value).toBeNull();
+  unmount();
+  render(<Harness />);
+  press('r');
+  expect(refreshRequested.value).toBeTypeOf('number');
+});
 
-    await act(() => {
-      refreshRequested.value = Date.now();
-      pollState.value = buildPollState({ inFlight: true });
-    });
-    await act(() => {
-      pollState.value = buildPollState({
-        inFlight: false,
-        lastError: { kind: 'network', message: 'Could not reach GitHub.' },
-      });
-    });
-    expect(region.textContent).toBe('Refresh failed: Could not reach GitHub.');
+function updatePoll(state: Parameters<typeof buildPollState>[0]) {
+  return act(() => {
+    pollState.value = buildPollState(state);
   });
+}
+
+it('RefreshAnnouncer reads out the result of a refresh the user asked for, not background polls', async () => {
+  render(<RefreshAnnouncer />);
+  const region = screen.getByRole('status');
+  await updatePoll({ inFlight: true });
+  await updatePoll({ inFlight: false });
+  expect(region.textContent).toBe('');
+
+  await act(() => {
+    refreshRequested.value = Date.now();
+    pollState.value = buildPollState({ inFlight: true });
+  });
+  await updatePoll({ inFlight: false });
+  expect(region.textContent).toBe('Updated. 0 pull requests.');
+  expect(refreshRequested.value).toBeNull();
+
+  // The user is done refreshing as soon as the list is ready, even while merge reads run.
+  await act(() => {
+    refreshRequested.value = Date.now();
+    pollState.value = buildPollState({ inFlight: true });
+  });
+  await updatePoll({ inFlight: true, mergePending: ['PR_1'] });
+  expect(region.textContent).toBe('Updated. 0 pull requests.');
+  expect(refreshRequested.value).toBeNull();
+  await updatePoll({ inFlight: false });
+
+  // A second click during enrichment shares that poll and is acknowledged when it finishes.
+  const earlier = new Date(Date.now() - 10_000).toISOString();
+  await act(() => {
+    pollState.value = buildPollState({
+      inFlight: true,
+      mergePending: ['PR_1'],
+      lastAttemptAt: earlier,
+    });
+    refreshRequested.value = Date.now();
+  });
+  expect(refreshRequested.value).not.toBeNull();
+  await act(() => {
+    pollState.value = buildPollState({
+      lastAttemptAt: earlier,
+      lastSuccessAt: new Date(Date.now() + 10).toISOString(),
+    });
+  });
+  expect(refreshRequested.value).toBeNull();
+
+  // A poll so fast the panel never saw it running still counts once it started after the ask.
+  await act(() => {
+    refreshRequested.value = Date.now();
+  });
+  await act(() => {
+    pollState.value = buildPollState({
+      inFlight: false,
+      lastAttemptAt: new Date(Date.now() + 10).toISOString(),
+    });
+  });
+  expect(refreshRequested.value).toBeNull();
+
+  await act(() => {
+    refreshRequested.value = Date.now();
+    pollState.value = buildPollState({ inFlight: true });
+  });
+  await act(() => {
+    pollState.value = buildPollState({
+      inFlight: false,
+      lastError: { kind: 'network', message: 'Could not reach GitHub.' },
+    });
+  });
+  expect(region.textContent).toBe('Refresh failed: Could not reach GitHub.');
 });

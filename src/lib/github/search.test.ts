@@ -17,85 +17,83 @@ const custom = (query?: string): Section => ({
   ...(query === undefined ? {} : { query }),
 });
 
-describe('buildSearchQuery', () => {
-  it.each([
-    ['authored', 'is:pr is:open author:@me archived:false'],
-    ['review_requested', 'is:pr is:open user-review-requested:@me archived:false'],
-    ['mentioned', 'is:pr is:open mentions:@me archived:false'],
-    ['assigned', 'is:pr is:open assignee:@me archived:false'],
-  ] as const)('builds the %s preset', (kind, expected) => {
-    expect(buildSearchQuery(preset(kind), none)).toBe(expected);
-  });
+it.each([
+  ['authored', 'is:pr is:open author:@me archived:false'],
+  ['review_requested', 'is:pr is:open user-review-requested:@me archived:false'],
+  ['mentioned', 'is:pr is:open mentions:@me archived:false'],
+  ['assigned', 'is:pr is:open assignee:@me archived:false'],
+] as const)('buildSearchQuery builds the %s preset', (kind, expected) => {
+  expect(buildSearchQuery(preset(kind), none)).toBe(expected);
+});
 
-  it('builds one team search with the repo filters', () => {
-    const settings = { repoInclude: ['acme'], repoExclude: ['acme/old'] };
-    expect(buildSearchQuery(preset('team_review_requested'), settings, 'acme/core')).toBe(
-      'is:pr is:open team-review-requested:acme/core archived:false user:acme -repo:acme/old',
-    );
-  });
-
-  it('adds repo: for owner/name and user: for a bare owner', () => {
-    const settings = { repoInclude: ['acme/api', 'octo'], repoExclude: [] };
-    expect(buildSearchQuery(preset('authored'), settings)).toBe(
-      'is:pr is:open author:@me archived:false repo:acme/api user:octo',
-    );
-  });
-
-  it('adds -repo: and -user: for exclusions', () => {
-    const settings = { repoInclude: [], repoExclude: ['acme/legacy', 'spam'] };
-    expect(buildSearchQuery(preset('mentioned'), settings)).toBe(
-      'is:pr is:open mentions:@me archived:false -repo:acme/legacy -user:spam',
-    );
-  });
-
-  it('combines include and exclude, include first', () => {
-    const settings = { repoInclude: ['acme'], repoExclude: ['acme/legacy'] };
-    expect(buildSearchQuery(preset('assigned'), settings)).toBe(
-      'is:pr is:open assignee:@me archived:false user:acme -repo:acme/legacy',
-    );
-  });
-
-  it('enforces is:pr on custom queries and keeps the rest as typed', () => {
-    expect(buildSearchQuery(custom('  author:@me label:bug  '), none)).toBe(
-      'is:pr author:@me label:bug',
-    );
-    expect(buildSearchQuery(custom('is:pr review:approved'), none)).toBe(
-      'is:pr is:pr review:approved',
-    );
-    expect(buildSearchQuery(custom('fix OR hotfix'), none)).toBe('is:pr fix OR hotfix');
-  });
-
-  it('applies repo filters to custom queries', () => {
-    const settings = { repoInclude: ['acme/api'], repoExclude: ['acme/legacy'] };
-    expect(buildSearchQuery(custom('label:bug'), settings)).toBe(
-      'is:pr label:bug repo:acme/api -repo:acme/legacy',
-    );
-  });
-
-  it.each(['repo:acme/web label:bug', 'label:bug org:acme', 'user:octo', '(REPO:acme/web)'])(
-    'lets the scope of the custom query %j win over the include list',
-    (query) => {
-      const settings = { repoInclude: ['other'], repoExclude: ['acme/legacy'] };
-      expect(buildSearchQuery(custom(query), settings)).toBe(`is:pr ${query} -repo:acme/legacy`);
-    },
+it('buildSearchQuery builds one team search with the repo filters', () => {
+  const settings = { repoInclude: ['acme'], repoExclude: ['acme/old'] };
+  expect(buildSearchQuery(preset('team_review_requested'), settings, 'acme/core')).toBe(
+    'is:pr is:open team-review-requested:acme/core archived:false user:acme -repo:acme/old',
   );
+});
 
-  it('does not take a negated scope or a lookalike for the query own scope', () => {
-    const settings = { repoInclude: ['other'], repoExclude: [] };
-    expect(buildSearchQuery(custom('-repo:acme/web'), settings)).toBe(
-      'is:pr -repo:acme/web user:other',
-    );
-    expect(buildSearchQuery(custom('label:myrepo:x'), settings)).toBe(
-      'is:pr label:myrepo:x user:other',
-    );
-  });
+it('buildSearchQuery adds repo: for owner/name and user: for a bare owner', () => {
+  const settings = { repoInclude: ['acme/api', 'octo'], repoExclude: [] };
+  expect(buildSearchQuery(preset('authored'), settings)).toBe(
+    'is:pr is:open author:@me archived:false repo:acme/api user:octo',
+  );
+});
 
-  it('returns only is:pr plus filters for a custom section without a query', () => {
-    expect(buildSearchQuery(custom(), none)).toBe('is:pr');
-    expect(buildSearchQuery(custom('   '), { repoInclude: ['acme'], repoExclude: [] })).toBe(
-      'is:pr user:acme',
-    );
-  });
+it('buildSearchQuery adds -repo: and -user: for exclusions', () => {
+  const settings = { repoInclude: [], repoExclude: ['acme/legacy', 'spam'] };
+  expect(buildSearchQuery(preset('mentioned'), settings)).toBe(
+    'is:pr is:open mentions:@me archived:false -repo:acme/legacy -user:spam',
+  );
+});
+
+it('buildSearchQuery combines include and exclude, include first', () => {
+  const settings = { repoInclude: ['acme'], repoExclude: ['acme/legacy'] };
+  expect(buildSearchQuery(preset('assigned'), settings)).toBe(
+    'is:pr is:open assignee:@me archived:false user:acme -repo:acme/legacy',
+  );
+});
+
+it('buildSearchQuery enforces is:pr on custom queries and keeps the rest as typed', () => {
+  expect(buildSearchQuery(custom('  author:@me label:bug  '), none)).toBe(
+    'is:pr author:@me label:bug',
+  );
+  expect(buildSearchQuery(custom('is:pr review:approved'), none)).toBe(
+    'is:pr is:pr review:approved',
+  );
+  expect(buildSearchQuery(custom('fix OR hotfix'), none)).toBe('is:pr fix OR hotfix');
+});
+
+it('buildSearchQuery applies repo filters to custom queries', () => {
+  const settings = { repoInclude: ['acme/api'], repoExclude: ['acme/legacy'] };
+  expect(buildSearchQuery(custom('label:bug'), settings)).toBe(
+    'is:pr label:bug repo:acme/api -repo:acme/legacy',
+  );
+});
+
+it.each(['repo:acme/web label:bug', 'label:bug org:acme', 'user:octo', '(REPO:acme/web)'])(
+  'buildSearchQuery lets the scope of the custom query %j win over the include list',
+  (query) => {
+    const settings = { repoInclude: ['other'], repoExclude: ['acme/legacy'] };
+    expect(buildSearchQuery(custom(query), settings)).toBe(`is:pr ${query} -repo:acme/legacy`);
+  },
+);
+
+it('buildSearchQuery does not take a negated scope or a lookalike for the query own scope', () => {
+  const settings = { repoInclude: ['other'], repoExclude: [] };
+  expect(buildSearchQuery(custom('-repo:acme/web'), settings)).toBe(
+    'is:pr -repo:acme/web user:other',
+  );
+  expect(buildSearchQuery(custom('label:myrepo:x'), settings)).toBe(
+    'is:pr label:myrepo:x user:other',
+  );
+});
+
+it('buildSearchQuery returns only is:pr plus filters for a custom section without a query', () => {
+  expect(buildSearchQuery(custom(), none)).toBe('is:pr');
+  expect(buildSearchQuery(custom('   '), { repoInclude: ['acme'], repoExclude: [] })).toBe(
+    'is:pr user:acme',
+  );
 });
 
 describe('filterByRepo', () => {

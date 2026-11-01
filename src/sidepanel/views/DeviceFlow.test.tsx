@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/preact';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { viewerNode } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { fakeChrome } from '../../test/chrome';
@@ -77,251 +77,247 @@ async function advance(ms: number) {
   });
 }
 
-describe('DeviceFlow', () => {
-  it('asks to be allowed on github.com, shows the code, opens GitHub and keeps the code on screen', async () => {
-    const request = vi.spyOn(chrome.permissions, 'request');
-    stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    render(<DeviceFlow />);
-    expect(screen.getByText(/Approve Prowl on github\.com with a one-time code/)).toBeTruthy();
+it('DeviceFlow asks to be allowed on github.com, shows the code, opens GitHub and keeps the code on screen', async () => {
+  const request = vi.spyOn(chrome.permissions, 'request');
+  stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  render(<DeviceFlow />);
+  expect(screen.getByText(/Approve Prowl on github\.com with a one-time code/)).toBeTruthy();
 
-    await act(async () => {
-      fireEvent.click(start());
-      // Still inside the click: the permission request has to have been made by now.
-      expect(request).toHaveBeenCalledWith({ origins: ['https://github.com/*'] });
-      await vi.advanceTimersByTimeAsync(0);
-    });
-
-    expect(screen.getByText('WDJB-MJHT')).toBeTruthy();
-    expect(screen.getByText('Enter this code on GitHub to finish signing in.')).toBeTruthy();
-    expect(screen.getByRole('status').textContent).toMatch(/Waiting for you to approve/);
-    expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/login/device' }]);
-    expect(document.activeElement).toBe(
-      screen.getByRole('region', { name: 'Authorize Prowl on GitHub' }),
-    );
-    expect(screen.queryByRole('button', { name: 'Continue with GitHub' })).toBeNull();
+  await act(async () => {
+    fireEvent.click(start());
+    // Still inside the click: the permission request has to have been made by now.
+    expect(request).toHaveBeenCalledWith({ origins: ['https://github.com/*'] });
+    await vi.advanceTimersByTimeAsync(0);
   });
 
-  it('counts down to the end of the code', async () => {
-    stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    render(<DeviceFlow />);
-    await begin();
-    expect(screen.getByRole('timer').textContent).toBe('Code expires in 15:00');
+  expect(screen.getByText('WDJB-MJHT')).toBeTruthy();
+  expect(screen.getByText('Enter this code on GitHub to finish signing in.')).toBeTruthy();
+  expect(screen.getByRole('status').textContent).toMatch(/Waiting for you to approve/);
+  expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/login/device' }]);
+  expect(document.activeElement).toBe(
+    screen.getByRole('region', { name: 'Authorize Prowl on GitHub' }),
+  );
+  expect(screen.queryByRole('button', { name: 'Continue with GitHub' })).toBeNull();
+});
 
-    await advance(2_000);
-    expect(screen.getByRole('timer').textContent).toBe('Code expires in 14:58');
+it('DeviceFlow counts down to the end of the code', async () => {
+  stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  render(<DeviceFlow />);
+  await begin();
+  expect(screen.getByRole('timer').textContent).toBe('Code expires in 15:00');
 
-    await advance(897_000);
-    expect(screen.getByRole('timer').textContent).toBe('Code expires in 0:01');
+  await advance(2_000);
+  expect(screen.getByRole('timer').textContent).toBe('Code expires in 14:58');
 
-    await advance(2_000);
-    expect(screen.getByRole('alert').textContent).toMatch(/The code expired/);
-    expect(screen.queryByRole('timer')).toBeNull();
+  await advance(897_000);
+  expect(screen.getByRole('timer').textContent).toBe('Code expires in 0:01');
+
+  await advance(2_000);
+  expect(screen.getByRole('alert').textContent).toMatch(/The code expired/);
+  expect(screen.queryByRole('timer')).toBeNull();
+});
+
+it('DeviceFlow opens the verification page again on request', async () => {
+  stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  render(<DeviceFlow />);
+  await begin();
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Open GitHub' }));
   });
 
-  it('opens the verification page again on request', async () => {
-    stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    render(<DeviceFlow />);
-    await begin();
+  expect(fakeChrome().__state.createdTabs).toHaveLength(2);
+});
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Open GitHub' }));
-    });
+it('DeviceFlow copies the code', async () => {
+  stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  const write = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+  render(<DeviceFlow />);
+  await begin();
 
-    expect(fakeChrome().__state.createdTabs).toHaveLength(2);
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code WDJB-MJHT' }));
   });
 
-  it('copies the code', async () => {
-    stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    const write = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
-    render(<DeviceFlow />);
-    await begin();
+  expect(write).toHaveBeenCalledWith('WDJB-MJHT');
+  expect(toasts.value.map((toast) => toast.message)).toEqual(['Code copied']);
+});
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy code WDJB-MJHT' }));
-    });
+it('DeviceFlow says so when the clipboard is not available', async () => {
+  stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+  render(<DeviceFlow />);
+  await begin();
 
-    expect(write).toHaveBeenCalledWith('WDJB-MJHT');
-    expect(toasts.value.map((toast) => toast.message)).toEqual(['Code copied']);
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code WDJB-MJHT' }));
   });
 
-  it('says so when the clipboard is not available', async () => {
-    stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
-    render(<DeviceFlow />);
-    await begin();
+  expect(toasts.value[0]).toMatchObject({ tone: 'danger' });
+  expect(toasts.value[0]?.message).toMatch(/Could not copy/);
+});
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy code WDJB-MJHT' }));
-    });
+it('DeviceFlow signs in once the user approves: stores an oauth account, polls and shows the list', async () => {
+  const fetch = stubGitHub({
+    polls: [{ error: 'authorization_pending' }, { access_token: TOKEN }],
+  });
+  const send = vi.spyOn(chrome.runtime, 'sendMessage');
+  location.hash = '#/onboarding';
+  render(<DeviceFlow />);
+  await begin();
 
-    expect(toasts.value[0]).toMatchObject({ tone: 'danger' });
-    expect(toasts.value[0]?.message).toMatch(/Could not copy/);
+  await advance(1_000);
+  expect(location.hash).toBe('#/onboarding');
+  await advance(1_000);
+
+  expect(location.hash).toBe('#/');
+  const { auth } = await chrome.storage.local.get('auth');
+  expect(auth).toMatchObject({
+    method: 'oauth',
+    token: TOKEN,
+    tokenType: 'oauth',
+    scopes: ['repo', 'read:org'],
+    viewer: viewerNode(),
+  });
+  expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+  expect(toasts.value).toEqual([]);
+  expect(urls(fetch).filter((url) => url.endsWith('/access_token'))).toHaveLength(2);
+});
+
+it('DeviceFlow signs in with a warning when GitHub granted less than the repo scope', async () => {
+  stubGitHub({ scopes: 'read:user' });
+  render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
+
+  expect(toasts.value[0]?.message).toMatch(/^Signed in as octocat\. This token has no repo scope/);
+  expect((await chrome.storage.local.get('auth')).auth).toBeDefined();
+});
+
+it('DeviceFlow explains why access to github.com is needed when it is not granted', async () => {
+  vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
+  const fetch = stubGitHub();
+  render(<DeviceFlow />);
+
+  await begin();
+
+  expect(screen.getByRole('alert').textContent).toMatch(
+    /needs access to github\.com to sign you in from the browser.*paste a token/,
+  );
+  expect(fetch).not.toHaveBeenCalled();
+  expect(start().getAttribute('aria-busy')).toBeNull();
+});
+
+it('DeviceFlow shows the denial, goes back to the start button and lets the user try again', async () => {
+  stubGitHub({ polls: [{ error: 'access_denied' }] });
+  render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
+
+  expect(screen.getByRole('alert').textContent).toMatch(/Access was denied on GitHub/);
+  expect(screen.queryByText('WDJB-MJHT')).toBeNull();
+  expect(document.activeElement).toBe(start());
+  expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
+
+  stubGitHub();
+  await begin();
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(screen.getByText('WDJB-MJHT')).toBeTruthy();
+});
+
+it('DeviceFlow reports an expired code and an unreachable GitHub', async () => {
+  stubGitHub({ polls: [{ error: 'expired_token' }] });
+  const { unmount } = render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
+  expect(screen.getByRole('alert').textContent).toMatch(/The code expired/);
+  unmount();
+
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+  render(<DeviceFlow />);
+  await begin();
+  expect(screen.getByRole('alert').textContent).toMatch(/Could not reach GitHub/);
+});
+
+it('DeviceFlow shows why the token was refused when GitHub rejects what it just issued', async () => {
+  stubGitHub({ account: jsonResponse({ message: 'Bad credentials' }, { status: 401 }) });
+  render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
+
+  expect(screen.getByRole('alert').textContent).toMatch(/GitHub rejected this token/);
+  expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
+});
+
+it('DeviceFlow cancels: back to the start button, no more polling', async () => {
+  const fetch = stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
+  const polled = urls(fetch).length;
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   });
 
-  it('signs in once the user approves: stores an oauth account, polls and shows the list', async () => {
-    const fetch = stubGitHub({
-      polls: [{ error: 'authorization_pending' }, { access_token: TOKEN }],
-    });
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    location.hash = '#/onboarding';
-    render(<DeviceFlow />);
-    await begin();
+  expect(screen.queryByText('WDJB-MJHT')).toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(document.activeElement).toBe(start());
+  await advance(10_000);
+  expect(urls(fetch)).toHaveLength(polled);
+});
 
-    await advance(1_000);
-    expect(location.hash).toBe('#/onboarding');
-    await advance(1_000);
+it('DeviceFlow does not sign in when cancelled while GitHub checks the token', async () => {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const fetch = stubGitHub();
+  fetch.mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.endsWith('/login/device/code')) return jsonResponse(DEVICE_CODE_BODY);
+    if (url.endsWith('/login/oauth/access_token')) return jsonResponse({ access_token: TOKEN });
+    await gate;
+    return url.endsWith('/graphql')
+      ? jsonResponse({ data: { viewer: viewerNode() } })
+      : jsonResponse({}, { headers: { 'x-oauth-scopes': 'repo' } });
+  });
+  render(<DeviceFlow />);
+  await begin();
+  await advance(1_000);
 
-    expect(location.hash).toBe('#/');
-    const { auth } = await chrome.storage.local.get('auth');
-    expect(auth).toMatchObject({
-      method: 'oauth',
-      token: TOKEN,
-      tokenType: 'oauth',
-      scopes: ['repo', 'read:org'],
-      viewer: viewerNode(),
-    });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
-    expect(toasts.value).toEqual([]);
-    expect(urls(fetch).filter((url) => url.endsWith('/access_token'))).toHaveLength(2);
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    release();
+  });
+  await advance(0);
+
+  expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
+  expect(location.hash).not.toBe('#/');
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+it('DeviceFlow stops when the view goes away', async () => {
+  const fetch = stubGitHub({ polls: [{ error: 'authorization_pending' }] });
+  const { unmount } = render(<DeviceFlow />);
+  await begin();
+  const requests = urls(fetch).length;
+
+  unmount();
+  await advance(10_000);
+
+  expect(urls(fetch)).toHaveLength(requests);
+});
+
+it('DeviceFlow ignores a second click while the first is starting', async () => {
+  const request = vi.spyOn(chrome.permissions, 'request');
+  stubGitHub();
+  render(<DeviceFlow />);
+
+  await act(async () => {
+    fireEvent.click(start());
+    fireEvent.click(start());
   });
 
-  it('signs in with a warning when GitHub granted less than the repo scope', async () => {
-    stubGitHub({ scopes: 'read:user' });
-    render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-
-    expect(toasts.value[0]?.message).toMatch(
-      /^Signed in as octocat\. This token has no repo scope/,
-    );
-    expect((await chrome.storage.local.get('auth')).auth).toBeDefined();
-  });
-
-  it('explains why access to github.com is needed when it is not granted', async () => {
-    vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
-    const fetch = stubGitHub();
-    render(<DeviceFlow />);
-
-    await begin();
-
-    expect(screen.getByRole('alert').textContent).toMatch(
-      /needs access to github\.com to sign you in from the browser.*paste a token/,
-    );
-    expect(fetch).not.toHaveBeenCalled();
-    expect(start().getAttribute('aria-busy')).toBeNull();
-  });
-
-  it('shows the denial, goes back to the start button and lets the user try again', async () => {
-    stubGitHub({ polls: [{ error: 'access_denied' }] });
-    render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-
-    expect(screen.getByRole('alert').textContent).toMatch(/Access was denied on GitHub/);
-    expect(screen.queryByText('WDJB-MJHT')).toBeNull();
-    expect(document.activeElement).toBe(start());
-    expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
-
-    stubGitHub();
-    await begin();
-    expect(screen.queryByRole('alert')).toBeNull();
-    expect(screen.getByText('WDJB-MJHT')).toBeTruthy();
-  });
-
-  it('reports an expired code and an unreachable GitHub', async () => {
-    stubGitHub({ polls: [{ error: 'expired_token' }] });
-    const { unmount } = render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-    expect(screen.getByRole('alert').textContent).toMatch(/The code expired/);
-    unmount();
-
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
-    render(<DeviceFlow />);
-    await begin();
-    expect(screen.getByRole('alert').textContent).toMatch(/Could not reach GitHub/);
-  });
-
-  it('shows why the token was refused when GitHub rejects what it just issued', async () => {
-    stubGitHub({ account: jsonResponse({ message: 'Bad credentials' }, { status: 401 }) });
-    render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-
-    expect(screen.getByRole('alert').textContent).toMatch(/GitHub rejected this token/);
-    expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
-  });
-
-  it('cancels: back to the start button, no more polling', async () => {
-    const fetch = stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-    const polled = urls(fetch).length;
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    });
-
-    expect(screen.queryByText('WDJB-MJHT')).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
-    expect(document.activeElement).toBe(start());
-    await advance(10_000);
-    expect(urls(fetch)).toHaveLength(polled);
-  });
-
-  it('does not sign in when cancelled while GitHub checks the token', async () => {
-    let release: () => void = () => undefined;
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const fetch = stubGitHub();
-    fetch.mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.endsWith('/login/device/code')) return jsonResponse(DEVICE_CODE_BODY);
-      if (url.endsWith('/login/oauth/access_token')) return jsonResponse({ access_token: TOKEN });
-      await gate;
-      return url.endsWith('/graphql')
-        ? jsonResponse({ data: { viewer: viewerNode() } })
-        : jsonResponse({}, { headers: { 'x-oauth-scopes': 'repo' } });
-    });
-    render(<DeviceFlow />);
-    await begin();
-    await advance(1_000);
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-      release();
-    });
-    await advance(0);
-
-    expect((await chrome.storage.local.get('auth')).auth).toBeUndefined();
-    expect(location.hash).not.toBe('#/');
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
-
-  it('stops when the view goes away', async () => {
-    const fetch = stubGitHub({ polls: [{ error: 'authorization_pending' }] });
-    const { unmount } = render(<DeviceFlow />);
-    await begin();
-    const requests = urls(fetch).length;
-
-    unmount();
-    await advance(10_000);
-
-    expect(urls(fetch)).toHaveLength(requests);
-  });
-
-  it('ignores a second click while the first is starting', async () => {
-    const request = vi.spyOn(chrome.permissions, 'request');
-    stubGitHub();
-    render(<DeviceFlow />);
-
-    await act(async () => {
-      fireEvent.click(start());
-      fireEvent.click(start());
-    });
-
-    expect(request).toHaveBeenCalledTimes(1);
-  });
+  expect(request).toHaveBeenCalledTimes(1);
 });

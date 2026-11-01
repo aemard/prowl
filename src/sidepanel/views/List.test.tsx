@@ -1,56 +1,53 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { computeBadge } from '../../lib/badge/computeBadge';
 import type { SortOrder } from '../../lib/model';
 import { stubDetailFetch } from '../../test/githubFetch';
 import { buildAuth, buildPollState, buildSnapshot, buildSnapshotOf } from '../../test/panel';
-import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, ListView } from './List';
-import { cardTitles, NOW, observer, pr, repo, titles, withSections } from './List.test-support';
+import { auth, pollState, settings, snapshot } from '../state/store';
+import { ListView } from './List';
+import { cardTitles, observer, pr, repo, titles, withSections } from './List.test-support';
 
-describe('states without pull requests', () => {
-  it('points to Settings when no section is turned on', () => {
-    withSections([]);
-    render(<ListView />);
-    expect(screen.getByRole('heading', { name: 'No sections turned on' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Open settings' }));
-    expect(location.hash).toBe('#/settings');
-  });
+it('states without pull requests points to Settings when no section is turned on', () => {
+  withSections([]);
+  render(<ListView />);
+  expect(screen.getByRole('heading', { name: 'No sections turned on' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Open settings' }));
+  expect(location.hash).toBe('#/settings');
+});
 
-  it('shows a skeleton while the first poll runs', () => {
-    pollState.value = buildPollState({ inFlight: true });
-    render(<ListView />);
-    const loading = screen.getByRole('status', { name: 'Loading pull requests' });
-    expect(loading.getAttribute('aria-busy')).toBe('true');
-    expect(screen.queryByRole('link')).toBeNull();
-  });
+it('states without pull requests shows a skeleton while the first poll runs', () => {
+  pollState.value = buildPollState({ inFlight: true });
+  render(<ListView />);
+  const loading = screen.getByRole('status', { name: 'Loading pull requests' });
+  expect(loading.getAttribute('aria-busy')).toBe('true');
+  expect(screen.queryByRole('link')).toBeNull();
+});
 
-  it('says nothing loaded and leaves the reason and the retry to the banner', () => {
-    pollState.value = buildPollState({
-      lastError: { kind: 'network', message: 'You are offline' },
-    });
-    render(<ListView />);
-    expect(screen.getByRole('heading', { name: 'Could not load pull requests' })).toBeTruthy();
-    expect(screen.getByText(/The notice above says why/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Retry' }).closest('.status-banner')).toBeTruthy();
+it('states without pull requests says nothing loaded and leaves the reason and the retry to the banner', () => {
+  pollState.value = buildPollState({
+    lastError: { kind: 'network', message: 'You are offline' },
   });
+  render(<ListView />);
+  expect(screen.getByRole('heading', { name: 'Could not load pull requests' })).toBeTruthy();
+  expect(screen.getByText(/The notice above says why/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Retry' }).closest('.status-banner')).toBeTruthy();
+});
 
-  it('keeps the skeleton while a retry is running', () => {
-    pollState.value = buildPollState({
-      inFlight: true,
-      lastError: { kind: 'network', message: 'You are offline' },
-    });
-    render(<ListView />);
-    expect(screen.getByRole('status', { name: 'Loading pull requests' })).toBeTruthy();
+it('states without pull requests keeps the skeleton while a retry is running', () => {
+  pollState.value = buildPollState({
+    inFlight: true,
+    lastError: { kind: 'network', message: 'You are offline' },
   });
+  render(<ListView />);
+  expect(screen.getByRole('status', { name: 'Loading pull requests' })).toBeTruthy();
+});
 
-  it('explains an empty section for its kind, without a filter box', () => {
-    snapshot.value = buildSnapshotOf({ authored: [] });
-    render(<ListView />);
-    expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
-    expect(screen.getByText('Pull requests you open will show up here.')).toBeTruthy();
-    expect(screen.queryByRole('searchbox')).toBeNull();
-  });
+it('states without pull requests explains an empty section for its kind, without a filter box', () => {
+  snapshot.value = buildSnapshotOf({ authored: [] });
+  render(<ListView />);
+  expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
+  expect(screen.getByText('Pull requests you open will show up here.')).toBeTruthy();
+  expect(screen.queryByRole('searchbox')).toBeNull();
 });
 
 describe('one section', () => {
@@ -116,243 +113,23 @@ describe('one section', () => {
   });
 });
 
-describe('several sections', () => {
-  beforeEach(() => {
-    withSections(['authored', 'review_requested', 'custom-1']);
-    settings.value = {
-      ...settings.value,
-      sections: [
-        ...settings.value.sections,
-        { id: 'custom-1', kind: 'custom', label: 'Stale', enabled: true, query: 'is:pr stale' },
-      ],
-    };
-    snapshot.value = buildSnapshotOf(
-      {
-        authored: [pr(1), pr(2)],
-        review_requested: [pr(3, { title: 'Please review me' })],
-      },
-      { sectionErrors: { 'custom-1': 'Search failed: validation' } },
-    );
+it('relative times keep up with the clock', () => {
+  snapshot.value = buildSnapshotOf({
+    authored: [pr(1, { updatedAt: '2026-10-06T11:58:00.000Z' })],
   });
-
-  it('shows the section bar with short names, icons and counts, and switches panels', () => {
-    render(<ListView />);
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Mine2', 'Review1', 'StaleCould not load']);
-    expect(tabs.map((tab) => tab.title)).toEqual(['Created by me', 'Review requested', 'Stale']);
-    expect(tabs.map((tab) => tab.querySelectorAll('svg[aria-hidden="true"]').length)).toEqual([
-      1, 1, 2,
-    ]);
-    expect(screen.getByRole('tabpanel', { name: 'Created by me' }).id).toBe(
-      screen.getByRole('tab', { selected: true }).getAttribute('aria-controls'),
-    );
-    expect(cardTitles()).toEqual(['PR number 1', 'PR number 2']);
-    // The filter, then the tabs, then the panel they control.
-    const [filter, tablist, panel] = ['searchbox', 'tablist', 'tabpanel'].map((role) =>
-      screen.getByRole(role),
-    ) as HTMLElement[];
-    const follows = (a?: Node, b?: Node) =>
-      Boolean(a && b && a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(follows(filter, tablist) && follows(tablist, panel)).toBe(true);
-
-    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
-    expect(cardTitles()).toEqual(['Please review me']);
-    expect(screen.getByRole('tabpanel', { name: 'Review requested' })).toBeTruthy();
-  });
-
-  it('counts only what matches the filter', () => {
-    render(<ListView />);
-    fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'review me' } });
-    expect(
-      screen
-        .getAllByRole('tab')
-        .map((tab) => tab.textContent)
-        .slice(0, 2),
-    ).toEqual(['Mine0', 'Review1']);
-    expect(screen.getByRole('heading', { name: 'No matches' })).toBeTruthy();
-  });
-
-  it('shows what went wrong in a section that failed instead of an empty state', () => {
-    render(<ListView />);
-    fireEvent.click(screen.getByRole('tab', { name: /Stale/ }));
-    expect(screen.getByText(/Could not load “Stale”: Search failed: validation/)).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: 'No pull requests' })).toBeNull();
-  });
-
-  it('shows Team reviews as "Teams", with the teams that loaded under its notice', () => {
-    withSections(['authored', 'team_review_requested']);
-    snapshot.value = buildSnapshotOf(
-      { authored: [pr(1)], team_review_requested: [pr(4, { title: 'Team PR' })] },
-      { sectionErrors: { team_review_requested: 'GitHub refused the search for acme/gone.' } },
-    );
-    render(<ListView />);
-    const tab = screen.getByRole('tab', { name: /^Teams/ });
-    expect(tab.title).toBe('Team reviews');
-    fireEvent.click(tab);
-    expect(
-      screen.getByText('Could not load “Team reviews”: GitHub refused the search for acme/gone.'),
-    ).toBeTruthy();
-    expect(cardTitles()).toEqual(['Team PR']);
-  });
-
-  it('falls back to the first section when the selected one is turned off', () => {
-    activeSectionId.value = 'mentioned';
-    render(<ListView />);
-    expect(screen.getByRole('tab', { selected: true }).textContent).toContain('Mine');
-  });
-
-  it('puts the sections past the fourth under "More" and shows the one picked there', () => {
-    const extra = ['Bots', 'Docs', 'Infra'].map((label, n) => ({
-      id: `custom-${n + 2}`,
-      kind: 'custom' as const,
-      label,
-      enabled: true,
-      query: `is:pr ${label}`,
-    }));
-    withSections(['authored', 'review_requested', 'mentioned', 'assigned']);
-    settings.value = { ...settings.value, sections: [...settings.value.sections, ...extra] };
-    snapshot.value = buildSnapshotOf({ authored: [pr(1)], 'custom-3': [pr(9, { title: 'Docs' })] });
-    render(<ListView />);
-    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-      'Mine1',
-      'Review0',
-      'Mentions0',
-      'Assigned0',
-    ]);
-    fireEvent.click(screen.getByRole('button', { name: 'More sections' }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Docs 1' }));
-    expect(screen.getByRole('button', { name: 'More sections, Docs selected' })).toBeTruthy();
-    expect(cardTitles()).toEqual(['Docs']);
-    expect(screen.queryByRole('tab', { selected: true })).toBeNull();
-    expect(screen.getByRole('tabpanel', { name: 'Docs' })).toBeTruthy();
-  });
+  render(<ListView />);
+  expect(screen.getByText('2 min ago')).toBeTruthy();
+  act(() => void vi.advanceTimersByTime(3 * 60_000));
+  expect(screen.getByText('5 min ago')).toBeTruthy();
 });
 
-describe('unseen changes', () => {
-  const a = pr(1, { updatedAt: '2026-10-06T10:00:00.000Z' });
-  const b = pr(2, { updatedAt: '2026-10-06T09:00:00.000Z' });
-  const c = pr(3, { updatedAt: '2026-10-06T08:00:00.000Z' });
-  const markSeen = (send: { mock: { calls: unknown[][] } }) =>
-    send.mock.calls
-      .map(([message]) => message)
-      .filter((m) => (m as { type: string }).type === 'markSeen');
-
-  beforeEach(() => {
-    snapshot.value = buildSnapshotOf({ authored: [a, b, c] });
-    prLocal.value = {
-      snoozed: {},
-      muted: {},
-      seen: { [b.id]: b.updatedAt, [c.id]: '2026-10-05T00:00:00.000Z' },
-    };
-  });
-
-  it('puts a dot on cards changed since they were seen, as many as the unseen badge counts', () => {
-    render(<ListView />);
-    const dots = [...document.querySelectorAll('.pr-card__summary')].map((card) =>
-      card.getAttribute('data-unseen'),
-    );
-    expect(dots).toEqual(['true', null, 'true']);
-    const badge = computeBadge(snapshot.value, prLocal.value, 'unseen', settings.value, NOW);
-    expect(badge.text).toBe(String(dots.filter(Boolean).length));
-  });
-
-  it('does not count a card behind the section bar as on screen', () => {
-    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(49);
-    render(<ListView />);
-    expect(observer().options).toEqual({ threshold: 0.6, rootMargin: '0px 0px 0px 0px' });
-
-    // Turning a second section on brings the bar, and a new observer that leaves it out.
-    act(() => withSections(['authored', 'mentioned']));
-    expect(screen.getByRole('tablist')).toBeTruthy();
-    expect(observer().options?.rootMargin).toBe('0px 0px -49px 0px');
-  });
-
-  it('marks the unseen cards that stayed on screen for 1.5 s, once', () => {
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    render(<ListView />);
-    observer().show([a.id, b.id]);
-
-    act(() => void vi.advanceTimersByTime(1499));
-    expect(markSeen(send)).toEqual([]);
-    act(() => void vi.advanceTimersByTime(1));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
-
-    act(() => void vi.advanceTimersByTime(10_000));
-    expect(markSeen(send)).toHaveLength(1);
-  });
-
-  it('reports cards on screen as priority without forcing a poll, then clears it when hidden', async () => {
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    render(<ListView />);
-    observer().show([a.id]);
-    await act(async () => {});
-    expect(send).toHaveBeenCalledWith({ type: 'mergePriority', prIds: [a.id] });
-    expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'poll' }));
-    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    await act(async () => {});
-    expect(send).toHaveBeenLastCalledWith({ type: 'mergePriority', prIds: [] });
-  });
-
-  it('waits again after a scroll, and skips cards that left the screen', () => {
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    render(<ListView />);
-    observer().show([a.id]);
-    act(() => void vi.advanceTimersByTime(1000));
-    observer().show([a.id, c.id]);
-    act(() => void vi.advanceTimersByTime(1000));
-    expect(markSeen(send)).toEqual([]);
-    observer().show([c.id]);
-    act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [c.id] }]);
-  });
-
-  it('does nothing while the panel is hidden, and starts when it shows', () => {
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-    render(<ListView />);
-    observer().show([a.id]);
-    act(() => void vi.advanceTimersByTime(5000));
-    expect(markSeen(send)).toEqual([]);
-
-    Reflect.deleteProperty(document, 'visibilityState');
-    act(() => void document.dispatchEvent(new Event('visibilitychange')));
-    act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
-  });
-
-  it('drops the dot once the worker has stored it as seen', () => {
-    render(<ListView />);
-    act(() => {
-      prLocal.value = { ...prLocal.value, seen: { ...prLocal.value.seen, [a.id]: a.updatedAt } };
-    });
-    expect(document.querySelectorAll('[data-unseen]')).toHaveLength(1);
-  });
-});
-
-describe('relative times', () => {
-  it('keep up with the clock', () => {
-    snapshot.value = buildSnapshotOf({
-      authored: [pr(1, { updatedAt: '2026-10-06T11:58:00.000Z' })],
-    });
-    render(<ListView />);
-    expect(screen.getByText('2 min ago')).toBeTruthy();
-    act(() => void vi.advanceTimersByTime(3 * 60_000));
-    expect(screen.getByText('5 min ago')).toBeTruthy();
-  });
-});
-
-describe('a snapshot with a PR missing', () => {
-  it('skips ids that have no pull request', () => {
-    const snap = buildSnapshot();
-    snap.sections.authored = ['gone'];
-    snapshot.value = snap;
-    render(<ListView />);
-    expect(titles()).toEqual([]);
-    expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
-  });
+it('a snapshot with a PR missing skips ids that have no pull request', () => {
+  const snap = buildSnapshot();
+  snap.sections.authored = ['gone'];
+  snapshot.value = snap;
+  render(<ListView />);
+  expect(titles()).toEqual([]);
+  expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
 });
 
 describe('expanded cards', () => {

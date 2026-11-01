@@ -98,25 +98,6 @@
           }
         }
       }
-    },
-    {
-      "includes": ["**/*.test.{ts,tsx,mjs}", "tests/e2e/**/*.spec.ts"],
-      "linter": {
-        "rules": {
-          "complexity": {
-            "noExcessiveLinesPerFunction": "off"
-          },
-          "style": {
-            "noExcessiveLinesPerFile": {
-              "level": "error",
-              "options": {
-                "maxLines": 600,
-                "skipBlankLines": true
-              }
-            }
-          }
-        }
-      }
     }
   ],
   "assist": {

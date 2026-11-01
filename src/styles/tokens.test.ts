@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 
 const root = resolve(import.meta.dirname, '../..');
 const tokenFiles = ['tokens.base.css', 'tokens.css'];
@@ -130,86 +130,84 @@ function contrastTable(): string {
   return lines.join('\n');
 }
 
-describe('design tokens', () => {
-  it('keeps brand text readable on the mint logo background', () => {
-    expect(ratio(light, 'brand-ink', 'brand-mint')).toBeGreaterThanOrEqual(4.5);
-  });
+it('design tokens keeps brand text readable on the mint logo background', () => {
+  expect(ratio(light, 'brand-ink', 'brand-mint')).toBeGreaterThanOrEqual(4.5);
+});
 
-  it('parses the shared, light and both dark blocks', () => {
-    expect(shared.get('--space-1')).toBe('4px');
-    expect(light.get('--color-bg')).toBe('var(--gray-1)');
-    expect(darkSystem.size).toBeGreaterThan(50);
-  });
+it('design tokens parses the shared, light and both dark blocks', () => {
+  expect(shared.get('--space-1')).toBe('4px');
+  expect(light.get('--color-bg')).toBe('var(--gray-1)');
+  expect(darkSystem.size).toBeGreaterThan(50);
+});
 
-  it('keeps the system-dark and forced-dark blocks identical', () => {
-    expect([...darkForced]).toEqual([...darkSystem]);
-  });
+it('design tokens keeps the system-dark and forced-dark blocks identical', () => {
+  expect([...darkForced]).toEqual([...darkSystem]);
+});
 
-  it('redefines every themed token in dark', () => {
-    expect([...lightOwn.keys()].filter((k) => !darkSystem.has(k))).toEqual([]);
-  });
+it('design tokens redefines every themed token in dark', () => {
+  expect([...lightOwn.keys()].filter((k) => !darkSystem.has(k))).toEqual([]);
+});
 
-  it('collapses transition durations under prefers-reduced-motion', () => {
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*:root\s*\{/);
-    expect(reducedMotion?.get('--duration-fast')).toBe('0ms');
-    expect(reducedMotion?.get('--duration-normal')).toBe('0ms');
-  });
+it('design tokens collapses transition durations under prefers-reduced-motion', () => {
+  expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*:root\s*\{/);
+  expect(reducedMotion?.get('--duration-fast')).toBe('0ms');
+  expect(reducedMotion?.get('--duration-normal')).toBe('0ms');
+});
 
-  for (const [theme, tokens] of [
-    ['light', light],
-    ['dark', dark],
-  ] as const) {
-    it(`meets WCAG AA for text in ${theme}`, () => {
-      const failures: string[] = [];
-      for (const row of TEXT_ROWS) {
-        for (const bg of [...SURFACES, tintOf(row)]) {
-          const r = ratio(tokens, row, bg);
-          if (r < 4.5) failures.push(`${row} on ${bg}: ${fmt(r)}`);
-        }
+for (const [theme, tokens] of [
+  ['light', light],
+  ['dark', dark],
+] as const) {
+  it(`design tokens meets WCAG AA for text in ${theme}`, () => {
+    const failures: string[] = [];
+    for (const row of TEXT_ROWS) {
+      for (const bg of [...SURFACES, tintOf(row)]) {
+        const r = ratio(tokens, row, bg);
+        if (r < 4.5) failures.push(`${row} on ${bg}: ${fmt(r)}`);
       }
-      for (const solid of SOLIDS) {
-        const r = ratio(tokens, onSolid(solid), solid);
-        if (r < 4.5) failures.push(`${onSolid(solid)} on ${solid}: ${fmt(r)}`);
-      }
-      expect(failures).toEqual([]);
-    });
-
-    it(`meets 3:1 for UI components and graphics in ${theme}`, () => {
-      const failures = UI_PAIRS.filter(([fg, bg]) => ratio(tokens, fg, bg) < 3).map(
-        ([fg, bg]) => `${fg} on ${bg}: ${fmt(ratio(tokens, fg, bg))}`,
-      );
-      expect(failures).toEqual([]);
-    });
-  }
-
-  it('documents the current contrast table in docs/design.md', () => {
-    const doc = readFileSync(resolve(root, 'docs/design.md'), 'utf8');
-    const current = /<!-- contrast:start -->\n([\s\S]*?)\n<!-- contrast:end -->/.exec(doc)?.[1];
-    // On failure, paste the expected table between the markers in docs/design.md.
-    expect(current).toBe(contrastTable());
-  });
-
-  it('keeps raw colors out of every stylesheet except the design tokens', () => {
-    const offenders: string[] = [];
-    const walk = (dir: string): string[] =>
-      readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
-        entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
-      );
-    for (const file of walk(resolve(root, 'src'))) {
-      if (
-        !file.endsWith('.css') ||
-        tokenFiles.some((name) => file === resolve(root, 'src/styles', name))
-      )
-        continue;
-      const source = readFileSync(file, 'utf8');
-      if (/:[^;{}]*(#[0-9a-f]{3,8}\b|rgba?\(|hsla?\()/i.test(source)) offenders.push(file);
     }
-    expect(offenders).toEqual([]);
+    for (const solid of SOLIDS) {
+      const r = ratio(tokens, onSolid(solid), solid);
+      if (r < 4.5) failures.push(`${onSolid(solid)} on ${solid}: ${fmt(r)}`);
+    }
+    expect(failures).toEqual([]);
   });
 
-  it('computes contrast like WCAG', () => {
-    expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 5);
-    expect(contrast('#777777', '#ffffff')).toBeCloseTo(4.48, 2);
-    expect(() => resolveColor(light, '--color-backdrop')).toThrow(/not a hex color/);
+  it(`design tokens meets 3:1 for UI components and graphics in ${theme}`, () => {
+    const failures = UI_PAIRS.filter(([fg, bg]) => ratio(tokens, fg, bg) < 3).map(
+      ([fg, bg]) => `${fg} on ${bg}: ${fmt(ratio(tokens, fg, bg))}`,
+    );
+    expect(failures).toEqual([]);
   });
+}
+
+it('design tokens documents the current contrast table in docs/design.md', () => {
+  const doc = readFileSync(resolve(root, 'docs/design.md'), 'utf8');
+  const current = /<!-- contrast:start -->\n([\s\S]*?)\n<!-- contrast:end -->/.exec(doc)?.[1];
+  // On failure, paste the expected table between the markers in docs/design.md.
+  expect(current).toBe(contrastTable());
+});
+
+it('design tokens keeps raw colors out of every stylesheet except the design tokens', () => {
+  const offenders: string[] = [];
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+      entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
+    );
+  for (const file of walk(resolve(root, 'src'))) {
+    if (
+      !file.endsWith('.css') ||
+      tokenFiles.some((name) => file === resolve(root, 'src/styles', name))
+    )
+      continue;
+    const source = readFileSync(file, 'utf8');
+    if (/:[^;{}]*(#[0-9a-f]{3,8}\b|rgba?\(|hsla?\()/i.test(source)) offenders.push(file);
+  }
+  expect(offenders).toEqual([]);
+});
+
+it('design tokens computes contrast like WCAG', () => {
+  expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 5);
+  expect(contrast('#777777', '#ffffff')).toBeCloseTo(4.48, 2);
+  expect(() => resolveColor(light, '--color-backdrop')).toThrow(/not a hex color/);
 });

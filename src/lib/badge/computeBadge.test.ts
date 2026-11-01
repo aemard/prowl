@@ -31,116 +31,110 @@ function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) =>
 const badge = (prs: PullRequest[], mode: BadgeMode = 'attention', local = emptyPrLocal()) =>
   computeBadge(snapshot(prs), local, mode, DEFAULT_SETTINGS, NOW);
 
-describe('computeBadge: attention', () => {
-  it('counts failing CI, requested changes, conflicts and ready to merge, not quiet PRs', () => {
-    const view = badge([failing(1), changes(2), conflicting(3), ready(4), quiet(5)]);
-    expect(view).toEqual({
-      text: '4',
-      title:
-        'Prowl: 4 pull requests needing attention (1 CI failing, 1 changes requested, 1 conflicts, 1 ready to merge)',
-      danger: true,
-    });
+it('computeBadge: attention counts failing CI, requested changes, conflicts and ready to merge, not quiet PRs', () => {
+  const view = badge([failing(1), changes(2), conflicting(3), ready(4), quiet(5)]);
+  expect(view).toEqual({
+    text: '4',
+    title:
+      'Prowl: 4 pull requests needing attention (1 CI failing, 1 changes requested, 1 conflicts, 1 ready to merge)',
+    danger: true,
   });
+});
 
-  it('counts a PR once however many reasons it has, and lists each reason', () => {
-    const both = quiet(1, {
-      commits: headCommit({ FAILURE: 1 }),
-      reviewDecision: 'CHANGES_REQUESTED',
-    });
-    expect(badge([both, ready(2)])).toMatchObject({
-      text: '2',
-      title:
-        'Prowl: 2 pull requests needing attention (1 CI failing, 1 changes requested, 1 ready to merge)',
-    });
+it('computeBadge: attention counts a PR once however many reasons it has, and lists each reason', () => {
+  const both = quiet(1, {
+    commits: headCommit({ FAILURE: 1 }),
+    reviewDecision: 'CHANGES_REQUESTED',
   });
-
-  it('is accent, not danger, unless CI fails or changes are requested', () => {
-    expect(badge([conflicting(1), ready(2)])).toMatchObject({ text: '2', danger: false });
-    expect(badge([changes(1), ready(2)]).danger).toBe(true);
-    expect(badge([failing(1)]).danger).toBe(true);
+  expect(badge([both, ready(2)])).toMatchObject({
+    text: '2',
+    title:
+      'Prowl: 2 pull requests needing attention (1 CI failing, 1 changes requested, 1 ready to merge)',
   });
+});
 
-  it('says "1 pull request" in the singular', () => {
-    expect(badge([ready(1)]).title).toBe(
-      'Prowl: 1 pull request needing attention (1 ready to merge)',
-    );
+it('computeBadge: attention is accent, not danger, unless CI fails or changes are requested', () => {
+  expect(badge([conflicting(1), ready(2)])).toMatchObject({ text: '2', danger: false });
+  expect(badge([changes(1), ready(2)]).danger).toBe(true);
+  expect(badge([failing(1)]).danger).toBe(true);
+});
+
+it('computeBadge: attention says "1 pull request" in the singular', () => {
+  expect(badge([ready(1)]).title).toBe(
+    'Prowl: 1 pull request needing attention (1 ready to merge)',
+  );
+});
+
+it('computeBadge: attention shows nothing when nothing needs attention', () => {
+  expect(badge([quiet(1), quiet(2)])).toEqual(NO_BADGE);
+  expect(badge([])).toEqual({ text: '', title: BADGE_TITLE, danger: false });
+});
+
+it('computeBadge: attention ignores merged and closed PRs even when a section holds them', () => {
+  const merged = quiet(1, { state: 'MERGED', commits: headCommit({ FAILURE: 1 }) });
+  expect(badge([merged, quiet(2, { state: 'CLOSED', mergeable: 'CONFLICTING' })])).toEqual(
+    NO_BADGE,
+  );
+});
+
+it('computeBadge: attention counts only PRs that are in a section, and each one once', () => {
+  const [a, b, c] = [failing(1), failing(2), failing(3)] as [PullRequest, PullRequest, PullRequest];
+  const sections = { authored: [a.id, b.id], assigned: [b.id], custom: ['PR_gone'] };
+  const view = computeBadge(
+    snapshot([a, b, c], sections),
+    emptyPrLocal(),
+    'attention',
+    DEFAULT_SETTINGS,
+    NOW,
+  );
+  expect(view.text).toBe('2');
+});
+
+it('computeBadge: attention excludes snoozed PRs until the snooze ends, but not muted ones', () => {
+  const [a, b] = [failing(1), failing(2)] as [PullRequest, PullRequest];
+  let local: PrLocalState = snooze(emptyPrLocal(), a.id, NOW + HOUR);
+  local = mute(local, b.id);
+  expect(badge([a, b], 'attention', local).text).toBe('1');
+  expect(
+    computeBadge(snapshot([a, b]), local, 'attention', DEFAULT_SETTINGS, NOW + 2 * HOUR).text,
+  ).toBe('2');
+});
+
+it('computeBadge: attention leaves out PRs the list hides, under the same setting', () => {
+  const stale = quiet(1, { commits: headCommit({ FAILURE: 1 }, {}, '2026-09-10T12:00:00Z') });
+  const [old, recent] = [stale, failing(2)] as [PullRequest, PullRequest];
+  expect(badge([old, recent])).toMatchObject({
+    text: '1',
+    title: 'Prowl: 1 pull request needing attention (1 CI failing)',
   });
+  expect(badge([old], 'unseen')).toEqual(NO_BADGE);
+  const never = { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 };
+  expect(computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', never, NOW).text).toBe(
+    '2',
+  );
+});
 
-  it('shows nothing when nothing needs attention', () => {
-    expect(badge([quiet(1), quiet(2)])).toEqual(NO_BADGE);
-    expect(badge([])).toEqual({ text: '', title: BADGE_TITLE, danger: false });
+it('computeBadge: attention leaves out drafts and bots when the list does, and counts them otherwise', () => {
+  const draft = quiet(1, { isDraft: true, commits: headCommit({ FAILURE: 1 }) });
+  const bot = quiet(2, {
+    author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
+    commits: headCommit({ FAILURE: 1 }),
   });
+  const prs = [draft, bot, failing(3)];
+  const count = (hide: Partial<typeof DEFAULT_SETTINGS>, mode: BadgeMode = 'attention') =>
+    computeBadge(snapshot(prs), emptyPrLocal(), mode, { ...DEFAULT_SETTINGS, ...hide }, NOW).text;
 
-  it('ignores merged and closed PRs even when a section holds them', () => {
-    const merged = quiet(1, { state: 'MERGED', commits: headCommit({ FAILURE: 1 }) });
-    expect(badge([merged, quiet(2, { state: 'CLOSED', mergeable: 'CONFLICTING' })])).toEqual(
-      NO_BADGE,
-    );
-  });
+  expect(count({})).toBe('3');
+  expect(count({ hideDrafts: true })).toBe('2');
+  expect(count({ hideBots: true })).toBe('2');
+  expect(count({ hideDrafts: true, hideBots: true })).toBe('1');
+  expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('1');
+});
 
-  it('counts only PRs that are in a section, and each one once', () => {
-    const [a, b, c] = [failing(1), failing(2), failing(3)] as [
-      PullRequest,
-      PullRequest,
-      PullRequest,
-    ];
-    const sections = { authored: [a.id, b.id], assigned: [b.id], custom: ['PR_gone'] };
-    const view = computeBadge(
-      snapshot([a, b, c], sections),
-      emptyPrLocal(),
-      'attention',
-      DEFAULT_SETTINGS,
-      NOW,
-    );
-    expect(view.text).toBe('2');
-  });
-
-  it('excludes snoozed PRs until the snooze ends, but not muted ones', () => {
-    const [a, b] = [failing(1), failing(2)] as [PullRequest, PullRequest];
-    let local: PrLocalState = snooze(emptyPrLocal(), a.id, NOW + HOUR);
-    local = mute(local, b.id);
-    expect(badge([a, b], 'attention', local).text).toBe('1');
-    expect(
-      computeBadge(snapshot([a, b]), local, 'attention', DEFAULT_SETTINGS, NOW + 2 * HOUR).text,
-    ).toBe('2');
-  });
-
-  it('leaves out PRs the list hides, under the same setting', () => {
-    const stale = quiet(1, { commits: headCommit({ FAILURE: 1 }, {}, '2026-09-10T12:00:00Z') });
-    const [old, recent] = [stale, failing(2)] as [PullRequest, PullRequest];
-    expect(badge([old, recent])).toMatchObject({
-      text: '1',
-      title: 'Prowl: 1 pull request needing attention (1 CI failing)',
-    });
-    expect(badge([old], 'unseen')).toEqual(NO_BADGE);
-    const never = { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 };
-    expect(
-      computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', never, NOW).text,
-    ).toBe('2');
-  });
-
-  it('leaves out drafts and bots when the list does, and counts them otherwise', () => {
-    const draft = quiet(1, { isDraft: true, commits: headCommit({ FAILURE: 1 }) });
-    const bot = quiet(2, {
-      author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
-      commits: headCommit({ FAILURE: 1 }),
-    });
-    const prs = [draft, bot, failing(3)];
-    const count = (hide: Partial<typeof DEFAULT_SETTINGS>, mode: BadgeMode = 'attention') =>
-      computeBadge(snapshot(prs), emptyPrLocal(), mode, { ...DEFAULT_SETTINGS, ...hide }, NOW).text;
-
-    expect(count({})).toBe('3');
-    expect(count({ hideDrafts: true })).toBe('2');
-    expect(count({ hideBots: true })).toBe('2');
-    expect(count({ hideDrafts: true, hideBots: true })).toBe('1');
-    expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('1');
-  });
-
-  it('shows 99+ above 99', () => {
-    const many = Array.from({ length: 100 }, (_, i) => failing(i + 1));
-    expect(badge(many.slice(0, 99)).text).toBe('99');
-    expect(badge(many).text).toBe('99+');
-  });
+it('computeBadge: attention shows 99+ above 99', () => {
+  const many = Array.from({ length: 100 }, (_, i) => failing(i + 1));
+  expect(badge(many.slice(0, 99)).text).toBe('99');
+  expect(badge(many).text).toBe('99+');
 });
 
 describe('computeBadge: unseen', () => {

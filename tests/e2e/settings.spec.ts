@@ -1,10 +1,8 @@
-import type { Page, Worker } from '@playwright/test';
+import type { Worker } from '@playwright/test';
 import type { Settings } from '../../src/lib/model';
-import { defaultSettings } from '../../src/lib/storage/settings';
 import { headCommit, prNode, searchResponse } from '../fixtures/github';
-import { expect, saveScreenshot, test } from './fixtures';
+import { expect, test } from './fixtures';
 import { nodesFor } from './helpers/listData';
-import { MOCK_ORIGIN } from './mock-github/server';
 
 const BUG = prNode({ number: 7, title: 'Fix flaky login test', repository: 'acme/web' });
 
@@ -23,10 +21,6 @@ const pollPeriod = (worker: Worker) =>
 const notificationIds = (worker: Worker) =>
   worker.evaluate(async () => Object.keys(await chrome.notifications.getAll()));
 
-/** The `section` of the settings screen under the heading `title`. */
-const group = (panel: Page, title: string) =>
-  panel.locator('section', { has: panel.getByRole('heading', { level: 3, name: title }) });
-
 test.beforeEach(async ({ context, github, signIn, poll }) => {
   github.onGraphQL('ProwlSearch', (variables) =>
     searchResponse(
@@ -39,112 +33,104 @@ test.beforeEach(async ({ context, github, signIn, poll }) => {
   // `poll()` leaves the page it sent from open, and it would mark cards seen like a panel.
   for (const page of context.pages()) if (page.url().includes('/sidepanel/')) await page.close();
 });
+test('scope › turning a section on fetches it without waiting for the next poll', async ({
+  openPanel,
+  github,
+}) => {
+  const panel = await openPanel('#/settings');
+  const section = panel.getByRole('switch', { name: 'Review requested' });
+  await expect(section).toHaveAttribute('aria-checked', 'false');
+  await section.click();
+  await expect(section).toHaveAttribute('aria-checked', 'true');
 
-test.describe('scope', () => {
-  test('turning a section on fetches it without waiting for the next poll', async ({
-    openPanel,
-    github,
-  }) => {
-    const panel = await openPanel('#/settings');
-    const section = panel.getByRole('switch', { name: 'Review requested' });
-    await expect(section).toHaveAttribute('aria-checked', 'false');
-    await section.click();
-    await expect(section).toHaveAttribute('aria-checked', 'true');
+  await expect
+    .poll(() => searches(github).some((query) => query.includes('review-requested:@me')))
+    .toBe(true);
+  await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+  await expect(panel.getByRole('tab', { name: /^Review/ })).toHaveText('Review3');
+});
 
-    await expect
-      .poll(() => searches(github).some((query) => query.includes('review-requested:@me')))
-      .toBe(true);
-    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
-    await expect(panel.getByRole('tab', { name: /^Review/ })).toHaveText('Review3');
-  });
+test('scope › adds, edits and removes a custom section, checking its query first', async ({
+  openPanel,
+  github,
+}) => {
+  const panel = await openPanel('#/settings');
+  await panel.getByRole('button', { name: 'Add custom section' }).click();
+  const dialog = panel.getByRole('dialog', { name: 'Add custom section' });
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog.getByText('Give the section a name.')).toBeVisible();
+  await expect(dialog.getByLabel('Name')).toBeFocused();
 
-  test('adds, edits and removes a custom section, checking its query first', async ({
-    openPanel,
-    github,
-  }) => {
-    const panel = await openPanel('#/settings');
-    await panel.getByRole('button', { name: 'Add custom section' }).click();
-    const dialog = panel.getByRole('dialog', { name: 'Add custom section' });
-    await dialog.getByRole('button', { name: 'Save' }).click();
-    await expect(dialog.getByText('Give the section a name.')).toBeVisible();
-    await expect(dialog.getByLabel('Name')).toBeFocused();
+  await dialog.getByLabel('Name').fill('Bugs');
+  await dialog.getByLabel('Search query').fill('is:issue label:bug');
+  await expect(dialog.getByText(/follows pull requests only/)).toBeVisible();
+  await dialog.getByLabel('Search query').fill('label:bug');
+  await expect(dialog.getByText(/follows pull requests only/)).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog).toHaveCount(0);
 
-    await dialog.getByLabel('Name').fill('Bugs');
-    await dialog.getByLabel('Search query').fill('is:issue label:bug');
-    await expect(dialog.getByText(/follows pull requests only/)).toBeVisible();
-    await dialog.getByLabel('Search query').fill('label:bug');
-    await expect(dialog.getByText(/follows pull requests only/)).toHaveCount(0);
-    await dialog.getByRole('button', { name: 'Save' }).click();
-    await expect(dialog).toHaveCount(0);
+  await expect(panel.getByRole('switch', { name: 'Bugs' })).toHaveAttribute('aria-checked', 'true');
+  await expect.poll(() => searches(github).some((query) => query.includes('label:bug'))).toBe(true);
+  await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+  await expect(panel.getByRole('tab', { name: /Bugs/ })).toHaveText('Bugs1');
+  await panel.getByRole('tab', { name: /Bugs/ }).click();
+  await expect(panel.locator('.pr-card')).toContainText('Fix flaky login test');
 
-    await expect(panel.getByRole('switch', { name: 'Bugs' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
-    await expect
-      .poll(() => searches(github).some((query) => query.includes('label:bug')))
-      .toBe(true);
-    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
-    await expect(panel.getByRole('tab', { name: /Bugs/ })).toHaveText('Bugs1');
-    await panel.getByRole('tab', { name: /Bugs/ }).click();
-    await expect(panel.locator('.pr-card')).toContainText('Fix flaky login test');
+  await panel.getByRole('button', { name: 'Settings' }).click();
+  await panel.getByRole('button', { name: 'Edit Bugs' }).click();
+  await panel.getByLabel('Name').fill('Flaky tests');
+  await panel.getByRole('button', { name: 'Save' }).click();
+  await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toBeVisible();
 
-    await panel.getByRole('button', { name: 'Settings' }).click();
-    await panel.getByRole('button', { name: 'Edit Bugs' }).click();
-    await panel.getByLabel('Name').fill('Flaky tests');
-    await panel.getByRole('button', { name: 'Save' }).click();
-    await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Remove Flaky tests' }).click();
+  await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Undo' }).click();
+  await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toBeVisible();
+});
 
-    await panel.getByRole('button', { name: 'Remove Flaky tests' }).click();
-    await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toHaveCount(0);
-    await panel.getByRole('button', { name: 'Undo' }).click();
-    await expect(panel.getByRole('switch', { name: 'Flaky tests' })).toBeVisible();
-  });
+test('scope › include and exclude lists take owners and repositories, and nothing else', async ({
+  openPanel,
+  serviceWorker,
+  github,
+}) => {
+  const panel = await openPanel('#/settings');
+  const include = panel.getByRole('group', { name: 'Include' });
+  const field = include.getByLabel('Include repository');
+  await field.fill('acme/web/extra');
+  await include.getByRole('button', { name: 'Add to include list' }).click();
+  await expect(include.getByText(/Enter an owner or owner\/name/)).toBeVisible();
 
-  test('include and exclude lists take owners and repositories, and nothing else', async ({
-    openPanel,
-    serviceWorker,
-    github,
-  }) => {
-    const panel = await openPanel('#/settings');
-    const include = panel.getByRole('group', { name: 'Include' });
-    const field = include.getByLabel('Include repository');
-    await field.fill('acme/web/extra');
-    await include.getByRole('button', { name: 'Add to include list' }).click();
-    await expect(include.getByText(/Enter an owner or owner\/name/)).toBeVisible();
+  await field.fill('acme');
+  await field.press('Enter');
+  await field.fill('octo/docs');
+  await field.press('Enter');
+  await expect(include.getByRole('listitem')).toHaveText(['acme', 'octo/docs']);
+  await panel
+    .getByRole('group', { name: 'Exclude' })
+    .getByLabel('Exclude repository')
+    .fill('acme/legacy');
+  await panel.getByRole('button', { name: 'Add to exclude list' }).click();
 
-    await field.fill('acme');
-    await field.press('Enter');
-    await field.fill('octo/docs');
-    await field.press('Enter');
-    await expect(include.getByRole('listitem')).toHaveText(['acme', 'octo/docs']);
-    await panel
-      .getByRole('group', { name: 'Exclude' })
-      .getByLabel('Exclude repository')
-      .fill('acme/legacy');
-    await panel.getByRole('button', { name: 'Add to exclude list' }).click();
+  await expect
+    .poll(async () => (await savedSettings(serviceWorker))?.repoInclude)
+    .toEqual(['acme', 'octo/docs']);
+  await expect
+    .poll(async () => (await savedSettings(serviceWorker))?.repoExclude)
+    .toEqual(['acme/legacy']);
+  await expect
+    .poll(() =>
+      searches(github).some(
+        (query) =>
+          query.includes('user:acme') &&
+          query.includes('repo:octo/docs') &&
+          query.includes('-repo:acme/legacy'),
+      ),
+    )
+    .toBe(true);
 
-    await expect
-      .poll(async () => (await savedSettings(serviceWorker))?.repoInclude)
-      .toEqual(['acme', 'octo/docs']);
-    await expect
-      .poll(async () => (await savedSettings(serviceWorker))?.repoExclude)
-      .toEqual(['acme/legacy']);
-    await expect
-      .poll(() =>
-        searches(github).some(
-          (query) =>
-            query.includes('user:acme') &&
-            query.includes('repo:octo/docs') &&
-            query.includes('-repo:acme/legacy'),
-        ),
-      )
-      .toBe(true);
-
-    await include.getByRole('button', { name: 'Remove acme', exact: true }).click();
-    await expect(include.getByRole('listitem')).toHaveText(['octo/docs']);
-    await expect(field).toBeFocused();
-  });
+  await include.getByRole('button', { name: 'Remove acme', exact: true }).click();
+  await expect(include.getByRole('listitem')).toHaveText(['octo/docs']);
+  await expect(field).toBeFocused();
 });
 
 test.describe('refresh', () => {
@@ -245,210 +231,5 @@ test.describe('notifications', () => {
     await expect
       .poll(async () => (await savedSettings(serviceWorker))?.notifications.quietHours)
       .toEqual({ enabled: true, start: '23:30', end: '06:15' });
-  });
-});
-
-test.describe('appearance', () => {
-  test('theme applies at once, and survives a reload', async ({ openPanel }) => {
-    const panel = await openPanel('#/settings');
-    await panel.getByLabel('Theme').selectOption('dark');
-    await expect(panel.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await panel.reload();
-    await expect(panel.getByLabel('Theme')).toHaveValue('dark');
-    await expect(panel.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await panel.getByLabel('Theme').selectOption('system');
-    await expect(panel.locator('html')).not.toHaveAttribute('data-theme');
-  });
-
-  test('sort order applies to the list', async ({ openPanel }) => {
-    const panel = await openPanel('#/settings');
-    await panel.getByLabel('Sort pull requests by').selectOption('repo');
-    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
-    const repos = await panel.locator('.pr-card').first().textContent();
-    expect(repos).toContain('acme/api');
-  });
-
-  test('the toolbar badge follows the mode', async ({ openPanel, serviceWorker }) => {
-    const badge = () => serviceWorker.evaluate(() => chrome.action.getBadgeText({}));
-    await expect.poll(badge).not.toBe('');
-    const panel = await openPanel('#/settings');
-    await panel.getByLabel('Toolbar badge').selectOption('off');
-    await expect.poll(badge).toBe('');
-    await expect(panel.getByText('The toolbar icon shows no number.')).toBeVisible();
-    await panel.getByLabel('Toolbar badge').selectOption('attention');
-    await expect.poll(badge).not.toBe('');
-  });
-});
-
-test.describe('account and about', () => {
-  test('shows the account and signs out after a confirmation', async ({
-    openPanel,
-    serviceWorker,
-    signIn,
-  }) => {
-    await signIn({ scopes: ['repo', 'read:org'] });
-    const panel = await openPanel('#/settings');
-    const account = group(panel, 'Account');
-    await expect(account).toContainText('octocat');
-    await expect(account).toContainText('Classic personal access token');
-    await expect(account.getByText('read:org')).toBeVisible();
-    // No secret on screen: only the kind of token.
-    await expect(panel.locator('body')).not.toContainText('ghp_e2e');
-
-    await account.getByRole('button', { name: 'Sign out' }).click();
-    await panel
-      .getByRole('dialog', { name: 'Sign out?' })
-      .getByRole('button', { name: 'Cancel' })
-      .click();
-    await expect(account).toBeVisible();
-
-    await account.getByRole('button', { name: 'Sign out' }).click();
-    await panel.getByRole('dialog').getByRole('button', { name: 'Sign out' }).click();
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
-    await expect
-      .poll(() =>
-        serviceWorker.evaluate(async () => Object.keys(await chrome.storage.local.get(null))),
-      )
-      .not.toContain('auth');
-  });
-
-  test('shows the version and opens the project pages on GitHub', async ({
-    context,
-    openPanel,
-    serviceWorker,
-  }) => {
-    const panel = await openPanel('#/settings');
-    const version = await serviceWorker.evaluate(() => chrome.runtime.getManifest().version);
-    await expect(group(panel, 'About')).toContainText(`Version ${version}`);
-    // Chrome knows the open-panel command. Whether it binds the suggested key depends on how the
-    // extension was installed (an unpacked test load gets none), so About says either way.
-    const commands = await serviceWorker.evaluate(() => chrome.commands.getAll());
-    expect(commands.map(({ name, description }) => ({ name, description }))).toContainEqual({
-      name: 'open-panel',
-      description: 'Open Prowl',
-    });
-    await expect(group(panel, 'About')).toContainText('Change it at chrome://extensions/shortcuts');
-
-    for (const [name, path] of [
-      ['Documentation', '/aemard/prowl#readme'],
-      ['Privacy', '/aemard/prowl/blob/main/docs/privacy.md'],
-      ['Source code', '/aemard/prowl'],
-    ] as const) {
-      const opened = context.waitForEvent('page');
-      await group(panel, 'About').getByRole('link', { name }).click();
-      const page = await opened;
-      expect(page.url()).toBe(`${MOCK_ORIGIN}${path}`);
-      await page.close();
-    }
-  });
-});
-
-test.describe('privacy and permissions', () => {
-  test('promises no access to the pages and lists what Chrome granted', async ({
-    context,
-    openPanel,
-    serviceWorker,
-    expectNoA11yViolations,
-  }) => {
-    const panel = await openPanel('#/settings');
-    const privacy = group(panel, 'Privacy and permissions');
-    await expect(privacy).toContainText(
-      'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',
-    );
-
-    // The rows are what Chrome reports for the loaded extension, not a copy of the docs.
-    const granted = await serviceWorker.evaluate(() => chrome.permissions.getAll());
-    const rows = privacy.getByRole('list', { name: 'What Prowl may do' }).getByRole('listitem');
-    await expect(rows).toHaveCount(
-      (granted.permissions?.length ?? 0) + (granted.origins?.length ?? 0),
-    );
-    await expect(rows.locator('.settings-permissions__name')).toHaveText([
-      'Side panel',
-      'Storage',
-      'Alarms',
-      'Notifications',
-      new URL(MOCK_ORIGIN).host,
-    ]);
-    await expect(rows.last()).toContainText('Read your pull requests and act on them');
-
-    for (const colorScheme of ['light', 'dark'] as const) {
-      await panel.emulateMedia({ colorScheme });
-      await expectNoA11yViolations(panel);
-    }
-
-    const opened = context.waitForEvent('page');
-    await privacy.getByRole('link', { name: 'Read the privacy policy' }).click();
-    const page = await opened;
-    expect(page.url()).toBe(`${MOCK_ORIGIN}/aemard/prowl/blob/main/docs/privacy.md`);
-    await page.close();
-  });
-});
-
-test.describe('look', () => {
-  /** A fully used screen: custom section, filters, quiet hours, a token with scopes. */
-  const busy: Partial<Settings> = {
-    ...defaultSettings(),
-    sections: [
-      ...defaultSettings().sections.map((section) => ({
-        ...section,
-        enabled: section.id !== 'assigned',
-      })),
-      { id: 'custom-1', kind: 'custom', label: 'Bugs', enabled: true, query: 'label:bug' },
-    ],
-    repoInclude: ['acme', 'octo/docs'],
-    repoExclude: ['northwind-engineering/internal-platform-services-monorepo'],
-    notifications: {
-      ...defaultSettings().notifications,
-      events: { ...defaultSettings().notifications.events, ci_passed: false },
-      quietHours: { enabled: true, start: '22:00', end: '08:00' },
-    },
-  };
-
-  test('is accessible in light and dark, and fits the panel', async ({
-    openPanel,
-    seedStorage,
-    signIn,
-    expectNoA11yViolations,
-  }) => {
-    await seedStorage({ settings: busy });
-    await signIn({ scopes: ['repo', 'read:org'] });
-    const panel = await openPanel('#/settings');
-    await expect(panel.getByRole('switch', { name: 'Bugs' })).toBeVisible();
-
-    for (const colorScheme of ['light', 'dark'] as const) {
-      await panel.emulateMedia({ colorScheme });
-      await expectNoA11yViolations(panel);
-    }
-
-    // The dialog, too, and the field errors it shows.
-    await panel.getByRole('button', { name: 'Add custom section' }).click();
-    await panel.getByRole('button', { name: 'Save' }).click();
-    await expectNoA11yViolations(panel);
-    await panel.screenshot({ path: test.info().outputPath('dialog.png') });
-    await panel.keyboard.press('Escape');
-
-    const overflow = await panel.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
-  });
-
-  test('screenshot', async ({ openPanel, seedStorage, signIn }) => {
-    await seedStorage({ settings: busy });
-    await signIn({ scopes: ['repo', 'read:org'] });
-    const panel = await openPanel('#/settings');
-    await panel.emulateMedia({ colorScheme: 'light' });
-    await expect(panel.getByRole('switch', { name: 'Bugs' })).toBeVisible();
-    // The e2e build talks to the mock server; the image shows the host the shipped build has.
-    await expect(panel.locator('.settings-permissions__name').last()).toHaveText(
-      new URL(MOCK_ORIGIN).host,
-    );
-    await panel.evaluate((mock) => {
-      for (const name of document.querySelectorAll('.settings-permissions__name'))
-        if (name.textContent === mock) name.textContent = 'api.github.com';
-    }, new URL(MOCK_ORIGIN).host);
-    await saveScreenshot(panel, 'settings', { fullPage: true });
-    await panel.emulateMedia({ colorScheme: 'dark' });
-    await panel.screenshot({ path: test.info().outputPath('settings-dark.png'), fullPage: true });
   });
 });

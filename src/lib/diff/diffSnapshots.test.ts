@@ -187,81 +187,79 @@ const cases: Case[] = [
   ['nothing: unchanged', {}, {}, []],
 ];
 
-describe('diffSnapshots', () => {
-  it.each(cases)('%s', (_name, before, after, expected) => {
-    const result = diffSnapshots(snapshot([pr(before)]), snapshot([pr(after)]), VIEWER);
-    expect(result.map(({ type, actor, at }) => [type, actor, at])).toEqual(
-      expected.map(([type, actor = null, at = FETCHED_AT]) => [type, actor, at]),
-    );
-  });
+it.each(cases)('diffSnapshots %s', (_name, before, after, expected) => {
+  const result = diffSnapshots(snapshot([pr(before)]), snapshot([pr(after)]), VIEWER);
+  expect(result.map(({ type, actor, at }) => [type, actor, at])).toEqual(
+    expected.map(([type, actor = null, at = FETCHED_AT]) => [type, actor, at]),
+  );
+});
 
-  it('builds the event from the next copy of the PR', () => {
-    const after = pr({ title: 'Renamed', ...ci('failure') });
-    expect(diffSnapshots(snapshot([pr()]), snapshot([after]), VIEWER)).toEqual([
-      {
-        id: `${base.id}:ci_failed:${SHA}`,
-        type: 'ci_failed',
-        prId: base.id,
-        repo: 'acme/widgets',
-        number: 1,
-        title: 'Renamed',
-        url: 'https://github.com/acme/widgets/pull/1',
-        actor: null,
-        at: FETCHED_AT,
-      },
-    ]);
-  });
+it('diffSnapshots builds the event from the next copy of the PR', () => {
+  const after = pr({ title: 'Renamed', ...ci('failure') });
+  expect(diffSnapshots(snapshot([pr()]), snapshot([after]), VIEWER)).toEqual([
+    {
+      id: `${base.id}:ci_failed:${SHA}`,
+      type: 'ci_failed',
+      prId: base.id,
+      repo: 'acme/widgets',
+      number: 1,
+      title: 'Renamed',
+      url: 'https://github.com/acme/widgets/pull/1',
+      actor: null,
+      at: FETCHED_AT,
+    },
+  ]);
+});
 
-  it('returns nothing without a previous snapshot', () => {
-    expect(diffSnapshots(null, snapshot([pr(ci('failure'))]), VIEWER)).toEqual([]);
-  });
+it('diffSnapshots returns nothing without a previous snapshot', () => {
+  expect(diffSnapshots(null, snapshot([pr(ci('failure'))]), VIEWER)).toEqual([]);
+});
 
-  it('returns nothing when the previous snapshot belongs to another account', () => {
-    const prev = snapshot([pr()], FETCHED_AT, 'hubot');
-    expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), VIEWER)).toEqual([]);
-    expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), 'HUBOT')).toHaveLength(1);
-  });
+it('diffSnapshots returns nothing when the previous snapshot belongs to another account', () => {
+  const prev = snapshot([pr()], FETCHED_AT, 'hubot');
+  expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), VIEWER)).toEqual([]);
+  expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), 'HUBOT')).toHaveLength(1);
+});
 
-  it('ignores PRs that left the scope and PRs that are new', () => {
-    const gone = pr();
-    const fresh = pr({ id: 'PR_new', ...ci('failure'), ...reviews(review('hubot', 'approved')) });
-    expect(diffSnapshots(snapshot([gone]), snapshot([fresh]), VIEWER)).toEqual([]);
-  });
+it('diffSnapshots ignores PRs that left the scope and PRs that are new', () => {
+  const gone = pr();
+  const fresh = pr({ id: 'PR_new', ...ci('failure'), ...reviews(review('hubot', 'approved')) });
+  expect(diffSnapshots(snapshot([gone]), snapshot([fresh]), VIEWER)).toEqual([]);
+});
 
-  it('gives a repeated poll of the same change the same ids', () => {
-    const prev = snapshot([pr(comments(0))]);
-    const after = pr({
-      ...ci('failure'),
-      ...comments(1, 'hubot'),
-      ...reviews(review('hubot', 'approved')),
-    });
-    const ids = (fetchedAt: string) =>
-      diffSnapshots(prev, snapshot([after], fetchedAt), VIEWER).map(({ id }) => id);
-    expect(ids(FETCHED_AT)).toEqual(ids('2026-10-06T09:02:00.000Z'));
-    expect(new Set(ids(FETCHED_AT)).size).toBe(3);
+it('diffSnapshots gives a repeated poll of the same change the same ids', () => {
+  const prev = snapshot([pr(comments(0))]);
+  const after = pr({
+    ...ci('failure'),
+    ...comments(1, 'hubot'),
+    ...reviews(review('hubot', 'approved')),
   });
+  const ids = (fetchedAt: string) =>
+    diffSnapshots(prev, snapshot([after], fetchedAt), VIEWER).map(({ id }) => id);
+  expect(ids(FETCHED_AT)).toEqual(ids('2026-10-06T09:02:00.000Z'));
+  expect(new Set(ids(FETCHED_AT)).size).toBe(3);
+});
 
-  it('reports a duplicated review once', () => {
-    const twice = [review('hubot', 'approved'), review('hubot', 'approved')];
-    expect(
-      diffSnapshots(snapshot([pr()]), snapshot([pr({ reviews: twice })]), VIEWER),
-    ).toHaveLength(1);
-  });
+it('diffSnapshots reports a duplicated review once', () => {
+  const twice = [review('hubot', 'approved'), review('hubot', 'approved')];
+  expect(diffSnapshots(snapshot([pr()]), snapshot([pr({ reviews: twice })]), VIEWER)).toHaveLength(
+    1,
+  );
+});
 
-  it('sorts events of every PR by time, oldest first', () => {
-    const one = pr();
-    const two = pr({ id: 'PR_two', number: 2 });
-    const next = snapshot([
-      { ...one, ...ci('failure'), ...comments(1, 'hubot') },
-      { ...two, ...reviews(review('hubot', 'approved')) },
-    ]);
-    const events = diffSnapshots(snapshot([one, two]), next, VIEWER);
-    expect(events.map(({ type, number }) => [type, number])).toEqual([
-      ['approved', 2],
-      ['comment_new', 1],
-      ['ci_failed', 1],
-    ]);
-  });
+it('diffSnapshots sorts events of every PR by time, oldest first', () => {
+  const one = pr();
+  const two = pr({ id: 'PR_two', number: 2 });
+  const next = snapshot([
+    { ...one, ...ci('failure'), ...comments(1, 'hubot') },
+    { ...two, ...reviews(review('hubot', 'approved')) },
+  ]);
+  const events = diffSnapshots(snapshot([one, two]), next, VIEWER);
+  expect(events.map(({ type, number }) => [type, number])).toEqual([
+    ['approved', 2],
+    ['comment_new', 1],
+    ['ci_failed', 1],
+  ]);
 });
 
 describe('checks across pending polls', () => {
