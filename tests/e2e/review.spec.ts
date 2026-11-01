@@ -169,7 +169,7 @@ test.describe('review actions', () => {
     );
   });
 
-  test('explains a refusal in a toast with GitHub’s words, never the token', async ({
+  test('explains a refusal with GitHub’s words (toast or inline), never the token', async ({
     github,
     openPanel,
     expectNoA11yViolations,
@@ -203,6 +203,7 @@ test.describe('review actions', () => {
       'true',
     );
     await expect(dialog.getByRole('textbox', { name: 'Message' })).toHaveValue('Please add a test');
+    await expect(dialog.getByRole('textbox', { name: 'Message' })).toBeFocused();
     await expectNoA11yViolations(panel);
 
     // A failure changes nothing on GitHub, so nothing to refresh.

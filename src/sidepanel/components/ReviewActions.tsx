@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
 import type { PullRequest } from '../../lib/model';
@@ -44,6 +44,7 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
   const [writing, setWriting] = useState<Written | null>(null);
   const drafts = reviewDrafts.value[pr.id];
   const [error, setError] = useState('');
+  const field = useRef<HTMLElement>(null);
   const viewer = auth.value?.viewer.login;
   if (!viewer) return null;
 
@@ -56,6 +57,11 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
   const canReview = pr.state === 'open' && pr.author?.login.toLowerCase() !== viewer.toLowerCase();
   const written = writing && WRITTEN[writing];
 
+  // An error that arrives after the click is only read out when its field has focus.
+  const fail = (message: string) => {
+    setError(message);
+    field.current?.focus();
+  };
   const open = (kind: Written) => {
     setError('');
     setWriting(kind);
@@ -65,8 +71,8 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
   const send = async (kind: Written) => {
     const { name, done, send: run } = WRITTEN[kind];
     const text = (drafts?.[kind] ?? '').trim();
-    if (!text) return setError('Write a message first.');
-    const sent = await runPrAction(pr, name, done, (client) => run(client, pr, text), setError);
+    if (!text) return fail('Write a message first.');
+    const sent = await runPrAction(pr, name, done, (client) => run(client, pr, text), fail);
     if (sent) {
       setWriting(null);
       setReviewDraft(pr.id, kind, '');
@@ -142,6 +148,7 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
             maxLength={MAX_BODY_LENGTH}
             value={drafts?.[writing] ?? ''}
             error={error}
+            inputRef={field}
             readOnly={pending !== undefined}
             onValueChange={(text) => {
               setError('');
