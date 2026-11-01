@@ -192,8 +192,14 @@
   gap: var(--space-2);
   border-radius: inherit;
 }
+/* The pointer light is the hover cue; where it is off, the summary keeps a tint. */
 .pr-card__summary:hover {
   background: transparent;
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .pr-card__summary:hover {
+    background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
+  }
 }
 .pr-card__title {
   font-size: var(--text-lg);
