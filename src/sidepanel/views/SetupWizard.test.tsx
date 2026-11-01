@@ -97,8 +97,10 @@ describe('SetupWizard', () => {
   it('goes back and persists its current step', async () => {
     await open({ step: 1 });
     await click('Back');
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Your pull requests' })).toBeTruthy(),
+    );
     expect(await getItem('onboarding')).toEqual({ status: 'pending', nextStep: 0 });
-    expect(screen.getByRole('heading', { name: 'Your pull requests' })).toBeTruthy();
   });
 
   it('does not advance when settings cannot be saved', async () => {
