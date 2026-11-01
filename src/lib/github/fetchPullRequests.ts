@@ -240,16 +240,12 @@ export async function fetchPullRequests(
       const readAt = new Date().toISOString();
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
-        const before = previous?.pullRequests[pr.id];
-        if (isNode(node) && node.headRefOid && node.headRefOid !== pr.headSha) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-          delete result.mergeStateAt[pr.id];
-        } else if (isNode(node)) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
-          result.mergeStateAt[pr.id] = readAt;
-        } else if (before?.headSha === pr.headSha) {
-          result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-        }
+        // A hole or a failed batch leaves the baseline above; facts computed for another head
+        // are unknown for this one, and unread, so the next poll asks again.
+        if (!isNode(node)) return;
+        const sameHead = node.headRefOid === pr.headSha;
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState(sameHead ? node : {}) };
+        if (sameHead) result.mergeStateAt[pr.id] = readAt;
       });
     }
     await onProgress?.(result, []);

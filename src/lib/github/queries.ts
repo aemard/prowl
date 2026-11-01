@@ -234,7 +234,7 @@ export interface PullRequestNode {
 
 export interface MergeStateNode {
   id: string;
-  headRefOid?: string;
+  headRefOid: string;
   reviewDecision: string | null;
   mergeable: string;
   mergeStateStatus: string;
