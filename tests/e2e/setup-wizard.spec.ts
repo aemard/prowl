@@ -89,7 +89,10 @@ test('onboarding filters discovered GitHub teams before following team review re
   const page = await openPanel();
   await page.getByRole('switch', { name: 'Team reviews' }).click();
   await expect(page.getByRole('group', { name: 'acme' })).toBeVisible();
-  await expect(page.getByRole('switch', { name: 'Security' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('switch', { name: 'Security' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
   await expectNoA11yViolations(page);
   await page.getByRole('switch', { name: 'Security' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -102,5 +105,7 @@ test('onboarding filters discovered GitHub teams before following team review re
     };
   });
   expect(saved.unfollowedTeams).toEqual(['acme/security']);
-  expect(saved.sections.find((section) => section.kind === 'team_review_requested')?.enabled).toBe(true);
+  expect(saved.sections.find((section) => section.kind === 'team_review_requested')?.enabled).toBe(
+    true,
+  );
 });

@@ -41,7 +41,6 @@ const click = async (label: string) => {
 };
 
 describe('SetupWizard', () => {
-
   it('lists discovered teams by organization, follows all by default and saves exclusions on Continue', async () => {
     await chrome.storage.local.set({
       teams: {
@@ -61,9 +60,13 @@ describe('SetupWizard', () => {
     expect(screen.getByRole('region', { name: 'Teams to follow' })).toBeTruthy();
     expect(screen.getByRole('group', { name: 'acme' })).toBeTruthy();
     expect(screen.getByRole('group', { name: 'octo' })).toBeTruthy();
-    expect(screen.getByRole('switch', { name: 'Platform Engineering' }).getAttribute('aria-checked')).toBe('true');
+    expect(
+      screen.getByRole('switch', { name: 'Platform Engineering' }).getAttribute('aria-checked'),
+    ).toBe('true');
     fireEvent.click(screen.getByRole('switch', { name: 'Security' }));
-    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe(
+      'false',
+    );
     expect((await getItem('settings'))?.unfollowedTeams).toBeUndefined();
     await click('Continue');
     const saved = await getItem('settings');
@@ -83,7 +86,9 @@ describe('SetupWizard', () => {
     });
     await open({ status: 'completed' });
     fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
-    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe(
+      'false',
+    );
     fireEvent.click(screen.getByRole('switch', { name: 'Security' }));
     await click('Continue');
     expect((await getItem('settings'))?.unfollowedTeams).toEqual(['legacy/archived']);
@@ -103,7 +108,9 @@ describe('SetupWizard', () => {
         },
       });
     });
-    expect(screen.getByRole('switch', { name: 'Infrastructure' }).getAttribute('aria-checked')).toBe('true');
+    expect(
+      screen.getByRole('switch', { name: 'Infrastructure' }).getAttribute('aria-checked'),
+    ).toBe('true');
   });
 
   it('shows an access error and allows setup without team discovery', async () => {
