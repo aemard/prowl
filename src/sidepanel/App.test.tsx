@@ -54,6 +54,13 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
   });
 
+  it('shows setup to signed-in users with a pending installation, not to legacy installations', async () => {
+    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 0 } });
+    expect(screen.getByRole('main', { name: 'First-time setup' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Your pull requests' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull();
+  });
+
   it('switches views and moves focus into the new one, but not on first load', async () => {
     await open({ auth: buildAuth() });
     expect(document.body.contains(document.activeElement)).toBe(true);

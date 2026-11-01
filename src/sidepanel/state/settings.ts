@@ -28,12 +28,13 @@ function refreshSoon(): void {
 export async function saveSettings(
   patch: Parameters<typeof updateSettings>[0],
   { refresh = false }: { refresh?: boolean } = {},
-): Promise<void> {
+): Promise<boolean> {
   try {
     await updateSettings(patch);
   } catch {
     showToast({ message: 'Could not save the setting. Try again.', tone: 'danger' });
-    return;
+    return false;
   }
   if (refresh) refreshSoon();
+  return true;
 }

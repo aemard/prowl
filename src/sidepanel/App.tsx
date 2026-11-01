@@ -11,6 +11,7 @@ import { ToastRegion } from './components/ui/Toast';
 import { type Route, route } from './state/router';
 import { hydrated, settings } from './state/store';
 import { ListView } from './views/List';
+import { SetupWizard } from './views/SetupWizard';
 import { OnboardingView } from './views/Onboarding';
 import './App.css';
 
@@ -21,6 +22,7 @@ const VIEWS: Record<Route, ComponentType> = {
   list: ListView,
   settings: SettingsView,
   onboarding: OnboardingView,
+  setup: SetupWizard,
 };
 
 /** Accessible name of the main landmark, announced when focus moves there on navigation. */
@@ -28,6 +30,7 @@ const LABELS: Record<Route, string> = {
   list: 'Pull requests',
   settings: 'Settings',
   onboarding: 'Sign in',
+  setup: 'First-time setup',
 };
 
 /** `system` removes the override so tokens.css follows `prefers-color-scheme`. */
@@ -79,7 +82,7 @@ function Shell() {
     <>
       <Header />
       <main ref={mainRef} class="app-main" tabIndex={-1} aria-label={LABELS[current]}>
-        {current !== 'onboarding' && current !== 'list' && <StatusBanner />}
+        {current !== 'onboarding' && current !== 'list' && current !== 'setup' && <StatusBanner />}
         <View />
       </main>
       <ShortcutsDialog />

@@ -47,9 +47,9 @@ export function Header() {
       <ProwlMark size={20} />
       <div class="header__text">
         <h1 class="header__title">Prowl</h1>
-        {viewer && <UpdatedAt />}
+        {viewer && route.value !== 'setup' && <UpdatedAt />}
       </div>
-      {viewer && (
+      {viewer && route.value !== 'setup' && (
         <div class="header__actions">
           <IconButton label="Refresh" loading={listRefreshing.value} onClick={requestRefresh}>
             <SyncIcon />
