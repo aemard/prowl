@@ -195,7 +195,7 @@ describe('mapPullRequest', () => {
     ['CHANGES_REQUESTED', 'changes_requested'],
     ['REVIEW_REQUIRED', 'review_required'],
     [null, 'none'],
-    ['SOMETHING_NEW', 'none'],
+    ['SOMETHING_NEW', 'unknown'],
   ] as const)('maps reviewDecision %s to %s', (reviewDecision, expected) => {
     expect(mapPullRequest(prNode({ reviewDecision })).reviewDecision).toBe(expected);
   });

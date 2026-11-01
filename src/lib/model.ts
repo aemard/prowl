@@ -33,7 +33,13 @@ export interface CheckItem {
   required: boolean;
 }
 
-export type ReviewDecision = 'approved' | 'changes_requested' | 'review_required' | 'none';
+/** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
+export type ReviewDecision =
+  | 'approved'
+  | 'changes_requested'
+  | 'review_required'
+  | 'none'
+  | 'unknown';
 
 export type ReviewState = 'approved' | 'changes_requested' | 'commented' | 'dismissed';
 

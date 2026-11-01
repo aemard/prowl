@@ -497,6 +497,38 @@ describe('fetchPullRequests', () => {
     });
   });
 
+  it('does not reuse old head facts for PRs outside the merge budget', async () => {
+    const old = Array.from({ length: 21 }, (_, i) =>
+      prNode({ number: i + 1, reviewDecision: 'APPROVED', mergeStateStatus: 'CLEAN' }),
+    );
+    const fresh = old.map((pr) => ({ ...pr, headRefOid: 'b'.repeat(40) }));
+    const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': fresh }) });
+    const result = await fetchPullRequests(client, settings(), {
+      pullRequests: Object.fromEntries(old.map((pr) => [pr.id, mapped(pr)])),
+    });
+    expect(result.pullRequests[prId(21)]).toMatchObject({
+      mergeStateStatus: 'unknown',
+      reviewDecision: 'unknown',
+      viewerCanUpdate: false,
+    });
+    expect(result.mergeStateAt[prId(21)]).toBeUndefined();
+  });
+
+  it('rejects a merge response computed for a different head during the poll', async () => {
+    const node = prNode();
+    const { client } = setup({
+      ProwlSearch: bySearch({ 'author:@me': [node] }),
+      ProwlMergeState: () =>
+        mergeStateResponse(
+          [node.id],
+          [{ ...node, headRefOid: 'b'.repeat(40), mergeStateStatus: 'CLEAN' }],
+        ),
+    });
+    const result = await fetchPullRequests(client, settings());
+    expect(result.pullRequests[node.id]?.mergeStateStatus).toBe('unknown');
+    expect(result.mergeStateAt[node.id]).toBeUndefined();
+  });
+
   describe('PRs that left every section', () => {
     const still = mapped(prNode({ number: 1 }));
     const merged = mapped(prNode({ number: 2 }));

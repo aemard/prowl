@@ -10,7 +10,9 @@ import { fakeChrome } from '../test/chrome';
 import { BADGE_COLORS, clearBadge, updateBadge, watchBadge } from './badge';
 
 const failing = mapPullRequest(prNode({ number: 1, commits: headCommit({ FAILURE: 1 }) }));
-const ready = mapPullRequest(prNode({ number: 2, mergeStateStatus: 'CLEAN' }));
+const ready = mapPullRequest(
+  prNode({ number: 2, mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }),
+);
 
 function snapshot(...prs: PullRequest[]): Snapshot {
   return {
