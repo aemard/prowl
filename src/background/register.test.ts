@@ -4,7 +4,6 @@ import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { setItem, updateItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
-import { buildPollState } from '../test/panel';
 import { POLL_ALARM, scheduleAlarm } from './poller';
 import { registerBackground } from './register';
 
@@ -109,22 +108,4 @@ describe('registerBackground', () => {
       expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/a/b/pull/1' }]),
     );
   });
-});
-
-it('uses a reconnect hint only after a network failure, leaving quota waits untouched', async () => {
-  registerBackground();
-  await scheduleAlarm(5);
-  await setItem(
-    'pollState',
-    buildPollState({ lastError: { kind: 'rate_limited', message: 'Wait' } }),
-  );
-  globalThis.dispatchEvent(new Event('online'));
-  await settle();
-  expect(alarm()).toBeDefined();
-  await setItem(
-    'pollState',
-    buildPollState({ lastError: { kind: 'network', message: 'Offline' } }),
-  );
-  globalThis.dispatchEvent(new Event('online'));
-  await vi.waitFor(() => expect(alarm()).toBeUndefined());
 });

@@ -151,8 +151,12 @@ A Dependabot pull request that stays open is one of these:
 - **`main` ruleset**: pull request required (squash, no approval: nothing could approve the
   maintainer's own), signed commits, `Verify` and CodeQL `Analyze` required on an up-to-date
   branch, review discussions resolved, no force push or deletion; admins bypass only through a
-  pull request. Squash commits default to the PR title and retain individual commit messages in
-  the body. Web commits require a DCO sign-off, separately from verified signatures.
+  pull request.
+- **Settings → General**: under Pull Requests, set the squash "Default commit message" to "Pull
+  request title and commit details" (the PR title becomes the commit title, the body keeps each
+  commit message and its sign-off); under Commits, tick "Require contributors to sign off on
+  web-based commits" (a DCO sign-off, separate from the verified signature GitHub adds to a squash
+  commit).
 - **`v*` tag ruleset**: no update or deletion. Creation stays open because release-please creates
   tags with `GITHUB_TOKEN`, which a personal repository's ruleset cannot exempt; `release-tag.yml`
   checks instead that a hand-pushed tag is on `main`.

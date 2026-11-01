@@ -12,7 +12,7 @@ import { mapMergeState } from '../lib/github/mapPullRequest';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
-import type { AuthState, PollState, PrEvent, Snapshot } from '../lib/model';
+import type { PollState, PrEvent, Snapshot } from '../lib/model';
 import { normalizePrLocal, pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
 import { SESSION_LOCK, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
@@ -100,9 +100,10 @@ function mergePriority(): string[] {
  * Polls GitHub unless signed out, stopped by a rejected token, or waiting (backoff, rate
  * limit). `force` (a user action) skips the backoff and retries a rejected token, never a
  * rate-limit wait; `refreshTeams` discovers the viewer's teams again even when they are not
- * due. Ordinary triggers share the current poll. Scope/action changes and team refreshes
- * coalesce one trailing poll using the latest stored configuration. Resolves to null when the poll was skipped, failed (see
- * `pollState.lastError`) or was dropped by a sign-out; never rejects.
+ * due. Ordinary triggers share the current poll; `afterCurrent` (a settings change, action or
+ * sign-in) and team refreshes share one trailing poll, which reads the latest configuration.
+ * Resolves to null when the poll was skipped, failed (see `pollState.lastError`) or was dropped
+ * by a sign-out; never rejects.
  */
 export function poll({
   force = false,
@@ -345,7 +346,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
         if (!active) return;
         const client = createGitHubClient({ token: auth.token, apiUrl: env.apiUrl });
         const data = await client.graphql<MergeStateData>(MERGE_STATE_QUERY, { ids: [id] });
-        if (!(await stillSignedIn(auth))) return;
         await withSignedIn(auth, async () => {
           const node = data.nodes?.[0];
           const latest = await getItem('snapshot');
@@ -359,7 +359,7 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
             latestPr.headSha !== headSha
           )
             return;
-          if (node && node.id === id && (!node.headRefOid || node.headRefOid === headSha)) {
+          if (node && node.id === id && node.headRefOid === headSha) {
             const next: Snapshot = {
               ...latest,
               pullRequests: {
@@ -376,7 +376,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
               normalizePrLocal(await getItem('prLocal')),
             );
           }
-          if (!(await stillSignedIn(auth))) return;
           const rateLimit = parseRateLimit(data.rateLimit) ?? state.rateLimit;
           await setItem('pollState', {
             ...state,
@@ -418,11 +417,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
     if (remaining) consulted.set(id, remaining);
     else consulted.delete(id);
   }
-}
-
-/** The token the poll started with is still the stored one. */
-async function stillSignedIn(auth: AuthState): Promise<boolean> {
-  return (await getItem('auth'))?.token === auth.token;
 }
 
 /** The poll's account is gone: start over for whoever signed in, or clean up after sign-out. */

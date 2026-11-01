@@ -13,7 +13,8 @@ export function SectionCoverageNotice({
   count: number;
 }) {
   if (!coverage.hasMore) return null;
-  const query = coverage.queries.map(({ query }) => query).join(' ');
+  // One link, one search: joined queries would only match PRs that satisfy all of them.
+  const query = coverage.queries.find(({ cursor }) => cursor)?.query;
   return (
     <aside class="list__coverage" aria-label="List coverage">
       <p>
