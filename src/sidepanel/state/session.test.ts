@@ -20,7 +20,7 @@ describe('completeSignIn', () => {
 
     expect((await chrome.storage.local.get('auth')).auth).toEqual(buildAuth('octocat'));
     expect(await getItems(['teams'])).toEqual({});
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(location.hash).toBe('#/');
   });
 

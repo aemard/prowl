@@ -864,3 +864,18 @@ previous cards until their search completes, so a slow team section does not hol
 personal list or masquerade as a newly empty section. Merge enrichment still follows search.
 Local snoozes expire by date. Mute/seen and unexpired snoozes are removed only after confirmed
 closure, never merely because a PR left a bounded search or the selected scope.
+
+
+## Refresh and session ordering
+
+Panel setting changes, completed mutations and sign-in request `poll` with `afterCurrent`.
+While a poll is active, these requests share one trailing promise, using the latest saved
+configuration; further changes during that trailing run can schedule one more run. Ordinary
+refreshes still share the current poll. Team rediscovery is coalesced into the trailing request.
+Quota/backoff checks remain in `runPoll`. A worker reconnect hint requests an ordinary poll
+only after a network error and does not bypass those waits.
+
+The short origin-shared `prowl:session` Web Lock serializes sign-in/sign-out with the session
+check and writes of progressive snapshots, final snapshots/teams, targeted facts, poll state
+and notifications. GitHub reads are outside this lock. A completed sign-out cannot be undone
+by an old publication, and delayed `signedOut` cleanup cannot clear a newly signed-in account.

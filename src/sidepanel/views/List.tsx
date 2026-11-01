@@ -308,7 +308,9 @@ export function ListView() {
   );
   const error = snap.sectionErrors?.[selected.id];
   const coverage = snap.sectionCoverage?.[selected.id];
-  const searching = snap.sectionsPending?.includes(selected.id) ?? false;
+  const searching =
+    snap.sectionsPending?.includes(selected.id) ||
+    (!(selected.id in snap.sections) && !error && pollState.value?.inFlight);
   const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
   const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;

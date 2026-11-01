@@ -19,6 +19,10 @@ function send(
 }
 
 describe('handleMessage', () => {
+  it('rejects malformed trailing-refresh flags', async () => {
+    expect(await send({ type: 'poll', afterCurrent: 'true' })).toBe(false);
+  });
+
   it('ignores other extensions and messages it does not know', async () => {
     const other = { id: 'someone-else' } as chrome.runtime.MessageSender;
     expect(await send({ type: 'signedOut' }, other)).toBe(false);

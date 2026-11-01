@@ -45,7 +45,7 @@ const commitTitle = () => within(dialog()).getByRole('textbox', { name: /Commit 
 const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
 const choose = (value: string) => fireEvent.change(method(), { target: { value } });
 const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-const poll = { type: 'poll', force: true };
+const poll = { type: 'poll', force: true, afterCurrent: true };
 
 beforeEach(() => {
   auth.value = buildAuth('octocat');
