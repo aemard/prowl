@@ -12,11 +12,15 @@ import {
 } from './notifier';
 
 const settings = () => ({ ...defaultSettings().notifications, enabled: true });
+
 const shown = () => fakeChrome().__state.notifications;
+
 const notify = (...events: ReturnType<typeof prEvent>[]) =>
   notifyEvents(events, settings(), emptyPrLocal());
+
 const events = (count: number) =>
   Array.from({ length: count }, (_, i) => prEvent({ number: i + 1 }));
+
 const stored = async () =>
   (await chrome.storage.session.get<{ notified?: Record<string, string> }>('notified')).notified;
 

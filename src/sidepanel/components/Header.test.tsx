@@ -9,24 +9,24 @@ import { toasts } from './ui/Toast';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
-beforeEach(() => {
-  vi.useFakeTimers({ now: NOW, toFake: ['Date', 'setInterval', 'clearInterval'] });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  auth.value = undefined;
-  snapshot.value = undefined;
-  pollState.value = undefined;
-  location.hash = '';
-  toasts.value = [];
-});
-
-const signIn = () => {
-  auth.value = buildAuth();
-};
-
 describe('Header', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW, toFake: ['Date', 'setInterval', 'clearInterval'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    auth.value = undefined;
+    snapshot.value = undefined;
+    pollState.value = undefined;
+    location.hash = '';
+    toasts.value = [];
+  });
+
+  const signIn = () => {
+    auth.value = buildAuth();
+  };
+
   it('shows only the brand while signed out', () => {
     render(<Header />);
     expect(screen.getByRole('heading', { level: 1, name: 'Prowl' })).toBeTruthy();
@@ -124,18 +124,18 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: 'Back to pull requests' })).toBeTruthy();
   });
 
-  describe('sign out', () => {
-    const openConfirmation = () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Account: octocat' }));
-      fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
-    };
-    const store = () =>
-      chrome.storage.local.set({
-        auth: buildAuth(),
-        snapshot: buildSnapshot(),
-        pollState: buildPollState(),
-      });
+  const openConfirmation = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Account: octocat' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+  };
+  const store = () =>
+    chrome.storage.local.set({
+      auth: buildAuth(),
+      snapshot: buildSnapshot(),
+      pollState: buildPollState(),
+    });
 
+  describe('sign out', () => {
     it('asks first, and cancelling keeps everything', async () => {
       signIn();
       await store();

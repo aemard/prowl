@@ -151,25 +151,25 @@ describe('useShortcuts', () => {
   });
 });
 
+function updatePoll(state: Parameters<typeof buildPollState>[0]) {
+  return act(() => {
+    pollState.value = buildPollState(state);
+  });
+}
+
 describe('RefreshAnnouncer', () => {
   it('reads out the result of a refresh the user asked for, not background polls', async () => {
     render(<RefreshAnnouncer />);
     const region = screen.getByRole('status');
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: true });
-    });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
+    await updatePoll({ inFlight: true });
+    await updatePoll({ inFlight: false });
     expect(region.textContent).toBe('');
 
     await act(() => {
       refreshRequested.value = Date.now();
       pollState.value = buildPollState({ inFlight: true });
     });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
+    await updatePoll({ inFlight: false });
     expect(region.textContent).toBe('Updated. 0 pull requests.');
     expect(refreshRequested.value).toBeNull();
 
@@ -178,14 +178,10 @@ describe('RefreshAnnouncer', () => {
       refreshRequested.value = Date.now();
       pollState.value = buildPollState({ inFlight: true });
     });
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: true, mergePending: ['PR_1'] });
-    });
+    await updatePoll({ inFlight: true, mergePending: ['PR_1'] });
     expect(region.textContent).toBe('Updated. 0 pull requests.');
     expect(refreshRequested.value).toBeNull();
-    await act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
+    await updatePoll({ inFlight: false });
 
     // A second click during enrichment shares that poll and is acknowledged when it finishes.
     const earlier = new Date(Date.now() - 10_000).toISOString();

@@ -17,9 +17,10 @@ let stop: (() => void) | undefined;
 const hydrate = async () => {
   stop = await hydrateStore();
 };
-afterEach(() => stop?.());
 
 describe('hydrateStore', () => {
+  afterEach(() => stop?.());
+
   it('falls back to defaults and signed out when storage is empty', async () => {
     await hydrate();
     expect(hydrated.value).toBe(true);
