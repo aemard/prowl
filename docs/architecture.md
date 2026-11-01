@@ -567,7 +567,8 @@ signal (`state/store.ts`).
   client secret). Builds without one hide the button and link to `docs/auth.md` instead.
   1. The button's click handler first calls `chrome.permissions.request` for `env.webUrl/*`
      (`https://github.com/*`, an optional host permission; granted already in e2e builds), because
-     Chrome only prompts during the user gesture. A refusal is explained inline and nothing is sent.
+     Chrome only prompts during the user gesture. A refusal is explained inline, nothing is sent
+     and the token form opens (`onTokenFallback`).
   2. `requestDeviceCode()` POSTs `client_id` + `scope=repo read:org` (form-encoded, `Accept: application/json`)
      to `{webUrl}/login/device/code` and returns `{ deviceCode, userCode, verificationUri,
      expiresAt, interval }`. The panel shows the code (copy button, `Code expires in m:ss`, cancel),
@@ -584,6 +585,9 @@ signal (`state/store.ts`).
   4. `validateDeviceToken(token)` is `validatePat` (viewer + scopes, a warning when `repo` is
      missing) with `method: 'oauth'`; `completeSignIn(auth, warning)` stores it, polls and shows
      the list, as for a PAT.
+  Onboarding puts the token form behind "Use a personal access token" and the creation guides
+  behind "Help choosing a token". Without a client id the form is open from the start; with one it
+  opens by itself after a refused permission or an `unsupported` failure.
   The flow lives in the panel only: closing the panel ends it (the code stays valid at GitHub for
   its 15 minutes, but nothing polls), and the user starts again. Tokens from the flow do not
   expire (OAuth Apps), and sign-out only forgets them locally; the user can revoke Prowl under
@@ -742,11 +746,16 @@ signal (`state/store.ts`).
     recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
   - `NumberField` saves valid whole numbers as typed (interval 1-60, results 1-100, and in
     Appearance "Hide PRs with no commit for (days)" 0-365) and shows an error for the rest; blur
-    shows the saved value again. The Refresh note shows the estimated
-    cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
+    shows the saved value again. "Maximum PRs loaded per section" is always visible; the interval
+    and the note with the estimated cost in points an hour (`estimatedPointsPerHour`, the formula
+    of the cost table above, called a baseline) sit in a native `<details>` "Refresh options". The
+    coverage notice's "Change limit" (`changePrLimit`, `state/settings.ts`) sets the one-shot
+    `settingsFocus` signal and navigates; `SettingsView` consumes it on mount and focuses the field
+    (the shell's own focus move on route changes is a layout effect so that it comes first).
     Appearance also has the "Hide draft PRs" and "Hide PRs opened by bots" switches (the list,
     counts and badge follow at once; nothing is fetched again).
-  - Notifications: master switch (reveals event switches, quiet hours and the test button only when enabled),
+  - Notifications: master switch (while off, only a note shows; the event switches, quiet hours
+    and the test button appear when it is on, and the saved choices are kept),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
     which calls `chrome.notifications.create` from the panel with id `test:<ms>` and
@@ -969,13 +978,3 @@ pointer listener (`useGlassReflection`) paints only the current surface, at most
 frame; scrolling and preference changes clear it. Reduced motion or a coarse/touch pointer
 disables the moving reflection; reduced transparency uses opaque surfaces and removes the
 blur, rims and reflection. No new dependency, timer, network call or loading state.
-
-## Progressive sign-in and settings
-
-When OAuth is available, GitHub sign-in is primary and PAT is an explicit disclosure. Without
-OAuth, or when GitHub rejects device-flow availability, the token form is shown directly.
-Token creation guides are revealed separately. Disabled notifications show only the master
-switch and a short explanation; enabling them restores the saved event/quiet-hour choices.
-The loaded-PR maximum stays visible. Check interval and approximate API cost sit in native
-Refresh options, without changing stored preferences. Change limit navigates with a one-shot
-focus request consumed by the lazily loaded settings view, focusing the actual number field.
