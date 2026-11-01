@@ -427,9 +427,15 @@ describe('SettingsView', () => {
     });
 
     it('reveals notification options only when enabled, retaining the saved choices', async () => {
-      await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
+      const { notifications: defaults } = defaultSettings();
+      const chosen = {
+        ...defaults,
+        enabled: true,
+        events: { ...defaults.events, ci_failed: false },
+        quietHours: { enabled: true, start: '22:00', end: '08:00' },
+      };
+      await open({ notifications: chosen });
       const notifications = group('Notifications');
-      const before = (await saved()).notifications;
       fireEvent.click(toggle('Desktop notifications', notifications));
       await waitFor(() =>
         expect(notifications.queryByRole('switch', { name: 'CI fails' })).toBeNull(),
@@ -441,7 +447,8 @@ describe('SettingsView', () => {
       await waitFor(() =>
         expect(notifications.getByRole('switch', { name: 'CI fails' })).toBeTruthy(),
       );
-      expect((await saved()).notifications).toEqual(before);
+      expect(toggle('CI fails', notifications).getAttribute('aria-checked')).toBe('false');
+      expect((await saved()).notifications).toEqual(chosen);
     });
 
     it('sets quiet hours that cross midnight', async () => {
