@@ -923,9 +923,9 @@ the head, scope and evidence their read depends on; merge enrichment does not re
 
 Nested reviews/requests/threads expose connection limits rather than claiming completeness.
 Check requirement flags remain unknown when inaccessible, distinct from false. Expanded-card
-branch rules use the applied-rules REST endpoint; known method restrictions intersect repo
-methods, unreadable rules produce an explicit warning, and GitHub always decides final merge
-permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
+branch rules use the applied-rulesets REST endpoint (classic branch protection is not in it);
+known method restrictions intersect repo methods, unreadable rules (including a full page of
+100) produce an explicit warning, and GitHub always decides final merge permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
 up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
 the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
 Section scans also stop after 20 requests per query, independently of the examined-node bound.
