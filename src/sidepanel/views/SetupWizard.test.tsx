@@ -41,6 +41,111 @@ const click = async (label: string) => {
 };
 
 describe('SetupWizard', () => {
+
+  it('lists discovered teams by organization, follows all by default and saves exclusions on Continue', async () => {
+    await chrome.storage.local.set({
+      teams: {
+        login: 'octocat',
+        fetchedAt: new Date().toISOString(),
+        teams: [
+          { org: 'acme', slug: 'platform', name: 'Platform Engineering' },
+          { org: 'acme', slug: 'security', name: 'Security' },
+          { org: 'octo', slug: 'web', name: 'Web' },
+        ],
+        error: null,
+      },
+    });
+    await open();
+    expect(screen.queryByRole('region', { name: 'Teams to follow' })).toBeNull();
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    expect(screen.getByRole('region', { name: 'Teams to follow' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'acme' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'octo' })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Platform Engineering' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('switch', { name: 'Security' }));
+    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe('false');
+    expect((await getItem('settings'))?.unfollowedTeams).toBeUndefined();
+    await click('Continue');
+    const saved = await getItem('settings');
+    expect(saved?.sections.find((s) => s.kind === 'team_review_requested')?.enabled).toBe(true);
+    expect(saved?.unfollowedTeams).toEqual(['acme/security']);
+  });
+
+  it('keeps saved team exclusions on a setup rerun, without resetting other teams', async () => {
+    await chrome.storage.local.set({
+      settings: { ...defaultSettings(), unfollowedTeams: ['acme/security', 'legacy/archived'] },
+      teams: {
+        login: 'octocat',
+        fetchedAt: new Date().toISOString(),
+        teams: [{ org: 'acme', slug: 'security', name: 'Security' }],
+        error: null,
+      },
+    });
+    await open({ status: 'completed' });
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    expect(screen.getByRole('switch', { name: 'Security' }).getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(screen.getByRole('switch', { name: 'Security' }));
+    await click('Continue');
+    expect((await getItem('settings'))?.unfollowedTeams).toEqual(['legacy/archived']);
+  });
+
+  it('reacts to team discovery arriving after the wizard opens', async () => {
+    await open();
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    expect(screen.getByText('Teams are not loaded yet. Refresh to try again.')).toBeTruthy();
+    await act(async () => {
+      await chrome.storage.local.set({
+        teams: {
+          login: 'octocat',
+          fetchedAt: new Date().toISOString(),
+          teams: [{ org: 'acme', slug: 'infra', name: 'Infrastructure' }],
+          error: null,
+        },
+      });
+    });
+    expect(screen.getByRole('switch', { name: 'Infrastructure' }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('shows an access error and allows setup without team discovery', async () => {
+    await chrome.storage.local.set({
+      teams: {
+        login: 'octocat',
+        fetchedAt: new Date().toISOString(),
+        teams: [],
+        error: { kind: 'missing_scope', message: 'Missing read:org scope.' },
+      },
+    });
+    await open();
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    expect(screen.getByText(/Missing read:org scope/)).toBeTruthy();
+    await click('Continue');
+    expect(screen.getByRole('heading', { name: 'Notifications' })).toBeTruthy();
+    expect((await getItem('settings'))?.unfollowedTeams).toEqual([]);
+  });
+
+  it('can retry discovery without saving the draft team selection', async () => {
+    await open();
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    await click('Refresh teams');
+    expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' });
+    expect((await getItem('settings'))?.unfollowedTeams).toBeUndefined();
+  });
+
+  it('does not leak team names from a different account', async () => {
+    await chrome.storage.local.set({
+      teams: {
+        login: 'someone-else',
+        fetchedAt: new Date().toISOString(),
+        teams: [{ org: 'secret', slug: 'team', name: 'Secret team' }],
+        error: null,
+      },
+    });
+    await open();
+    fireEvent.click(screen.getByRole('switch', { name: 'Team reviews' }));
+    expect(screen.queryByText('Secret team')).toBeNull();
+  });
+
   it('saves selected PR sections when continuing and preserves custom sections', async () => {
     await chrome.storage.local.set({
       settings: {
