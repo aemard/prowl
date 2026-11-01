@@ -5,6 +5,7 @@
 // pixel sizes, so these pages render at 1x.
 // Usage: pnpm screenshots, then pnpm store-images (commit the PNGs). Headlines use Inter when
 // it is installed, else the system UI font.
+// To rebuild only the marquee: pnpm store-images promo-marquee.png.
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -14,6 +15,8 @@ const outDir = resolve(root, 'docs/store');
 const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
 const logo = dataUrl('src/assets/logo.png', 'image/png');
+// The marquee's list-ready.png reference is refreshed separately from pnpm screenshots.
+const marqueeLogo = dataUrl('docs/brand/prowl-logo-transparent.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
 const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
 
@@ -35,6 +38,26 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .panel { flex: none; overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px;
   background: var(--gray-1); box-shadow: var(--shadow-lg); }
 .panel img { display: block; }
+.marquee { padding: 28px 87px; gap: 90px; }
+.marquee .copy { width: 610px; flex: none; gap: 0; }
+.marquee .brand { gap: 16px; font-size: 44px; font-weight: 600;
+  letter-spacing: -0.04em; height: 88px; margin-left: -13px; }
+.marquee h1 { margin: 18px 0 14px; font-size: 56px; line-height: 1.08;
+  letter-spacing: -0.04em; font-weight: 600; text-wrap: initial; }
+.marquee p { font-size: 30px; line-height: 1.4; }
+.marquee .trust { display: flex; align-items: center; gap: 18px; margin-top: 24px;
+  font-size: 20px; color: var(--color-fg-muted); white-space: nowrap; }
+.marquee .trust span + span::before { content: '·'; margin-right: 18px; }
+.marquee .trust .open { color: var(--color-accent-fg); font-weight: 600; }
+.marquee .hero-product { flex: 1; margin-top: 14px; }
+.marquee .hero-label { font-size: 12px; letter-spacing: 0.15em; color: var(--color-fg-muted);
+  margin: 0 0 27px 19px; }
+.marquee .hero-preview { width: 432px; padding: 15px; border: 1px solid var(--color-border);
+  border-radius: 30px; background: var(--color-bg); box-shadow: var(--shadow-lg); }
+.marquee .hero-crop { height: 290px; overflow: hidden; border-radius: 20px; }
+.marquee .hero-crop img { display: block; }
+.marquee .hero-caption { display: flex; justify-content: space-between; font-size: 12px;
+  color: var(--color-fg-muted); margin: 19px 7px 4px; }
 `;
 
 /** The panel cut to `height` from the top; list shots show it whole, section bar included. */
@@ -125,24 +148,34 @@ const IMAGES = [
     file: 'promo-marquee.png',
     size: [1400, 560],
     html: `
-      <div class="canvas" data-tone="ink" style="gap:72px;padding:0 0 0 112px">
-        <div class="copy" style="flex:1">
-          <div class="brand" style="font-size:44px;gap:20px">
-            <img src="${logo}" width="88" height="88" alt="">Prowl
+      <div class="canvas marquee">
+        <div class="copy">
+          <div class="brand">
+            <img src="${marqueeLogo}" width="104" height="104" alt="">Prowl
           </div>
-          <p style="font-size:30px">Your GitHub pull requests in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
+          <h1>Your pull requests.<br>A little calmer.</h1>
+          <p>CI, reviews and merge status.<br>Right in Chrome’s side panel.</p>
+          <div class="trust"><span class="open">● &nbsp;Open source</span><span>MIT licensed</span><span>No tracking</span></div>
         </div>
-        <div style="display:flex;gap:24px;align-self:flex-start;margin-top:72px">
-          ${panel('list-light', 560)}${panel('list-dark', 560)}
+        <div class="hero-product">
+          <div class="hero-label">YOUR GITHUB PRs, AT A GLANCE</div>
+          <div class="hero-preview">
+            <div class="hero-crop"><img src="${shot('list-ready')}" width="400" height="760" alt="Prowl showing a pull request ready to merge"></div>
+            <div class="hero-caption"><span>Light theme</span><span>Chrome side panel</span></div>
+          </div>
         </div>
       </div>`,
   },
 ];
 
+const target = process.argv[2];
+const images = target ? IMAGES.filter(({ file }) => file === target) : IMAGES;
+if (images.length === 0) throw new Error(`Unknown store image: ${target}`);
+
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMIUM || undefined });
 try {
-  for (const { file, size, html } of IMAGES) {
+  for (const { file, size, html } of images) {
     const [width, height] = size;
     const page = await browser.newPage({ viewport: { width, height } });
     await page.setContent(
