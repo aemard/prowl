@@ -277,12 +277,6 @@ export async function fetchPullRequests(
         before.mergeable !== 'unknown' &&
         before.mergeStateStatus !== 'unknown' &&
         searchFacts(before) === searchFacts(pr);
-      // Preserve the baseline even when this poll has no budget left for its refresh.
-      if (before?.headSha === pr.headSha) {
-        result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-      } else if (before) {
-        result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-      }
       if (valid) {
         result.mergeStateAt[pr.id] = readAt;
       } else {
@@ -321,10 +315,10 @@ export async function fetchPullRequests(
           if (batch.some((pr) => ids.includes(pr.id))) {
             result.sectionErrors[sectionId] =
               `Some merge requirements could not be read: ${problemText(partialMessages)}`;
-            const coverage = result.sectionCoverage?.[sectionId];
             coverageFor(sectionId, {
-              hasMore: coverage?.hasMore ?? false,
-              queries: coverage?.queries ?? [],
+              hasMore: false,
+              queries: [],
+              ...result.sectionCoverage?.[sectionId],
               partial: true,
             });
           }
@@ -333,19 +327,13 @@ export async function fetchPullRequests(
       const readAt = new Date().toISOString();
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
-        const before = previous?.pullRequests[pr.id];
-        if (partialMessages.length) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-          delete result.mergeStateAt[pr.id];
-        } else if (isNode(node) && node.headRefOid !== pr.headSha) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-          delete result.mergeStateAt[pr.id];
-        } else if (isNode(node)) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
-          result.mergeStateAt[pr.id] = readAt;
-        } else if (before?.headSha === pr.headSha) {
-          result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-        }
+        // A hole or a failed batch keeps the facts `put` carried over. A node computed for
+        // another head, or read beside errors (a null `reviewDecision` would mean "no review
+        // required"), is unknown and unread, so the next poll asks again.
+        if (!isNode(node)) return;
+        const readable = node.headRefOid === pr.headSha && partialMessages.length === 0;
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState(readable ? node : {}) };
+        if (readable) result.mergeStateAt[pr.id] = readAt;
       });
     }
     await onProgress?.(result, []);

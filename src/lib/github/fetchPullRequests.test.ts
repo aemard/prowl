@@ -486,6 +486,36 @@ describe('fetchPullRequests', () => {
       expect(result.mergeStateAt).toEqual({});
     });
 
+    it('reads nothing from the nodes of a partial response, and says the section is incomplete', async () => {
+      const [read, hole] = [prNode({ number: 1 }), prNode({ number: 2 })];
+      const previous = {
+        pullRequests: { [hole.id]: { ...mapped(hole), mergeStateStatus: 'behind' as const } },
+      };
+      const { client } = setup({
+        ProwlSearch: bySearch({ 'author:@me': [read, hole] }),
+        ProwlMergeState: ({ ids }) =>
+          jsonResponse({
+            // A null `reviewDecision` here is an error, not "no review required".
+            data: mergeStateResponse(ids, [{ ...read, reviewDecision: null }]),
+            errors: [
+              graphqlError('FORBIDDEN', 'Cannot read reviews', ['nodes', 0, 'reviewDecision']),
+              graphqlError('NOT_FOUND', 'Could not resolve to a node', ['nodes', 1]),
+            ],
+          }),
+      });
+      const result = await fetchPullRequests(client, settings(), previous);
+      expect(result.pullRequests[read.id]).toMatchObject({
+        reviewDecision: 'unknown',
+        mergeStateStatus: 'unknown',
+      });
+      // The hole keeps what it had.
+      expect(result.pullRequests[hole.id]?.mergeStateStatus).toBe('behind');
+      expect(result.mergeStateAt).toEqual({});
+      expect(result.sectionErrors.authored).toContain('Some merge requirements could not be read');
+      expect(result.sectionErrors.authored).toContain('nodes.0.reviewDecision');
+      expect(result.sectionCoverage?.authored?.partial).toBe(true);
+    });
+
     it('fails the poll on a rejected token', async () => {
       const { client } = setup({
         ProwlSearch: bySearch({ 'author:@me': [prNode()] }),
