@@ -50,17 +50,40 @@ describe('signOut', () => {
       snapshot: buildSnapshot(),
       pollState: buildPollState(),
       settings: { version: 1 },
-      prLocal: { snoozed: {}, muted: {}, seen: {} },
+      prLocal: {
+        snoozed: {},
+        muted: { PR_1: true },
+        seen: {},
+        seenFacts: { PR_1: 'private observed content' },
+      },
       teams: { login: 'octocat', teams: [] },
+      panelState: {
+        login: 'octocat',
+        activeSectionId: 'authored',
+        foldedGroups: ['authored\nprivate/repo'],
+      },
     });
 
     await signOut();
 
     expect(
       Object.keys(
-        await getItems(['auth', 'snapshot', 'pollState', 'settings', 'prLocal', 'teams']),
+        await getItems([
+          'auth',
+          'snapshot',
+          'pollState',
+          'settings',
+          'prLocal',
+          'teams',
+          'panelState',
+        ]),
       ),
     ).toEqual(['settings', 'prLocal']);
+    expect((await getItems(['prLocal'])).prLocal).toEqual({
+      snoozed: {},
+      muted: { PR_1: true },
+      seen: {},
+    });
     expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
   });
 });

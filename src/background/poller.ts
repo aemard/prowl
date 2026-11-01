@@ -13,7 +13,13 @@ import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
 import type { AuthState, PollState, PrEvent, Snapshot } from '../lib/model';
-import { normalizePrLocal, pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
+import {
+  baselineSeenFacts,
+  forgetSeenFacts,
+  normalizePrLocal,
+  pruneExpired,
+  updatePrLocal,
+} from '../lib/storage/prLocal';
 import { SESSION_LOCK, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import {
@@ -62,6 +68,7 @@ export async function scheduleAlarm(minutes: number, ifScheduled = false): Promi
 export async function clearSignedOut(): Promise<void> {
   await withLock(SESSION_LOCK, async () => {
     if (await getItem('auth')) return;
+    await forgetSeenFacts();
     visibleCards.clear();
     const shown = await chrome.notifications.getAll();
     await Promise.all([
@@ -183,6 +190,7 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
   const events: PrEvent[] = [];
   const publish = async (fetched: FetchResult, mergePending: string[]) => {
     await withSignedIn(auth, async () => {
+      if (previous) await updatePrLocal((state) => baselineSeenFacts(state, previous.pullRequests));
       const next: Snapshot = {
         fetchedAt: new Date().toISOString(),
         viewer: auth.viewer,
@@ -291,6 +299,8 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
             ...Object.keys(state.muted),
             ...Object.keys(state.snoozed),
             ...Object.keys(state.seen),
+            ...Object.keys(state.seenFacts ?? {}),
+            ...Object.keys(state.alwaysShown ?? {}),
           ]),
         ].filter((id) => !closed.has(id)),
       ),

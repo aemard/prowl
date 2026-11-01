@@ -184,8 +184,8 @@ test('offline: banner counts down to the retry, the list stays readable', async 
     await github.start();
   }
 
-  const status = panel.getByRole('status').filter({ hasText: 'Offline' });
-  await expect(status).toContainText(/Offline — retrying in ([89]|10) min/);
+  const status = panel.getByRole('status').filter({ hasText: 'Could not reach GitHub' });
+  await expect(status).toContainText(/Could not reach GitHub — retrying in ([89]|10) min/);
   await expect(status).toContainText('Could not reach GitHub.');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);

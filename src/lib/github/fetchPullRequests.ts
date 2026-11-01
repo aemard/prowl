@@ -275,7 +275,7 @@ export async function fetchPullRequests(
     const now = Date.now();
     const stale: PullRequest[] = [];
     const hidden = (pr: PullRequest) =>
-      hiddenReasons(pr, settings, now).length > 0 || isSnoozed(local, pr.id, now);
+      hiddenReasons(pr, settings, now, local).length > 0 || isSnoozed(local, pr.id, now);
     for (const pr of Object.values(result.pullRequests)) {
       if (pr.state !== 'open') continue;
       const before = previous?.pullRequests[pr.id];

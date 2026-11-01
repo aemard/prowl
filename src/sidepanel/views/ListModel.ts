@@ -78,7 +78,7 @@ export function splitSection(
 ): SectionParts {
   const parts: SectionParts = { shown: [], hidden: [], snoozed: [] };
   for (const pr of prs) {
-    const reasons = hiddenReasons(pr, hide, now);
+    const reasons = hiddenReasons(pr, hide, now, local);
     if (isSnoozed(local, pr.id, now)) parts.snoozed.push(pr);
     else if (reasons.length > 0) parts.hidden.push({ pr, reasons });
     else parts.shown.push(pr);
