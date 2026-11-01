@@ -337,8 +337,7 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
         now - Date.parse(readAt) < 60_000 &&
         pr.mergeable !== 'unknown' &&
         pr.mergeStateStatus !== 'unknown' &&
-        pr.reviewDecision !== 'unknown' &&
-        !snapshot.mergeStateDue?.includes(id)
+        pr.reviewDecision !== 'unknown'
       )
         return;
       const settings = normalizeSettings(stored.settings);

@@ -913,10 +913,10 @@ link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched i
 
 `mergeStateAt` is the date the PR's merge facts were actually read; facts carried over from the
 previous poll keep it. `mergeStateDue` lists the PRs whose facts are aged, deferred or unknown,
-without inventing a date. A read (poll or card) clears its due id; neither facts nor date cross a
-change of the search data, the head included. Two of the 20 merge-read slots are reserved for the
-oldest pending facts so continuous visible hints cannot starve all other PRs. These are budgets,
-not refresh guarantees.
+without inventing a date; it labels cards, while facts and dates alone decide what a poll reads.
+A read (poll or card) clears its due id; neither facts nor date cross a change of the search data,
+the head included. Two of the 20 merge-read slots are reserved for the oldest pending facts so
+continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
 The header names list freshness; expanded details state merge verification age and cached/due
 or unverified status. Detail cache keys include the head and base, and old-head details are
 not presented as the current checks while a replacement loads or fails. Search-cache comparisons

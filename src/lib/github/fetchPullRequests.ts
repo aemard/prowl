@@ -131,7 +131,7 @@ export async function fetchPullRequests(
   client: GitHubClient,
   settings: FetchSettings,
   previous:
-    | (Pick<Snapshot, 'pullRequests' | 'mergeStateAt' | 'mergeStateDue'> &
+    | (Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
         Partial<Pick<Snapshot, 'sections' | 'sectionCoverage'>>)
     | null = null,
   teams: Pick<TeamsState, 'teams' | 'error'> | null = null,
@@ -285,7 +285,6 @@ export async function fetchPullRequests(
       const valid =
         carried &&
         readAt !== undefined &&
-        !previous?.mergeStateDue?.includes(pr.id) &&
         now - Date.parse(readAt) <
           (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
         before.mergeable !== 'unknown' &&
