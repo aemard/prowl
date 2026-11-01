@@ -189,7 +189,7 @@ const CASES: Case[] = [
     'mergeability still being computed',
     { mergeable: 'unknown', mergeStateStatus: 'unknown' },
     undefined,
-    ['GitHub is still checking whether it can be merged'],
+    ['Merge requirements have not been verified for this commit'],
   ],
 ];
 

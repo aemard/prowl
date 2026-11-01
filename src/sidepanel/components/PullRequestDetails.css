@@ -1,11 +1,12 @@
 /* The expanded part of a card: an inset panel below the card's summary. */
 .pr-detail {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4) var(--space-4);
   border-top: var(--border-width) solid var(--color-border-subtle);
-  background: var(--color-bg-subtle);
+  background: var(--glass-detail);
 }
 
 .pr-detail__label {
@@ -143,4 +144,9 @@
 .pr-detail {
   border-radius: 0 0 21px 21px;
   background: var(--glass-solid);
+}
+.pr-detail__freshness {
+  margin: var(--space-2) 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
 }

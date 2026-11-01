@@ -13,7 +13,5 @@ blob-report/
 !.env.example
 site/dist/
 site/.astro/
-scripts/ralph/logs/
-scripts/ralph/.last-branch
 .vite/
 .claude/worktrees/

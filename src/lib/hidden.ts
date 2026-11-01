@@ -2,7 +2,8 @@
  * Which pull requests are kept out of the way: left out of the list, the section counts and the
  * badge (a "Show N hidden" button reveals them), but still fetched and still notified. Pure.
  */
-import type { PullRequest, Settings } from './model';
+import type { PrLocalState, PullRequest, Settings } from './model';
+import { isAlwaysShown } from './storage/prLocal';
 
 /** Why a pull request is hidden. Each reason is one entry; revealed cards show them all. */
 export type HiddenReason = { kind: 'draft' } | { kind: 'bot' } | { kind: 'stale'; days: number };
@@ -18,7 +19,13 @@ const DAY_MS = 86_400_000;
  * commit is older than `hideStaleAfterDays` days (0 never hides; an unknown date never hides).
  * Applies to every section alike.
  */
-export function hiddenReasons(pr: PullRequest, hide: HideSettings, now: number): HiddenReason[] {
+export function hiddenReasons(
+  pr: PullRequest,
+  hide: HideSettings,
+  now: number,
+  local?: Pick<PrLocalState, 'alwaysShown'>,
+): HiddenReason[] {
+  if (local && isAlwaysShown(local, pr.id)) return [];
   const reasons: HiddenReason[] = [];
   if (hide.hideDrafts && pr.isDraft) reasons.push({ kind: 'draft' });
   if (hide.hideBots && pr.author?.isBot) reasons.push({ kind: 'bot' });

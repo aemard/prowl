@@ -20,11 +20,14 @@ Keep it true: a criterion that stops being met is fixed in the project, not left
    Unmet with its justification. OpenSSF Scorecard's `CII-Best-Practices` check reads the level on
    its next run.
 
-Before submitting silver, the maintainer names a successor in GitHub (Settings → Account →
-Successor settings), which `access_continuity` relies on.
+Before claiming Silver, the maintainer must establish and validate the emergency continuity
+procedure described in [GOVERNANCE.md](../GOVERNANCE.md#continuity). No successor or emergency
+access is configured as of 2026-10-31, so `access_continuity` is **Unmet**. A GitHub successor
+setting alone does not establish recovery of every necessary account within one week.
 
 ## Unmet, and why
 
+- Silver MUST: `access_continuity` (no designated successor or emergency access procedure).
 - Silver SHOULDs: `bus_factor` (one maintainer), `internationalization` (English only, on the
   roadmap) and `version_tags_signed` (release-please tags through the API, unsigned).
 - Gold and Baseline level 3 need a second person: gold asks for a bus factor of 2, two

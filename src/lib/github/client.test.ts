@@ -174,6 +174,19 @@ describe('graphql', () => {
       expect(onPartialErrors).not.toHaveBeenCalled();
     });
 
+    it.each(['UNAUTHENTICATED', 'RATE_LIMITED'])(
+      'never downgrades a global %s failure to partial data',
+      async (type) => {
+        const { client } = setup(
+          jsonResponse({ data: { nodes: [] }, errors: [graphqlError(type, 'Stop')] }),
+        );
+        await expect(client.graphql('query V { x }', {}, { partial: true })).rejects.toHaveProperty(
+          'kind',
+          type === 'RATE_LIMITED' ? 'rate_limited' : 'unauthorized',
+        );
+      },
+    );
+
     it('still throws in partial mode when there is no data at all', async () => {
       const body = { data: null, errors: [graphqlError('FORBIDDEN', 'SAML enforcement')] };
       const { client } = setup(jsonResponse(body));

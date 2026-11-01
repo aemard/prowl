@@ -112,7 +112,7 @@ export function describeStatus(
       return {
         kind: 'offline',
         tone: 'warning',
-        title: `Offline — ${retrying}`,
+        title: `Could not reach GitHub — ${retrying}`,
         detail: error.message,
         age,
         action: RETRY,

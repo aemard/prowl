@@ -20,6 +20,39 @@ afterEach(() => {
 });
 
 describe('runPrAction', () => {
+  it('reports a form error inline without duplicating a toast', async () => {
+    const onError = vi.fn();
+    expect(
+      await runPrAction(
+        pr,
+        'Comment',
+        'Commented',
+        async () => {
+          throw new GitHubError('forbidden', 'Permission denied');
+        },
+        onError,
+      ),
+    ).toBe(false);
+    expect(onError).toHaveBeenCalledWith('Permission denied');
+    expect(toasts.value).toEqual([]);
+  });
+
+  it('does not apply an old action result to another signed-in session', async () => {
+    let finish = () => {};
+    const run = runPrAction(
+      pr,
+      'Comment',
+      'Commented',
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    auth.value = buildAuth('hubot');
+    finish();
+    expect(await run).toBe(false);
+    expect(toasts.value).toEqual([]);
+  });
   it('names a pull request owner/name#number', () => {
     expect(prRef(pr)).toBe('acme/widgets#7');
   });
@@ -34,7 +67,7 @@ describe('runPrAction', () => {
     expect(toasts.value.map(({ message, tone }) => [tone, message])).toEqual([
       ['success', 'Merged acme/widgets#7'],
     ]);
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(pendingActions.value).toEqual({});
   });
 

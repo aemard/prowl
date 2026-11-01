@@ -38,13 +38,13 @@ describe('Header', () => {
     signIn();
     snapshot.value = buildSnapshot('2026-10-06T11:58:00.000Z');
     render(<Header />);
-    const time = screen.getByText('Updated 2 min ago');
+    const time = screen.getByText('List updated 2 min ago');
     expect(time.getAttribute('datetime')).toBe('2026-10-06T11:58:00.000Z');
 
     act(() => {
       vi.advanceTimersByTime(60_000);
     });
-    expect(screen.getByText('Updated 3 min ago')).toBeTruthy();
+    expect(screen.getByText('List updated 3 min ago')).toBeTruthy();
   });
 
   it('says so before the first fetch and while one is running', () => {

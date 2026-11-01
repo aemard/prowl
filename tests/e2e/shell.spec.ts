@@ -81,7 +81,7 @@ test.describe('signed in', () => {
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('heading', { level: 1, name: 'Prowl' })).toBeVisible();
-    await expect(panel.getByText('Updated 2 min ago', { exact: true })).toBeVisible();
+    await expect(panel.getByText('List updated 2 min ago', { exact: true })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Refresh' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
@@ -108,9 +108,9 @@ test.describe('signed in', () => {
   test('keeps in sync with what the service worker stores', async ({ openPanel, seedStorage }) => {
     const panel = await openPanel();
     await seedStorage({ snapshot: snapshot(new Date().toISOString()) });
-    await expect(panel.getByText('Updated just now')).toBeVisible();
+    await expect(panel.getByText('List updated just now')).toBeVisible();
     await seedStorage({ snapshot: snapshot(minutesAgo(5)) });
-    await expect(panel.getByText('Updated 5 min ago')).toBeVisible();
+    await expect(panel.getByText('List updated 5 min ago')).toBeVisible();
 
     await seedStorage({ pollState: pollState(true) });
     await expect(panel.getByRole('button', { name: 'Refresh' })).toHaveAttribute(

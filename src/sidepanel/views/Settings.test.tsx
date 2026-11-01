@@ -113,9 +113,12 @@ describe('SettingsView', () => {
       const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
       fireEvent.click(toggle('Mentioned'));
       fireEvent.click(toggle('Assigned to me'));
-      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true }), {
-        timeout: 2000,
-      });
+      await waitFor(
+        () => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true }),
+        {
+          timeout: 2000,
+        },
+      );
       expect(send).toHaveBeenCalledTimes(1);
     });
 
@@ -294,7 +297,7 @@ describe('SettingsView', () => {
 
     it('saves how many pull requests to fetch per section', async () => {
       await open();
-      fireEvent.input(group('Refresh').getByLabelText('Pull requests per section'), {
+      fireEvent.input(group('Refresh').getByLabelText('Maximum PRs loaded per section'), {
         target: { value: '100' },
       });
       await waitFor(async () => expect((await saved()).maxPerSection).toBe(100));
@@ -423,19 +426,22 @@ describe('SettingsView', () => {
       expect(notifications.getAllByRole('switch')).toHaveLength(1 + 9 + 1);
     });
 
-    it('greys out what depends on the master switch', async () => {
+    it('reveals notification options only when enabled, retaining the saved choices', async () => {
       await open({ notifications: { ...defaultSettings().notifications, enabled: true } });
       const notifications = group('Notifications');
+      const before = (await saved()).notifications;
       fireEvent.click(toggle('Desktop notifications', notifications));
       await waitFor(() =>
-        expect((toggle('CI fails', notifications) as HTMLButtonElement).disabled).toBe(true),
+        expect(notifications.queryByRole('switch', { name: 'CI fails' })).toBeNull(),
       );
-      expect((toggle('Quiet hours', notifications) as HTMLButtonElement).disabled).toBe(true);
-      expect(
-        (notifications.getByRole('button', { name: 'Send test notification' }) as HTMLButtonElement)
-          .disabled,
-      ).toBe(true);
+      expect(notifications.queryByRole('switch', { name: 'Quiet hours' })).toBeNull();
+      expect(notifications.queryByRole('button', { name: 'Send test notification' })).toBeNull();
       expect((await saved()).notifications.enabled).toBe(false);
+      fireEvent.click(toggle('Desktop notifications', notifications));
+      await waitFor(() =>
+        expect(notifications.getByRole('switch', { name: 'CI fails' })).toBeTruthy(),
+      );
+      expect((await saved()).notifications).toEqual(before);
     });
 
     it('sets quiet hours that cross midnight', async () => {
@@ -466,6 +472,7 @@ describe('SettingsView', () => {
       await open({
         notifications: {
           ...defaultSettings().notifications,
+          enabled: true,
           quietHours: { enabled: true, start: '22:00', end: '08:00' },
         },
       });
@@ -650,7 +657,7 @@ describe('SettingsView', () => {
       await act(async () => {
         fireEvent.click(dialog.getByRole('button', { name: 'Sign out' }));
       });
-      expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
+      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'signedOut' }));
       expect(Object.keys(await chrome.storage.local.get(null))).toEqual(['settings']);
       expect(screen.queryByRole('dialog')).toBeNull();
     });

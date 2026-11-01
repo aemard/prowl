@@ -26,7 +26,7 @@ function serve(github: Parameters<Parameters<typeof test>[2]>[0]['github']) {
           updatedAt: state.updatedAt,
           commits: headCommit(state.failing ? { FAILURE: 1 } : { SUCCESS: 1 }),
         }),
-        prNode({ number: 2, mergeStateStatus: 'CLEAN' }),
+        prNode({ number: 2, mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }),
         prNode({ number: 3 }),
       ],
       variables,

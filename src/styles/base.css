@@ -14,7 +14,7 @@ html {
 html,
 body {
   margin: 0;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: var(--text-md);

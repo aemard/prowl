@@ -30,7 +30,7 @@ function UpdatedAt() {
   return (
     <p class="header__updated">
       <time dateTime={fetchedAt} title={new Date(fetchedAt).toLocaleString()}>
-        Updated {formatRelativeTime(fetchedAt)}
+        List updated {formatRelativeTime(fetchedAt)}
       </time>
     </p>
   );

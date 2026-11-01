@@ -181,12 +181,33 @@
 }
 
 .pr-card {
+  position: relative;
   border: var(--border-width) solid var(--glass-edge);
   border-radius: 21px;
-  background: var(--glass-card);
+  background: transparent;
   box-shadow:
     var(--glass-shadow),
     inset 0 1px 0 var(--glass-rim);
+}
+/* The blur belongs to this decorative child. Blurring the card would trap its fixed menu. */
+.pr-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 180px 85px at var(--light-x, 20%) var(--light-y, 0%),
+      color-mix(
+        in srgb,
+        var(--glass-reflect) calc(var(--light-strength, 0.15) * 100%),
+        transparent
+      ),
+      transparent 76%
+    ),
+    var(--glass-card);
+  backdrop-filter: var(--glass-card-blur);
 }
 .pr-card__summary {
   padding: 14px;
@@ -194,7 +215,7 @@
   border-radius: inherit;
 }
 .pr-card__summary:hover {
-  background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
+  background: transparent;
 }
 .pr-card__title {
   font-size: var(--text-lg);
@@ -218,4 +239,10 @@
 }
 .pr-label {
   border-color: var(--glass-edge);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .pr-card {
+    background: var(--glass-solid);
+  }
 }

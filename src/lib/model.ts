@@ -30,10 +30,15 @@ export interface CheckItem {
   /** The check's own page; null when GitHub has none. Not yet checked against the allowlist. */
   url: string | null;
   /** The base branch's protection requires it to pass before merging. */
-  required: boolean;
+  required: boolean | null;
 }
 
-export type ReviewDecision = 'approved' | 'changes_requested' | 'review_required' | 'none';
+export type ReviewDecision =
+  | 'approved'
+  | 'changes_requested'
+  | 'review_required'
+  | 'none'
+  | 'unknown';
 
 export type ReviewState = 'approved' | 'changes_requested' | 'commented' | 'dismissed';
 
@@ -123,6 +128,8 @@ export interface PullRequest {
   labels: Label[];
   /** Unresolved review threads. */
   unresolvedThreads: number;
+  /** Nested connections whose remaining results are available only on GitHub. */
+  incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
   lastComment: { author: string; createdAt: string } | null;
@@ -156,6 +163,9 @@ export interface PullRequestDetail {
   requiredApprovals: number | null;
   /** The base branch needs every review conversation resolved before merging. */
   requiresConversationResolution: boolean;
+  /** Effective methods from readable branch rules; absent means not verified. */
+  allowedMergeMethods?: MergeMethod[];
+  warnings?: string[];
 }
 
 /**
@@ -208,6 +218,15 @@ export interface Viewer {
   name: string | null;
 }
 
+/** Coverage of a bounded section search; an absent total never means zero. */
+export interface SectionCoverage {
+  hasMore: boolean;
+  partial?: boolean;
+  stale?: boolean;
+  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  queries: { query: string; cursor: string | null; total?: number }[];
+}
+
 /** Everything one successful poll produced. Persisted by the service worker. */
 export interface Snapshot {
   fetchedAt: string;
@@ -215,6 +234,9 @@ export interface Snapshot {
   pullRequests: Record<string, PullRequest>;
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
+  sectionCoverage?: Record<string, SectionCoverage>;
+  /** Sections not yet searched in a progressive publication. */
+  sectionsPending?: string[];
   /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
@@ -238,6 +260,8 @@ export interface Snapshot {
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
+  /** Cached facts can retain their actual date while still needing verification. */
+  mergeStateDue?: string[];
 }
 
 export type PrEventType =
@@ -324,6 +348,17 @@ export interface PrLocalState {
   muted: Record<string, true>;
   /** PR id -> `updatedAt` value the user has seen. */
   seen: Record<string, string>;
+  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
+  seenFacts?: Record<string, string>;
+  /** Per-PR exceptions to automatic hiding. Snooze still takes precedence. */
+  alwaysShown?: Record<string, true>;
+}
+
+/** Local panel organization for one account; search text is deliberately session-only. */
+export interface PanelState {
+  login: string;
+  activeSectionId?: string;
+  foldedGroups: string[];
 }
 
 export interface QuietHours {
@@ -401,14 +436,15 @@ export const STORAGE_KEYS = {
   pollState: 'pollState',
   prLocal: 'prLocal',
   teams: 'teams',
+  panelState: 'panelState',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
-  | { type: 'poll'; force?: boolean }
-  | { type: 'markSeen'; prIds: string[] }
+  | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
+  | { type: 'markSeen'; prIds: string[]; versions?: Record<string, string> }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }
   /** Hints from visible cards; changes priority only, never starts a GitHub request. */

@@ -57,7 +57,9 @@ you use a token).
 
 ## Sign in with a token
 
-Paste a token into the field on the same screen. The panel links to GitHub's token pages with the
+Choose **Use a personal access token** on the sign-in screen, then paste your token. If browser
+sign-in is unavailable, the token field is already shown. **Help choosing a token** reveals the
+creation guides and links to GitHub's token pages with the
 form filled in.
 
 ### Classic token (recommended)

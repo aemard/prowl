@@ -4,6 +4,7 @@ import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { setItem, updateItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
+import { buildPollState } from '../test/panel';
 import { POLL_ALARM, scheduleAlarm } from './poller';
 import { registerBackground } from './register';
 
@@ -54,7 +55,7 @@ describe('registerBackground', () => {
   });
 
   it('paints the stored snapshot at startup and follows storage changes', async () => {
-    const pr = mapPullRequest(prNode({ mergeStateStatus: 'CLEAN' }));
+    const pr = mapPullRequest(prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }));
     const snapshot = {
       fetchedAt: '2026-10-06T11:59:00Z',
       viewer: viewerNode(),
@@ -108,4 +109,22 @@ describe('registerBackground', () => {
       expect(fakeChrome().__state.createdTabs).toEqual([{ url: 'https://github.com/a/b/pull/1' }]),
     );
   });
+});
+
+it('uses a reconnect hint only after a network failure, leaving quota waits untouched', async () => {
+  registerBackground();
+  await scheduleAlarm(5);
+  await setItem(
+    'pollState',
+    buildPollState({ lastError: { kind: 'rate_limited', message: 'Wait' } }),
+  );
+  globalThis.dispatchEvent(new Event('online'));
+  await settle();
+  expect(alarm()).toBeDefined();
+  await setItem(
+    'pollState',
+    buildPollState({ lastError: { kind: 'network', message: 'Offline' } }),
+  );
+  globalThis.dispatchEvent(new Event('online'));
+  await vi.waitFor(() => expect(alarm()).toBeUndefined());
 });

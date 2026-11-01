@@ -26,6 +26,12 @@ troubleshooting: [chrome-web-store.md](chrome-web-store.md).
 
 `release-please-config.json` pinned `"release-as": "1.0.0"` for the first release. It was removed
 after v1.0.0 so later releases follow Conventional Commits (`feat` → minor, `fix` → patch).
+`main` allows only squash merges, and the default squash title is the PR title. Preserve it in
+the merge dialog so Release Please reads the intended type and breaking-change marker. The
+commit body keeps the individual commit messages and their DCO sign-offs. The maintainer can
+still edit the final title or use the ruleset's admin bypass; this is not an immutable
+server-side commit-message restriction.
+
 Releases are reproducible: the zip is built from a clean checkout of the tag with a frozen
 lockfile and no shared cache, and its file times are fixed in any timezone (`scripts/zip.mjs`).
 
@@ -84,7 +90,7 @@ accessibility, best practices or SEO. It needs Chrome: `CHROME_PATH=/path/to/chr
 found (CI uses the Chromium that Playwright installed). Use it after you add a page or an image.
 
 The site shares files with the extension, so a change there shows up on the site on the next
-build: `src/styles/tokens.css` (colors, spacing), `src/assets/logo.svg` (mark and favicon) and
+build: `src/styles/tokens.css` (colors, spacing), `src/assets/logo.png` (mark and favicon) and
 `docs/screenshots/*.png` (the hero and the guides). Four pages render Markdown files at build time,
 so edit those, not the site: `/auth/` is `docs/auth.md`, `/privacy/` is `docs/privacy.md`,
 `/changelog/` is `CHANGELOG.md` (release-please keeps it current) and `/contributing/` is
@@ -143,8 +149,10 @@ A Dependabot pull request that stays open is one of these:
 ## Recommended repository settings
 
 - **`main` ruleset**: pull request required (squash, no approval: nothing could approve the
-  maintainer's own), signed commits, `Verify` and CodeQL `Analyze` required, no force push or
-  deletion; admins bypass only through a pull request.
+  maintainer's own), signed commits, `Verify` and CodeQL `Analyze` required on an up-to-date
+  branch, review discussions resolved, no force push or deletion; admins bypass only through a
+  pull request. Squash commits default to the PR title and retain individual commit messages in
+  the body. Web commits require a DCO sign-off, separately from verified signatures.
 - **`v*` tag ruleset**: no update or deletion. Creation stays open because release-please creates
   tags with `GITHUB_TOKEN`, which a personal repository's ruleset cannot exempt; `release-tag.yml`
   checks instead that a hand-pushed tag is on `main`.
