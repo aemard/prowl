@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultSettings } from '../../lib/storage/settings';
 import { getItem } from '../../lib/storage/storage';
@@ -15,7 +15,10 @@ afterEach(() => {
   toasts.value = [];
 });
 
-async function open(options: { step?: 0 | 1 | 2; status?: 'pending' | 'completed' | 'skipped' } = {}) {
+async function open(
+  options: { step?: 0 | 1 | 2; status?: 'pending' | 'completed' | 'skipped' } = {},
+) {
+  cleanup();
   await chrome.storage.local.set({
     auth: buildAuth(),
     onboarding: { status: options.status ?? 'pending', nextStep: options.step ?? 0 },
@@ -71,7 +74,9 @@ describe('SetupWizard', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Review requested' }));
     await click('Skip setup');
     expect(await getItem('onboarding')).toEqual({ status: 'skipped', nextStep: 0 });
-    expect((await getItem('settings'))?.sections.find((s) => s.kind === 'review_requested')?.enabled).not.toBe(true);
+    expect(
+      (await getItem('settings'))?.sections.find((s) => s.kind === 'review_requested')?.enabled,
+    ).not.toBe(true);
     expect(location.hash).toBe('#/');
   });
 
@@ -95,7 +100,9 @@ describe('SetupWizard', () => {
     await open();
     vi.spyOn(chrome.storage.local, 'set').mockRejectedValueOnce(new Error('quota'));
     await click('Continue');
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Your pull requests' })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Your pull requests' })).toBeTruthy(),
+    );
     expect(await getItem('onboarding')).toEqual({ status: 'pending', nextStep: 0 });
     expect(toasts.value.some(({ tone }) => tone === 'danger')).toBe(true);
   });

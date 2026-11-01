@@ -14,8 +14,9 @@ export async function initializeOnboarding(
   reason: chrome.runtime.InstalledDetails['reason'],
 ): Promise<void> {
   if (reason !== 'install' && reason !== 'update') return;
-  await updateItem(STORAGE_KEYS.onboarding, (current) =>
-    current ?? (reason === 'install' ? PENDING_SETUP : COMPLETED_SETUP),
+  await updateItem(
+    STORAGE_KEYS.onboarding,
+    (current) => current ?? (reason === 'install' ? PENDING_SETUP : COMPLETED_SETUP),
   );
 }
 
