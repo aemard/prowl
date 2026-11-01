@@ -184,17 +184,7 @@
   position: relative;
   border: var(--border-width) solid var(--glass-edge);
   border-radius: 21px;
-  background:
-    radial-gradient(
-      ellipse 180px 85px at var(--light-x, 20%) var(--light-y, 0%),
-      color-mix(
-        in srgb,
-        var(--glass-reflect) calc(var(--light-strength, 0.15) * 100%),
-        transparent
-      ),
-      transparent 76%
-    ),
-    var(--glass-card);
+  background: var(--glass-spot), var(--glass-card);
   box-shadow: var(--glass-shadow);
 }
 .pr-card__summary {
