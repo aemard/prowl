@@ -15,6 +15,7 @@ import type {
   Snapshot,
   TeamsState,
 } from '../model';
+import { jsonEqual } from '../storage/guards';
 import { isSnoozed } from '../storage/prLocal';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
@@ -32,7 +33,10 @@ import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
 import { MAX_TEAM_SEARCHES, teamKey } from './teams';
 
 export interface FetchResult
-  extends Pick<Snapshot, 'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending'> {
+  extends Pick<
+    Snapshot,
+    'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending' | 'mergeStateDue'
+  > {
   /** PR id -> when its merge facts were read (see `Snapshot.mergeStateAt`). */
   mergeStateAt: Record<string, string>;
   /** Sections that were skipped or loaded in part, section id -> readable reason. */
@@ -92,14 +96,16 @@ const mergeFacts = ({
 }: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
 
 /** What the search says about a PR, for telling whether anything changed since the last poll. */
-const searchFacts = (pr: PullRequest) =>
-  JSON.stringify({
-    ...pr,
-    reviewDecision: null,
-    mergeable: null,
-    mergeStateStatus: null,
-    viewerCanUpdate: null,
-  });
+const searchFacts = (pr: PullRequest) => ({
+  ...pr,
+  reviewDecision: null,
+  mergeable: null,
+  mergeStateStatus: null,
+  viewerCanUpdate: null,
+});
+// Chrome storage may reorder keys, including nested ones. Serialization order is not activity.
+const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
+  jsonEqual(searchFacts(a), searchFacts(b));
 
 /** False for a hole (null) and for `{}`, what a fragment on another type selects. */
 const isNode = <T extends { id: string }>(
@@ -169,11 +175,13 @@ export async function fetchPullRequests(
     let cut = false;
     let total: number | undefined;
     let examined = 0;
-    // Local repo intersections may reject whole pages. Bound scanned work independently of
-    // retained results: at most 500 nodes per query and never more than 5x the requested cap.
+    let pages = 0;
+    // Bound both requests and examined nodes: tiny retained limits must not cause hundreds
+    // of one-result pages when local repository filters reject every result.
     const scanBudget = Math.min(500, Math.max(100, settings.maxPerSection * 5));
     do {
       const first = Math.min(PAGE_SIZE, settings.maxPerSection - found.size, scanBudget - examined);
+      pages++;
       try {
         const data: SearchData = await read<SearchData>(SEARCH_QUERY, { query, first, after });
         const page: SearchData['search'] = data.search;
@@ -203,7 +211,7 @@ export async function fetchPullRequests(
         cut = true;
         break;
       }
-    } while (hasMore && found.size < settings.maxPerSection && examined < scanBudget);
+    } while (hasMore && found.size < settings.maxPerSection && examined < scanBudget && pages < 20);
     return {
       prs: [...found.values()],
       coverage: {
@@ -225,7 +233,10 @@ export async function fetchPullRequests(
   const put = (pr: PullRequest) => {
     const before = previous?.pullRequests[pr.id];
     result.pullRequests[pr.id] = before
-      ? { ...pr, ...(before.headSha === pr.headSha ? mergeFacts(before) : mapMergeState({})) }
+      ? {
+          ...pr,
+          ...(sameSearchFacts(before, pr) ? mergeFacts(before) : mapMergeState({})),
+        }
       : pr;
   };
   /**
@@ -269,17 +280,20 @@ export async function fetchPullRequests(
       if (pr.state !== 'open') continue;
       const before = previous?.pullRequests[pr.id];
       const readAt = previous?.mergeStateAt?.[pr.id];
+      // `put` kept the facts only if the search facts are unchanged; their date goes with them.
+      const carried = before !== undefined && sameSearchFacts(before, pr);
       const valid =
-        before !== undefined &&
+        carried &&
         readAt !== undefined &&
         now - Date.parse(readAt) <
           (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
         before.mergeable !== 'unknown' &&
         before.mergeStateStatus !== 'unknown' &&
-        searchFacts(before) === searchFacts(pr);
-      if (valid) {
-        result.mergeStateAt[pr.id] = readAt;
-      } else {
+        before.reviewDecision !== 'unknown';
+      if (carried && readAt) result.mergeStateAt[pr.id] = readAt;
+      if (!valid) {
+        result.mergeStateDue ??= [];
+        result.mergeStateDue.push(pr.id);
         stale.push(pr);
       }
     }
@@ -297,7 +311,18 @@ export async function fetchPullRequests(
           (priority.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
           (priority.get(b.id) ?? Number.MAX_SAFE_INTEGER),
       );
-      const batch = stale.splice(0, MERGE_STATE_BATCH);
+      // Reserve the last two slots for the oldest reads, even under continuous visible hints.
+      const fair =
+        count + MERGE_STATE_BATCH >= MERGE_STATE_PER_POLL
+          ? [...stale].sort((a, b) => age(a) - age(b)).slice(0, 2)
+          : [];
+      const chosen = new Set(
+        fair.concat(
+          stale.filter((pr) => !fair.includes(pr)).slice(0, MERGE_STATE_BATCH - fair.length),
+        ),
+      );
+      const batch = stale.filter((pr) => chosen.has(pr));
+      for (const pr of batch) stale.splice(stale.indexOf(pr), 1);
       await onProgress?.(
         result,
         batch.map(({ id }) => id),
@@ -333,9 +358,13 @@ export async function fetchPullRequests(
         if (!isNode(node)) return;
         const readable = node.headRefOid === pr.headSha && partialMessages.length === 0;
         result.pullRequests[pr.id] = { ...pr, ...mapMergeState(readable ? node : {}) };
-        if (readable) result.mergeStateAt[pr.id] = readAt;
+        if (readable) {
+          result.mergeStateAt[pr.id] = readAt;
+          result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
+        }
       });
     }
+    if (result.mergeStateDue?.length === 0) delete result.mergeStateDue;
     await onProgress?.(result, []);
   }
 

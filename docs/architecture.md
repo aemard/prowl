@@ -78,17 +78,18 @@ in-memory updates that the next snapshot replaces.
    (`snapshot.mergeStateAt`); unchanged hidden or snoozed PRs use a one-hour interval.
    Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
    currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
-   Deferred PRs keep their previous facts without a freshness timestamp so they stay due;
-   new PRs have unknown merge facts until read. Search updates continue for all PRs. Facts never
-   cross a head commit: a PR whose head changed starts unknown, and `ProwlMergeState` selects
+   Deferred PRs keep their previous facts and the date they were read, and are listed in
+   `snapshot.mergeStateDue`; new PRs have unknown merge facts until read. Search updates
+   continue for all PRs. Facts and their date never cross a change of the PR's search data (a new
+   head, review, check, comment): such a PR starts unknown, and `ProwlMergeState` selects
    `headRefOid` so facts computed for another head are dropped (the poll leaves that PR
    unknown and unread, a card refresh keeps what the card had).
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt` and `settledChecks` to
-   build the new `Snapshot`, and publishes it after each completed section, before merge reads and
-   after each completed batch. Each publication updates
+   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue`
+   and `settledChecks` to build the new `Snapshot`, and publishes it after each completed
+   section, before merge reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
    first poll suppresses events across all phases. `inFlight` remains true until enrichment
    finishes, while `mergePending` identifies the current batch. Publishing the list stops the
@@ -907,3 +908,26 @@ without a click. A failed send stays in the dialog: `onError` shows GitHub's rea
 field and `ReviewActions` focuses the field (a toast would hide behind the modal, and the field's
 error paragraph is not a live region); actions without a form keep their toast. The changed-files
 link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched into Prowl.
+
+## Merge facts and expanded detail coverage
+
+`mergeStateAt` is the date the PR's merge facts were actually read; facts carried over from the
+previous poll keep it. `mergeStateDue` lists the PRs whose facts are aged, deferred or unknown,
+without inventing a date; it labels cards, while facts and dates alone decide what a poll reads.
+A read (poll or card) clears its due id; neither facts nor date cross a change of the search data,
+the head included. Two of the 20 merge-read slots are reserved for the oldest pending facts so
+continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
+The header names list freshness; expanded details state merge verification age and cached/due
+or unverified status. Detail cache keys include the head and base, and old-head details are
+not presented as the current checks while a replacement loads or fails. Search-cache comparisons
+are independent of object-key order after Chrome storage serialization. Detail keys use only
+the head, scope and evidence their read depends on; merge enrichment does not refetch them.
+
+Nested reviews/requests/threads expose connection limits rather than claiming completeness.
+Check requirement flags remain unknown when inaccessible, distinct from false. Expanded-card
+branch rules use the applied-rulesets REST endpoint (classic branch protection is not in it);
+known method restrictions intersect repo methods, unreadable rules (including a full page of
+100) produce an explicit warning, and GitHub always decides final merge permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
+up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
+the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
+Section scans also stop after 20 requests per query, independently of the examined-node bound.

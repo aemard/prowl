@@ -77,6 +77,20 @@ function pick<T extends string, F>(
 const present = <T>(connection: Nodes<T> | null): T[] =>
   (connection?.nodes ?? []).filter((node): node is T => node !== null);
 
+/** A connection can be bounded without being empty or inaccessible. */
+function limitedConnections(
+  connections: Record<string, Nodes<unknown> | null | undefined>,
+): string[] {
+  return Object.entries(connections)
+    .filter(
+      ([, connection]) =>
+        connection?.pageInfo?.hasNextPage ||
+        (connection?.totalCount !== undefined &&
+          connection.totalCount > (connection.nodes?.length ?? 0)),
+    )
+    .map(([name]) => name);
+}
+
 /**
  * `CheckRunState`, `CheckStatusState` and `StatusState` (which share SUCCESS / FAILURE /
  * PENDING) -> bucket. Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED
@@ -152,7 +166,13 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
   const contexts = head?.statusCheckRollup?.contexts;
   const lastComment = present(node.comments).at(-1);
   const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
+  const incomplete = limitedConnections({
+    reviews: node.latestReviews,
+    'review requests': node.reviewRequests,
+    conversations: node.reviewThreads,
+  });
   return {
+    ...(incomplete.length ? { incomplete } : {}),
     id: node.id,
     number: node.number,
     title: node.title,
@@ -257,7 +277,7 @@ function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
     state: BUCKET[state] ?? 'neutral',
     // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
     url: url !== null && HTTP_URL.test(url) ? url : null,
-    required: node.isRequired === true,
+    required: typeof node.isRequired === 'boolean' ? node.isRequired : null,
   };
 }
 
@@ -274,6 +294,10 @@ export function mapPullRequestDetail(
     (page) => page.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts ?? [],
   );
   const rule = node.baseRef?.branchProtectionRule;
+  const warnings = limitedConnections({
+    reviews: node.latestReviews,
+    'review requests': node.reviewRequests,
+  }).map((name) => `Some ${name} are not loaded. View the full conversation on GitHub.`);
   const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
     const mapped = pick(REVIEW_STATES, state, null);
     return mapped
@@ -294,7 +318,8 @@ export function mapPullRequestDetail(
     reviewers: [...reviewed, ...requested].sort(
       (a, b) => REVIEWER_ORDER[a.state] - REVIEWER_ORDER[b.state],
     ),
-    requiredApprovals: rule?.requiredApprovingReviewCount || null,
+    ...(warnings.length ? { warnings } : {}),
+    requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
     requiresConversationResolution: rule?.requiresConversationResolution ?? false,
   };
 }

@@ -4,7 +4,7 @@ import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
-import { details } from '../state/prDetail';
+import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
 import { AlertIcon, GitMergeIcon } from './icons';
 import { mergeReadiness } from './mergeReadiness';
@@ -39,7 +39,11 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
   const [confirming, setConfirming] = useState(false);
   const [picked, setPicked] = useState<MergeMethod>();
   const [title, setTitle] = useState('');
-  const methods = pr.allowedMergeMethods;
+  const entry = details.value[pr.id];
+  const detail =
+    entry?.key === detailKey(pr) && !entry.loading && !entry.error ? entry.detail : undefined;
+  // The read starts from `pr.allowedMergeMethods` (part of the detail's key), so it only narrows.
+  const methods = detail?.allowedMergeMethods ?? pr.allowedMergeMethods;
   const method =
     [picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
   if (!method || !auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) {
@@ -54,7 +58,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
   // The modal hides the blockers listed above the button: the dialog repeats them.
   const blockers = ready
     ? []
-    : mergeReadiness(pr, details.value[pr.id]?.detail)
+    : mergeReadiness(pr, detail)
         .filter(({ tone }) => tone !== 'neutral' && tone !== 'success')
         .map(({ text }) => text.replace(/^Blocked: /, ''))
         .map((text) => text.charAt(0).toLowerCase() + text.slice(1));
@@ -154,8 +158,10 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
             disabled={pending !== undefined}
             hint={
               method === 'rebase'
-                ? 'Commits are kept as they are, so there is no commit title.'
-                : undefined
+                ? 'Commits are kept as they are, so there is no commit title. GitHub checks all applicable branch rules.'
+                : detail?.allowedMergeMethods
+                  ? 'Methods allowed by the repository and readable branch rules. GitHub checks remaining requirements.'
+                  : 'Methods follow repository settings. GitHub may apply additional branch restrictions.'
             }
             onValueChange={setPicked}
           />

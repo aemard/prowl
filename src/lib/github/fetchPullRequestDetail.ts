@@ -1,7 +1,8 @@
 /**
  * The read behind an expanded card: `ProwlPullRequestDetail` for one PR, mapped to the model.
  */
-import type { PullRequestDetail } from '../model';
+import type { PullRequest, PullRequestDetail } from '../model';
+import { isRecord } from '../storage/guards';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
 import { mapPullRequestDetail } from './mapPullRequest';
@@ -22,12 +23,14 @@ const isPullRequest = (node: DetailData['node']): node is DetailPullRequestNode 
 export async function fetchPullRequestDetail(
   client: GitHubClient,
   id: string,
+  pr?: Pick<PullRequest, 'repo' | 'baseRefName' | 'allowedMergeMethods'>,
 ): Promise<PullRequestDetail> {
+  const problems: string[] = [];
   const read = async (after: string | null) => {
     const { node } = await client.graphql<DetailData>(
       DETAIL_QUERY,
       { id, after },
-      { partial: true },
+      { partial: true, onPartialErrors: (messages) => problems.push(...messages) },
     );
     if (!isPullRequest(node))
       throw new GitHubError('not_found', 'This pull request is not available.');
@@ -44,5 +47,81 @@ export async function fetchPullRequestDetail(
     pages.push(next);
     pageInfo = contextsOf(next)?.pageInfo;
   }
-  return mapPullRequestDetail(pages);
+  let detail = mapPullRequestDetail(pages);
+  if (problems.length) {
+    detail.warnings = [
+      ...(detail.warnings ?? []),
+      `Some details could not be read: ${[...new Set(problems)].slice(0, 5).join(' ')}`,
+    ];
+  }
+  if (pr) detail = await applyBranchRules(client, pr, detail);
+  return detail;
+}
+
+/** The endpoint pages (30 by default); a full page may hide rules, so it counts as unreadable. */
+const RULES_PER_PAGE = 100;
+
+/**
+ * The rulesets that apply to the base branch (classic branch protection is not among them),
+ * not all rulesets of a repository. Read only on card expansion.
+ */
+async function applyBranchRules(
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'baseRefName' | 'allowedMergeMethods'>,
+  detail: PullRequestDetail,
+): Promise<PullRequestDetail> {
+  const path = `/repos/${encodeURIComponent(pr.repo.owner)}/${encodeURIComponent(pr.repo.name)}/rules/branches/${encodeURIComponent(pr.baseRefName)}?per_page=${RULES_PER_PAGE}`;
+  try {
+    const rules = await client.rest<unknown>('GET', path);
+    if (!Array.isArray(rules) || rules.length >= RULES_PER_PAGE)
+      throw new GitHubError('server', 'Branch rules unavailable.');
+    let methods = [...pr.allowedMergeMethods];
+    let requiredApprovals = detail.requiredApprovals;
+    let conversations = detail.requiresConversationResolution;
+    for (const rule of rules) {
+      if (!isRecord(rule) || typeof rule.type !== 'string')
+        throw new GitHubError('server', 'Invalid branch rules.');
+      if (rule.type === 'required_linear_history')
+        methods = methods.filter((method) => method !== 'merge');
+      if (rule.type !== 'pull_request' || !isRecord(rule.parameters)) continue;
+      const params = rule.parameters;
+      const allowed = params.allowed_merge_methods;
+      if (Array.isArray(allowed)) methods = methods.filter((method) => allowed.includes(method));
+      if (
+        typeof params.required_approving_review_count === 'number' &&
+        Number.isInteger(params.required_approving_review_count) &&
+        params.required_approving_review_count >= 0
+      ) {
+        requiredApprovals = Math.max(
+          requiredApprovals ?? 0,
+          params.required_approving_review_count,
+        );
+      }
+      conversations ||= params.required_review_thread_resolution === true;
+    }
+    return {
+      ...detail,
+      allowedMergeMethods: methods,
+      requiredApprovals,
+      requiresConversationResolution: conversations,
+      ...(methods.length === 0
+        ? {
+            warnings: [
+              ...(detail.warnings ?? []),
+              'No supported merge method is allowed by the readable repository and branch rules. Use GitHub to inspect the available options.',
+            ],
+          }
+        : {}),
+    };
+  } catch (error) {
+    if (error instanceof GitHubError && ['unauthorized', 'rate_limited'].includes(error.kind))
+      throw error;
+    return {
+      ...detail,
+      warnings: [
+        ...(detail.warnings ?? []),
+        'Branch rules could not be verified. Merge methods follow repository settings; GitHub may restrict them further.',
+      ],
+    };
+  }
 }

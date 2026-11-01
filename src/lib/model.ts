@@ -30,7 +30,7 @@ export interface CheckItem {
   /** The check's own page; null when GitHub has none. Not yet checked against the allowlist. */
   url: string | null;
   /** The base branch's protection requires it to pass before merging. */
-  required: boolean;
+  required: boolean | null;
 }
 
 /** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
@@ -129,6 +129,8 @@ export interface PullRequest {
   labels: Label[];
   /** Unresolved review threads. */
   unresolvedThreads: number;
+  /** Nested connections whose remaining results are available only on GitHub. */
+  incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
   lastComment: { author: string; createdAt: string } | null;
@@ -162,6 +164,9 @@ export interface PullRequestDetail {
   requiredApprovals: number | null;
   /** The base branch needs every review conversation resolved before merging. */
   requiresConversationResolution: boolean;
+  /** Effective methods from readable branch rules; absent means not verified. */
+  allowedMergeMethods?: MergeMethod[];
+  warnings?: string[];
 }
 
 /**
@@ -256,6 +261,8 @@ export interface Snapshot {
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
+  /** PR ids whose merge facts are aged, deferred, dropped or unread; those with a date keep it. */
+  mergeStateDue?: string[];
 }
 
 export type PrEventType =
