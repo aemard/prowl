@@ -65,7 +65,8 @@ in-memory updates that the next snapshot replaces.
    `{ type: 'refreshTeams' }` from the panel. `fetchPullRequests` (see
    [Fetching pull requests](#fetching-pull-requests)) builds each
    enabled section's search query (`src/lib/github/search.ts`) and fetches it with
-   `query ProwlSearch` (pages of 25, cursor-paginated up to `maxPerSection`), selecting
+   `query ProwlSearch` (pages of 25, cursor-paginated up to `maxPerSection`, see
+   [Bounded search coverage](#bounded-search-coverage-and-partial-publications)), selecting
    `rateLimit { limit remaining resetAt cost }`. A search GitHub refuses or gives up on (502/504
    past its 10 s limit) fails its section only; the poll fails when every search did.
    Merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`, `viewerCanUpdate`) are left
@@ -83,14 +84,16 @@ in-memory updates that the next snapshot replaces.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt` and `settledChecks` to build the new `Snapshot`, and
-   publishes it before merge reads and after each completed batch. Each publication updates
+   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt` and `settledChecks` to
+   build the new `Snapshot`, and publishes it after each completed section, before merge reads and
+   after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
    first poll suppresses events across all phases. `inFlight` remains true until enrichment
    finishes, while `mergePending` identifies the current batch. Publishing the list stops the
    global loader and announces a manual refresh as complete; only cards in that batch show
    a static "Updating merge status" badge. Completion or failure clears the batch; on enrichment failure the published list stays available. The final snapshot is
-   stored with `pollState` (and teams, when discovered). Local PR state is then pruned.
+   stored with `pollState` (and teams, when discovered). Ended snoozes and the choices for PRs
+   confirmed closed are then pruned from the local PR state.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm), including its merge-enrichment publications.
 7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
@@ -189,7 +192,7 @@ never qualifiers.
 
 `fetchPullRequests(client, settings, previous, teams)` (`src/lib/github/fetchPullRequests.ts`) is
 all of a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It
-returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
+returns `{ pullRequests, sections, sectionErrors, sectionCoverage, teamRequests, rateLimit }`:
 
 - Each enabled section runs `query ProwlSearch` (`queries.ts`) with its search string plus
   `sort:updated-desc` (unless a custom query has its own `sort:`), so the `maxPerSection` PRs
@@ -214,10 +217,10 @@ returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
   latest `ClosedEvent`), so the diff can emit `merged` / `closed`. Still-open ones only
   stopped matching and are dropped; merged or closed ones are never looked up again.
 - Both queries pass `{ partial: true }`: an org that requires SAML or a deleted PR leaves a
-  null node, which is skipped. A search whose errors mention SAML also gets a `sectionErrors`
-  entry for its section (an organization requires single sign-on the token is not authorized
-  for), shown above the PRs that did load; a deleted PR is skipped silently. `search` is
-  non-null in the schema, so a search that fails as a whole nulls `data` and still throws.
+  null node, which is skipped. A search with errors gets a `sectionErrors` entry for its section
+  (SAML errors say the token is not authorized for an organization), shown above the PRs that
+  did load; a deleted PR in `ProwlNodes` is skipped silently. `search` is non-null in the
+  schema, so a search that fails as a whole nulls `data` and still throws.
 
 Mapping (`mapPullRequest`):
 
@@ -848,22 +851,28 @@ left by a terminated worker.
 ## Bounded search coverage and partial publications
 
 `Snapshot.sectionCoverage` records proven `hasMore`, per-query cursors and available totals,
-plus partial/stale flags. Team queries have independent cursors: overlapping totals are never
-summed. Missing metadata on an older snapshot is unknown, not proof of additional results.
+plus `partial` (nodes or merge facts could not be read) and `stale` (the scan was cut short and
+cached members were kept) flags. Team queries have independent cursors: overlapping totals are
+never summed, and "View on GitHub" follows the first query with more results. Missing metadata
+on an older snapshot is unknown, not proof of additional results.
 The section limit counts loaded PRs before hide/snooze; the list warns only when GitHub reports
 more results or a merged team union exceeds the cap. Local filtering searches only loaded PRs.
 Only loaded PRs are monitored in a section; another section can also load the same PR.
 
-Repository filters apply on each fetched page. A query scans at most 500 nodes and at most
-`max(100, 5 * maxPerSection)`, independently of the retained limit, so rejected pages do not
-silently consume the entire retained capacity. Hitting the scan budget preserves pagination
-metadata. Page failures retain successful pages and eligible cached section members, capped at
-`maxPerSection`, with a partial/stale notice. Partial GraphQL errors retain their field path;
-authentication and quota errors remain global. Partial merge responses cannot make unreadable
-review requirements look absent.
+Repository filters apply on each fetched page. A query scans at most
+`min(500, max(100, 5 * maxPerSection))` nodes, independently of the retained limit, so rejected
+pages do not silently consume the entire retained capacity. Hitting the scan budget preserves
+pagination metadata. A failed page, a cursor that does not advance or a refused search keeps the
+pages read and the cached members of the section (`maxPerSection` at most, never over a PR this
+poll loaded) with a partial/stale notice. Unreadable nodes (SAML) keep nothing: the section lists
+what loaded and says why the rest is missing. Partial GraphQL errors retain their field path;
+authentication and quota errors remain global. A merge response with errors leaves its PRs'
+facts unknown and unread, so unreadable review requirements never look absent.
 
 During search, `sectionsPending` marks sections not yet completed. Publications keep their
 previous cards until their search completes, so a slow team section does not hold back a
-personal list or masquerade as a newly empty section. Merge enrichment still follows search.
+personal list or masquerade as a newly empty section; the list says "Searching" only while
+`pollState.inFlight`, since a failed poll leaves the marker in the snapshot. Merge enrichment
+still follows search.
 Local snoozes expire by date. Mute/seen and unexpired snoozes are removed only after confirmed
 closure, never merely because a PR left a bounded search or the selected scope.
