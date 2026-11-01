@@ -66,3 +66,41 @@ test('setup can be relaunched from Settings without resetting existing preferenc
   await page.getByRole('button', { name: 'Skip setup' }).click();
   await expect(page.getByRole('main', { name: 'Pull requests' })).toBeVisible();
 });
+
+test('onboarding filters discovered GitHub teams before following team review requests', async ({
+  signIn,
+  seedStorage,
+  openPanel,
+  expectNoA11yViolations,
+}) => {
+  await signIn();
+  await seedStorage({
+    onboarding: { status: 'pending', nextStep: 0 },
+    teams: {
+      login: 'octocat',
+      fetchedAt: new Date().toISOString(),
+      teams: [
+        { org: 'acme', slug: 'platform', name: 'Platform' },
+        { org: 'acme', slug: 'security', name: 'Security' },
+      ],
+      error: null,
+    },
+  });
+  const page = await openPanel();
+  await page.getByRole('switch', { name: 'Team reviews' }).click();
+  await expect(page.getByRole('group', { name: 'acme' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Security' })).toHaveAttribute('aria-checked', 'true');
+  await expectNoA11yViolations(page);
+  await page.getByRole('switch', { name: 'Security' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible();
+  const saved = await page.evaluate(async () => {
+    const { settings } = await chrome.storage.local.get('settings');
+    return settings as {
+      unfollowedTeams: string[];
+      sections: { kind: string; enabled: boolean }[];
+    };
+  });
+  expect(saved.unfollowedTeams).toEqual(['acme/security']);
+  expect(saved.sections.find((section) => section.kind === 'team_review_requested')?.enabled).toBe(true);
+});
