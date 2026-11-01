@@ -324,8 +324,19 @@ describe('isReadyToMerge', () => {
       expect(isReadyToMerge(pr({ ...ready(), mergeStateStatus }))).toBe(false);
     },
   );
-  it('does not treat inaccessible review requirements as absent', () => {
-    expect(isReadyToMerge(pr(ready({ reviewDecision: 'unknown' })))).toBe(false);
+  it.each(['clean', 'unstable', 'has_hooks'] as const)('accepts GitHub %s', (mergeStateStatus) => {
+    expect(isReadyToMerge(pr(ready({ mergeStateStatus })))).toBe(true);
+    expect(isReadyToMerge(pr(ready({ mergeStateStatus, reviewDecision: 'none' })))).toBe(true);
+  });
+  it.each([
+    { reviewDecision: 'unknown' },
+    { reviewDecision: 'review_required' },
+    { reviewDecision: 'changes_requested' },
+    { mergeable: 'conflicting' },
+    { mergeable: 'unknown' },
+    { isDraft: true },
+  ] as const)('is false for %j even when GitHub says clean', (overrides) => {
+    expect(isReadyToMerge(pr(ready(overrides)))).toBe(false);
   });
 
   it('is false once the PR is merged or closed', () => {
