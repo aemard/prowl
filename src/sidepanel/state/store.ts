@@ -7,8 +7,8 @@
 import { batch, computed, signal } from '@preact/signals';
 import {
   type AuthState,
-  type PollState,
   type OnboardingState,
+  type PollState,
   type PrLocalState,
   type Settings,
   type Snapshot,

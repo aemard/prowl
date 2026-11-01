@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initializeOnboarding, finishSetup, saveSetupStep } from './onboarding';
+import { finishSetup, initializeOnboarding, saveSetupStep } from './onboarding';
 import { getItem, setItem } from './storage';
 
 const state = () => getItem('onboarding');

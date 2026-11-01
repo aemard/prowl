@@ -11,8 +11,8 @@ import { ToastRegion } from './components/ui/Toast';
 import { type Route, route } from './state/router';
 import { hydrated, settings } from './state/store';
 import { ListView } from './views/List';
-import { SetupWizard } from './views/SetupWizard';
 import { OnboardingView } from './views/Onboarding';
+import { SetupWizard } from './views/SetupWizard';
 import './App.css';
 
 /** Settings is rarely opened: its own chunk, loaded on first visit. */

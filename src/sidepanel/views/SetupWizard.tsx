@@ -36,12 +36,13 @@ export function SetupWizard() {
   const [busy, setBusy] = useState(false);
 
   const insufficientTeamAccess =
-    auth.value?.tokenType !== 'fine_grained' &&
-    !auth.value?.scopes.includes('read:org');
+    auth.value?.tokenType !== 'fine_grained' && !auth.value?.scopes.includes('read:org');
 
   function toggle(kind: Preset, enabled: boolean) {
     setSelected((previous) =>
-      enabled ? [...previous.filter((item) => item !== kind), kind] : previous.filter((item) => item !== kind),
+      enabled
+        ? [...previous.filter((item) => item !== kind), kind]
+        : previous.filter((item) => item !== kind),
     );
   }
 
@@ -115,7 +116,14 @@ export function SetupWizard() {
     <section class="setup" aria-label="Set up Prowl">
       <div class="setup__heading">
         <p class="setup__eyebrow">GETTING STARTED · STEP {step + 1} OF 3</p>
-        <div class="setup__progress" aria-label={'Step ' + (step + 1) + ' of 3'}>
+        <div
+          class="setup__progress"
+          role="progressbar"
+          aria-label="Setup progress"
+          aria-valuemin={1}
+          aria-valuemax={3}
+          aria-valuenow={step + 1}
+        >
           {TITLES.map((title, index) => (
             <span key={title} class="setup__progress-segment" data-active={index <= step} />
           ))}
@@ -141,12 +149,14 @@ export function SetupWizard() {
           </div>
           {selected.includes('team_review_requested') && insufficientTeamAccess && (
             <p class="setup__hint">
-              Team reviews may require organization access (read:org). Prowl will show a
-              warning if GitHub cannot discover your teams.
+              Team reviews may require organization access (read:org). Prowl will show a warning if
+              GitHub cannot discover your teams.
             </p>
           )}
           {selected.length === 0 && (
-            <p class="setup__hint" role="status">Select at least one category to continue, or skip setup.</p>
+            <p class="setup__hint" role="status">
+              Select at least one category to continue, or skip setup.
+            </p>
           )}
         </div>
       )}
@@ -165,21 +175,25 @@ export function SetupWizard() {
             />
           </div>
           <p class="setup__hint">
-            Notifications stay off unless you enable them. You can customize events and
-            quiet hours later in Settings.
+            Notifications stay off unless you enable them. You can customize events and quiet hours
+            later in Settings.
           </p>
         </div>
       )}
 
       {step === 2 && (
         <div class="setup__content setup__done">
-          <p class="setup__description">
-            Prowl is ready to keep an eye on your pull requests.
-          </p>
+          <p class="setup__description">Prowl is ready to keep an eye on your pull requests.</p>
           <ul class="setup__tips">
-            <li><strong>Track your PRs.</strong> See CI, reviews and merge readiness at a glance.</li>
-            <li><strong>Take action.</strong> Review, approve and merge right from the side panel.</li>
-            <li><strong>Open anywhere.</strong> Use the Prowl keyboard shortcut.</li>
+            <li>
+              <strong>Track your PRs.</strong> See CI, reviews and merge readiness at a glance.
+            </li>
+            <li>
+              <strong>Take action.</strong> Review, approve and merge right from the side panel.
+            </li>
+            <li>
+              <strong>Open anywhere.</strong> Use the Prowl keyboard shortcut.
+            </li>
           </ul>
         </div>
       )}
@@ -190,7 +204,9 @@ export function SetupWizard() {
         </Button>
         <div class="setup__navigation">
           {step > 0 && (
-            <Button disabled={busy} onClick={() => void back()}>Back</Button>
+            <Button disabled={busy} onClick={() => void back()}>
+              Back
+            </Button>
           )}
           <Button
             variant="primary"
