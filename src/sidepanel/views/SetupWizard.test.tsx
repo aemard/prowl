@@ -33,6 +33,11 @@ const click = async (label: string) => {
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: label }));
   });
+  // The click handler starts an async chrome.storage write. Preact's act does not await
+  // the promise of a void event handler, so wait until that handler finishes.
+  await waitFor(() =>
+    expect(screen.queryByRole('button', { name: label })?.getAttribute('aria-busy')).toBeFalsy(),
+  );
 };
 
 describe('SetupWizard', () => {
