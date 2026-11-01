@@ -308,7 +308,9 @@ export function ListView() {
   );
   const error = snap.sectionErrors?.[selected.id];
   const coverage = snap.sectionCoverage?.[selected.id];
-  const searching = snap.sectionsPending?.includes(selected.id) ?? false;
+  // The marker is stored with the snapshot: a poll that failed or was cut off leaves it behind.
+  const searching =
+    pollState.value?.inFlight === true && (snap.sectionsPending?.includes(selected.id) ?? false);
   const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
   const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;

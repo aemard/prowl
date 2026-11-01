@@ -963,6 +963,28 @@ it('keeps proven coverage visible even when all loaded cards are hidden', () => 
   );
 });
 
+describe('a section still being searched', () => {
+  const pending = () => buildSnapshotOf({ authored: [] }, { sectionsPending: ['authored'] });
+
+  it('says so instead of calling the section empty', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: true });
+    snapshot.value = pending();
+    render(<ListView />);
+    expect(screen.getByRole('status').textContent).toContain('Searching');
+    expect(screen.queryByRole('heading', { name: 'No pull requests' })).toBeNull();
+  });
+
+  it('forgets the marker a failed or interrupted poll left in the snapshot', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: false });
+    snapshot.value = pending();
+    render(<ListView />);
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
+  });
+});
+
 it('qualifies a local search with no matches when other GitHub results exist', () => {
   withSections(['authored']);
   snapshot.value = buildSnapshotOf(
