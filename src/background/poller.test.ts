@@ -419,7 +419,7 @@ describe('poll', () => {
     expect(requests).toHaveLength(2);
   });
 
-  it('coalesces scope changes made during a poll into one run with the latest settings', async () => {
+  it('coalesces scope changes and team refreshes made during a poll into one run', async () => {
     let start = () => {};
     const started = new Promise<void>((resolve) => {
       start = resolve;
@@ -449,14 +449,17 @@ describe('poll', () => {
     });
     const following = poll({ force: true, afterCurrent: true });
     expect(poll({ force: true, afterCurrent: true })).toBe(following);
+    // A team refresh asked meanwhile joins the same trailing run.
+    expect(poll({ refreshTeams: true })).toBe(following);
     release();
     await initial;
     const result = await following;
     expect(requests.filter(({ operation }) => operation === 'ProwlSearch')).toHaveLength(3);
+    expect(teamCalls).toBe(2);
     expect(result?.snapshot.sections.review_requested).toEqual([prId(2)]);
   });
 
-  it('serializes snapshot publication with sign-out without locking the network request', async () => {
+  it('serializes snapshot publication with sign-out', async () => {
     github();
     await signIn();
     let entered = () => {};
