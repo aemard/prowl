@@ -37,18 +37,16 @@ export async function completeSignIn(
  * onboarding on its own; the worker clears its alarms, badge and notifications on `signedOut`.
  */
 export async function signOut(): Promise<void> {
-  await withLock(SESSION_LOCK, async () => {
-    await removeItems(
+  await withLock(SESSION_LOCK, () =>
+    removeItems(
       STORAGE_KEYS.auth,
       STORAGE_KEYS.snapshot,
       STORAGE_KEYS.pollState,
       STORAGE_KEYS.teams,
-    );
-  });
+    ),
+  );
   await sendToBackground({ type: 'signedOut' });
-  await withLock(SESSION_LOCK, async () => {
-    if (!(await getItem('auth'))) await releaseGitHubWebAccess();
-  });
+  await releaseGitHubWebAccess();
 }
 
 /**

@@ -172,6 +172,7 @@ export async function fetchPullRequests(
     const problems: string[] = [];
     let after: string | null = null;
     let hasMore = false;
+    let cut = false;
     let total: number | undefined;
     let examined = 0;
     let pages = 0;
@@ -199,6 +200,7 @@ export async function fetchPullRequests(
         if (!hasMore) break;
         if (!cursor || cursor === after) {
           problems.push('GitHub did not provide a usable next-page cursor.');
+          cut = true;
           break;
         }
         after = cursor;
@@ -206,6 +208,7 @@ export async function fetchPullRequests(
         if (!sectionLevel(error)) throw error;
         if (examined === 0) throw error;
         problems.push(error.message);
+        cut = true;
         break;
       }
     } while (hasMore && found.size < settings.maxPerSection && examined < scanBudget && pages < 20);
@@ -215,6 +218,7 @@ export async function fetchPullRequests(
         hasMore,
         queries: [{ query, cursor: hasMore ? after : null, total }],
         ...(problems.length ? { partial: true } : {}),
+        ...(cut ? { stale: true } : {}),
       },
       problems,
     };
@@ -235,25 +239,21 @@ export async function fetchPullRequests(
         }
       : pr;
   };
+  /**
+   * A search cut short (or refused) cannot tell which PRs left the section: keeps the cached
+   * members up to `maxPerSection`, never over a copy this poll loaded.
+   */
   const preserve = (section: Section) => {
-    const ids = previous?.sections?.[section.id] ?? [];
-    const kept = filterByRepo(
-      ids.flatMap((id) => previous?.pullRequests[id] ?? []),
-      settings,
-    )
-      .filter((pr) => pr.state === 'open')
-      .slice(0, settings.maxPerSection);
-    const merged = new Set(result.sections[section.id] ?? []);
-    for (const pr of kept) {
-      if (merged.size >= settings.maxPerSection) break;
-      if (!merged.has(pr.id)) {
-        if (!result.pullRequests[pr.id]) put(pr);
-        merged.add(pr.id);
-      }
+    const members = new Set(result.sections[section.id]);
+    const cached = (previous?.sections?.[section.id] ?? []).flatMap(
+      (id) => previous?.pullRequests[id] ?? [],
+    );
+    for (const pr of filterByRepo(cached, settings)) {
+      if (members.size >= settings.maxPerSection) break;
+      members.add(pr.id);
+      result.pullRequests[pr.id] ??= pr;
     }
-    if (merged.size || section.id in result.sections || section.id in (previous?.sections ?? {})) {
-      result.sections[section.id] = [...merged];
-    }
+    if (members.size) result.sections[section.id] = [...members];
   };
   const problemText = (problems: string[]) =>
     [...new Set(problems.map((message) => (SAML.test(message) ? SSO_REQUIRED : message)))]
@@ -290,16 +290,8 @@ export async function fetchPullRequests(
         before.mergeStateStatus !== 'unknown' &&
         before.reviewDecision !== 'unknown' &&
         sameSearchFacts(before, pr);
-      // Preserve the baseline even when this poll has no budget left for its refresh.
-      if (before && sameSearchFacts(before, pr)) {
-        result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-      } else if (before) {
-        result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-      }
       if (before?.headSha === pr.headSha && readAt) result.mergeStateAt[pr.id] = readAt;
-      if (valid) {
-        result.mergeStateAt[pr.id] = readAt;
-      } else {
+      if (!valid) {
         result.mergeStateDue ??= [];
         result.mergeStateDue.push(pr.id);
         stale.push(pr);
@@ -348,10 +340,10 @@ export async function fetchPullRequests(
           if (batch.some((pr) => ids.includes(pr.id))) {
             result.sectionErrors[sectionId] =
               `Some merge requirements could not be read: ${problemText(partialMessages)}`;
-            const coverage = result.sectionCoverage?.[sectionId];
             coverageFor(sectionId, {
-              hasMore: coverage?.hasMore ?? false,
-              queries: coverage?.queries ?? [],
+              hasMore: false,
+              queries: [],
+              ...result.sectionCoverage?.[sectionId],
               partial: true,
             });
           }
@@ -360,19 +352,15 @@ export async function fetchPullRequests(
       const readAt = new Date().toISOString();
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
-        const before = previous?.pullRequests[pr.id];
-        if (partialMessages.length) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-          delete result.mergeStateAt[pr.id];
-        } else if (isNode(node) && node.headRefOid && node.headRefOid !== pr.headSha) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-          delete result.mergeStateAt[pr.id];
-        } else if (isNode(node)) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
+        // A hole or a failed batch keeps the facts `put` carried over. A node computed for
+        // another head, or read beside errors (a null `reviewDecision` would mean "no review
+        // required"), is unknown and unread, so the next poll asks again.
+        if (!isNode(node)) return;
+        const readable = node.headRefOid === pr.headSha && partialMessages.length === 0;
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState(readable ? node : {}) };
+        if (readable) {
           result.mergeStateAt[pr.id] = readAt;
           result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
-        } else if (before && sameSearchFacts(before, pr)) {
-          result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
         }
       });
     }
@@ -395,6 +383,7 @@ export async function fetchPullRequests(
     const problems: string[] = [];
     const queries: SectionCoverage['queries'] = [];
     let hasMore = false;
+    let stale = false;
     const found = new Map<string, { pr: PullRequest; keys: string[] }>();
     for (const team of followed.slice(0, MAX_TEAM_SEARCHES)) {
       const key = teamKey(team);
@@ -403,6 +392,7 @@ export async function fetchPullRequests(
         const page = await search(`${query} sort:updated-desc`);
         queries.push(...page.coverage.queries);
         hasMore ||= page.coverage.hasMore;
+        stale ||= page.coverage.stale === true;
         problems.push(...page.problems);
         for (const pr of page.prs) {
           const entry = found.get(pr.id) ?? { pr, keys: [] };
@@ -412,6 +402,7 @@ export async function fetchPullRequests(
       } catch (error) {
         if (!sectionLevel(error)) throw error;
         problems.push(`GitHub refused the search for ${key}: ${error.message}`);
+        stale = true;
       }
     }
     if (followed.length > MAX_TEAM_SEARCHES) {
@@ -428,14 +419,13 @@ export async function fetchPullRequests(
       result.teamRequests[pr.id] = keys;
     }
     result.sections[section.id] = kept.map(({ pr }) => pr.id);
-    if (problems.length > 0) {
-      result.sectionErrors[section.id] = problemText(problems);
-      preserve(section);
-    }
+    if (problems.length > 0) result.sectionErrors[section.id] = problemText(problems);
+    if (stale) preserve(section);
     coverageFor(section.id, {
       hasMore,
       queries,
-      ...(problems.length ? { partial: true, stale: true } : {}),
+      ...(problems.length ? { partial: true } : {}),
+      ...(stale ? { stale: true } : {}),
     });
   }
 
@@ -453,12 +443,9 @@ export async function fetchPullRequests(
         try {
           const page = await search(HAS_SORT.test(query) ? query : `${query} sort:updated-desc`);
           for (const pr of page.prs) put(pr);
-          result.sections[section.id] = [...new Set(page.prs.map(({ id }) => id))];
-          if (page.problems.length) {
-            result.sectionErrors[section.id] = problemText(page.problems);
-            preserve(section);
-            page.coverage.stale = true;
-          }
+          result.sections[section.id] = page.prs.map(({ id }) => id);
+          if (page.problems.length) result.sectionErrors[section.id] = problemText(page.problems);
+          if (page.coverage.stale) preserve(section);
           coverageFor(section.id, page.coverage);
         } catch (error) {
           if (!sectionLevel(error)) throw error;
@@ -475,12 +462,12 @@ export async function fetchPullRequests(
     }
     pending.delete(section.id);
     if (pending.size > 0 && onProgress) {
-      result.sectionsPending = [...pending];
-      // Preserve other sections' cached cards without claiming they have been searched.
+      // The sections still to search keep their cached cards, without claiming they were searched.
       const publishing: FetchResult = {
         ...result,
         pullRequests: { ...result.pullRequests },
         sections: { ...result.sections },
+        sectionsPending: [...pending],
       };
       for (const id of pending) {
         const ids = previous?.sections?.[id] ?? [];
@@ -493,7 +480,6 @@ export async function fetchPullRequests(
       await onProgress(publishing, []);
     }
   }
-  delete result.sectionsPending;
   // GitHub itself is failing, not one heavy search: the poll backs off.
   if (!searched && serverError) throw serverError;
   const gone = filterByRepo(

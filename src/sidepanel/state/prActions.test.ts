@@ -37,22 +37,32 @@ describe('runPrAction', () => {
     expect(toasts.value).toEqual([]);
   });
 
-  it('does not apply an old action result to another signed-in session', async () => {
+  it.each([
+    ['succeeds', () => Promise.resolve()],
+    ['fails', () => Promise.reject(new GitHubError('forbidden', 'Permission denied'))],
+  ])('drops what an action that %s says once another account is signed in', async (_, settle) => {
+    const onError = vi.fn();
+    const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
     let finish = () => {};
     const run = runPrAction(
       pr,
       'Comment',
       'Commented',
       () =>
-        new Promise<void>((resolve) => {
-          finish = resolve;
+        new Promise<void>((resolve, reject) => {
+          finish = () => settle().then(resolve, reject);
         }),
+      onError,
     );
     auth.value = buildAuth('hubot');
     finish();
     expect(await run).toBe(false);
     expect(toasts.value).toEqual([]);
+    expect(onError).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(pendingActions.value).toEqual({});
   });
+
   it('names a pull request owner/name#number', () => {
     expect(prRef(pr)).toBe('acme/widgets#7');
   });

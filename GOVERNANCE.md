@@ -44,10 +44,8 @@ GitHub successor alone does not demonstrate recovery of all publishing access wi
 
 Until that is in place:
 
-- The workflows, rulesets and release process ([`docs/releasing.md`](docs/releasing.md)) are
-  public, so another person can build and release a fork; this does not grant control of the
-  existing repository or accounts.
+- The code is MIT-licensed and the workflows, rulesets and release process
+  ([`docs/releasing.md`](docs/releasing.md)) are public, so anyone can fork Prowl and release it
+  (zip, SBOM, provenance). That grants no control of the existing repository or accounts.
 - The Chrome Web Store listing belongs to the maintainer's developer account. Until a second
-  publisher is added, a successor ships releases on GitHub (zip, SBOM, provenance) and can publish
-  them under a new store listing.
-- The code is under the MIT License, so anyone can also fork it and carry on.
+  publisher is added, only the maintainer can update it; a fork would need a new listing.
