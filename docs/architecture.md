@@ -961,10 +961,11 @@ clear them under the session lock, retaining the existing timestamps and local c
 ## Softened Liquid Glass rendering
 
 The background reproduces all four mint/blue/violet/light ellipses of the approved softened
-proposal. Cards and chrome use its translucent gradients, thin masked rims and subtle pointer
-reflection. Blur belongs to a decorative pseudo-element: cards, summaries and details never
-introduce a transform, isolation, filter or stacking context that would trap their fixed menus.
-One passive delegated pointer listener paints only the current surface, at most once per frame;
-scrolling and preference changes clear it. Reduced motion or a coarse/touch pointer disables
-the moving reflection; reduced transparency uses opaque surfaces and removes blur/reflection.
-No new dependency, timer, network call or loading state is introduced.
+proposal. Cards and chrome use its translucent gradients, thin masked rims and a subtle
+pointer reflection (`--glass-spot`, defined on each surface). Only the header, search and
+section bar blur their backdrop, through a `::after`, so their fixed menus keep the viewport
+as containing block; a card has no filter, transform or isolation. One passive delegated
+pointer listener (`useGlassReflection`) paints only the current surface, at most once per
+frame; scrolling and preference changes clear it. Reduced motion or a coarse/touch pointer
+disables the moving reflection; reduced transparency uses opaque surfaces and removes the
+blur, rims and reflection. No new dependency, timer, network call or loading state.
