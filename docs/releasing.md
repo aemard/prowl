@@ -84,7 +84,7 @@ accessibility, best practices or SEO. It needs Chrome: `CHROME_PATH=/path/to/chr
 found (CI uses the Chromium that Playwright installed). Use it after you add a page or an image.
 
 The site shares files with the extension, so a change there shows up on the site on the next
-build: `src/styles/tokens.css` (colors, spacing), `src/assets/logo.svg` (mark and favicon) and
+build: `src/styles/tokens.css` (colors, spacing), `src/assets/logo.png` (mark and favicon) and
 `docs/screenshots/*.png` (the hero and the guides). Four pages render Markdown files at build time,
 so edit those, not the site: `/auth/` is `docs/auth.md`, `/privacy/` is `docs/privacy.md`,
 `/changelog/` is `CHANGELOG.md` (release-please keeps it current) and `/contributing/` is
