@@ -7,7 +7,6 @@
 import { batch, computed, signal } from '@preact/signals';
 import {
   type AuthState,
-  type OnboardingState,
   type PollState,
   type PrLocalState,
   type Settings,
@@ -24,8 +23,6 @@ import { getItems, subscribe } from '../../lib/storage/storage';
 export const settings = signal<Settings>(defaultSettings());
 /** Undefined = signed out. */
 export const auth = signal<AuthState | undefined>(undefined);
-/** Absent means a pre-existing installation; it must not unexpectedly see setup. */
-export const onboarding = signal<OnboardingState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
 /** The global loader covers searching only; merge batches carry their own card indicators. */
@@ -48,9 +45,6 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   },
   [STORAGE_KEYS.auth]: (raw) => {
     auth.value = raw as AuthState | undefined;
-  },
-  [STORAGE_KEYS.onboarding]: (raw) => {
-    onboarding.value = raw as OnboardingState | undefined;
   },
   [STORAGE_KEYS.snapshot]: (raw) => {
     snapshot.value = raw as Snapshot | undefined;

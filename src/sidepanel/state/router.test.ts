@@ -2,11 +2,10 @@ import { act } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildAuth } from '../../test/panel';
 import { navigate, resolveRoute, route } from './router';
-import { auth, onboarding } from './store';
+import { auth } from './store';
 
 afterEach(() => {
   auth.value = undefined;
-  onboarding.value = undefined;
   location.hash = '';
 });
 
@@ -17,9 +16,6 @@ describe('resolveRoute', () => {
     ['#/settings', false, 'onboarding'],
     ['#/onboarding', false, 'onboarding'],
     ['', true, 'list'],
-    ['#/setup', true, 'setup'],
-    ['#/settings', true, 'settings'],
-    ['#/', true, 'list'],
     ['#/', true, 'list'],
     ['#/settings', true, 'settings'],
     ['#/onboarding', true, 'onboarding'],
@@ -30,12 +26,6 @@ describe('resolveRoute', () => {
 });
 
 describe('route', () => {
-  it('forces pending setup even when the user requests the PR list, until completed', () => {
-    expect(resolveRoute('#/', true, true)).toBe('setup');
-    expect(resolveRoute('#/settings', true, true)).toBe('setup');
-    expect(resolveRoute('#/', true, false)).toBe('list');
-  });
-
   it('lands signed-out users on onboarding and signed-in users on the list', () => {
     expect(route.value).toBe('onboarding');
     auth.value = buildAuth();
