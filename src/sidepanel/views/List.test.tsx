@@ -650,6 +650,34 @@ describe('pull requests with no recent commit', () => {
     act(() => void vi.advanceTimersByTime(1500));
     expect(send).toHaveBeenCalledWith(seenMessage(stale));
   });
+
+  it('says how many PRs it loaded, matched, lists, hides and snoozes', () => {
+    const later = pr(3, { title: 'Later' });
+    snapshot.value = buildSnapshotOf({ authored: [stale, fresh, later], review_requested: [] });
+    prLocal.value = {
+      snoozed: { [later.id]: new Date(NOW + 3_600_000).toISOString() },
+      muted: {},
+      seen: {},
+    };
+    render(<ListView />);
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 in list · 1 hidden · 1 snoozed\./,
+    );
+    fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'old' } });
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 matching · 0 in list · 1 hidden · 0 snoozed\./,
+    );
+  });
+
+  it('keeps keyboard focus on a toggle when revealing what was set aside', () => {
+    render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
+    const reveal = screen.getByRole('button', { name: 'Show hidden and snoozed' });
+    reveal.focus();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole('button', { name: 'Show hidden and snoozed' })).toBeNull();
+    expect(document.activeElement).toBe(toggle('Hide again'));
+  });
 });
 
 describe('draft and bot pull requests', () => {

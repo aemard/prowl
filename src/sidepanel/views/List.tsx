@@ -423,6 +423,9 @@ export function ListView() {
                 onClick={() => {
                   showHidden.value = true;
                   setSnoozedOpen(true);
+                  // This notice goes away with the click: the toggle below stays and now reads
+                  // "Hide again", so keyboard focus does not fall back to the page.
+                  panel.current?.querySelector<HTMLElement>('.list__aside-toggle')?.focus();
                 }}
               >
                 Show hidden and snoozed
