@@ -77,8 +77,8 @@ The API cannot create items, so the first version is uploaded in the
      `screenshot-5-sign-in.png`. Small promo tile: `docs/store/promo-small.png`. Marquee:
      `docs/store/promo-marquee.png`. `pnpm store-images` rebuilds them from `docs/screenshots/`
      (run `pnpm screenshots` first when the UI changed).
-     Layouts and text are HTML/CSS in `scripts/store-images.mjs`, using the light mint
-     `--color-accent-bg` token and `docs/brand/prowl-logo-transparent.png`. The marquee uses the
+     Layouts and text are HTML/CSS in `scripts/store-images.mjs`, preserving the original green
+     `--color-brand-mint` token and `docs/brand/prowl-logo-transparent.png`. The marquee uses the
      committed `list-ready.png` reference capture; its preview crops one screenshot, without
      rotating or rearranging UI elements. Refresh that reference image separately when the
      panel UI changes: `pnpm screenshots` does not overwrite it.

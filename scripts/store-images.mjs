@@ -23,7 +23,7 @@ ${tokens}
 body { width: 100vw; height: 100vh; overflow: hidden; font-family: Inter, var(--font-sans);
   color: var(--color-fg); -webkit-font-smoothing: antialiased; }
 .canvas { position: relative; display: flex; align-items: center; width: 100%; height: 100%;
-  overflow: hidden; background: var(--color-accent-bg); }
+  overflow: hidden; background: var(--color-brand-mint); }
 .copy { display: flex; flex-direction: column; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; }
 h1 { font-family: "Inter Display", Inter, var(--font-sans); font-size: 56px; line-height: 1.08;
