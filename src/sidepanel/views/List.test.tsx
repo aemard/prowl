@@ -985,6 +985,28 @@ describe('a section still being searched', () => {
   });
 });
 
+it('links to the one search that has more results, not to all the team searches', () => {
+  withSections(['authored']);
+  snapshot.value = buildSnapshotOf(
+    { authored: [buildPullRequest()] },
+    {
+      sectionCoverage: {
+        authored: {
+          hasMore: true,
+          queries: [
+            { query: 'team:first', cursor: null },
+            { query: 'team:second', cursor: '50' },
+          ],
+        },
+      },
+    },
+  );
+  render(<ListView />);
+  const href = screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href');
+  expect(href).toContain('team%3Asecond');
+  expect(href).not.toContain('team%3Afirst');
+});
+
 it('qualifies a local search with no matches when other GitHub results exist', () => {
   withSections(['authored']);
   snapshot.value = buildSnapshotOf(
