@@ -13,7 +13,7 @@ const root = resolve(import.meta.dirname, '..');
 const outDir = resolve(root, 'docs/store');
 const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
-const logo = dataUrl('docs/brand/prowl-logo-transparent.png', 'image/png');
+const logo = dataUrl('src/assets/logo.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
 const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
 
@@ -24,34 +24,17 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: Inter, var(--
   color: var(--color-fg); -webkit-font-smoothing: antialiased; }
 .canvas { position: relative; display: flex; align-items: center; width: 100%; height: 100%;
   overflow: hidden; background: var(--color-brand-mint); }
+.canvas[data-tone="ink"] { background: var(--gray-12); color: var(--gray-1); }
+.canvas[data-tone="teal"] { background: var(--color-brand-mint); color: var(--color-brand-ink); }
 .copy { display: flex; flex-direction: column; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; }
 h1 { font-family: "Inter Display", Inter, var(--font-sans); font-size: 56px; line-height: 1.08;
   font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
 p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: pretty; }
+[data-tone] p { color: inherit; opacity: 0.8; }
 .panel { flex: none; overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px;
   background: var(--gray-1); box-shadow: var(--shadow-lg); }
 .panel img { display: block; }
-.marquee { padding: 44px 87px; gap: 90px; }
-.marquee .copy { width: 610px; flex: none; gap: 0; }
-.marquee .brand { gap: 16px; font-size: 37px; font-weight: 700;
-  letter-spacing: -0.04em; height: 88px; margin-left: -13px; }
-.marquee h1 { margin: 26px 0 18px; font-size: 61px; line-height: 1.08;
-  letter-spacing: -0.04em; font-weight: 600; text-wrap: initial; }
-.marquee p { font-size: 23px; line-height: 1.5; }
-.trust { display: flex; align-items: center; gap: 18px; margin-top: 31px;
-  font-size: 15px; color: var(--color-fg-muted); white-space: nowrap; }
-.trust span + span::before { content: '·'; margin-right: 18px; }
-.trust .open { color: var(--color-accent-fg); font-weight: 600; }
-.hero-product { flex: 1; margin-top: 14px; }
-.hero-label { font-size: 12px; letter-spacing: 0.15em; color: var(--color-fg-muted);
-  margin: 0 0 27px 19px; }
-.hero-preview { width: 452px; padding: 15px; border: 1px solid var(--color-border);
-  border-radius: 30px; background: var(--color-bg); box-shadow: var(--shadow-lg); }
-.hero-crop { height: 290px; overflow: hidden; border-radius: 20px; }
-.hero-crop img { display: block; }
-.hero-caption { display: flex; justify-content: space-between; font-size: 12px;
-  color: var(--color-fg-muted); margin: 19px 7px 4px; }
 `;
 
 /** The panel cut to `height` from the top; list shots show it whole, section bar included. */
@@ -130,11 +113,11 @@ const IMAGES = [
     ),
   },
   {
-    // Keep the tile simple and recognizable at half size: the logo alone.
+    // Google asks for no text, saturated color and a clear shape at half size: the logo alone.
     file: 'promo-small.png',
     size: [440, 280],
     html: `
-      <div class="canvas" style="justify-content:center">
+      <div class="canvas" data-tone="teal" style="justify-content:center">
         <img src="${logo}" width="256" height="256" alt="">
       </div>`,
   },
@@ -142,21 +125,15 @@ const IMAGES = [
     file: 'promo-marquee.png',
     size: [1400, 560],
     html: `
-      <div class="canvas marquee">
-        <div class="copy">
-          <div class="brand">
-            <img src="${logo}" width="104" height="104" alt="">Prowl
+      <div class="canvas" data-tone="ink" style="gap:72px;padding:0 0 0 112px">
+        <div class="copy" style="flex:1">
+          <div class="brand" style="font-size:44px;gap:20px">
+            <img src="${logo}" width="88" height="88" alt="">Prowl
           </div>
-          <h1>Your pull requests.<br>A little calmer.</h1>
-          <p>CI, reviews and merge status.<br>Right in Chrome’s side panel.</p>
-          <div class="trust"><span class="open">● &nbsp;Open source</span><span>MIT licensed</span><span>No tracking</span></div>
+          <p style="font-size:30px">Your GitHub pull requests in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
         </div>
-        <div class="hero-product">
-          <div class="hero-label">YOUR GITHUB PRs, AT A GLANCE</div>
-          <div class="hero-preview">
-            <div class="hero-crop"><img src="${shot('list-ready')}" width="420" height="798" alt="Prowl showing a pull request ready to merge"></div>
-            <div class="hero-caption"><span>Light theme</span><span>Chrome side panel</span></div>
-          </div>
+        <div style="display:flex;gap:24px;align-self:flex-start;margin-top:72px">
+          ${panel('list-light', 560)}${panel('list-dark', 560)}
         </div>
       </div>`,
   },
