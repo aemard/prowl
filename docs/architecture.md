@@ -890,3 +890,26 @@ They are never written to Chrome storage. Form send errors stay inline with the 
 editor open, while non-form failures retain toast feedback. Action results from an obsolete
 auth session do not clear current-session drafts or display old-account feedback. A context
 link opens the changed files on the configured GitHub origin; no diff is fetched into Prowl.
+
+
+## Merge facts and expanded detail coverage
+
+`mergeStateAt` is the actual successful verification date for the current head, including
+usable same-head cached facts. `mergeStateDue` keeps invalidated/deferred ids eligible without
+inventing a new date. Successful targeted reads clear their due id; no date or facts cross a
+head change. Two of the 20 merge-read slots are reserved for the oldest pending facts so
+continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
+The header names list freshness; expanded details state merge verification age and cached/due
+or unverified status. Detail cache keys include the head and base, and old-head details are
+not presented as the current checks while a replacement loads or fails. Search-cache comparisons
+are independent of object-key order after Chrome storage serialization. Detail keys use only
+the head, scope and evidence their read depends on; merge enrichment does not refetch them.
+
+Nested reviews/requests/threads expose connection limits rather than claiming completeness.
+Check requirement flags remain unknown when inaccessible, distinct from false. Expanded-card
+branch rules use the applied-rules REST endpoint; known method restrictions intersect repo
+methods, unreadable rules produce an explicit warning, and GitHub always decides final merge
+permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
+up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
+the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
+Section scans also stop after 20 requests per query, independently of the examined-node bound.

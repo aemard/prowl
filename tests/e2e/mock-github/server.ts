@@ -102,6 +102,7 @@ export class MockGitHub {
     this.requests.length = 0;
     this.defaultHeaders = {};
     this.on('GET', '/user/teams', () => ({ body: [] }));
+    this.on('GET', /^\/repos\/[^/]+\/[^/]+\/rules\/branches\/.+$/, () => ({ body: [] }));
   }
 
   /** Respond to a GraphQL operation (matched on `operationName` or the `query Name` declaration). */

@@ -37,7 +37,12 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
 
 function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): MergeLine[] {
   // No checks in the detail although the PR has some: the token could not read them.
-  const listed = detail?.checks.length ? detail.checks : undefined;
+  const listed =
+    detail?.checks.length &&
+    detail.checks.length >= detail.checksTotal &&
+    detail.checks.every((check) => check.required !== null)
+      ? detail.checks
+      : undefined;
   const lines: MergeLine[] = [];
   const { failed, pending } = pr.checks;
   if (failed > 0) {

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   closedNode,
   type FullPullRequestNode,
+  headCommit,
   mergeStateResponse,
   nodesResponse,
   prId,
@@ -404,10 +405,9 @@ describe('fetchPullRequests', () => {
       };
       const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
       const first = await fetchPullRequests(client, settings(), previous);
-      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe(
-        previous.pullRequests[prId(21)]?.mergeStateStatus,
-      );
-      expect(first.mergeStateAt[prId(21)]).toBeUndefined();
+      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe('unknown');
+      expect(first.mergeStateAt[prId(21)]).toBe(previous.mergeStateAt[prId(21)]);
+      expect(first.mergeStateDue).toContain(prId(21));
       calls.length = 0;
       await fetchPullRequests(client, settings(), first);
       expect(merge(calls).flat()).toEqual([prId(21)]);
@@ -448,9 +448,15 @@ describe('fetchPullRequests', () => {
         ...mapped(node),
         mergeStateStatus: 'behind' as const,
       });
+      const reordered = JSON.parse(JSON.stringify(behind(one)), (_key: string, value: unknown) =>
+        typeof value === 'object' && value !== null && !Array.isArray(value)
+          ? Object.fromEntries(Object.entries(value).reverse())
+          : value,
+      );
       const previous = {
         pullRequests: {
-          [prId(1)]: behind(one),
+          // Chrome serializes stored object keys in a different order, including nested maps.
+          [prId(1)]: reordered,
           [prId(2)]: { ...behind(two), title: 'Renamed since' },
           [prId(3)]: { ...behind(three), mergeable: 'unknown' as const },
           [prId(4)]: behind(four),
@@ -474,7 +480,7 @@ describe('fetchPullRequests', () => {
       const node = prNode({ number: 1, mergeStateStatus: 'CLEAN' });
       const previous = {
         pullRequests: {
-          [node.id]: { ...mapped(node), title: 'Old', mergeStateStatus: 'behind' as const },
+          [node.id]: { ...mapped(node), mergeStateStatus: 'behind' as const },
         },
       };
       const { client } = setup({
@@ -923,4 +929,109 @@ describe('bounded and partial section coverage', () => {
     expect(result.sections.authored).toEqual([mine.id]);
     expect(result.sectionsPending).toBeUndefined();
   });
+});
+
+it('reserves merge reads for old hidden PRs despite continuous visible priority hints', async () => {
+  const now = Date.now();
+  const nodes = Array.from({ length: 25 }, (_, index) =>
+    prNode({ number: index + 1, isDraft: index >= 20 }),
+  );
+  const previous = {
+    pullRequests: Object.fromEntries(
+      nodes.map((node) => [node.id, { ...mapped(node), title: 'Changed title' }]),
+    ),
+    mergeStateAt: Object.fromEntries(
+      nodes.map((node, index) => [
+        node.id,
+        new Date(now - (index >= 20 ? 120 : 5) * 60_000).toISOString(),
+      ]),
+    ),
+  };
+  const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+  const result = await fetchPullRequests(
+    client,
+    settings({ hideDrafts: true }),
+    previous,
+    null,
+    undefined,
+    undefined,
+    () => nodes.slice(0, 20).map(({ id }) => id),
+  );
+  const reads = calls
+    .filter(({ operation }) => operation === 'ProwlMergeState')
+    .flatMap(({ variables }) => variables.ids);
+  expect(reads).toHaveLength(20);
+  expect(reads).toContain(prId(21));
+  expect(reads).toContain(prId(22));
+  expect(result.mergeStateAt[prId(19)]).toBe(previous.mergeStateAt[prId(19)]);
+  expect(result.mergeStateDue).toContain(prId(19));
+});
+
+it('bounds page requests independently of a tiny retained limit and rejected repositories', async () => {
+  const nodes = Array.from({ length: 101 }, (_, index) =>
+    prNode({ number: index + 1, repository: 'excluded/repo' }),
+  );
+  const { client, queries } = setup({
+    ProwlSearch: (variables) => searchResponse(nodes, variables),
+  });
+  const result = await fetchPullRequests(
+    client,
+    settings({
+      maxPerSection: 1,
+      repoInclude: ['allowed/repo'],
+      sections: [section('custom', { query: 'org:excluded' })],
+    }),
+  );
+  expect(queries()).toHaveLength(20);
+  expect(result.sections.custom).toEqual([]);
+  expect(result.sectionCoverage?.custom?.hasMore).toBe(true);
+});
+
+it('invalidates cached readiness on changed same-head evidence, even when enrichment fails', async () => {
+  const old = prNode({ reviewDecision: 'APPROVED', mergeStateStatus: 'CLEAN' });
+  const changed = { ...old, commits: headCommit({ FAILURE: 1 }) };
+  const { client } = setup({
+    ProwlSearch: bySearch({ 'author:@me': [changed] }),
+    ProwlMergeState: () => jsonResponse({ message: 'Bad gateway' }, { status: 502 }),
+  });
+  const published: Array<PullRequest | undefined> = [];
+  const result = await fetchPullRequests(
+    client,
+    settings(),
+    {
+      pullRequests: { [old.id]: mapped(old) },
+      mergeStateAt: { [old.id]: new Date().toISOString() },
+    },
+    null,
+    undefined,
+    async (snapshot) => {
+      published.push(snapshot.pullRequests[old.id]);
+    },
+  );
+  for (const pr of [...published, result.pullRequests[old.id]]) {
+    expect(pr?.mergeStateStatus).toBe('unknown');
+    expect(pr?.reviewDecision).toBe('unknown');
+  }
+  expect(result.mergeStateDue).toContain(old.id);
+});
+
+it('never lets an errored section fallback overwrite a newer PR from another section', async () => {
+  const old = prNode();
+  const fresh = prNode({ headRefOid: 'b'.repeat(40) });
+  const { client } = setup({
+    ProwlSearch: (variables) =>
+      String(variables.query).includes('user-review-requested')
+        ? jsonResponse({ message: 'Bad gateway' }, { status: 502 })
+        : searchResponse([fresh], variables),
+  });
+  const result = await fetchPullRequests(
+    client,
+    settings({ sections: [section('authored'), section('review_requested')] }),
+    {
+      pullRequests: { [old.id]: mapped(old) },
+      sections: { authored: [old.id], review_requested: [old.id] },
+    },
+  );
+  expect(result.sections.review_requested).toContain(old.id);
+  expect(result.pullRequests[old.id]?.headSha).toBe(fresh.headRefOid);
 });

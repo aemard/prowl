@@ -193,6 +193,7 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
         sectionErrors: fetched.sectionErrors,
         teamRequests: fetched.teamRequests,
         mergeStateAt: fetched.mergeStateAt,
+        mergeStateDue: fetched.mergeStateDue,
         settledChecks: carrySettledChecks(previous, fetched.pullRequests),
       };
       const changes = previous ? diffSnapshots(published, next, auth.viewer.login) : [];
@@ -235,6 +236,7 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
       sectionErrors: fetched.sectionErrors,
       teamRequests: fetched.teamRequests,
       mergeStateAt: fetched.mergeStateAt,
+      mergeStateDue: fetched.mergeStateDue,
       settledChecks: carrySettledChecks(previous, fetched.pullRequests),
     };
   } catch (error) {
@@ -333,7 +335,9 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
         readAt &&
         now - Date.parse(readAt) < 60_000 &&
         pr.mergeable !== 'unknown' &&
-        pr.mergeStateStatus !== 'unknown'
+        pr.mergeStateStatus !== 'unknown' &&
+        pr.reviewDecision !== 'unknown' &&
+        !snapshot.mergeStateDue?.includes(id)
       )
         return;
       const settings = normalizeSettings(stored.settings);
@@ -367,6 +371,7 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
                 [id]: { ...latestPr, ...mapMergeState(node) },
               },
               mergeStateAt: { ...latest.mergeStateAt, [id]: new Date().toISOString() },
+              mergeStateDue: latest.mergeStateDue?.filter((other) => other !== id),
             };
             await setItem('snapshot', next);
             await updateBadge();

@@ -374,6 +374,9 @@ export function ListView() {
         {error !== undefined && (
           <SectionNotice section={selected} message={error} partial={coverage?.partial} />
         )}
+        {coverage?.stale && (
+          <p class="list__notice">Some results are cached and may reflect earlier settings.</p>
+        )}
         {coverage && (
           <SectionCoverageNotice
             coverage={coverage}
