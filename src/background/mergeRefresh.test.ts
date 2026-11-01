@@ -8,7 +8,7 @@ import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildSnapshotOf } from '../test/panel';
 import { refreshMergeState, setMergePriority } from './poller';
 
-const node = prNode({ mergeStateStatus: 'CLEAN' });
+const node = prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 const pr = { ...mapPullRequest(node), mergeStateStatus: 'blocked' as const };
 
 beforeEach(async () => {
@@ -67,6 +67,15 @@ it('updates the badge and reports a readiness change only once', async () => {
   await refreshMergeState(pr.id, pr.headSha);
   expect(fakeChrome().__state.notifications.size).toBe(1);
   expect([...fakeChrome().__state.notifications.keys()][0]).toContain(':ready_to_merge:');
+});
+
+it('rejects facts returned for a newer head than the card being refreshed', async () => {
+  serve(() =>
+    jsonResponse({ data: mergeStateResponse([pr.id], [{ ...node, headRefOid: 'b'.repeat(40) }]) }),
+  );
+  await refreshMergeState(pr.id, pr.headSha);
+  expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+  expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
 });
 
 it('honors rate-limit waits and rejects stale heads and absent PRs without fetching', async () => {
