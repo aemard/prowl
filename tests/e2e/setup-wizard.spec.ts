@@ -19,7 +19,16 @@ test('first-time setup configures scopes and notifications then opens the list',
   await expectNoA11yViolations(page);
   await page.getByRole('button', { name: 'Open my pull requests' }).click();
   await expect(page.getByRole('main', { name: 'Pull requests' })).toBeVisible();
-  const state = await page.evaluate(() => chrome.storage.local.get(['onboarding', 'settings']));
+  const state = await page.evaluate(async () => {
+    const stored = await chrome.storage.local.get(['onboarding', 'settings']);
+    return {
+      onboarding: stored.onboarding,
+      settings: stored.settings as {
+        sections: { kind: string; enabled: boolean }[];
+        notifications: { enabled: boolean };
+      },
+    };
+  });
   expect(state.onboarding).toEqual({ status: 'completed', nextStep: 0 });
   expect(
     state.settings.sections.find((s: { kind: string }) => s.kind === 'review_requested').enabled,
@@ -39,9 +48,11 @@ test('skipping setup preserves defaults and does not show setup again', async ({
   await expect(page.getByRole('main', { name: 'Pull requests' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('main', { name: 'Pull requests' })).toBeVisible();
-  expect(
-    (await page.evaluate(() => chrome.storage.local.get('onboarding'))).onboarding.status,
-  ).toBe('skipped');
+  const status = await page.evaluate(async () => {
+    const stored = await chrome.storage.local.get('onboarding');
+    return (stored.onboarding as { status: string }).status;
+  });
+  expect(status).toBe('skipped');
 });
 
 test('setup can be relaunched from Settings without resetting existing preferences', async ({
