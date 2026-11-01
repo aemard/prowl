@@ -44,7 +44,6 @@ const RETRY = { type: 'retry', label: 'Retry' } as const;
  * The banner for the stored poll state, or null when all is well. `fetchedAt` is the snapshot's:
  * an error never hides the data on screen, the banner only says how old it is.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
 export function describeStatus(
   poll: PollState | undefined,
   fetchedAt: string | undefined,

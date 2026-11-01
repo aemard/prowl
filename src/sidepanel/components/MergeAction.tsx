@@ -35,8 +35,6 @@ const DISABLE_AUTO_MERGE = 'Disable auto-merge';
  * a toast shows after the dialog closed (a modal would hide it); the choices stay for the next
  * try, and a refresh is requested because such a refusal usually means the PR changed.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export function MergeAction({ pr }: { pr: PullRequest }) {
   const [confirming, setConfirming] = useState(false);
   const [picked, setPicked] = useState<MergeMethod>();

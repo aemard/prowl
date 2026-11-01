@@ -51,7 +51,6 @@ const UNPARSEABLE = Symbol('unparseable');
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export function createGitHubClient({
   token,
   apiUrl,
@@ -85,7 +84,6 @@ export function createGitHubClient({
     return fail(kind, message || `GitHub responded with HTTP ${status}.`, status, headers);
   }
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   async function send(method: HttpMethod, path: string, body: unknown, rest: boolean) {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
@@ -144,7 +142,6 @@ export function createGitHubClient({
   }
 
   return {
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
     async graphql<T>(
       query: string,
       variables: Record<string, unknown> = {},

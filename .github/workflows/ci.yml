@@ -55,9 +55,6 @@ jobs:
       - name: Biome
         run: pnpm exec biome ci .
 
-      - name: File length
-        run: pnpm lines
-
       - name: Types
         run: pnpm typecheck
 

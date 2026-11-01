@@ -31,7 +31,6 @@ type Handler = (variables: Record<string, unknown>) => Response | Error | object
 function setup(handlers: Record<string, Handler>) {
   const calls: { operation: string; variables: Record<string, unknown> }[] = [];
   const searched = new Map<string, FullPullRequestNode>();
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   const fetch = vi.fn<FetchLike>(async (_url, init) => {
     const { query, variables } = JSON.parse(String(init.body));
     const operation = /query (\w+)/.exec(query)?.[1] ?? '';

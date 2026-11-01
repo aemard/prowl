@@ -197,8 +197,6 @@ export const LIST_RENDERED_MARK = 'prowl:list-rendered';
 let listRendered = false;
 
 /** The pull request list: a quick filter, one card per PR and the section bar at the bottom. */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export function ListView() {
   const now = useNow(30_000);
   const idPrefix = useId();

@@ -130,7 +130,6 @@ export class MockGitHub {
     );
   }
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const cors = {
       'access-control-allow-origin': '*',

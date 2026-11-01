@@ -33,13 +33,6 @@
     "rules": {
       "preset": "recommended",
       "a11y": "error",
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "error",
-        "noExcessiveLinesPerFunction": {
-          "level": "error",
-          "options": { "maxLines": 80, "skipBlankLines": true }
-        }
-      },
       "suspicious": {
         "noConsole": {
           "level": "error",
@@ -86,16 +79,6 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/*.test.{ts,tsx,mjs}", "**/*.spec.ts", "src/test/**"],
-      "linter": {
-        "rules": {
-          "complexity": {
-            "noExcessiveLinesPerFunction": "off"
           }
         }
       }

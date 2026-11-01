@@ -119,8 +119,6 @@ const isNode = <T extends { id: string }>(
  * then after each batch, with the ids of the next merge batch (empty when finishing).
  * This call stays alive until enrichment finishes.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export async function fetchPullRequests(
   client: GitHubClient,
   settings: FetchSettings,
@@ -183,7 +181,6 @@ export async function fetchPullRequests(
    * Fills in the merge facts of the PRs found: kept from `previous` while still valid, else read
    * in batches. A batch GitHub gives up on keeps the previous facts and is tried again next poll.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   async function readMergeState(): Promise<void> {
     const now = Date.now();
     const stale: PullRequest[] = [];
@@ -255,7 +252,6 @@ export async function fetchPullRequests(
    * One search per followed team (the first `MAX_TEAM_SEARCHES`), merged newest first and cut
    * to `maxPerSection`. A refused team search is reported; the other teams still load.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   async function searchTeams(section: Section): Promise<void> {
     const all = teams?.teams ?? [];
     const followed = all.filter((team) => !settings.unfollowedTeams.includes(teamKey(team)));

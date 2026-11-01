@@ -35,7 +35,6 @@ function moveFocus(step: 1 | -1) {
 export function useShortcuts(enabled: boolean): void {
   useEffect(() => {
     if (!enabled) return;
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || document.querySelector('dialog[open]')) return;
       const shortcut = shortcutFor(event);
@@ -89,7 +88,6 @@ export function ShortcutsDialog() {
 export function RefreshAnnouncer() {
   const [message, setMessage] = useState('');
   const wasBusy = useRef(false);
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   useSignalEffect(() => {
     const state = pollState.value;
     const busy = state?.inFlight === true && state.mergePending === undefined;

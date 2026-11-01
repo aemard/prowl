@@ -80,7 +80,6 @@ function place(menu: HTMLElement, trigger: HTMLElement, align: 'start' | 'end'):
  * closes and returns focus to the trigger, Tab closes, and so does a click outside. On scroll or
  * resize the menu follows its trigger, and closes once the trigger is out of view.
  */
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -150,7 +149,6 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
     setActive(enabled[next] ?? -1);
   };
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
   const onMenuKeyDown = (event: TargetedKeyboardEvent<HTMLDivElement>) => {
     const { key } = event;
     if (key === 'ArrowDown' || key === 'ArrowUp') {

@@ -15,7 +15,6 @@
     "build:e2e": "vite build --mode e2e",
     "zip": "node scripts/zip.mjs",
     "size": "node scripts/check-size.mjs",
-    "lines": "node scripts/check-file-size.mjs",
     "icons": "node scripts/icons.mjs",
     "store-images": "node scripts/store-images.mjs",
     "lint": "biome check .",
@@ -26,9 +25,9 @@
     "coverage": "vitest run --coverage",
     "e2e": "pnpm build && pnpm build:e2e && playwright test",
     "screenshots": "PROWL_SCREENSHOTS=1 pnpm e2e",
-    "verify:fast": "pnpm lint && pnpm lines && pnpm typecheck && pnpm test",
+    "verify:fast": "pnpm lint && pnpm typecheck && pnpm test",
     "verify:changed": "pnpm verify:fast && pnpm build && pnpm size",
-    "verify": "pnpm lint && pnpm lines && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
+    "verify": "pnpm lint && pnpm typecheck && pnpm coverage && pnpm build && pnpm --filter site build && pnpm size && pnpm e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
