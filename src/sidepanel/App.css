@@ -46,6 +46,19 @@ body {
   }
 }
 
+/* The pointer light: useGlassReflection sets --light-x, --light-y and --light-strength on the
+   hovered surface. Defined on each surface so var() resolves there, not once on :root. */
+.header,
+.list__filter,
+.section-tabs,
+.pr-card {
+  --glass-spot: radial-gradient(
+    ellipse 180px 85px at var(--light-x, 20%) var(--light-y, 0%),
+    color-mix(in srgb, var(--glass-reflect) calc(var(--light-strength, 0.15) * 100%), transparent),
+    transparent 76%
+  );
+}
+
 /* A separate backdrop avoids making fixed menus relative to the glass container. */
 .header::after,
 .list__filter::after,
@@ -56,17 +69,7 @@ body {
   z-index: -1;
   pointer-events: none;
   border-radius: inherit;
-  background:
-    radial-gradient(
-      ellipse 180px 85px at var(--light-x, 20%) var(--light-y, 0%),
-      color-mix(
-        in srgb,
-        var(--glass-reflect) calc(var(--light-strength, 0.15) * 100%),
-        transparent
-      ),
-      transparent 76%
-    ),
-    var(--glass-chrome);
+  background: var(--glass-spot), var(--glass-chrome);
   backdrop-filter: var(--glass-blur);
 }
 

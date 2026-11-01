@@ -46,6 +46,7 @@ describe('PrMenu', () => {
     await waitFor(async () => expect((await loadPrLocal()).alwaysShown).toEqual({}));
     expect(fetch).not.toHaveBeenCalled();
   });
+
   it('lists local actions, and the GitHub ones the viewer may run', () => {
     open({ checks: { ...base.checks, state: 'failure', failed: 1 } });
     expect(labels().map((l) => l.replace(/feature\/widgets$/, ''))).toEqual([

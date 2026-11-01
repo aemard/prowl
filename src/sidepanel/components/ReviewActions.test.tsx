@@ -164,9 +164,11 @@ describe('request changes', () => {
     expect(document.activeElement).toBe(message());
 
     type('   ');
+    submit().focus();
     fireEvent.click(submit());
     expect(within(dialog()).getByText('Write a message first.')).toBeTruthy();
     expect(message().getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(message());
     expect(sent).toEqual([]);
     type('Please add a test');
     expect(message().getAttribute('aria-invalid')).toBeNull();
@@ -236,6 +238,7 @@ describe('request changes', () => {
     show();
     fireEvent.click(button('Request changes acme/widgets#1'));
     type('Please add a test');
+    submit().focus();
     fireEvent.click(submit());
     await waitFor(() =>
       expect(
@@ -245,6 +248,8 @@ describe('request changes', () => {
     expect(toastTexts()).toEqual([]);
     expect(message().getAttribute('aria-invalid')).toBe('true');
     expect((message() as HTMLTextAreaElement).value).toBe('Please add a test');
+    // The error is announced by focusing the field it describes.
+    expect(document.activeElement).toBe(message());
   });
 
   it('can be cancelled', () => {
@@ -285,6 +290,20 @@ it('clears private draft text when the account changes', () => {
     auth.value = buildAuth('hubot');
   });
   expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe('');
+});
+
+it('keeps a draft when the same account signs in again with another token', () => {
+  show();
+  fireEvent.click(button('Comment on acme/widgets#1'));
+  fireEvent.input(screen.getByRole('textbox', { name: /Message/ }), {
+    target: { value: 'Still mine' },
+  });
+  act(() => {
+    auth.value = { ...buildAuth('octocat'), token: 'ghp_rotated' };
+  });
+  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe(
+    'Still mine',
+  );
 });
 
 describe('comment', () => {

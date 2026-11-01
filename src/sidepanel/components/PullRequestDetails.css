@@ -1,12 +1,11 @@
 /* The expanded part of a card: an inset panel below the card's summary. */
 .pr-detail {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4) var(--space-4);
   border-top: var(--border-width) solid var(--color-border-subtle);
-  background: var(--glass-detail);
+  background: var(--color-bg-subtle);
 }
 
 .pr-detail__label {
@@ -21,6 +20,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+/* A link among buttons: underlined and in the accent color, or it reads as a label. */
+.pr-detail .pr-actions__link {
+  align-self: center;
+  color: var(--color-accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .pr-detail__list {
