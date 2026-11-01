@@ -55,6 +55,17 @@
   font-weight: var(--weight-semibold);
 }
 
+.settings-details > summary {
+  cursor: pointer;
+  font-weight: var(--weight-medium);
+}
+.settings-details[open] > summary {
+  margin-bottom: var(--space-3);
+}
+.settings-details > .settings-note {
+  margin-top: var(--space-3);
+}
+
 .settings-list {
   display: flex;
   flex-direction: column;

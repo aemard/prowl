@@ -4,6 +4,7 @@
  * table-tested; `PullRequestDetails` only picks an icon per tone. Works from the list's data
  * alone and sharpens (which checks are required, how many approvals) once the detail is loaded.
  */
+import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 
@@ -36,7 +37,12 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
 
 function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): MergeLine[] {
   // No checks in the detail although the PR has some: the token could not read them.
-  const listed = detail?.checks.length ? detail.checks : undefined;
+  const listed =
+    detail?.checks.length &&
+    detail.checks.length >= detail.checksTotal &&
+    detail.checks.every((check) => check.required !== null)
+      ? detail.checks
+      : undefined;
   const lines: MergeLine[] = [];
   const { failed, pending } = pr.checks;
   if (failed > 0) {
@@ -97,12 +103,21 @@ export function mergeReadiness(pr: PullRequest, detail?: PullRequestDetail): Mer
     });
   }
   if (lines.every(({ tone }) => tone === 'neutral')) {
-    if (pr.mergeable === 'unknown' || pr.mergeStateStatus === 'unknown') {
-      lines.push({ tone: 'neutral', text: 'GitHub is still checking whether it can be merged' });
+    if (
+      pr.mergeable === 'unknown' ||
+      pr.mergeStateStatus === 'unknown' ||
+      pr.reviewDecision === 'unknown'
+    ) {
+      lines.push({
+        tone: 'neutral',
+        text: 'Merge requirements have not been verified for this commit',
+      });
     } else if (pr.mergeStateStatus === 'blocked') {
       lines.push({ tone: 'attention', text: "Blocked by the base branch's rules" });
-    } else {
+    } else if (isReadyToMerge(pr)) {
       lines.push({ tone: 'success', text: 'Ready to merge' });
+    } else {
+      lines.push({ tone: 'attention', text: 'Merge requirements are not satisfied' });
     }
   }
   return lines;

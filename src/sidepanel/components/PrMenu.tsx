@@ -1,8 +1,10 @@
 import type { PullRequest } from '../../lib/model';
 import {
+  isAlwaysShown,
   isMuted,
   isSnoozed,
   mute,
+  setAlwaysShown,
   snooze,
   unmute,
   unsnooze,
@@ -17,6 +19,7 @@ import {
   BellSlashIcon,
   ClockIcon,
   CopyIcon,
+  EyeIcon,
   GitPullRequestDraftIcon,
   GitPullRequestIcon,
   KebabHorizontalIcon,
@@ -61,6 +64,7 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
   const local = prLocal.value;
   const snoozed = isSnoozed(local, pr.id, now);
   const muted = isMuted(local, pr.id);
+  const alwaysShown = isAlwaysShown(local, pr.id);
   const viewer = auth.value?.viewer.login ?? '';
   const busy = pendingActions.value[pr.id] !== undefined;
   const ref = prRef(pr);
@@ -93,6 +97,24 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
         ),
     },
     'separator',
+    {
+      id: 'always-show',
+      label: 'Always show this PR',
+      checked: alwaysShown,
+      checkRole: 'menuitemcheckbox',
+      icon: <EyeIcon />,
+      onSelect: () => {
+        const shown = !isAlwaysShown(prLocal.value, pr.id);
+        void updatePrLocal((state) => setAlwaysShown(state, pr.id, shown)).then(() =>
+          showToast({
+            message: shown
+              ? 'Always shown in the list and badge. Snooze still applies.'
+              : 'Automatic hiding applies to this PR again.',
+            tone: 'info',
+          }),
+        );
+      },
+    },
     ...(snoozed
       ? [
           {

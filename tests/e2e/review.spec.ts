@@ -172,6 +172,7 @@ test.describe('review actions', () => {
   test('explains a refusal in a toast with GitHub’s words, never the token', async ({
     github,
     openPanel,
+    expectNoA11yViolations,
   }) => {
     github.onGraphQL('ProwlApprove', () =>
       failure('Resource not accessible by personal access token ghp_e2e'),
@@ -190,20 +191,56 @@ test.describe('review actions', () => {
     await expect(approve).toBeEnabled();
     await expect(panel.locator('body')).not.toContainText('ghp_e2e');
 
-    // The dialog closes, the reason is in a toast and what was written is still there.
+    // A form failure stays beside the text, without forcing the user to reopen it.
     await theirs.getByRole('button', { name: `Request changes ${THEIRS.ref}` }).click();
     const dialog = panel.getByRole('dialog', { name: 'Request changes' });
     await dialog.getByRole('textbox', { name: 'Message' }).fill('Please add a test');
     await dialog.getByRole('button', { name: 'Request changes' }).click();
-    await expect(dialog).toHaveCount(0);
-    await expect(toasts(panel)).toContainText(
-      'Request changes failed: Review could not be submitted',
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('Review could not be submitted', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
+      'aria-invalid',
+      'true',
     );
-    await theirs.getByRole('button', { name: `Request changes ${THEIRS.ref}` }).click();
     await expect(dialog.getByRole('textbox', { name: 'Message' })).toHaveValue('Please add a test');
+    await expectNoA11yViolations(panel);
 
     // A failure changes nothing on GitHub, so nothing to refresh.
     expect(github.requestsFor(SEARCH)).toHaveLength(polls);
+  });
+
+  test('preserves a comment through folding, section changes and Settings', async ({
+    openPanel,
+    expectNoA11yViolations,
+  }) => {
+    const panel = await openPanel();
+    await panel.getByRole('tab', { name: /^Review/ }).click();
+    const theirs = await expand(panel, THEIRS.title);
+    await expect(theirs.getByRole('link', { name: 'View changes on GitHub' })).toHaveAttribute(
+      'href',
+      /\/pull\/2490\/files$/,
+    );
+    const comment = theirs.getByRole('button', { name: `Comment on ${THEIRS.ref}` });
+    await comment.click();
+    const dialog = panel.getByRole('dialog', { name: 'Comment', exact: true });
+    await dialog.getByRole('textbox', { name: 'Message' }).fill('A draft worth keeping');
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await theirs.getByRole('button', { name: /^Details for / }).click();
+    await panel.getByRole('tab', { name: /^Mine/ }).click();
+    await panel.evaluate(() => {
+      location.hash = '#/settings';
+    });
+    await expect(panel.getByRole('main', { name: 'Settings' })).toBeVisible();
+    await panel.evaluate(() => {
+      location.hash = '#/';
+    });
+    await panel.getByRole('tab', { name: /^Review/ }).click();
+    await expand(panel, THEIRS.title);
+    await comment.click();
+    await expect(dialog.getByRole('textbox', { name: 'Message' })).toHaveValue(
+      'A draft worth keeping',
+    );
+    await expectNoA11yViolations(panel);
   });
 
   test('comments on your own pull request, which cannot be approved', async ({

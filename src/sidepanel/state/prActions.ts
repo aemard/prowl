@@ -30,18 +30,23 @@ export async function runPrAction(
   name: string,
   done: string,
   run: (client: GitHubClient) => Promise<void>,
+  onError?: (message: string) => void,
 ): Promise<boolean> {
-  const token = auth.value?.token;
+  const session = auth.value;
+  const token = session?.token;
   if (!token || pendingActions.value[pr.id]) return false;
   pendingActions.value = { ...pendingActions.value, [pr.id]: name };
   try {
     await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
+    if (auth.value !== session) return false;
     showToast({ message: `${done} ${prRef(pr)}`, tone: 'success' });
-    void sendToBackground({ type: 'poll', force: true });
+    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
     return true;
   } catch (error) {
+    if (auth.value !== session) return false;
     const reason = error instanceof GitHubError ? error.message : 'Something went wrong.';
-    showToast({ message: `${name} failed: ${reason}`, tone: 'danger' });
+    if (onError) onError(reason);
+    else showToast({ message: `${name} failed: ${reason}`, tone: 'danger' });
     return false;
   } finally {
     const { [pr.id]: _finished, ...others } = pendingActions.value;

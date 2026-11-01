@@ -51,7 +51,8 @@ test.describe('sign in with the OAuth device flow', () => {
     );
     const panel = await openPanel();
     await expect(startButton(panel)).toBeVisible();
-    await expect(panel.getByText('or paste a token')).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Use a personal access token' })).toBeVisible();
+    await expect(panel.getByLabel('Personal access token')).not.toBeVisible();
     await panel.emulateMedia({ colorScheme: 'light' });
     await expectNoA11yViolations(panel);
 

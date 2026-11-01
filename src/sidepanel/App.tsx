@@ -8,6 +8,7 @@ import { RefreshAnnouncer, ShortcutsDialog, useShortcuts } from './components/Sh
 import { StatusBanner } from './components/StatusBanner';
 import { Skeleton } from './components/ui/Skeleton';
 import { ToastRegion } from './components/ui/Toast';
+import { useGlassReflection } from './components/useGlassReflection';
 import { type Route, route } from './state/router';
 import { hydrated, settings } from './state/store';
 import { ListView } from './views/List';
@@ -90,6 +91,7 @@ function Shell() {
 
 /** The panel shell: skeleton until the store is hydrated, then header plus the current view. */
 export function App() {
+  useGlassReflection();
   useSignalEffect(() => applyTheme(settings.value.theme));
   return (
     <>

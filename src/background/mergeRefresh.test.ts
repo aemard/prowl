@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { mergeStateResponse, prNode } from '../../tests/fixtures/github';
-import { graphqlRateLimit, jsonResponse } from '../../tests/fixtures/http';
+import { graphqlError, graphqlRateLimit, jsonResponse } from '../../tests/fixtures/http';
 import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, removeItems, setItem, setItems } from '../lib/storage/storage';
@@ -8,7 +8,7 @@ import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildSnapshotOf } from '../test/panel';
 import { refreshMergeState, setMergePriority } from './poller';
 
-const node = prNode({ mergeStateStatus: 'CLEAN' });
+const node = prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 const pr = { ...mapPullRequest(node), mergeStateStatus: 'blocked' as const };
 
 beforeEach(async () => {
@@ -69,6 +69,15 @@ it('updates the badge and reports a readiness change only once', async () => {
   expect([...fakeChrome().__state.notifications.keys()][0]).toContain(':ready_to_merge:');
 });
 
+it('rejects facts returned for a newer head than the card being refreshed', async () => {
+  serve(() =>
+    jsonResponse({ data: mergeStateResponse([pr.id], [{ ...node, headRefOid: 'b'.repeat(40) }]) }),
+  );
+  await refreshMergeState(pr.id, pr.headSha);
+  expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+  expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
+});
+
 it('honors rate-limit waits and rejects stale heads and absent PRs without fetching', async () => {
   const fetch = serve();
   await refreshMergeState('missing', pr.headSha);
@@ -124,4 +133,23 @@ it('visibility hints alone never trigger a GitHub read', () => {
   setMergePriority('panel-1', [pr.id]);
   setMergePriority('panel-1', []);
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it('does not publish readiness from a partially forbidden targeted response', async () => {
+  serve(() =>
+    jsonResponse({
+      data: mergeStateResponse([pr.id], [node]),
+      errors: [
+        graphqlError('FORBIDDEN', 'Review requirements unavailable', [
+          'nodes',
+          0,
+          'reviewDecision',
+        ]),
+      ],
+    }),
+  );
+  await refreshMergeState(pr.id, pr.headSha);
+  expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+  expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
+  expect((await getItem('pollState'))?.lastError?.kind).toBe('forbidden');
 });

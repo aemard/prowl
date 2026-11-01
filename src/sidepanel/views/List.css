@@ -9,6 +9,13 @@
   list-style: none;
 }
 
+.list__summary {
+  margin: var(--space-2) var(--space-4);
+  color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-sm);
+}
+
 .list__notice {
   display: flex;
   align-items: flex-start;
@@ -88,4 +95,26 @@
 }
 .list__aside .pr-list {
   padding-top: var(--space-2);
+}
+
+.list__coverage {
+  margin: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--glass-edge);
+  border-radius: var(--radius-lg);
+  background: var(--glass-card);
+  font-size: var(--text-sm);
+}
+.list__coverage p {
+  margin: 0;
+}
+.list__coverage-help {
+  color: var(--color-fg-muted);
+  margin-top: var(--space-1);
+}
+.list__coverage-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
 }

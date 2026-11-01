@@ -150,6 +150,7 @@ export function searchResponse(
   const end = start + Number(first);
   return {
     search: {
+      issueCount: all.length,
       pageInfo: { hasNextPage: end < all.length, endCursor: all.length ? String(end) : null },
       nodes: all.slice(start, end),
     },
@@ -170,6 +171,7 @@ export function mergeStateResponse(
       return node
         ? {
             id: node.id,
+            headRefOid: node.headRefOid,
             reviewDecision: node.reviewDecision,
             mergeable: node.mergeable,
             mergeStateStatus: node.mergeStateStatus,

@@ -1,5 +1,6 @@
 import { OPEN_PANEL_COMMAND } from '../lib/model';
 import { subscribeSettings } from '../lib/storage/settings';
+import { getItem } from '../lib/storage/storage';
 import { updateBadge, watchBadge } from './badge';
 import { handleMessage } from './messages';
 import { onNotificationButtonClicked, onNotificationClicked } from './notifier';
@@ -14,6 +15,12 @@ export function registerBackground(): void {
     void updateBadge();
     void poll();
   };
+  globalThis.addEventListener('online', () => {
+    void getItem('pollState').then((state) => {
+      // A reconnect is a hint, not permission to bypass a quota or retry backoff.
+      if (state?.lastError?.kind === 'network') void poll();
+    });
+  });
   chrome.runtime.onInstalled.addListener(start);
   chrome.runtime.onStartup.addListener(start);
   chrome.alarms.onAlarm.addListener(({ name }) => {
