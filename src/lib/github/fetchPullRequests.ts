@@ -280,17 +280,18 @@ export async function fetchPullRequests(
       if (pr.state !== 'open') continue;
       const before = previous?.pullRequests[pr.id];
       const readAt = previous?.mergeStateAt?.[pr.id];
+      // `put` kept the facts only if the search facts are unchanged; their date goes with them.
+      const carried = before !== undefined && sameSearchFacts(before, pr);
       const valid =
-        before !== undefined &&
+        carried &&
         readAt !== undefined &&
         !previous?.mergeStateDue?.includes(pr.id) &&
         now - Date.parse(readAt) <
           (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
         before.mergeable !== 'unknown' &&
         before.mergeStateStatus !== 'unknown' &&
-        before.reviewDecision !== 'unknown' &&
-        sameSearchFacts(before, pr);
-      if (before?.headSha === pr.headSha && readAt) result.mergeStateAt[pr.id] = readAt;
+        before.reviewDecision !== 'unknown';
+      if (carried && readAt) result.mergeStateAt[pr.id] = readAt;
       if (!valid) {
         result.mergeStateDue ??= [];
         result.mergeStateDue.push(pr.id);

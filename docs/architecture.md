@@ -78,9 +78,10 @@ in-memory updates that the next snapshot replaces.
    (`snapshot.mergeStateAt`); unchanged hidden or snoozed PRs use a one-hour interval.
    Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
    currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
-   Deferred PRs keep their previous facts without a freshness timestamp so they stay due;
-   new PRs have unknown merge facts until read. Search updates continue for all PRs. Facts never
-   cross a head commit: a PR whose head changed starts unknown, and `ProwlMergeState` selects
+   Deferred PRs keep their previous facts and the date they were read, and are listed in
+   `snapshot.mergeStateDue`; new PRs have unknown merge facts until read. Search updates
+   continue for all PRs. Facts and their date never cross a change of the PR's search data (a new
+   head, review, check, comment): such a PR starts unknown, and `ProwlMergeState` selects
    `headRefOid` so facts computed for another head are dropped (the poll leaves that PR
    unknown and unread, a card refresh keeps what the card had).
 4. Open PRs present in the previous snapshot but missing now are fetched by id
@@ -910,11 +911,12 @@ link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched i
 
 ## Merge facts and expanded detail coverage
 
-`mergeStateAt` is the actual successful verification date for the current head, including
-usable same-head cached facts. `mergeStateDue` keeps invalidated/deferred ids eligible without
-inventing a new date. Successful targeted reads clear their due id; no date or facts cross a
-head change. Two of the 20 merge-read slots are reserved for the oldest pending facts so
-continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
+`mergeStateAt` is the date the PR's merge facts were actually read; facts carried over from the
+previous poll keep it. `mergeStateDue` lists the PRs whose facts are aged, deferred or unknown,
+without inventing a date. A read (poll or card) clears its due id; neither facts nor date cross a
+change of the search data, the head included. Two of the 20 merge-read slots are reserved for the
+oldest pending facts so continuous visible hints cannot starve all other PRs. These are budgets,
+not refresh guarantees.
 The header names list freshness; expanded details state merge verification age and cached/due
 or unverified status. Detail cache keys include the head and base, and old-head details are
 not presented as the current checks while a replacement loads or fails. Search-cache comparisons

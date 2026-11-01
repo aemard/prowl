@@ -395,7 +395,26 @@ describe('fetchPullRequests', () => {
       expect(Object.keys(next.mergeStateAt)).toHaveLength(35);
     });
 
-    it('keeps changed deferred facts due until they are actually read', async () => {
+    it('keeps the facts and date of a deferred PR, due until it is actually read', async () => {
+      const nodes = Array.from({ length: 21 }, (_, i) => prNode({ number: i + 1 }));
+      const previous = {
+        pullRequests: Object.fromEntries(nodes.map((node) => [node.id, mapped(node)])),
+        mergeStateAt: Object.fromEntries(
+          nodes.map((node) => [node.id, new Date(Date.now() - 20 * MINUTE).toISOString()]),
+        ),
+      };
+      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const first = await fetchPullRequests(client, settings(), previous);
+      expect(first.pullRequests[prId(21)]).toEqual(previous.pullRequests[prId(21)]);
+      expect(first.mergeStateAt[prId(21)]).toBe(previous.mergeStateAt[prId(21)]);
+      expect(first.mergeStateDue).toEqual([prId(21)]);
+      calls.length = 0;
+      const next = await fetchPullRequests(client, settings(), first);
+      expect(merge(calls).flat()).toEqual([prId(21)]);
+      expect(next.mergeStateDue).toBeUndefined();
+    });
+
+    it('drops the facts and the date of a PR whose search facts changed, read or not', async () => {
       const nodes = Array.from({ length: 21 }, (_, i) => prNode({ number: i + 1 }));
       const previous = {
         pullRequests: Object.fromEntries(
@@ -403,14 +422,11 @@ describe('fetchPullRequests', () => {
         ),
         mergeStateAt: Object.fromEntries(nodes.map((node) => [node.id, new Date().toISOString()])),
       };
-      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
       const first = await fetchPullRequests(client, settings(), previous);
       expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe('unknown');
-      expect(first.mergeStateAt[prId(21)]).toBe(previous.mergeStateAt[prId(21)]);
-      expect(first.mergeStateDue).toContain(prId(21));
-      calls.length = 0;
-      await fetchPullRequests(client, settings(), first);
-      expect(merge(calls).flat()).toEqual([prId(21)]);
+      expect(first.mergeStateAt[prId(21)]).toBeUndefined();
+      expect(first.mergeStateDue).toEqual([prId(21)]);
     });
 
     it('prioritizes visible PRs and reuses hidden and snoozed facts for an hour', async () => {
@@ -1018,13 +1034,11 @@ it('reserves merge reads for old hidden PRs despite continuous visible priority 
     prNode({ number: index + 1, isDraft: index >= 20 }),
   );
   const previous = {
-    pullRequests: Object.fromEntries(
-      nodes.map((node) => [node.id, { ...mapped(node), title: 'Changed title' }]),
-    ),
+    pullRequests: Object.fromEntries(nodes.map((node) => [node.id, mapped(node)])),
     mergeStateAt: Object.fromEntries(
       nodes.map((node, index) => [
         node.id,
-        new Date(now - (index >= 20 ? 120 : 5) * 60_000).toISOString(),
+        new Date(now - (index >= 20 ? 120 : 20) * 60_000).toISOString(),
       ]),
     ),
   };
@@ -1094,6 +1108,7 @@ it('invalidates cached readiness on changed same-head evidence, even when enrich
     expect(pr?.reviewDecision).toBe('unknown');
   }
   expect(result.mergeStateDue).toContain(old.id);
+  expect(result.mergeStateAt[old.id]).toBeUndefined();
 });
 
 it('never lets an errored section fallback overwrite a newer PR from another section', async () => {
