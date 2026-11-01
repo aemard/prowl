@@ -48,9 +48,10 @@ export function SetupWizard() {
   const [notifications, setNotifications] = useState(settings.value.notifications.enabled);
   const [busy, setBusy] = useState(false);
 
-  const discovered = teams.value?.login.toLowerCase() === auth.value?.viewer.login.toLowerCase()
-    ? teams.value
-    : undefined;
+  const discovered =
+    teams.value?.login.toLowerCase() === auth.value?.viewer.login.toLowerCase()
+      ? teams.value
+      : undefined;
   const availableTeams = discovered?.teams ?? [];
   const following = availableTeams.filter((team) => !unfollowed.includes(teamKey(team))).length;
   const teamsEnabled = selected.includes('team_review_requested');
@@ -202,8 +203,8 @@ export function SetupWizard() {
               )}
               {discovered?.error && (
                 <p class="setup__hint" role="status">
-                  {discovered.error.message} You can still continue and configure teams later
-                  in Settings.
+                  {discovered.error.message} You can still continue and configure teams later in
+                  Settings.
                 </p>
               )}
               {discovered && !discovered.error && availableTeams.length === 0 && (
