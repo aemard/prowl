@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { activityKey } from '../../lib/activity';
 import { computeBadge } from '../../lib/badge/computeBadge';
 import type { PullRequest, Settings, SortOrder } from '../../lib/model';
 import { defaultSettings } from '../../lib/storage/settings';
@@ -11,9 +12,16 @@ import {
   buildSnapshot,
   buildSnapshotOf,
 } from '../../test/panel';
+import { activeSectionId, filterQuery, foldedGroups, showHidden } from '../state/listContext';
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, filterQuery, foldedGroups, ListView, showHidden } from './List';
+import { ListView } from './List';
+
+const seenMessage = (pr: PullRequest) => ({
+  type: 'markSeen',
+  prIds: [pr.id],
+  versions: { [pr.id]: activityKey(pr) },
+});
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
@@ -357,7 +365,7 @@ describe('unseen changes', () => {
     act(() => void vi.advanceTimersByTime(1499));
     expect(markSeen(send)).toEqual([]);
     act(() => void vi.advanceTimersByTime(1));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(a)]);
 
     act(() => void vi.advanceTimersByTime(10_000));
     expect(markSeen(send)).toHaveLength(1);
@@ -388,7 +396,7 @@ describe('unseen changes', () => {
     expect(markSeen(send)).toEqual([]);
     observer().show([c.id]);
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [c.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(c)]);
   });
 
   it('does nothing while the panel is hidden, and starts when it shows', () => {
@@ -402,7 +410,7 @@ describe('unseen changes', () => {
     Reflect.deleteProperty(document, 'visibilityState');
     act(() => void document.dispatchEvent(new Event('visibilitychange')));
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(a)]);
   });
 
   it('drops the dot once the worker has stored it as seen', () => {
@@ -549,11 +557,15 @@ describe('pull requests with no recent commit', () => {
     expect(show.getAttribute('aria-expanded')).toBe('false');
     const panel = screen.getByRole('tabpanel');
     expect(panel.lastElementChild?.contains(show)).toBe(true);
-    // A section of hidden PRs only is neither empty nor filtered out.
+    // A section containing only hidden PRs explains the apparent empty list.
     fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
     expect(cardTitles()).toEqual([]);
-    expect(screen.queryByRole('heading')).toBeNull();
+    expect(
+      screen.getByRole('heading', { name: 'All loaded pull requests are set aside' }),
+    ).toBeTruthy();
     expect(toggle('Show 1 hidden')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show hidden and snoozed' }));
+    expect(cardTitles()).toEqual(['Old idea']);
   });
 
   it('reveals them for the session, saying why, and hides them again', () => {
@@ -637,7 +649,35 @@ describe('pull requests with no recent commit', () => {
     );
     observer().show([stale.id]);
     act(() => void vi.advanceTimersByTime(1500));
-    expect(send).toHaveBeenCalledWith({ type: 'markSeen', prIds: [stale.id] });
+    expect(send).toHaveBeenCalledWith(seenMessage(stale));
+  });
+
+  it('says how many PRs it loaded, matched, lists, hides and snoozes', () => {
+    const later = pr(3, { title: 'Later' });
+    snapshot.value = buildSnapshotOf({ authored: [stale, fresh, later], review_requested: [] });
+    prLocal.value = {
+      snoozed: { [later.id]: new Date(NOW + 3_600_000).toISOString() },
+      muted: {},
+      seen: {},
+    };
+    render(<ListView />);
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 in list · 1 hidden · 1 snoozed\./,
+    );
+    fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'old' } });
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 matching · 0 in list · 1 hidden · 0 snoozed\./,
+    );
+  });
+
+  it('keeps keyboard focus on a toggle when revealing what was set aside', () => {
+    render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
+    const reveal = screen.getByRole('button', { name: 'Show hidden and snoozed' });
+    reveal.focus();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole('button', { name: 'Show hidden and snoozed' })).toBeNull();
+    expect(document.activeElement).toBe(toggle('Hide again'));
   });
 });
 
@@ -917,7 +957,7 @@ describe('grouped by repository', () => {
     const marked = (send.mock.calls as unknown[][])
       .map(([message]) => message as { type: string; prIds?: string[] })
       .filter((message) => message.type === 'markSeen');
-    expect(marked).toEqual([{ type: 'markSeen', prIds: [web1.id] }]);
+    expect(marked).toEqual([seenMessage(web1)]);
 
     fireEvent.click(header('acme/api'));
     expect(observed()).toEqual([api2.id, api4.id, web1.id, web3.id, docs5.id]);

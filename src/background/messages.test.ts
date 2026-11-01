@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { prId, searchResponse, teamJson } from '../../tests/fixtures/github';
 import { jsonResponse } from '../../tests/fixtures/http';
-import type { PullRequest } from '../lib/model';
+import { activityKey } from '../lib/activity';
 import { getItem, getItems, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
-import { buildAuth, buildPollState, buildSnapshot } from '../test/panel';
+import { buildAuth, buildPollState, buildPullRequest, buildSnapshot } from '../test/panel';
 import { handleMessage } from './messages';
 import { POLL_ALARM, scheduleAlarm } from './poller';
 
@@ -33,6 +33,7 @@ describe('handleMessage', () => {
       { type: 'poll', force: 'yes' },
       { type: 'markSeen', prIds: 'PR_1' },
       { type: 'markSeen', prIds: [1] },
+      { type: 'markSeen', prIds: [], versions: { PR_1: 5 } },
       { type: 'refreshMergeState', prId: '', headSha: 'a'.repeat(40) },
       { type: 'refreshMergeState', prId: 'PR_1', headSha: 'bad' },
       { type: 'refreshMergeState', prId: 1, headSha: 'a'.repeat(40) },
@@ -80,10 +81,32 @@ describe('handleMessage', () => {
   it('marks the snapshot version of PRs seen', async () => {
     const snapshot = buildSnapshot();
     const id = prId(1);
-    snapshot.pullRequests[id] = { id, updatedAt: '2026-10-06T10:00:00Z' } as PullRequest;
-    await setItems({ snapshot });
+    snapshot.pullRequests[id] = buildPullRequest({ id, updatedAt: '2026-10-06T10:00:00Z' });
+    await setItems({ auth: buildAuth(), snapshot });
     expect(await send({ type: 'markSeen', prIds: [id, 'PR_unknown'] })).toBe(true);
     expect((await getItem('prLocal'))?.seen).toEqual({ [id]: '2026-10-06T10:00:00Z' });
+  });
+
+  it('marks a PR seen only at the version the panel showed', async () => {
+    const snapshot = buildSnapshot();
+    const pr = buildPullRequest();
+    snapshot.pullRequests[pr.id] = pr;
+    await setItems({ auth: buildAuth(), snapshot });
+    await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: 'older version' } });
+    expect((await getItem('prLocal'))?.seen).toEqual({});
+    await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: activityKey(pr) } });
+    expect((await getItem('prLocal'))?.seenFacts?.[pr.id]).toBe(activityKey(pr));
+  });
+
+  it('marks nothing seen when signed out or when the snapshot belongs to another account', async () => {
+    const snapshot = buildSnapshot();
+    const pr = buildPullRequest();
+    snapshot.pullRequests[pr.id] = pr;
+    await setItems({ snapshot });
+    await send({ type: 'markSeen', prIds: [pr.id] });
+    await setItems({ auth: buildAuth('hubot') });
+    await send({ type: 'markSeen', prIds: [pr.id] });
+    expect(await getItem('prLocal')).toBeUndefined();
   });
 
   it('stops polling and clears the badge on sign-out', async () => {

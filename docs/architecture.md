@@ -4,9 +4,9 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 (`api.github.com`, plus `github.com` for the OAuth device flow).
 
 ```
-            ┌──────────────────────── chrome.storage.local ────────────────────────┐
-            │ settings · auth · snapshot · pollState · prLocal · teams             │
-            └───────▲───────────────────────────────▲──────────────────────────────┘
+            ┌──────────────────────── chrome.storage.local ─────────────────────────┐
+            │ settings · auth · snapshot · pollState · prLocal · teams · panelState │
+            └───────▲───────────────────────────────▲───────────────────────────────┘
                     │ write                          │ read + onChanged
 ┌───────────────────┴───────────┐        ┌───────────┴───────────────────────────┐
 │ Service worker (background)   │◀──msg──│ Side panel (Preact)                    │
@@ -41,7 +41,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now, local)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`; none for a PR in `prLocal.alwaysShown`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
@@ -408,7 +409,8 @@ settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/back
 
 - `attention` (default) counts the open PRs in a section with failing CI, requested changes,
   conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
-  with `updatedAt` newer than `prLocal.seen` (a PR never seen counts; state does not matter);
+  with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
+  never seen counts; state does not matter);
   `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count,
   nor PRs the list hides (`hiddenReasons` with `settings`, the same rule as the list); muted ones
   do (mute only silences notifications). Merged and closed PRs outside every section never
@@ -485,10 +487,13 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
     Unversioned data counts as version 1; data from a newer version is normalized best-effort.
 - `prLocal.ts`: pure reducers over `PrLocalState` (`snooze`, `unsnooze`, `mute`, `unmute`,
-  `markSeen`, `pruneExpired`), which return the same object when nothing changes, and
-  predicates (`isSnoozed`, `isMuted`, `isSeen`); `updatePrLocal(fn)` applies reducers in one
-  locked write. `markSeen` never moves backwards. `pruneExpired(state, now, knownIds)` drops ended snoozes and
-  every entry for PRs not in `knownIds` (the snapshot's PR ids).
+  `markSeen`, `setAlwaysShown`, `baselineSeenFacts`, `pruneExpired`), which return the same object
+  when nothing changes, and predicates (`isSnoozed`, `isMuted`, `isSeen`, `isAlwaysShown`);
+  `updatePrLocal(fn)` applies reducers in one locked write. `markSeen` never moves backwards.
+  `pruneExpired(state, now, knownIds)` drops ended snoozes and every entry for PRs not in
+  `knownIds` (the snapshot's PR ids). `forgetSeenFacts` drops the observed facts only.
+- `panelState.ts`: `normalizePanelState` for the `panelState` key (see
+  [List visibility and local organization](#list-visibility-and-local-organization)).
 
 Readers of `auth`, `snapshot`, `pollState` and `teams` trust the stored shape: only Prowl
 writes them.
@@ -619,8 +624,9 @@ signal (`state/store.ts`).
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
   split by `splitSection` into cards (what the bar counts), hidden PRs (`hiddenReasons`, for every
   kind of section alike) and snoozed PRs, which win over hidden. The selected tab, the filter,
-  whether hidden PRs are revealed and the folded repository groups are module signals, so they
-  survive a visit to Settings and last until the panel closes. States:
+  whether hidden PRs are revealed and the folded repository groups use `state/listContext.ts`.
+  The section and folds are stored locally in account-scoped `panelState`, restored only after
+  hydration and cleared on sign-out; filter/reveal remain panel-session state. States:
   skeleton until the first snapshot (or "Could not load pull requests" when the first poll failed;
   the banner has the reason and the retry), no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
   for a section in `snapshot.sectionErrors`.
@@ -645,7 +651,7 @@ signal (`state/store.ts`).
   | `unauthorized` | "Your GitHub token was revoked or expired" (`role="alert"`, danger) | Re-authenticate: `navigate('onboarding')`; settings and snapshot stay, a new token signs in and forces a poll |
   | `rate_limited`, wait pending | "Rate limited until 3:37 PM" (`nextAllowedAt`; warning) | none: a forced poll respects the wait. Once it has passed: "GitHub rate limit has reset" and Retry |
   | no error, `nextAllowedAt` pending, under 100 points left | "GitHub rate limit almost used up", "Refreshing resumes at ..." | none |
-  | `network` | "Offline — retrying in N min" (`nextAllowedAt`, else "retrying soon"; warning) | Retry (forced poll, which skips a backoff) |
+  | `network` | "Could not reach GitHub — retrying in N min" (`nextAllowedAt`, else "retrying soon"; warning) | Retry (forced poll, which skips a backoff) |
   | any other error | "GitHub error — retrying in N min" and GitHub's message (danger) | Retry |
   | none, snapshot older than max(10 min, 5 intervals), no poll running | "Pull requests may be out of date" (warning) | Refresh now |
   | none of the above, `auth.expiresAt` within 7 days (`describeTokenExpiry`) | "Your GitHub token expires in 3 days" (warning) | Renew token: `navigate('onboarding')` |
@@ -655,11 +661,13 @@ signal (`state/store.ts`).
   the age and the countdown tick, and a screen reader should not hear them again each time. The
   banner re-renders every 30 s and reads `Date.now()` itself. A poll that is running shows the
   Retry button as busy.
-- Unseen: a PR is unseen when `prLocal.seen[id]` is missing or older than its `updatedAt`
-  (`isSeen`). The list observes its cards (IntersectionObserver, 60% visible) and, once the same
-  unseen cards have stayed on screen for 1.5 s while `document.visibilityState` is visible, sends
-  one `{ type: 'markSeen', prIds }`; a scroll, a hidden panel or a new snapshot restarts the wait.
-  The worker stores `seen`, and the dot disappears through the storage subscription.
+- Unseen: `isSeen` compares the stored timestamp and `activityKey` facts (head, checks,
+  reviews/requests, comments, draft/state/auto-merge). CI can change without `updatedAt`; list
+  polling dates and transient merge enrichment are excluded. Legacy seen timestamps acquire
+  their baseline from the previous snapshot without creating a false unread migration. The
+  list observes cards (60% visible) and sends `{ type: 'markSeen', prIds, versions }` after
+  1.5 s of visibility. The worker rejects versions superseded since the message and writes
+  under the session lock; changed facts restart the dwell. No poll starts from this observer.
 - `PullRequestCard` is a summary plus, when expanded, `PullRequestDetails`. The title is the
   link (`GitHubLink`: `href` only for URLs on `env.webUrl`, click opens through `openGitHubUrl`,
   named "Title, owner/name#n"); the chevron `IconButton` ("Details for Title", `aria-expanded`,
@@ -931,3 +939,21 @@ known method restrictions intersect repo methods, unreadable rules (including a 
 up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
 the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
 Section scans also stop after 20 requests per query, independently of the examined-node bound.
+
+## List visibility and local organization
+
+A compact per-section summary separates loaded, matching, main-list, hidden and snoozed PRs.
+An all-set-aside state explains the result and offers a temporary reveal. Tab counts include
+folded main-list matches; temporary reveal and text filtering do not change the badge.
+`alwaysShown` is a per-PR local exception passed through the shared hiding rule for list, badge
+and merge-read priority. It includes that PR in the badge when relevant; explicit snooze wins.
+No global hiding preference is changed. Confirmed-closure pruning covers these choices too.
+
+`panelState` stores only login, selected section and folded group keys locally, never in Chrome
+sync. Hydration precedes restoration; writes hold the session lock and update only that key.
+Sign-out removes repository context and a different account cannot restore it. Search text and
+temporary reveals remain session-only. Network errors retain cached data and retry controls,
+but their wording does not claim the browser is necessarily offline.
+
+Observed `seenFacts` may include PR metadata: sign-in, sign-out and signed-out worker cleanup
+clear them under the session lock, retaining the existing timestamps and local choices.

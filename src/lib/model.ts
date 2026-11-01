@@ -349,6 +349,17 @@ export interface PrLocalState {
   muted: Record<string, true>;
   /** PR id -> `updatedAt` value the user has seen. */
   seen: Record<string, string>;
+  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
+  seenFacts?: Record<string, string>;
+  /** Per-PR exceptions to automatic hiding. Snooze still takes precedence. */
+  alwaysShown?: Record<string, true>;
+}
+
+/** Local panel organization for one account; search text is deliberately session-only. */
+export interface PanelState {
+  login: string;
+  activeSectionId?: string;
+  foldedGroups: string[];
 }
 
 export interface QuietHours {
@@ -426,6 +437,7 @@ export const STORAGE_KEYS = {
   pollState: 'pollState',
   prLocal: 'prLocal',
   teams: 'teams',
+  panelState: 'panelState',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -433,7 +445,7 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
-  | { type: 'markSeen'; prIds: string[] }
+  | { type: 'markSeen'; prIds: string[]; versions?: Record<string, string> }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }
   /** Hints from visible cards; changes priority only, never starts a GitHub request. */

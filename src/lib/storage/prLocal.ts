@@ -4,7 +4,8 @@
  * badge can evaluate them on state already in memory, and several of them can be combined
  * into one write: `await updatePrLocal((s) => snooze(s, id, until))`.
  */
-import { type PrLocalState, STORAGE_KEYS } from '../model';
+import { activityKey } from '../activity';
+import { type PrLocalState, type PullRequest, STORAGE_KEYS } from '../model';
 import { isDateString, isRecord, toMillis } from './guards';
 import { getItem, subscribe, type Unsubscribe, updateItem } from './storage';
 
@@ -42,6 +43,17 @@ export function normalizePrLocal(value: unknown): PrLocalState {
     snoozed: validEntries(raw.snoozed, isDateString),
     muted: validEntries(raw.muted, (item): item is true => item === true),
     seen: validEntries(raw.seen, isDateString),
+    ...(isRecord(raw.seenFacts)
+      ? {
+          seenFacts: validEntries(
+            raw.seenFacts,
+            (item): item is string => typeof item === 'string' && item.length <= 16_384,
+          ),
+        }
+      : {}),
+    ...(isRecord(raw.alwaysShown)
+      ? { alwaysShown: validEntries(raw.alwaysShown, (item): item is true => item === true) }
+      : {}),
   };
 }
 
@@ -71,11 +83,49 @@ export function unmute(state: PrLocalState, id: string): PrLocalState {
  * Records that the user has seen the PR as of its `updatedAt`. Never moves backwards, so a
  * stale snapshot cannot mark newer activity as unseen again. Invalid dates are ignored.
  */
-export function markSeen(state: PrLocalState, id: string, updatedAt: string): PrLocalState {
+export function markSeen(
+  state: PrLocalState,
+  id: string,
+  updatedAt: string,
+  facts?: string,
+): PrLocalState {
   if (!isDateString(updatedAt)) return state;
   const seen = ownValue(state.seen, id);
-  if (seen !== undefined && Date.parse(seen) >= Date.parse(updatedAt)) return state;
-  return { ...state, seen: { ...state.seen, [id]: updatedAt } };
+  if (seen !== undefined && Date.parse(seen) > Date.parse(updatedAt)) return state;
+  if (seen === updatedAt && (facts === undefined || state.seenFacts?.[id] === facts)) return state;
+  return {
+    ...state,
+    seen: { ...state.seen, [id]: updatedAt },
+    ...(facts === undefined ? {} : { seenFacts: { ...state.seenFacts, [id]: facts } }),
+  };
+}
+
+/** Seed legacy timestamp markers from the previous snapshot, avoiding a false unread migration. */
+export function baselineSeenFacts(
+  state: PrLocalState,
+  prs: Record<string, PullRequest>,
+): PrLocalState {
+  let next = state;
+  for (const pr of Object.values(prs)) {
+    if (ownValue(next.seenFacts ?? {}, pr.id) === undefined && isSeen(next, pr.id, pr.updatedAt))
+      next = markSeen(next, pr.id, pr.updatedAt, activityKey(pr));
+  }
+  return next;
+}
+
+export function isAlwaysShown(state: Pick<PrLocalState, 'alwaysShown'>, id: string): boolean {
+  return ownValue(state.alwaysShown ?? {}, id) === true;
+}
+
+export function setAlwaysShown(state: PrLocalState, id: string, shown: boolean): PrLocalState {
+  if (isAlwaysShown(state, id) === shown) return state;
+  const alwaysShown = state.alwaysShown ?? {};
+  return {
+    ...state,
+    alwaysShown: shown
+      ? { ...alwaysShown, [id]: true }
+      : filterRecord(alwaysShown, (key) => key !== id),
+  };
 }
 
 /** True while a snooze for the PR has not ended. */
@@ -89,9 +139,21 @@ export function isMuted(state: PrLocalState, id: string): boolean {
 }
 
 /** True when the user has seen the PR at `updatedAt` or later. */
-export function isSeen(state: PrLocalState, id: string, updatedAt: string): boolean {
+export function isSeen(
+  state: PrLocalState,
+  id: string,
+  updatedAt: string,
+  facts?: string,
+): boolean {
   const seen = ownValue(state.seen, id);
-  return seen !== undefined && Date.parse(seen) >= Date.parse(updatedAt);
+  if (seen === undefined) return false;
+  if (Date.parse(seen) > Date.parse(updatedAt)) return true;
+  return (
+    Date.parse(seen) === Date.parse(updatedAt) &&
+    (facts === undefined ||
+      ownValue(state.seenFacts ?? {}, id) === undefined ||
+      ownValue(state.seenFacts ?? {}, id) === facts)
+  );
 }
 
 /**
@@ -112,8 +174,24 @@ export function pruneExpired(
   );
   const muted = filterRecord(state.muted, tracked);
   const seen = filterRecord(state.seen, tracked);
-  if (snoozed === state.snoozed && muted === state.muted && seen === state.seen) return state;
-  return { snoozed, muted, seen };
+  const seenFacts = state.seenFacts && filterRecord(state.seenFacts, tracked);
+  const alwaysShown = state.alwaysShown && filterRecord(state.alwaysShown, tracked);
+  if (
+    snoozed === state.snoozed &&
+    muted === state.muted &&
+    seen === state.seen &&
+    seenFacts === state.seenFacts &&
+    alwaysShown === state.alwaysShown
+  )
+    return state;
+  return {
+    ...state,
+    snoozed,
+    muted,
+    seen,
+    ...(seenFacts ? { seenFacts } : {}),
+    ...(alwaysShown ? { alwaysShown } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -122,6 +200,15 @@ export function pruneExpired(
 /** The stored local PR state, normalized (empty when nothing is stored yet). */
 export async function loadPrLocal(): Promise<PrLocalState> {
   return normalizePrLocal(await getItem(STORAGE_KEYS.prLocal));
+}
+
+/** Drop observed PR content at a session boundary, retaining the user's local choices. */
+export async function forgetSeenFacts(): Promise<void> {
+  if (!(await getItem('prLocal'))?.seenFacts) return;
+  await updatePrLocal((state) => {
+    const { seenFacts: _facts, ...choices } = state;
+    return choices;
+  });
 }
 
 /**
