@@ -87,9 +87,9 @@ in-memory updates that the next snapshot replaces.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt` and `settledChecks` to
-   build the new `Snapshot`, and publishes it after each completed section, before merge reads and
-   after each completed batch. Each publication updates
+   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue`
+   and `settledChecks` to build the new `Snapshot`, and publishes it after each completed
+   section, before merge reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
    first poll suppresses events across all phases. `inFlight` remains true until enrichment
    finishes, while `mergePending` identifies the current batch. Publishing the list stops the

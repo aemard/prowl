@@ -261,7 +261,7 @@ export interface Snapshot {
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
-  /** Cached facts can retain their actual date while still needing verification. */
+  /** PR ids whose merge facts are aged, deferred, dropped or unread; those with a date keep it. */
   mergeStateDue?: string[];
 }
 
