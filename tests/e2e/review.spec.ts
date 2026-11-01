@@ -228,13 +228,9 @@ test.describe('review actions', () => {
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await theirs.getByRole('button', { name: /^Details for / }).click();
     await panel.getByRole('tab', { name: /^Mine/ }).click();
-    await panel.evaluate(() => {
-      location.hash = '#/settings';
-    });
+    await panel.getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(panel.getByRole('main', { name: 'Settings' })).toBeVisible();
-    await panel.evaluate(() => {
-      location.hash = '#/';
-    });
+    await panel.getByRole('button', { name: 'Back to pull requests' }).click();
     await panel.getByRole('tab', { name: /^Review/ }).click();
     await expand(panel, THEIRS.title);
     await comment.click();

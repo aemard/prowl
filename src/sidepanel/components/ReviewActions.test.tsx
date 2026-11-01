@@ -292,6 +292,20 @@ it('clears private draft text when the account changes', () => {
   expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe('');
 });
 
+it('keeps a draft when the same account signs in again with another token', () => {
+  show();
+  fireEvent.click(button('Comment on acme/widgets#1'));
+  fireEvent.input(screen.getByRole('textbox', { name: /Message/ }), {
+    target: { value: 'Still mine' },
+  });
+  act(() => {
+    auth.value = { ...buildAuth('octocat'), token: 'ghp_rotated' };
+  });
+  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe(
+    'Still mine',
+  );
+});
+
 describe('comment', () => {
   it('adds a conversation comment from the same kind of dialog', async () => {
     const sent = stubGitHub(() => jsonResponse({ data: commented }));
