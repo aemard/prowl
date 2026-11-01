@@ -108,6 +108,97 @@ export interface FakeNotification {
   options: chrome.notifications.NotificationCreateOptions;
 }
 
+function fakeAlarms(alarms: Map<string, chrome.alarms.Alarm>) {
+  return {
+    create: async (name: string, info: chrome.alarms.AlarmCreateInfo) => {
+      const period = info.periodInMinutes;
+      const when = info.when ?? Date.now() + (info.delayInMinutes ?? period ?? 0) * 60_000;
+      alarms.set(name, {
+        name,
+        scheduledTime: when,
+        persistAcrossSessions: true,
+        ...(period ? { periodInMinutes: period } : {}),
+      });
+    },
+    get: async (name: string) => alarms.get(name),
+    getAll: async () => [...alarms.values()],
+    clear: async (name: string) => alarms.delete(name),
+    clearAll: async () => {
+      const had = alarms.size > 0;
+      alarms.clear();
+      return had;
+    },
+    onAlarm: new FakeEvent<[chrome.alarms.Alarm]>(),
+  };
+}
+
+function fakeNotifications(notifications: Map<string, FakeNotification>) {
+  let sequence = 0;
+  return {
+    create: async (
+      idOrOptions: string | chrome.notifications.NotificationCreateOptions,
+      maybeOptions?: chrome.notifications.NotificationCreateOptions,
+    ) => {
+      const id = typeof idOrOptions === 'string' ? idOrOptions : `notification-${++sequence}`;
+      const options = (typeof idOrOptions === 'string' ? maybeOptions : idOrOptions) ?? {};
+      notifications.set(id, {
+        id,
+        options: options as chrome.notifications.NotificationCreateOptions,
+      });
+      return id;
+    },
+    clear: async (id: string) => notifications.delete(id),
+    getAll: async () => Object.fromEntries([...notifications.keys()].map((id) => [id, true])),
+    onClicked: new FakeEvent<[string]>(),
+    onButtonClicked: new FakeEvent<[string, number]>(),
+    onClosed: new FakeEvent<[string, boolean]>(),
+  };
+}
+
+function fakePermissions(grantedOrigins: Set<string>) {
+  const onAdded = new FakeEvent<[chrome.permissions.Permissions]>();
+  const onRemoved = new FakeEvent<[chrome.permissions.Permissions]>();
+  const shipped = createManifest('production');
+  return {
+    // Like Chrome: the manifest's permissions and hosts, plus the optional hosts granted since.
+    getAll: async (): Promise<chrome.permissions.Permissions> => ({
+      permissions: [...(shipped.permissions ?? [])],
+      origins: [...(shipped.host_permissions ?? []), ...grantedOrigins],
+    }),
+    contains: async ({ origins = [] }: chrome.permissions.Permissions) =>
+      origins.every((origin) => grantedOrigins.has(origin)),
+    request: async ({ origins = [] }: chrome.permissions.Permissions) => {
+      const added = origins.filter((origin) => !grantedOrigins.has(origin));
+      for (const origin of added) grantedOrigins.add(origin);
+      if (added.length > 0) onAdded.emit({ origins: added });
+      return true;
+    },
+    remove: async ({ origins = [] }: chrome.permissions.Permissions) => {
+      const removed = origins.filter((origin) => grantedOrigins.delete(origin));
+      if (removed.length > 0) onRemoved.emit({ origins: removed });
+      return true;
+    },
+    onAdded,
+    onRemoved,
+  };
+}
+
+function fakeRuntime() {
+  return {
+    id: 'prowl-test-extension',
+    lastError: undefined as chrome.runtime.LastError | undefined,
+    getURL: (path: string) => `chrome-extension://prowl-test-extension/${path.replace(/^\//, '')}`,
+    getManifest: () => ({ manifest_version: 3, name: 'Prowl', version: '0.0.0-test' }),
+    sendMessage: async (_message: unknown) => undefined as unknown,
+    onMessage: new FakeEvent<
+      [unknown, chrome.runtime.MessageSender, (response?: unknown) => void]
+    >(),
+    onInstalled: new FakeEvent<[chrome.runtime.InstalledDetails]>(),
+    onStartup: new FakeEvent<[]>(),
+    openOptionsPage: async () => undefined,
+  };
+}
+
 export function createFakeChrome() {
   const storageOnChanged = new FakeEvent<[StorageChanges, string]>();
   const alarms = new Map<string, chrome.alarms.Alarm>();
@@ -119,74 +210,17 @@ export function createFakeChrome() {
     { name: 'open-panel', description: 'Open Prowl', shortcut: 'Ctrl+Shift+P' },
   ];
   const grantedOrigins = new Set<string>();
-  const permissionsOnAdded = new FakeEvent<[chrome.permissions.Permissions]>();
-  const permissionsOnRemoved = new FakeEvent<[chrome.permissions.Permissions]>();
-  /** What the shipped manifest asks for at install; `getAll()` starts from it. */
-  const shipped = createManifest('production');
-  let notificationSeq = 0;
 
-  const fake = {
-    runtime: {
-      id: 'prowl-test-extension',
-      lastError: undefined as chrome.runtime.LastError | undefined,
-      getURL: (path: string) =>
-        `chrome-extension://prowl-test-extension/${path.replace(/^\//, '')}`,
-      getManifest: () => ({ manifest_version: 3, name: 'Prowl', version: '0.0.0-test' }),
-      sendMessage: async (_message: unknown) => undefined as unknown,
-      onMessage: new FakeEvent<
-        [unknown, chrome.runtime.MessageSender, (response?: unknown) => void]
-      >(),
-      onInstalled: new FakeEvent<[chrome.runtime.InstalledDetails]>(),
-      onStartup: new FakeEvent<[]>(),
-      openOptionsPage: async () => undefined,
-    },
+  return {
+    runtime: fakeRuntime(),
     storage: {
-      local: undefined as unknown as FakeStorageArea,
-      sync: undefined as unknown as FakeStorageArea,
-      session: undefined as unknown as FakeStorageArea,
+      local: new FakeStorageArea('local', storageOnChanged),
+      sync: new FakeStorageArea('sync', storageOnChanged),
+      session: new FakeStorageArea('session', storageOnChanged),
       onChanged: storageOnChanged,
     },
-    alarms: {
-      create: async (name: string, info: chrome.alarms.AlarmCreateInfo) => {
-        const period = info.periodInMinutes;
-        const when = info.when ?? Date.now() + (info.delayInMinutes ?? period ?? 0) * 60_000;
-        alarms.set(name, {
-          name,
-          scheduledTime: when,
-          persistAcrossSessions: true,
-          ...(period ? { periodInMinutes: period } : {}),
-        });
-      },
-      get: async (name: string) => alarms.get(name),
-      getAll: async () => [...alarms.values()],
-      clear: async (name: string) => alarms.delete(name),
-      clearAll: async () => {
-        const had = alarms.size > 0;
-        alarms.clear();
-        return had;
-      },
-      onAlarm: new FakeEvent<[chrome.alarms.Alarm]>(),
-    },
-    notifications: {
-      create: async (
-        idOrOptions: string | chrome.notifications.NotificationCreateOptions,
-        maybeOptions?: chrome.notifications.NotificationCreateOptions,
-      ) => {
-        const id =
-          typeof idOrOptions === 'string' ? idOrOptions : `notification-${++notificationSeq}`;
-        const options = (typeof idOrOptions === 'string' ? maybeOptions : idOrOptions) ?? {};
-        notifications.set(id, {
-          id,
-          options: options as chrome.notifications.NotificationCreateOptions,
-        });
-        return id;
-      },
-      clear: async (id: string) => notifications.delete(id),
-      getAll: async () => Object.fromEntries([...notifications.keys()].map((id) => [id, true])),
-      onClicked: new FakeEvent<[string]>(),
-      onButtonClicked: new FakeEvent<[string, number]>(),
-      onClosed: new FakeEvent<[string, boolean]>(),
-    },
+    alarms: fakeAlarms(alarms),
+    notifications: fakeNotifications(notifications),
     action: {
       setBadgeText: async ({ text }: { text?: string | null }) => {
         badge.text = text ?? '';
@@ -212,28 +246,7 @@ export function createFakeChrome() {
       },
       query: async () => [] as chrome.tabs.Tab[],
     },
-    permissions: {
-      // Like Chrome: the manifest's permissions and hosts, plus the optional hosts granted since.
-      getAll: async (): Promise<chrome.permissions.Permissions> => ({
-        permissions: [...(shipped.permissions ?? [])],
-        origins: [...(shipped.host_permissions ?? []), ...grantedOrigins],
-      }),
-      contains: async ({ origins = [] }: chrome.permissions.Permissions) =>
-        origins.every((o) => grantedOrigins.has(o)),
-      request: async ({ origins = [] }: chrome.permissions.Permissions) => {
-        const added = origins.filter((o) => !grantedOrigins.has(o));
-        for (const o of added) grantedOrigins.add(o);
-        if (added.length > 0) permissionsOnAdded.emit({ origins: added });
-        return true;
-      },
-      remove: async ({ origins = [] }: chrome.permissions.Permissions) => {
-        const removed = origins.filter((o) => grantedOrigins.delete(o));
-        if (removed.length > 0) permissionsOnRemoved.emit({ origins: removed });
-        return true;
-      },
-      onAdded: permissionsOnAdded,
-      onRemoved: permissionsOnRemoved,
-    },
+    permissions: fakePermissions(grantedOrigins),
     commands: {
       getAll: async () => commands.map((command) => ({ ...command })),
       onCommand: new FakeEvent<[string, chrome.tabs.Tab | undefined]>(),
@@ -241,11 +254,6 @@ export function createFakeChrome() {
     /** Test-only inspection handles. Not part of the real API. */
     __state: { alarms, notifications, badge, createdTabs, grantedOrigins, commands },
   };
-
-  fake.storage.local = new FakeStorageArea('local', storageOnChanged);
-  fake.storage.sync = new FakeStorageArea('sync', storageOnChanged);
-  fake.storage.session = new FakeStorageArea('session', storageOnChanged);
-  return fake;
 }
 
 export type FakeChrome = ReturnType<typeof createFakeChrome>;

@@ -1,5 +1,5 @@
 import pkg from '../package.json' with { type: 'json' };
-import { OPEN_PANEL_COMMAND } from './lib/model';
+import { OPEN_PANEL_COMMAND } from './lib/model.ts';
 
 export type BuildMode = 'production' | 'development' | 'e2e';
 

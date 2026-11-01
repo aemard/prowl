@@ -138,7 +138,7 @@ describe('watchBadge', () => {
 
 describe('BADGE_COLORS', () => {
   it('match the danger and accent tokens', () => {
-    const tokens = readFileSync('src/styles/tokens.css', 'utf8');
+    const tokens = readFileSync('src/styles/tokens.base.css', 'utf8');
     const light = (name: string) =>
       new RegExp(`--color-${name}-solid: (#[0-9a-f]{6});`).exec(tokens)?.[1];
     expect(BADGE_COLORS).toEqual({ danger: light('danger'), accent: light('accent') });

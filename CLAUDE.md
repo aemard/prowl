@@ -29,12 +29,16 @@ Load the built extension: `chrome://extensions` → Developer mode → Load unpa
 ## Conventions
 
 - TypeScript strict, no `any` (use `unknown` + narrowing). Named exports. ES modules.
+- Biome: 300 code lines per file, 50 per function body (blank/comment-only lines excluded).
+  Test files: 600 lines, no function cap (suite callbacks); test helpers retain 300/50. Warnings fail.
+  Split by responsibility, never compress code or suppress a limit to pass it.
 - Tests are colocated: `foo.ts` → `foo.test.ts`. Use the `chrome` fake from `src/test/chrome.ts`
   (installed globally before each test); extend the fake rather than mocking per test.
 - GitHub-shaped test data comes from builders in `tests/fixtures/` (shared by unit tests and
   the E2E mock). Never hit the real GitHub API in tests.
 - UI: Preact function components, `@preact/signals` for shared state, one `.css` file per
-  component using tokens from `src/styles/tokens.css` only (no hex colors outside tokens).
+  component using tokens from `src/styles/tokens.css` only (no raw colors outside the token
+  stylesheets).
 - Design-system components live in `src/sidepanel/components/ui/`; reuse them.
 - No `innerHTML` / `dangerouslySetInnerHTML`. Render untrusted GitHub text as text.
 - Only open URLs that start with the configured GitHub web URL (`env.webUrl`).

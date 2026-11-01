@@ -31,29 +31,15 @@ export function Dialog(props: DialogProps) {
   return props.open ? <OpenDialog {...props} /> : null;
 }
 
-function OpenDialog({
-  onClose,
-  title,
-  description,
-  children,
-  footer,
-  initialFocus,
-  closeOnBackdrop = true,
-  class: className,
-}: DialogProps) {
+function useDialogLifecycle(onClose: () => void, initialFocus?: RefObject<HTMLElement>) {
   const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  const descriptionId = useId();
   const active = useRef(true);
-  const pressedBackdrop = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
-
   // Our own cleanup closes the native dialog too; that must not call onClose again.
   const requestClose = () => {
     if (active.current) onCloseRef.current();
   };
-
   useLayoutEffect(() => {
     const dialog = ref.current;
     const previous = document.activeElement as HTMLElement | null;
@@ -68,33 +54,70 @@ function OpenDialog({
       if (previous?.isConnected) previous.focus();
     };
   }, []);
+  return { ref, requestClose };
+}
 
-  const onKeyDown = (event: TargetedKeyboardEvent<HTMLDialogElement>) => {
-    // Esc belongs to the dialog (the `cancel` event closes it): a handler of whatever contains
-    // the dialog in the DOM, such as a card that folds on Esc, must not see it as its own.
-    if (event.key === 'Escape') event.stopPropagation();
-    if (event.key !== 'Tab') return;
-    const items = focusableIn(event.currentTarget);
-    const first = items[0];
-    const last = items[items.length - 1];
-    const current = document.activeElement;
-    if (!first || !last) {
-      event.preventDefault();
-    } else if (event.shiftKey && (current === first || current === event.currentTarget)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && current === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
+function onDialogKeyDown(event: TargetedKeyboardEvent<HTMLDialogElement>) {
+  // Esc belongs to the dialog (the `cancel` event closes it): a handler of whatever contains
+  // the dialog in the DOM, such as a card that folds on Esc, must not see it as its own.
+  if (event.key === 'Escape') event.stopPropagation();
+  if (event.key !== 'Tab') return;
+  const items = focusableIn(event.currentTarget);
+  const first = items[0];
+  const last = items[items.length - 1];
+  const current = document.activeElement;
+  if (!first || !last) {
+    event.preventDefault();
+  } else if (event.shiftKey && (current === first || current === event.currentTarget)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && current === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
+function DialogContent({
+  title,
+  description,
+  children,
+  footer,
+  onClose,
+  titleId,
+  descriptionId,
+}: DialogProps & { titleId: string; descriptionId: string }) {
+  return (
+    <div class="ui-dialog__panel">
+      <div class="ui-dialog__header">
+        <h2 id={titleId} class="ui-dialog__title">
+          {title}
+        </h2>
+        <IconButton label="Close" size="sm" class="ui-dialog__close" onClick={onClose}>
+          <XIcon />
+        </IconButton>
+      </div>
+      {description && (
+        <p id={descriptionId} class="ui-dialog__description">
+          {description}
+        </p>
+      )}
+      {children && <div class="ui-dialog__body">{children}</div>}
+      {footer && <div class="ui-dialog__footer">{footer}</div>}
+    </div>
+  );
+}
+
+function OpenDialog({ closeOnBackdrop = true, ...props }: DialogProps) {
+  const { ref, requestClose } = useDialogLifecycle(props.onClose, props.initialFocus);
+  const titleId = useId();
+  const descriptionId = useId();
+  const pressedBackdrop = useRef(false);
   return (
     <dialog
       ref={ref}
-      class={cx('ui-dialog', className)}
+      class={cx('ui-dialog', props.class)}
       aria-labelledby={titleId}
-      aria-describedby={description ? descriptionId : undefined}
+      aria-describedby={props.description ? descriptionId : undefined}
       tabIndex={-1}
       onCancel={(event) => {
         // Esc: stay controlled by the parent instead of letting the browser close it.
@@ -102,7 +125,7 @@ function OpenDialog({
         requestClose();
       }}
       onClose={requestClose}
-      onKeyDown={onKeyDown}
+      onKeyDown={onDialogKeyDown}
       onPointerDown={(event) => {
         pressedBackdrop.current = event.target === event.currentTarget;
       }}
@@ -113,23 +136,12 @@ function OpenDialog({
         pressedBackdrop.current = false;
       }}
     >
-      <div class="ui-dialog__panel">
-        <div class="ui-dialog__header">
-          <h2 id={titleId} class="ui-dialog__title">
-            {title}
-          </h2>
-          <IconButton label="Close" size="sm" class="ui-dialog__close" onClick={requestClose}>
-            <XIcon />
-          </IconButton>
-        </div>
-        {description && (
-          <p id={descriptionId} class="ui-dialog__description">
-            {description}
-          </p>
-        )}
-        {children && <div class="ui-dialog__body">{children}</div>}
-        {footer && <div class="ui-dialog__footer">{footer}</div>}
-      </div>
+      <DialogContent
+        {...props}
+        onClose={requestClose}
+        titleId={titleId}
+        descriptionId={descriptionId}
+      />
     </dialog>
   );
 }

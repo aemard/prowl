@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  type FullPullRequestNode,
   headCommit,
   mergeStateResponse,
   prId,
@@ -8,85 +7,29 @@ import {
   searchResponse,
   teamJson,
 } from '../../tests/fixtures/github';
-import { graphqlRateLimit, jsonResponse, rateLimitHeaders } from '../../tests/fixtures/http';
-import type { SearchData } from '../lib/github/queries';
-import type { AuthState, CheckState, PollState, Settings } from '../lib/model';
+import { jsonResponse } from '../../tests/fixtures/http';
+import type { CheckState, PollState } from '../lib/model';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState } from '../test/panel';
 import { BADGE_COLORS } from './badge';
-import { clearSignedOut, POLL_ALARM, poll, refreshMergeState, scheduleAlarm } from './poller';
-
-const NOW = Date.parse('2026-10-06T12:00:00.000Z');
-const MINUTE = 60_000;
-const at = (ms: number) => new Date(ms).toISOString();
-const PR = prId(1);
-const CHECKS: Record<CheckState, Record<string, number> | null> = {
-  success: { SUCCESS: 2 },
-  failure: { SUCCESS: 1, FAILURE: 1 },
-  pending: { SUCCESS: 1, IN_PROGRESS: 1 },
-  none: null,
-};
-
-type Reply = (query: string | undefined) => Response | object | Promise<Response | object>;
-
-/** `GET /user/teams` calls of the current test (kept out of the GraphQL `requests`). */
-let teamCalls = 0;
-
-/**
- * Stubs `fetch` as GitHub: every GraphQL request gets `reply(search query)`, every
- * `GET /user/teams` gets `teams()` (no team by default). `ProwlMergeState` gets the facts of the
- * PRs the last search returned and stays out of `requests`, like the teams.
- */
-function github(
-  reply: Reply = () => searchResponse([prNode()]),
-  teams: () => Response | Promise<Response> = () => jsonResponse([]),
-  merge?: (ids: string[], nodes: FullPullRequestNode[]) => Response | Promise<Response>,
-) {
-  teamCalls = 0;
-  let searched: FullPullRequestNode[] = [];
-  const requests: { operation: string; query?: string; token: string | null }[] = [];
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url: string, init: RequestInit) => {
-      if (url.includes('/user/teams?')) {
-        teamCalls += 1;
-        return teams();
-      }
-      const { query, variables } = JSON.parse(String(init.body));
-      if (query.includes('query ProwlMergeState')) {
-        return merge
-          ? merge(variables.ids, searched)
-          : jsonResponse({ data: mergeStateResponse(variables.ids, searched) });
-      }
-      const token = new Headers(init.headers).get('authorization');
-      requests.push({
-        operation: /query (\w+)/.exec(query)?.[1] ?? '',
-        query: variables.query,
-        token,
-      });
-      const out = await reply(variables.query);
-      if (!(out instanceof Response) && 'search' in out) {
-        searched = ((out as SearchData).search.nodes ?? []) as FullPullRequestNode[];
-      }
-      return out instanceof Response ? out : jsonResponse({ data: out });
-    }),
-  );
-  return requests;
-}
-
-const fail =
-  (status: number, message: string, headers: Record<string, string> = {}): Reply =>
-  () =>
-    jsonResponse({ message }, { status, headers });
-const searchWith = (checks: CheckState) => () =>
-  searchResponse([prNode({ commits: headCommit(CHECKS[checks]) })]);
-
-const signIn = (auth: AuthState = buildAuth()) => setItem('auth', auth);
-const pollState = async () => (await getItem('pollState')) as PollState;
-const alarm = () => fakeChrome().__state.alarms.get(POLL_ALARM);
-const later = (ms: number) => vi.setSystemTime(Date.now() + ms);
+import { clearSignedOut, poll, refreshMergeState, scheduleAlarm } from './poller';
+import {
+  alarm,
+  at,
+  CHECKS,
+  fail,
+  github,
+  later,
+  MINUTE,
+  NOW,
+  PR,
+  pollState,
+  searchWith,
+  signIn,
+  teamCalls,
+} from './poller.test-support';
 
 beforeEach(() => {
   vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
@@ -96,7 +39,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-
 describe('poll', () => {
   it('does nothing while signed out, and unschedules the alarm', async () => {
     const requests = github();
@@ -501,235 +443,6 @@ describe('poll', () => {
       expect(refreshed).not.toBe(shared);
       expect(refreshed?.snapshot).toBeDefined();
     });
-  });
-
-  it('backs off exponentially after errors; a forced poll skips the backoff', async () => {
-    const requests = github(fail(502, 'Bad gateway'));
-    await signIn();
-    await setItem('settings', { ...defaultSettings(), pollIntervalMinutes: 2 });
-    await poll();
-    expect(await pollState()).toMatchObject({
-      consecutiveFailures: 1,
-      nextAllowedAt: at(NOW + 4 * MINUTE),
-      lastError: { kind: 'server', message: 'Bad gateway' },
-      lastSuccessAt: null,
-      inFlight: false,
-    });
-    expect(alarm()).toBeDefined();
-
-    later(2 * MINUTE);
-    await poll();
-    expect(requests).toHaveLength(1);
-    later(2 * MINUTE);
-    await poll();
-    expect(requests).toHaveLength(2);
-    expect(await pollState()).toMatchObject({
-      consecutiveFailures: 2,
-      nextAllowedAt: at(NOW + 12 * MINUTE),
-    });
-
-    await poll({ force: true });
-    expect(requests).toHaveLength(3);
-    expect(await pollState()).toMatchObject({ consecutiveFailures: 3 });
-  });
-
-  it('caps the backoff at 30 minutes, with jitter', async () => {
-    vi.mocked(Math.random).mockReturnValue(0.5);
-    github(fail(502, 'Bad gateway'));
-    await signIn();
-    await setItem('pollState', buildPollState({ consecutiveFailures: 9 }));
-    await poll();
-    expect(await pollState()).toMatchObject({ nextAllowedAt: at(NOW + 26.25 * MINUTE) });
-  });
-
-  it('a success resets the failures', async () => {
-    github();
-    await signIn();
-    await setItem(
-      'pollState',
-      buildPollState({ consecutiveFailures: 3, lastError: { kind: 'network', message: 'x' } }),
-    );
-    await poll();
-    expect(await pollState()).toMatchObject({
-      consecutiveFailures: 0,
-      lastError: null,
-      nextAllowedAt: null,
-    });
-  });
-
-  it('waits for the rate limit to reset, even when forced', async () => {
-    const reset = NOW + 20 * MINUTE;
-    const requests = github(
-      fail(403, 'API rate limit exceeded', rateLimitHeaders({ remaining: 0, reset: reset / 1000 })),
-    );
-    await signIn();
-    await poll();
-    expect(await pollState()).toMatchObject({
-      nextAllowedAt: at(reset),
-      lastError: { kind: 'rate_limited' },
-    });
-
-    later(10 * MINUTE);
-    await poll({ force: true });
-    expect(requests).toHaveLength(1);
-    later(10 * MINUTE);
-    github();
-    await poll({ force: true });
-    expect(await pollState()).toMatchObject({ lastError: null, nextAllowedAt: null });
-  });
-
-  it('waits for the reset when fewer than 100 points are left', async () => {
-    const resetAt = at(NOW + 30 * MINUTE);
-    const requests = github(() =>
-      searchResponse([], {}, graphqlRateLimit({ remaining: 99, resetAt })),
-    );
-    await signIn();
-    await poll();
-    expect(await pollState()).toMatchObject({
-      nextAllowedAt: resetAt,
-      lastError: null,
-      rateLimit: { remaining: 99 },
-    });
-    await poll({ force: true });
-    expect(requests).toHaveLength(1);
-  });
-
-  it('stops on a rejected token until a forced poll', async () => {
-    const requests = github(fail(401, 'Bad credentials'));
-    await signIn();
-    await poll();
-    expect(await pollState()).toMatchObject({
-      nextAllowedAt: null,
-      lastError: { kind: 'unauthorized', message: 'Bad credentials' },
-    });
-    expect(alarm()).toBeUndefined();
-
-    later(5 * MINUTE);
-    await poll();
-    expect(requests).toHaveLength(1);
-    expect(alarm()).toBeUndefined();
-
-    github();
-    await poll({ force: true });
-    expect(await pollState()).toMatchObject({ lastError: null });
-    expect(alarm()).toBeDefined();
-  });
-
-  it('keeps sections GitHub refuses as section errors, without backing off', async () => {
-    const custom = { id: 'custom-1', kind: 'custom', label: 'Mine', enabled: true, query: 'x' };
-    await setItem('settings', {
-      ...defaultSettings(),
-      sections: [...defaultSettings().sections, custom],
-    } as Settings);
-    github((query) =>
-      query?.startsWith('is:pr x')
-        ? jsonResponse({ message: 'Validation Failed' }, { status: 422 })
-        : searchResponse([prNode()]),
-    );
-    await signIn();
-    await setItem('prLocal', { snoozed: {}, muted: { PR_elsewhere: true }, seen: {} });
-    await poll();
-
-    expect((await getItem('snapshot'))?.sectionErrors).toEqual({
-      'custom-1': 'Validation Failed',
-    });
-    expect(await pollState()).toMatchObject({ consecutiveFailures: 0, lastError: null });
-    expect((await getItem('prLocal'))?.muted).toEqual({ PR_elsewhere: true });
-  });
-
-  it('prunes local state of PRs that are gone and of ended snoozes', async () => {
-    github();
-    await signIn();
-    await setItem('prLocal', {
-      snoozed: { [PR]: at(NOW - MINUTE) },
-      muted: { [PR]: true, PR_gone: true },
-      seen: { PR_gone: at(NOW) },
-    });
-    await poll();
-    expect(await getItem('prLocal')).toEqual({ snoozed: {}, muted: { [PR]: true }, seen: {} });
-  });
-
-  it('drops the result of a poll interrupted by sign-out', async () => {
-    github(async () => {
-      // The panel signs out mid-poll: removes its keys, then sends `signedOut`.
-      await removeItems('auth', 'snapshot');
-      await clearSignedOut();
-      return searchResponse([prNode()]);
-    });
-    await signIn();
-    expect(await poll()).toBeNull();
-    expect(await getItems(['snapshot', 'pollState'])).toEqual({});
-    expect(alarm()).toBeUndefined();
-  });
-
-  it('drops the error of a poll interrupted by sign-out', async () => {
-    github(async () => {
-      await removeItems('auth');
-      return jsonResponse({ message: 'Bad credentials' }, { status: 401 });
-    });
-    await signIn();
-    await poll();
-    expect(await getItems(['pollState'])).toEqual({});
-  });
-
-  it('starts over when another account signs in mid-poll', async () => {
-    const other = { ...buildAuth('hubot'), token: 'ghp_other' };
-    let calls = 0;
-    const requests = github(async () => {
-      if (calls++ === 0) await signIn(other);
-      return searchResponse([prNode()]);
-    });
-    await signIn();
-    const result = await poll();
-    expect(requests.map(({ token }) => token)).toEqual(['Bearer ghp_test', 'Bearer ghp_other']);
-    expect(result?.snapshot.viewer.login).toBe('hubot');
-  });
-
-  it('clears an in-flight flag left by a worker that stopped mid-poll', async () => {
-    const requests = github();
-    await signIn();
-    const stuck = buildPollState({
-      inFlight: true,
-      nextAllowedAt: at(NOW + MINUTE),
-      lastError: { kind: 'network', message: 'x' },
-    });
-    await setItem('pollState', stuck);
-    await poll();
-    expect(requests).toEqual([]);
-    expect(await pollState()).toEqual({ ...stuck, inFlight: false });
-  });
-
-  it('ignores a wait the clock cannot have set (it went back)', async () => {
-    const requests = github();
-    await signIn();
-    await setItem(
-      'pollState',
-      buildPollState({
-        nextAllowedAt: at(NOW + 24 * 60 * MINUTE),
-        lastError: { kind: 'network', message: 'x' },
-      }),
-    );
-    await poll();
-    expect(requests).toHaveLength(1);
-  });
-
-  it('records an unexpected failure without the details', async () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    github(() => searchResponse([{ ...prNode(), commits: null } as never]));
-    await signIn();
-    expect(await poll()).toBeNull();
-    expect(await pollState()).toMatchObject({
-      consecutiveFailures: 1,
-      lastError: { kind: 'server', message: 'Something went wrong while refreshing.' },
-    });
-    expect(log).toHaveBeenCalled();
-  });
-
-  it('never rejects, even when storage fails', async () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    vi.spyOn(chrome.storage.local, 'get').mockRejectedValue(new Error('storage broken'));
-    expect(await poll()).toBeNull();
-    expect(log).toHaveBeenCalledWith('Prowl: poll failed', expect.any(Error));
   });
 });
 
