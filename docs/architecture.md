@@ -879,3 +879,14 @@ The short origin-shared `prowl:session` Web Lock serializes sign-in/sign-out wit
 check and writes of progressive snapshots, final snapshots/teams, targeted facts, poll state
 and notifications. GitHub reads are outside this lock. A completed sign-out cannot be undone
 by an old publication, and delayed `signedOut` cleanup cannot clear a newly signed-in account.
+
+
+## Written review drafts
+
+Comment and change-request drafts live in the panel’s in-memory `reviewDrafts` signal, keyed
+by PR id and message kind. Folding a card or navigating between views does not discard them.
+Sending successfully clears only that message; logout/account change clears all drafts.
+They are never written to Chrome storage. Form send errors stay inline with the text and
+editor open, while non-form failures retain toast feedback. Action results from an obsolete
+auth session do not clear current-session drafts or display old-account feedback. A context
+link opens the changed files on the configured GitHub origin; no diff is fetched into Prowl.
