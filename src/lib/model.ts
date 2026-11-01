@@ -384,6 +384,13 @@ export interface Settings {
  * Whether this device mirrors its settings through Chrome sync, and why the last write there
  * failed. Device-local: it never goes to `chrome.storage.sync` itself.
  */
+/** Install-local first-run setup; never synced with user settings or cleared on sign-out. */
+export interface OnboardingState {
+  status: 'pending' | 'completed' | 'skipped';
+  /** The next step to present after the panel is closed and reopened. */
+  nextStep: 0 | 1 | 2;
+}
+
 export interface SyncState {
   enabled: boolean;
   /** Why settings could not be written to Chrome sync (over its quota...); null when they were. */
@@ -401,6 +408,7 @@ export const STORAGE_KEYS = {
   pollState: 'pollState',
   prLocal: 'prLocal',
   teams: 'teams',
+  onboarding: 'onboarding',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

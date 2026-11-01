@@ -8,7 +8,7 @@ import { navigate } from './router';
 
 /**
  * Stores the validated sign-in (PAT or device flow), asks the worker for the first poll and shows
- * the list. A `warning` (the token works but not fully) stays on screen as a toast.
+ * either first-run setup or the list. A `warning` remains on screen as a toast.
  */
 export async function completeSignIn(
   auth: AuthState,
@@ -21,9 +21,10 @@ export async function completeSignIn(
   }
   // A new token may see other teams (read:org added): the first poll discovers them again.
   await removeItems(STORAGE_KEYS.teams);
+  const setup = await getItem(STORAGE_KEYS.onboarding);
   await setItem(STORAGE_KEYS.auth, auth);
   void sendToBackground({ type: 'poll', force: true });
-  navigate('list');
+  navigate(setup?.status === 'pending' ? 'setup' : 'list');
   if (warning) {
     showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
   }
