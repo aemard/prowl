@@ -71,25 +71,6 @@ describe('App', () => {
     expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Pull requests' }));
   });
 
-  it('focuses the PR limit when asked, the first time and once the settings view is loaded', async () => {
-    await open({ auth: buildAuth() });
-    const limit = () => screen.getByLabelText('Maximum PRs loaded per section');
-
-    act(() => changePrLimit());
-    await screen.findByLabelText('Maximum PRs loaded per section');
-    await waitFor(() => expect(document.activeElement).toBe(limit()));
-
-    await act(() => navigate('list'));
-    act(() => changePrLimit());
-    await waitFor(() => expect(document.activeElement).toBe(limit()));
-
-    // The request is one-shot: a later visit to Settings lands on the view, not on the field.
-    await act(() => navigate('list'));
-    await act(() => navigate('settings'));
-    expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Settings' }));
-    await act(() => navigate('list'));
-  });
-
   it('shows onboarding when the user signs out, and the list when they sign in', async () => {
     await open({ auth: buildAuth() });
     await act(() => chrome.storage.local.remove('auth'));
@@ -131,5 +112,26 @@ describe('App', () => {
   it('mounts the toast region once', async () => {
     await open();
     expect(screen.getAllByRole('region', { name: 'Messages' })).toHaveLength(1);
+  });
+});
+
+describe('App, after "Change limit"', () => {
+  it('focuses the PR limit when asked, the first time and once the settings view is loaded', async () => {
+    await open({ auth: buildAuth() });
+    const limit = () => screen.getByLabelText('Maximum PRs loaded per section');
+
+    act(() => changePrLimit());
+    await screen.findByLabelText('Maximum PRs loaded per section');
+    await waitFor(() => expect(document.activeElement).toBe(limit()));
+
+    await act(() => navigate('list'));
+    act(() => changePrLimit());
+    await waitFor(() => expect(document.activeElement).toBe(limit()));
+
+    // The request is one-shot: a later visit to Settings lands on the view, not on the field.
+    await act(() => navigate('list'));
+    await act(() => navigate('settings'));
+    expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Settings' }));
+    await act(() => navigate('list'));
   });
 });

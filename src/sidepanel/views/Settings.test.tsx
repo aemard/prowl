@@ -40,6 +40,13 @@ async function open(
   );
 }
 
+/** Notifications on, with an event and the quiet hours set away from their defaults. */
+const chosen = {
+  ...defaultSettings().notifications,
+  enabled: true,
+  events: { ...defaultSettings().notifications.events, ci_failed: false },
+  quietHours: { enabled: true, start: '22:00', end: '08:00' },
+};
 const saved = async () => normalizeSettings((await chrome.storage.local.get('settings')).settings);
 const group = (title: string) =>
   within(screen.getByRole('heading', { level: 3, name: title }).closest('section') as HTMLElement);
@@ -427,13 +434,6 @@ describe('SettingsView', () => {
     });
 
     it('reveals notification options only when enabled, retaining the saved choices', async () => {
-      const { notifications: defaults } = defaultSettings();
-      const chosen = {
-        ...defaults,
-        enabled: true,
-        events: { ...defaults.events, ci_failed: false },
-        quietHours: { enabled: true, start: '22:00', end: '08:00' },
-      };
       await open({ notifications: chosen });
       const notifications = group('Notifications');
       fireEvent.click(toggle('Desktop notifications', notifications));
