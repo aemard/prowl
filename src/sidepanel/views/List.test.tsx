@@ -12,9 +12,10 @@ import {
   buildSnapshot,
   buildSnapshotOf,
 } from '../../test/panel';
+import { activeSectionId, filterQuery, foldedGroups, showHidden } from '../state/listContext';
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, filterQuery, foldedGroups, ListView, showHidden } from './List';
+import { ListView } from './List';
 
 const seenMessage = (pr: PullRequest) => ({
   type: 'markSeen',

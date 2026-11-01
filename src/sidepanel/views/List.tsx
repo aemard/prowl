@@ -51,8 +51,6 @@ import './List.css';
 /** How long a card must stay on screen before it counts as seen. */
 const SEEN_DELAY_MS = 1500;
 
-export { activeSectionId, filterQuery, foldedGroups, showHidden } from '../state/listContext';
-
 const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
 
 /**
@@ -259,12 +257,13 @@ export function ListView() {
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
+  const isUnseen = (pr: PullRequest) => !isSeen(local, pr.id, pr.updatedAt, activityKey(pr));
   const seeable = [...rendered, ...revealed];
   const versions = Object.fromEntries(seeable.map((pr) => [pr.id, activityKey(pr)]));
   useMarkSeen(
     panel,
     [enabled.length > 1, ...seeable.map((pr) => `${pr.id}:${versions[pr.id]}`)].join('\n'),
-    seeable.filter((pr) => !isSeen(local, pr.id, pr.updatedAt, versions[pr.id])).map((pr) => pr.id),
+    seeable.filter(isUnseen).map((pr) => pr.id),
     versions,
   );
 
@@ -306,7 +305,7 @@ export function ListView() {
       key={pr.id}
       pr={pr}
       now={now}
-      unseen={!isSeen(local, pr.id, pr.updatedAt, activityKey(pr))}
+      unseen={isUnseen(pr)}
       muted={isMuted(local, pr.id)}
       teams={snap.teamRequests?.[pr.id]}
       grouped={grouped}
@@ -319,16 +318,16 @@ export function ListView() {
   const searching =
     pollState.value?.inFlight === true &&
     (snap.sectionsPending?.includes(selected.id) || (!(selected.id in snap.sections) && !error));
-  const empty = shown.length + hidden.length + snoozed.length === 0;
   const loaded = pullRequestsOf(snap, selected.id).length;
   const matches = shown.length + hidden.length + snoozed.length;
+  const empty = matches === 0;
   const setAside =
     shown.length === 0 &&
     matches > 0 &&
     revealed.length === 0 &&
     !(snoozedOpen && snoozed.length > 0);
   // Empty only because of the filter: the section itself has pull requests.
-  const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;
+  const filteredOut = empty && loaded > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
   const tabs = enabled.map((section) => {
     const { icon: Icon, short } = KINDS[section.kind];
@@ -403,12 +402,7 @@ export function ListView() {
         {error !== undefined && (
           <SectionNotice section={selected} message={error} partial={coverage?.partial} />
         )}
-        {coverage && (
-          <SectionCoverageNotice
-            coverage={coverage}
-            count={pullRequestsOf(snap, selected.id).length}
-          />
-        )}
+        {coverage && <SectionCoverageNotice coverage={coverage} count={loaded} />}
         {setAside && !searching && (
           <EmptyState
             icon={<EyeClosedIcon size={24} />}
@@ -500,7 +494,7 @@ export function ListView() {
                     key={pr.id}
                     pr={pr}
                     now={now}
-                    unseen={!isSeen(local, pr.id, pr.updatedAt, activityKey(pr))}
+                    unseen={isUnseen(pr)}
                     muted={isMuted(local, pr.id)}
                     teams={snap.teamRequests?.[pr.id]}
                     hiddenBecause={describeHiddenReasons(reasons)}
