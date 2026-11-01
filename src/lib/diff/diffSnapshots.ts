@@ -64,6 +64,7 @@ export function carrySettledChecks(
  * repeated poll yields the same ids; `at` is GitHub's time, or `next.fetchedAt` for check and
  * ready-to-merge changes, whose time the snapshot does not carry.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
 export function diffSnapshots(
   prev: Snapshot | null,
   next: Snapshot,

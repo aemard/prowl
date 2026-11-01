@@ -81,6 +81,8 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
  * opens and describes the card with every fact it shows, so a screen reader gets the whole card
  * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export function PullRequestCard({
   pr,
   unseen,

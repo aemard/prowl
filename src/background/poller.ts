@@ -117,6 +117,8 @@ export function poll({
   return current;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult | null> {
   const stored = await getItems(['auth', 'pollState', 'settings', 'teams', 'prLocal']);
   const { auth } = stored;
@@ -245,11 +247,14 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
  * Refresh one consulted card, serialized with polls and other card reads. A recent read is
  * shared across panels/reopens; head and account checks drop results overtaken by changes.
  */
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
 export async function refreshMergeState(id: string, headSha: string): Promise<void> {
   const requestedAuth = await getItem('auth');
   if (!requestedAuth) return;
   consulted.set(id, (consulted.get(id) ?? 0) + 1);
   try {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
+    // biome-ignore lint/complexity/noExcessiveLinesPerFunction: legacy, tracked by the size ratchet — split when next touched
     await withLock('prowl:poll', async () => {
       const stored = await getItems(['auth', 'snapshot', 'pollState', 'settings']);
       const { auth, snapshot } = stored;

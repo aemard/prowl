@@ -34,6 +34,7 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   };
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
 function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): MergeLine[] {
   // No checks in the detail although the PR has some: the token could not read them.
   const listed = detail?.checks.length ? detail.checks : undefined;
@@ -69,6 +70,7 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
 }
 
 /** At least one line. A `neutral` line informs; any other tone is a blocker or the verdict. */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
 export function mergeReadiness(pr: PullRequest, detail?: PullRequestDetail): MergeLine[] {
   if (pr.state === 'merged') {
     return [{ tone: 'done', text: pr.closedBy ? `Merged by ${pr.closedBy}` : 'Merged' }];

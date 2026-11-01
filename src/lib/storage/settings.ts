@@ -235,6 +235,7 @@ function parseSection(value: unknown): Section | null {
  * defaults, duplicates dropped); custom sections need a query and get a fresh `custom-N` id
  * when theirs is missing, invalid or already used.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
 function normalizeSections(value: unknown): Section[] {
   if (!Array.isArray(value)) return defaultSettings().sections;
   const parsed = value.map(parseSection).filter((section) => section !== null);

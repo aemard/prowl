@@ -158,6 +158,7 @@ describe('design tokens', () => {
     ['light', light],
     ['dark', dark],
   ] as const) {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy, tracked by the size ratchet — split when next touched
     it(`meets WCAG AA for text in ${theme}`, () => {
       const failures: string[] = [];
       for (const row of TEXT_ROWS) {
