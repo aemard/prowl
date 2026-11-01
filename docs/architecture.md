@@ -840,3 +840,27 @@ The header and retry controls use `listRefreshing` (a poll is running and no mer
 been published). Targeted card reads also publish `mergePending` without starting the global
 loader. Both success and failure remove this ephemeral state; the next poll discards markers
 left by a terminated worker.
+
+
+## Bounded search coverage and partial publications
+
+`Snapshot.sectionCoverage` records proven `hasMore`, per-query cursors and available totals,
+plus partial/stale flags. Team queries have independent cursors: overlapping totals are never
+summed. Missing metadata on an older snapshot is unknown, not proof of additional results.
+The section limit counts loaded PRs before hide/snooze; the list warns only when GitHub reports
+more results or a merged team union exceeds the cap. Local filtering searches only loaded PRs.
+Only loaded PRs are monitored in a section; another section can also load the same PR.
+
+Repository filters apply on each fetched page. A query scans at most 500 nodes and at most
+`max(100, 5 * maxPerSection)`, independently of the retained limit, so rejected pages do not
+silently consume the entire retained capacity. Hitting the scan budget preserves pagination
+metadata. Page failures retain successful pages and eligible cached section members, capped at
+`maxPerSection`, with a partial/stale notice. Partial GraphQL errors retain their field path;
+authentication and quota errors remain global. Partial merge responses cannot make unreadable
+review requirements look absent.
+
+During search, `sectionsPending` marks sections not yet completed. Publications keep their
+previous cards until their search completes, so a slow team section does not hold back a
+personal list or masquerade as a newly empty section. Merge enrichment still follows search.
+Local snoozes expire by date. Mute/seen and unexpired snoozes are removed only after confirmed
+closure, never merely because a PR left a bounded search or the selected scope.

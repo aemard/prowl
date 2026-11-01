@@ -294,7 +294,7 @@ describe('SettingsView', () => {
 
     it('saves how many pull requests to fetch per section', async () => {
       await open();
-      fireEvent.input(group('Refresh').getByLabelText('Pull requests per section'), {
+      fireEvent.input(group('Refresh').getByLabelText('Maximum PRs loaded per section'), {
         target: { value: '100' },
       });
       await waitFor(async () => expect((await saved()).maxPerSection).toBe(100));

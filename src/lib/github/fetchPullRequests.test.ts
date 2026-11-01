@@ -816,8 +816,111 @@ describe('fetchPullRequests', () => {
       expect(queries()).toHaveLength(MAX_TEAM_SEARCHES);
       expect(result.sections).toEqual({ team_review_requested: [] });
       expect(result.sectionErrors.team_review_requested).toBe(
-        `Prowl searches ${MAX_TEAM_SEARCHES} teams at most, 2 more were skipped. Unfollow teams in Settings to choose which.`,
+        `Partial results: ${MAX_TEAM_SEARCHES} of 12 followed teams searched. Choose teams in Settings.`,
       );
     });
+  });
+});
+
+describe('bounded and partial section coverage', () => {
+  it.each([49, 50, 51])('reports extra results only when GitHub has more (%s)', async (count) => {
+    const nodes = Array.from({ length: count }, (_, i) => prNode({ number: i + 1 }));
+    const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+    const result = await fetchPullRequests(client, settings());
+    expect(result.sections.authored?.length).toBe(Math.min(count, 50));
+    expect(result.sectionCoverage?.authored?.hasMore ?? false).toBe(count > 50);
+    if (count > 50)
+      expect(result.sectionCoverage?.authored?.queries[0]).toMatchObject({
+        cursor: '50',
+        total: 51,
+      });
+  });
+
+  it('looks beyond rejected repository pages, under a separate scan budget', async () => {
+    const nodes = Array.from({ length: 51 }, (_, i) =>
+      prNode({ number: i + 1, repository: i === 50 ? 'allowed/repo' : 'elsewhere/repo' }),
+    );
+    const { client, queries } = setup({
+      ProwlSearch: (variables) => searchResponse(nodes, variables),
+    });
+    const result = await fetchPullRequests(
+      client,
+      settings({
+        sections: [section('custom', { query: 'org:elsewhere org:allowed is:open' })],
+        repoInclude: ['allowed/repo'],
+      }),
+    );
+    expect(result.sections.custom).toEqual([prId(51, 'allowed/repo')]);
+    expect(queries().length).toBe(3);
+  });
+
+  it('keeps fetched pages and previous section members when a subsequent page fails', async () => {
+    const nodes = Array.from({ length: 26 }, (_, i) => prNode({ number: i + 1 }));
+    const old = prNode({ number: 99 });
+    const { client } = setup({
+      ProwlSearch: (variables) =>
+        variables.after
+          ? jsonResponse({ message: 'Bad gateway' }, { status: 502 })
+          : searchResponse(nodes, variables),
+    });
+    const result = await fetchPullRequests(client, settings(), {
+      pullRequests: { [old.id]: mapped(old) },
+      sections: { authored: [old.id] },
+    });
+    expect(result.sections.authored).toHaveLength(26);
+    expect(result.sections.authored).toContain(old.id);
+    expect(result.sectionCoverage?.authored).toMatchObject({
+      partial: true,
+      stale: true,
+      hasMore: true,
+    });
+    expect(result.sectionErrors.authored).toContain('Bad gateway');
+  });
+
+  it('reports non-SAML node errors and their field path rather than a complete empty result', async () => {
+    const data = searchResponse([null]);
+    const { client } = setup({
+      ProwlSearch: () =>
+        jsonResponse({
+          data,
+          errors: [
+            graphqlError('FORBIDDEN', 'Resource not accessible by personal access token', [
+              'search',
+              'nodes',
+              0,
+            ]),
+          ],
+        }),
+    });
+    const result = await fetchPullRequests(client, settings());
+    expect(result.sectionCoverage?.authored?.partial).toBe(true);
+    expect(result.sectionErrors.authored).toContain('Resource not accessible');
+    expect(result.sectionErrors.authored).toContain('search.nodes.0');
+  });
+
+  it('publishes a completed section while the next team search is still blocked', async () => {
+    const mine = prNode();
+    const publications: string[][] = [];
+    const { client } = setup({
+      ProwlSearch: (variables) => {
+        if (String(variables.query).includes('mentions:')) {
+          expect(publications).toContainEqual(['mentioned']);
+          return searchResponse([], variables);
+        }
+        return searchResponse([mine], variables);
+      },
+    });
+    const result = await fetchPullRequests(
+      client,
+      settings({ sections: [section('authored'), section('mentioned')] }),
+      null,
+      null,
+      undefined,
+      async (snapshot) => {
+        if (snapshot.sectionsPending) publications.push([...snapshot.sectionsPending]);
+      },
+    );
+    expect(result.sections.authored).toEqual([mine.id]);
+    expect(result.sectionsPending).toBeUndefined();
   });
 });

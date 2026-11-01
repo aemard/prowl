@@ -19,6 +19,7 @@ import {
 import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
+import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { panelId, SectionTabs } from '../components/SectionTabs';
 import { StatusBanner } from '../components/StatusBanner';
 import { Button } from '../components/ui/Button';
@@ -181,12 +182,20 @@ function ListSkeleton() {
   );
 }
 
-function SectionNotice({ section, message }: { section: Section; message: string }) {
+function SectionNotice({
+  section,
+  message,
+  partial,
+}: {
+  section: Section;
+  message: string;
+  partial?: boolean;
+}) {
   return (
     <p class="list__notice">
       <AlertIcon size={16} />
       <span>
-        Could not load “{section.label}”: {message}
+        {partial ? 'Partial results for' : 'Could not load'} “{section.label}”: {message}
       </span>
     </p>
   );
@@ -298,6 +307,8 @@ export function ListView() {
     />
   );
   const error = snap.sectionErrors?.[selected.id];
+  const coverage = snap.sectionCoverage?.[selected.id];
+  const searching = snap.sectionsPending?.includes(selected.id) ?? false;
   const empty = shown.length + hidden.length + snoozed.length === 0;
   // Empty only because of the filter: the section itself has pull requests.
   const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;
@@ -353,7 +364,20 @@ export function ListView() {
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
-        {error !== undefined && <SectionNotice section={selected} message={error} />}
+        {searching && (
+          <p class="list__notice" role="status">
+            Searching “{selected.label}”…
+          </p>
+        )}
+        {error !== undefined && (
+          <SectionNotice section={selected} message={error} partial={coverage?.partial} />
+        )}
+        {coverage && (
+          <SectionCoverageNotice
+            coverage={coverage}
+            count={pullRequestsOf(snap, selected.id).length}
+          />
+        )}
         {shown.length > 0 && (
           <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
             {grouped
@@ -431,13 +455,13 @@ export function ListView() {
             )}
           </div>
         )}
-        {empty && error === undefined && (
+        {empty && error === undefined && !searching && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
             title={filteredOut ? 'No matches' : 'No pull requests'}
             description={
               filteredOut
-                ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
+                ? `Nothing in “${selected.label}” matches “${query.trim()}”.${coverage?.hasMore ? ' This search only covers the loaded PRs.' : ''}`
                 : KINDS[selected.kind].empty
             }
             action={

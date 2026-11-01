@@ -63,7 +63,7 @@ function PollingSettings() {
           onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
         />
         <NumberField
-          label="Pull requests per section"
+          label="Maximum PRs loaded per section"
           value={maxPerSection}
           min={MIN_PER_SECTION}
           max={MAX_PER_SECTION}

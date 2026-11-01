@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  closedNode,
   type FullPullRequestNode,
   headCommit,
   mergeStateResponse,
@@ -637,7 +638,7 @@ describe('poll', () => {
     expect((await getItem('prLocal'))?.muted).toEqual({ PR_elsewhere: true });
   });
 
-  it('prunes local state of PRs that are gone and of ended snoozes', async () => {
+  it('expires ended snoozes but keeps choices for PRs absent from the bounded snapshot', async () => {
     github();
     await signIn();
     await setItem('prLocal', {
@@ -646,7 +647,35 @@ describe('poll', () => {
       seen: { PR_gone: at(NOW) },
     });
     await poll();
-    expect(await getItem('prLocal')).toEqual({ snoozed: {}, muted: { [PR]: true }, seen: {} });
+    expect(await getItem('prLocal')).toEqual({
+      snoozed: {},
+      muted: { [PR]: true, PR_gone: true },
+      seen: { PR_gone: at(NOW) },
+    });
+  });
+
+  it('keeps mute, snooze and seen when an open PR leaves the search and reappears', async () => {
+    github();
+    await signIn();
+    await poll();
+    const local = {
+      muted: { [PR]: true as const },
+      snoozed: { [PR]: at(NOW + 24 * 60 * MINUTE) },
+      seen: { [PR]: at(NOW) },
+    };
+    await setItem('prLocal', local);
+    github((query) =>
+      query === undefined
+        ? { nodes: [closedNode(PR, { state: 'OPEN' })], rateLimit: graphqlRateLimit() }
+        : searchResponse([]),
+    );
+    await poll({ force: true });
+    expect((await getItem('snapshot'))?.pullRequests[PR]).toBeUndefined();
+    expect(await getItem('prLocal')).toEqual(local);
+    github();
+    await poll({ force: true });
+    expect((await getItem('snapshot'))?.pullRequests[PR]).toBeDefined();
+    expect(await getItem('prLocal')).toEqual(local);
   });
 
   it('drops the result of a poll interrupted by sign-out', async () => {

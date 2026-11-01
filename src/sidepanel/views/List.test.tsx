@@ -943,3 +943,35 @@ describe('grouped by repository', () => {
     expect(cardTitles()).toHaveLength(5);
   });
 });
+
+it('keeps proven coverage visible even when all loaded cards are hidden', () => {
+  withSections(['authored'], { hideDrafts: true });
+  const draft = buildPullRequest({ isDraft: true });
+  snapshot.value = buildSnapshotOf(
+    { authored: [draft] },
+    {
+      sectionCoverage: {
+        authored: { hasMore: true, queries: [{ query: 'is:pr author:@me', cursor: '50' }] },
+      },
+    },
+  );
+  render(<ListView />);
+  expect(screen.getByLabelText('List coverage').textContent).toContain('1 PR loaded. More results');
+  expect(screen.getByRole('button', { name: 'Change limit' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toContain(
+    'author%3A%40me',
+  );
+});
+
+it('qualifies a local search with no matches when other GitHub results exist', () => {
+  withSections(['authored']);
+  snapshot.value = buildSnapshotOf(
+    { authored: [buildPullRequest()] },
+    {
+      sectionCoverage: { authored: { hasMore: true, queries: [] } },
+    },
+  );
+  filterQuery.value = 'no-such-pull-request';
+  render(<ListView />);
+  expect(screen.getByText(/This search only covers the loaded PRs/)).toBeTruthy();
+});

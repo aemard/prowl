@@ -156,9 +156,29 @@ export function createGitHubClient({
       const { data, errors } = payload;
       const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
       if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
+        const fatal = errors.find(
+          (error) =>
+            isRecord(error) &&
+            ['unauthorized', 'rate_limited'].includes(classifyGraphQLType(error.type)),
+        );
+        if (isRecord(fatal)) {
+          throw fail(
+            classifyGraphQLType(fatal.type),
+            typeof fatal.message === 'string'
+              ? clean(fatal.message)
+              : 'GitHub refused this request.',
+            status,
+            headers,
+          );
+        }
         onPartialErrors?.(
           errors.flatMap((error) =>
-            isRecord(error) && typeof error.message === 'string' ? [clean(error.message)] : [],
+            isRecord(error) && typeof error.message === 'string'
+              ? [
+                  clean(error.message) +
+                    (Array.isArray(error.path) ? ` (${clean(error.path.join('.'))})` : ''),
+                ]
+              : [],
           ),
         );
       }
