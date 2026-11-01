@@ -214,6 +214,15 @@ export interface Viewer {
   name: string | null;
 }
 
+/** Coverage of a bounded section search; an absent total never means zero. */
+export interface SectionCoverage {
+  hasMore: boolean;
+  partial?: boolean;
+  stale?: boolean;
+  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  queries: { query: string; cursor: string | null; total?: number }[];
+}
+
 /** Everything one successful poll produced. Persisted by the service worker. */
 export interface Snapshot {
   fetchedAt: string;
@@ -221,6 +230,9 @@ export interface Snapshot {
   pullRequests: Record<string, PullRequest>;
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
+  sectionCoverage?: Record<string, SectionCoverage>;
+  /** Sections not yet searched in a progressive publication. */
+  sectionsPending?: string[];
   /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team

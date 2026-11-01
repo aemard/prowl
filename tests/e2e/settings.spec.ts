@@ -176,7 +176,7 @@ test.describe('refresh', () => {
     github,
   }) => {
     const panel = await openPanel('#/settings');
-    await panel.getByLabel('Pull requests per section').fill('20');
+    await panel.getByLabel('Maximum PRs loaded per section').fill('20');
     await expect.poll(async () => (await savedSettings(serviceWorker))?.maxPerSection).toBe(20);
     await expect
       .poll(() =>
