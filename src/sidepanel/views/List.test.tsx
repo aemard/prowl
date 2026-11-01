@@ -975,6 +975,18 @@ describe('a section still being searched', () => {
     expect(screen.queryByRole('heading', { name: 'No pull requests' })).toBeNull();
   });
 
+  it('says so for a section the running poll has not loaded yet, unless it failed', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: true });
+    snapshot.value = buildSnapshotOf({});
+    const { unmount } = render(<ListView />);
+    expect(screen.getByRole('status').textContent).toContain('Searching');
+    unmount();
+    snapshot.value = buildSnapshotOf({}, { sectionErrors: { authored: 'GitHub refused it.' } });
+    render(<ListView />);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('forgets the marker a failed or interrupted poll left in the snapshot', () => {
     withSections(['authored']);
     pollState.value = buildPollState({ inFlight: false });

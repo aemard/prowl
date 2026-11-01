@@ -66,7 +66,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
     );
     setConfirming(false);
     if (merged) setTitle('');
-    else void sendToBackground({ type: 'poll', force: true });
+    else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   };
   const enableAutoMerge = async () => {
     const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, 'Auto-merge is on for', (client) =>

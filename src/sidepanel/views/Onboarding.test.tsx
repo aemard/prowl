@@ -104,7 +104,7 @@ describe('OnboardingView', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(toasts.value).toEqual([]);
   });
 

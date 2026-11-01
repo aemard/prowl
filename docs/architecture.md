@@ -59,7 +59,9 @@ in-memory updates that the next snapshot replaces.
    `{ type: 'poll', force: true }`.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
    forced), or if `pollState.nextAllowedAt` is in the future: a forced poll skips a backoff
-   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight).
+   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight); a
+   settings change, action or sign-in asks for one trailing poll instead (see
+   [Refresh and session ordering](#refresh-and-session-ordering)).
 3. The viewer's teams are discovered first when due (see [Teams](#teams)): stored teams of
    another account or none, older than 24 h (1 h after a failed attempt), or a
    `{ type: 'refreshTeams' }` from the panel. `fetchPullRequests` (see
@@ -356,11 +358,12 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `poller.ts`:
 
-- `poll({ force, refreshTeams })` runs at most one poll at a time (an in-memory promise;
-  concurrent callers share it, except `refreshTeams`, which waits for the poll in flight and
-  then runs its own so the teams are discovered again) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
-  stored a snapshot, null otherwise. The badge and notifications update at each progressive
-  publication inside the poll; callers sharing it do not repeat those events.
+- `poll({ force, refreshTeams, afterCurrent })` runs at most one poll at a time (an in-memory
+  promise; concurrent callers share it, except `refreshTeams` and `afterCurrent`, which share
+  one trailing poll that starts when the one in flight ends) and never rejects. It resolves to
+  `{ snapshot, events }` when a poll ran and stored a snapshot, null otherwise. The badge and
+  notifications update at each progressive publication inside the poll; callers sharing it do
+  not repeat those events.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
   with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
@@ -382,9 +385,9 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 - A custom section that GitHub refuses lands in `snapshot.sectionErrors` and the poll counts as
   a success. While any section failed, pruning keeps the local state of PRs not in the
   snapshot (only ended snoozes go), since that section's PRs are missing.
-- Before storing anything the poller re-reads `auth`: if its token changed (sign-out, another
-  account) the result is dropped; it starts over when someone is signed in, else it clears
-  what a sign-out clears. A snapshot of another account is never used as the baseline.
+- Every write of a poll runs in `withSignedIn(auth, …)`: if the stored token changed (sign-out,
+  another account) the write is skipped and the poll starts over when someone is signed in,
+  else clears what a sign-out clears. A snapshot of another account is never used as the baseline.
 
 `messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
 their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
@@ -876,3 +879,17 @@ personal list or masquerade as a newly empty section; the list says "Searching" 
 still follows search.
 Local snoozes expire by date. Mute/seen and unexpired snoozes are removed only after confirmed
 closure, never merely because a PR left a bounded search or the selected scope.
+
+## Refresh and session ordering
+
+Panel setting changes, completed mutations and sign-in request `poll` with `afterCurrent`.
+While a poll is active, these requests share one trailing promise, using the latest saved
+configuration; further changes during that trailing run can schedule one more run. Ordinary
+refreshes still share the current poll. Team rediscovery is coalesced into the trailing request.
+Quota/backoff checks remain in `runPoll`.
+
+The short origin-shared `prowl:session` Web Lock serializes sign-in/sign-out with the session
+check and writes of progressive snapshots, final snapshots/teams, targeted facts, poll state
+and notifications. GitHub reads are outside this lock, which is not reentrant. A completed
+sign-out cannot be undone by an old publication, and delayed `signedOut` cleanup cannot clear a
+newly signed-in account.

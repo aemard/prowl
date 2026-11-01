@@ -38,7 +38,7 @@ const show = (overrides: Partial<PullRequest> = {}) =>
   render(<ReviewActions pr={{ ...pr, ...overrides }} />);
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-const poll = { type: 'poll', force: true };
+const poll = { type: 'poll', force: true, afterCurrent: true };
 
 beforeEach(() => {
   auth.value = buildAuth('octocat');

@@ -37,7 +37,7 @@ export async function runPrAction(
   try {
     await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
     showToast({ message: `${done} ${prRef(pr)}`, tone: 'success' });
-    void sendToBackground({ type: 'poll', force: true });
+    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
     return true;
   } catch (error) {
     const reason = error instanceof GitHubError ? error.message : 'Something went wrong.';

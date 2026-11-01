@@ -114,7 +114,7 @@ test.describe('sign in', () => {
         viewer,
       },
     });
-    await expect.poll(messages).toContainEqual({ type: 'poll', force: true });
+    await expect.poll(messages).toContainEqual({ type: 'poll', force: true, afterCurrent: true });
 
     for (const request of [github.requestsFor('ProwlViewer')[0], github.requestsFor('/user')[0]]) {
       expect(request?.headers.authorization).toBe(`Bearer ${CLASSIC}`);
