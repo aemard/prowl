@@ -154,6 +154,7 @@ test.describe('refresh', () => {
   }) => {
     expect(await pollPeriod(serviceWorker)).toBe(5);
     const panel = await openPanel('#/settings');
+    await panel.getByText('Refresh options', { exact: true }).click();
     const interval = panel.getByLabel('Check every (minutes)');
     await expect(interval).toHaveValue('5');
     await expect(panel.getByText(/5,000 points an hour/)).toBeVisible();
@@ -176,7 +177,7 @@ test.describe('refresh', () => {
     github,
   }) => {
     const panel = await openPanel('#/settings');
-    await panel.getByLabel('Pull requests per section').fill('20');
+    await panel.getByLabel('Maximum PRs loaded per section').fill('20');
     await expect.poll(async () => (await savedSettings(serviceWorker))?.maxPerSection).toBe(20);
     await expect
       .poll(() =>
@@ -221,13 +222,14 @@ test.describe('notifications', () => {
     await poll();
     expect(await notificationIds(serviceWorker)).toEqual([]);
 
-    // The master switch greys the rest out; turning it back on brings them back.
+    // The master switch collapses the detail without resetting event choices.
     const master = panel.getByRole('switch', { name: 'Desktop notifications' });
     await master.click();
-    await expect(panel.getByRole('switch', { name: 'CI passes' })).toBeDisabled();
-    await expect(panel.getByRole('button', { name: 'Send test notification' })).toBeDisabled();
+    await expect(panel.getByRole('switch', { name: 'CI passes' })).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: 'Send test notification' })).toHaveCount(0);
     await master.click();
     await expect(panel.getByRole('switch', { name: 'CI passes' })).toBeEnabled();
+    await expect(ciFails).toHaveAttribute('aria-checked', 'false');
   });
 
   test('quiet hours can cross midnight', async ({ openPanel, serviceWorker }) => {

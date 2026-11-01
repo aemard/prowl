@@ -6,6 +6,7 @@
  */
 import type {
   AuthState,
+  PanelState,
   PollState,
   PrLocalState,
   Settings,
@@ -25,6 +26,7 @@ export interface StorageSchema {
   prLocal: PrLocalState;
   teams: TeamsState;
   sync: SyncState;
+  panelState: PanelState;
 }
 
 /** Called with the new and previous value; `undefined` means the key is absent. */

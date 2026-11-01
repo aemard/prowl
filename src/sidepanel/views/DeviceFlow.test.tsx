@@ -180,7 +180,7 @@ describe('DeviceFlow', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(toasts.value).toEqual([]);
     expect(urls(fetch).filter((url) => url.endsWith('/access_token'))).toHaveLength(2);
   });

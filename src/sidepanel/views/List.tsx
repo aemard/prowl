@@ -1,5 +1,5 @@
-import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { activityKey } from '../../lib/activity';
 import { describeHiddenReasons } from '../../lib/hidden';
 import type { PullRequest, Section, SectionKind, Snapshot } from '../../lib/model';
 import { isMuted, isSeen } from '../../lib/storage/prLocal';
@@ -19,6 +19,7 @@ import {
 import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
+import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { panelId, SectionTabs } from '../components/SectionTabs';
 import { StatusBanner } from '../components/StatusBanner';
 import { Button } from '../components/ui/Button';
@@ -27,6 +28,15 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { TextField } from '../components/ui/TextField';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
+import {
+  activeSectionId,
+  filterQuery,
+  foldedGroups,
+  foldKey,
+  selectSection,
+  showHidden,
+  toggleFolded,
+} from '../state/listContext';
 import { navigate } from '../state/router';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import {
@@ -41,21 +51,7 @@ import './List.css';
 /** How long a card must stay on screen before it counts as seen. */
 const SEEN_DELAY_MS = 1500;
 
-/**
- * Selected tab, quick filter, whether hidden PRs are revealed and which repository groups are
- * folded (a `foldKey` per section and repository) live outside the view, so they survive a
- * visit to Settings and last until the panel closes. Exported for tests, which reset them.
- */
-export const activeSectionId = signal<string | undefined>(undefined);
-export const filterQuery = signal('');
-export const showHidden = signal(false);
-export const foldedGroups = signal<string[]>([]);
-
-const foldKey = (sectionId: string, repo: string) => `${sectionId}\n${repo}`;
-const toggleFolded = (key: string) => {
-  const folded = foldedGroups.value;
-  foldedGroups.value = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
-};
+export { activeSectionId, filterQuery, foldedGroups, showHidden } from '../state/listContext';
 
 const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
 
@@ -105,10 +101,12 @@ function useMarkSeen(
   list: { current: HTMLElement | null },
   renderedKey: string,
   unseenIds: string[],
+  versions: Record<string, string>,
 ) {
   const [onScreen, setOnScreen] = useState<string[]>([]);
   const [panelVisible, setPanelVisible] = useState(() => document.visibilityState === 'visible');
   const unseenKey = unseenIds.join('\n');
+  const versionKey = JSON.stringify(versions);
 
   useEffect(() => {
     const update = () => setPanelVisible(document.visibilityState === 'visible');
@@ -154,11 +152,18 @@ function useMarkSeen(
     const prIds = onScreen.filter((id) => unseen.has(id));
     if (!panelVisible || prIds.length === 0) return;
     const timer = setTimeout(
-      () => void sendToBackground({ type: 'markSeen', prIds }),
+      () =>
+        void sendToBackground({
+          type: 'markSeen',
+          prIds,
+          versions: Object.fromEntries(
+            Object.entries(versions).filter(([id]) => prIds.includes(id)),
+          ),
+        }),
       SEEN_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [panelVisible, onScreen, unseenKey]);
+  }, [panelVisible, onScreen, unseenKey, versionKey]);
 }
 
 function ListSkeleton() {
@@ -181,12 +186,20 @@ function ListSkeleton() {
   );
 }
 
-function SectionNotice({ section, message }: { section: Section; message: string }) {
+function SectionNotice({
+  section,
+  message,
+  partial,
+}: {
+  section: Section;
+  message: string;
+  partial?: boolean;
+}) {
   return (
     <p class="list__notice">
       <AlertIcon size={16} />
       <span>
-        Could not load “{section.label}”: {message}
+        {partial ? 'Partial results for' : 'Could not load'} “{section.label}”: {message}
       </span>
     </p>
   );
@@ -247,10 +260,12 @@ export function ListView() {
     performance.mark(LIST_RENDERED_MARK);
   });
   const seeable = [...rendered, ...revealed];
+  const versions = Object.fromEntries(seeable.map((pr) => [pr.id, activityKey(pr)]));
   useMarkSeen(
     panel,
-    [enabled.length > 1, ...seeable.map((pr) => pr.id)].join('\n'),
-    seeable.filter((pr) => !isSeen(local, pr.id, pr.updatedAt)).map((pr) => pr.id),
+    [enabled.length > 1, ...seeable.map((pr) => `${pr.id}:${versions[pr.id]}`)].join('\n'),
+    seeable.filter((pr) => !isSeen(local, pr.id, pr.updatedAt, versions[pr.id])).map((pr) => pr.id),
+    versions,
   );
 
   if (!selected) {
@@ -291,14 +306,25 @@ export function ListView() {
       key={pr.id}
       pr={pr}
       now={now}
-      unseen={!isSeen(local, pr.id, pr.updatedAt)}
+      unseen={!isSeen(local, pr.id, pr.updatedAt, activityKey(pr))}
       muted={isMuted(local, pr.id)}
       teams={snap.teamRequests?.[pr.id]}
       grouped={grouped}
     />
   );
   const error = snap.sectionErrors?.[selected.id];
+  const coverage = snap.sectionCoverage?.[selected.id];
+  const searching =
+    snap.sectionsPending?.includes(selected.id) ||
+    (!(selected.id in snap.sections) && !error && pollState.value?.inFlight);
   const empty = shown.length + hidden.length + snoozed.length === 0;
+  const loaded = pullRequestsOf(snap, selected.id).length;
+  const matches = shown.length + hidden.length + snoozed.length;
+  const setAside =
+    shown.length === 0 &&
+    matches > 0 &&
+    revealed.length === 0 &&
+    !(snoozedOpen && snoozed.length > 0);
   // Empty only because of the filter: the section itself has pull requests.
   const filteredOut = empty && pullRequestsOf(snap, selected.id).length > 0;
   const anyPullRequests = enabled.some((section) => pullRequestsOf(snap, section.id).length > 0);
@@ -347,13 +373,64 @@ export function ListView() {
           tabs={tabs}
           selectedId={selected.id}
           onSelect={(id) => {
-            activeSectionId.value = id;
+            void selectSection(id);
           }}
           idPrefix={idPrefix}
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
-        {error !== undefined && <SectionNotice section={selected} message={error} />}
+        {loaded > 0 && (
+          <p
+            class="list__summary"
+            role="note"
+            title="Tab counts show main-list PRs after filtering, including folded groups. Temporary reveals do not affect the badge."
+          >
+            {loaded} loaded · {query.trim() && `${matches} matching · `}
+            {shown.length} in list · {hidden.length} hidden · {snoozed.length} snoozed
+            <span class="sr-only">
+              . Tab counts include folded groups. The badge ignores this text filter, counts unique
+              PRs across sections and excludes hidden and snoozed PRs.
+            </span>
+          </p>
+        )}
+        {searching && (
+          <p class="list__notice" role="status">
+            Searching “{selected.label}”…
+          </p>
+        )}
+        {error !== undefined && (
+          <SectionNotice section={selected} message={error} partial={coverage?.partial} />
+        )}
+        {coverage?.stale && (
+          <p class="list__notice">Some results are cached and may reflect earlier settings.</p>
+        )}
+        {coverage && (
+          <SectionCoverageNotice
+            coverage={coverage}
+            count={pullRequestsOf(snap, selected.id).length}
+          />
+        )}
+        {setAside && !searching && (
+          <EmptyState
+            icon={<EyeClosedIcon size={24} />}
+            title={
+              query.trim()
+                ? 'Matches are hidden or snoozed'
+                : 'All loaded pull requests are set aside'
+            }
+            description="Automatic hiding and snooze keep these PRs out of the main list. You can reveal them below or choose Always show in a PR’s menu."
+            action={
+              <Button
+                onClick={() => {
+                  showHidden.value = true;
+                  setSnoozedOpen(true);
+                }}
+              >
+                Show hidden and snoozed
+              </Button>
+            }
+          />
+        )}
         {shown.length > 0 && (
           <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
             {grouped
@@ -421,7 +498,7 @@ export function ListView() {
                     key={pr.id}
                     pr={pr}
                     now={now}
-                    unseen={!isSeen(local, pr.id, pr.updatedAt)}
+                    unseen={!isSeen(local, pr.id, pr.updatedAt, activityKey(pr))}
                     muted={isMuted(local, pr.id)}
                     teams={snap.teamRequests?.[pr.id]}
                     hiddenBecause={describeHiddenReasons(reasons)}
@@ -431,13 +508,13 @@ export function ListView() {
             )}
           </div>
         )}
-        {empty && error === undefined && (
+        {empty && error === undefined && !searching && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
             title={filteredOut ? 'No matches' : 'No pull requests'}
             description={
               filteredOut
-                ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
+                ? `Nothing in “${selected.label}” matches “${query.trim()}”.${coverage?.hasMore ? ' This search only covers the loaded PRs.' : ''}`
                 : KINDS[selected.kind].empty
             }
             action={

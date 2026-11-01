@@ -3,6 +3,7 @@
  * since you last looked), whether one of them is red, and a tooltip saying why. Pure: the
  * service worker (`src/background/badge.ts`) paints the result.
  */
+import { activityKey } from '../activity';
 import { isReadyToMerge } from '../diff/diffSnapshots';
 import { type HideSettings, hiddenReasons } from '../hidden';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
@@ -55,9 +56,13 @@ export function computeBadge(
   const ids = new Set(Object.values(snapshot.sections).flat());
   const counted = [...ids]
     .flatMap((id) => snapshot.pullRequests[id] ?? [])
-    .filter((pr) => !isSnoozed(local, pr.id, now) && hiddenReasons(pr, hide, now).length === 0)
+    .filter(
+      (pr) => !isSnoozed(local, pr.id, now) && hiddenReasons(pr, hide, now, local).length === 0,
+    )
     .filter((pr) =>
-      mode === 'attention' ? reasonsOf(pr).length > 0 : !isSeen(local, pr.id, pr.updatedAt),
+      mode === 'attention'
+        ? reasonsOf(pr).length > 0
+        : !isSeen(local, pr.id, pr.updatedAt, activityKey(pr)),
     );
   if (counted.length === 0) return NO_BADGE;
 

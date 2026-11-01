@@ -42,5 +42,4 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
 | Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 
-Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time (see
-`progress.txt`, US-027).
+Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time.

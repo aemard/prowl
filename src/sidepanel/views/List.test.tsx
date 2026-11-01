@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { activityKey } from '../../lib/activity';
 import { computeBadge } from '../../lib/badge/computeBadge';
 import type { PullRequest, Settings, SortOrder } from '../../lib/model';
 import { defaultSettings } from '../../lib/storage/settings';
@@ -14,6 +15,12 @@ import {
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import { activeSectionId, filterQuery, foldedGroups, ListView, showHidden } from './List';
+
+const seenMessage = (pr: PullRequest) => ({
+  type: 'markSeen',
+  prIds: [pr.id],
+  versions: { [pr.id]: activityKey(pr) },
+});
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
@@ -357,7 +364,7 @@ describe('unseen changes', () => {
     act(() => void vi.advanceTimersByTime(1499));
     expect(markSeen(send)).toEqual([]);
     act(() => void vi.advanceTimersByTime(1));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(a)]);
 
     act(() => void vi.advanceTimersByTime(10_000));
     expect(markSeen(send)).toHaveLength(1);
@@ -388,7 +395,7 @@ describe('unseen changes', () => {
     expect(markSeen(send)).toEqual([]);
     observer().show([c.id]);
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [c.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(c)]);
   });
 
   it('does nothing while the panel is hidden, and starts when it shows', () => {
@@ -402,7 +409,7 @@ describe('unseen changes', () => {
     Reflect.deleteProperty(document, 'visibilityState');
     act(() => void document.dispatchEvent(new Event('visibilitychange')));
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([seenMessage(a)]);
   });
 
   it('drops the dot once the worker has stored it as seen', () => {
@@ -549,11 +556,15 @@ describe('pull requests with no recent commit', () => {
     expect(show.getAttribute('aria-expanded')).toBe('false');
     const panel = screen.getByRole('tabpanel');
     expect(panel.lastElementChild?.contains(show)).toBe(true);
-    // A section of hidden PRs only is neither empty nor filtered out.
+    // A section containing only hidden PRs explains the apparent empty list.
     fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
     expect(cardTitles()).toEqual([]);
-    expect(screen.queryByRole('heading')).toBeNull();
+    expect(
+      screen.getByRole('heading', { name: 'All loaded pull requests are set aside' }),
+    ).toBeTruthy();
     expect(toggle('Show 1 hidden')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show hidden and snoozed' }));
+    expect(cardTitles()).toEqual(['Old idea']);
   });
 
   it('reveals them for the session, saying why, and hides them again', () => {
@@ -637,7 +648,7 @@ describe('pull requests with no recent commit', () => {
     );
     observer().show([stale.id]);
     act(() => void vi.advanceTimersByTime(1500));
-    expect(send).toHaveBeenCalledWith({ type: 'markSeen', prIds: [stale.id] });
+    expect(send).toHaveBeenCalledWith(seenMessage(stale));
   });
 });
 
@@ -917,7 +928,7 @@ describe('grouped by repository', () => {
     const marked = (send.mock.calls as unknown[][])
       .map(([message]) => message as { type: string; prIds?: string[] })
       .filter((message) => message.type === 'markSeen');
-    expect(marked).toEqual([{ type: 'markSeen', prIds: [web1.id] }]);
+    expect(marked).toEqual([seenMessage(web1)]);
 
     fireEvent.click(header('acme/api'));
     expect(observed()).toEqual([api2.id, api4.id, web1.id, web3.id, docs5.id]);
@@ -942,4 +953,36 @@ describe('grouped by repository', () => {
     expect(headers()).toEqual([]);
     expect(cardTitles()).toHaveLength(5);
   });
+});
+
+it('keeps proven coverage visible even when all loaded cards are hidden', () => {
+  withSections(['authored'], { hideDrafts: true });
+  const draft = buildPullRequest({ isDraft: true });
+  snapshot.value = buildSnapshotOf(
+    { authored: [draft] },
+    {
+      sectionCoverage: {
+        authored: { hasMore: true, queries: [{ query: 'is:pr author:@me', cursor: '50' }] },
+      },
+    },
+  );
+  render(<ListView />);
+  expect(screen.getByLabelText('List coverage').textContent).toContain('1 PR loaded. More results');
+  expect(screen.getByRole('button', { name: 'Change limit' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toContain(
+    'author%3A%40me',
+  );
+});
+
+it('qualifies a local search with no matches when other GitHub results exist', () => {
+  withSections(['authored']);
+  snapshot.value = buildSnapshotOf(
+    { authored: [buildPullRequest()] },
+    {
+      sectionCoverage: { authored: { hasMore: true, queries: [] } },
+    },
+  );
+  filterQuery.value = 'no-such-pull-request';
+  render(<ListView />);
+  expect(screen.getByText(/This search only covers the loaded PRs/)).toBeTruthy();
 });

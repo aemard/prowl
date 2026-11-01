@@ -14,6 +14,7 @@ export function stubDetailFetch(
   respond: (variables: Record<string, unknown>) => Answer | Promise<Answer> = () => detailNode(),
 ) {
   const fetch = vi.fn(async (_url: string, init: RequestInit) => {
+    if (init.method === 'GET' && _url.includes('/rules/branches/')) return jsonResponse([]);
     const out = await respond(JSON.parse(String(init.body)).variables);
     return out instanceof Response ? out : jsonResponse({ data: detailResponse(out) });
   });
