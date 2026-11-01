@@ -12,9 +12,9 @@ import { jsonResponse } from '../../../tests/fixtures/http';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import { buildAuth, buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import { details } from '../state/prDetail';
-import { auth } from '../state/store';
+import { auth, snapshot } from '../state/store';
 import { PullRequestDetails } from './PullRequestDetails';
 
 const pr = buildPullRequest({
@@ -34,6 +34,7 @@ beforeEach(() => {
 afterEach(() => {
   auth.value = undefined;
   details.value = {};
+  snapshot.value = undefined;
 });
 
 const list = (name: string) => within(screen.getByRole('list', { name }));
@@ -230,4 +231,42 @@ it('does not display old-head checks while a new-head detail request is pending'
     }),
   );
   await screen.findByText('new-head-check');
+});
+
+describe('what the card says about the merge facts', () => {
+  const agoMs = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+  const stored = (extra: Parameters<typeof buildSnapshotOf>[1]) => {
+    snapshot.value = buildSnapshotOf({ authored: [pr] }, extra);
+  };
+  const freshness = () => document.querySelector('.pr-detail__freshness')?.textContent;
+
+  it('gives the date they were read, and that cached ones are due', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({ mergeStateAt: { [pr.id]: agoMs(20) }, mergeStateDue: [pr.id] });
+    show();
+    expect(freshness()).toBe('Merge facts verified 20 min ago · cached, verification due.');
+  });
+
+  it('gives no due mark to facts that were just read', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({ mergeStateAt: { [pr.id]: agoMs(2) } });
+    show();
+    expect(freshness()).toBe('Merge facts verified 2 min ago.');
+  });
+
+  it('says they were not verified for this commit when there is no date', () => {
+    stubDetailFetch(() => new Promise(() => {}));
+    stored({});
+    show();
+    expect(freshness()).toBe('Merge facts have not been verified for this commit.');
+  });
+
+  it('sends to GitHub for the connections and details it could not load', async () => {
+    stubDetailFetch(() => detailNode({ latestReviews: { nodes: [], totalCount: 21 } }));
+    show({ incomplete: ['conversations'] });
+    const note = () => screen.getByRole('note');
+    expect(note().textContent).toContain('Some conversations are not loaded.');
+    await waitFor(() => expect(note().textContent).toContain('Some reviews are not loaded.'));
+    expect(within(note()).getByRole('link', { name: 'View full details on GitHub' })).toBeTruthy();
+  });
 });

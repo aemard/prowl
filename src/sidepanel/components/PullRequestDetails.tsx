@@ -231,10 +231,7 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
 
   const entry = details.value[pr.id];
   const detail = entry?.key === key && !entry.loading && !entry.error ? entry.detail : undefined;
-  const checkedAt =
-    snapshot.value?.pullRequests[pr.id]?.headSha === pr.headSha
-      ? snapshot.value.mergeStateAt?.[pr.id]
-      : undefined;
+  const checkedAt = snapshot.value?.mergeStateAt?.[pr.id];
   const due = snapshot.value?.mergeStateDue?.includes(pr.id);
   const waiting = !detail && !entry?.error;
   return (
