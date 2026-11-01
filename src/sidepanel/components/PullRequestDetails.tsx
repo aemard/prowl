@@ -233,6 +233,9 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
           <ReviewActions pr={pr} />
           <MergeAction pr={pr} />
           <MaintenanceActions pr={pr} />
+          <GitHubLink class="pr-actions__link" href={`${pr.url}/files`}>
+            View changes on GitHub
+          </GitHubLink>
         </div>
       </Group>
       {entry?.error && (

@@ -5,7 +5,6 @@ import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { type ReviewDraftKind, reviewDrafts, setReviewDraft } from '../state/reviewDrafts';
 import { auth } from '../state/store';
-import { GitHubLink } from './GitHubLink';
 import { CheckIcon, CommentIcon, FileDiffIcon } from './icons';
 import { Button } from './ui/Button';
 import { Dialog } from './ui/Dialog';
@@ -116,9 +115,6 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
       >
         {WRITTEN.comment.name}
       </Button>
-      {canReview && (
-        <GitHubLink href={`${pr.url.replace(/\/$/, '')}/files`}>View changes on GitHub</GitHubLink>
-      )}
       {writing && written && (
         <Dialog
           open
