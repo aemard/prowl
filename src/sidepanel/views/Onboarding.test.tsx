@@ -50,6 +50,7 @@ describe('OnboardingView', () => {
     const alternative = screen.getByRole('button', { name: 'Use a personal access token' });
     expect(alternative.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(alternative);
+    expect(alternative.getAttribute('aria-expanded')).toBe('true');
     expect(screen.queryByRole('heading', { name: 'Classic token' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
       'secondary',
@@ -57,8 +58,26 @@ describe('OnboardingView', () => {
     expect(screen.queryByText(/not available in this build/)).toBeNull();
   });
 
+  it('shows the token form when Chrome access to github.com is refused', async () => {
+    vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
+    render(<OnboardingView />);
+    expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Continue with GitHub' }));
+    });
+
+    expect(screen.getByRole('alert').textContent).toMatch(/paste a token below/);
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'Use a personal access token' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
+
   it('ends with the version, the shortcut and the links of Settings', async () => {
-    renderTokens();
+    render(<OnboardingView />);
     expect(await screen.findByText('Ctrl+Shift+P')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Source code' })).toBeTruthy();
   });
@@ -197,7 +216,7 @@ describe('OnboardingView in a build without an OAuth client id', () => {
   });
 
   it('shows browser sign-in as unavailable with a link to the docs, and no dead button', () => {
-    renderTokens();
+    render(<OnboardingView />);
 
     expect(
       screen.getByText(/Signing in from the browser is not available in this build/),
@@ -206,14 +225,15 @@ describe('OnboardingView in a build without an OAuth client id', () => {
       screen.getByRole('link', { name: 'How to sign in with a token' }).getAttribute('href'),
     ).toBe(AUTH_DOCS_URL);
     expect(screen.queryByRole('button', { name: 'Continue with GitHub' })).toBeNull();
-    expect(screen.queryByText('or paste a token')).toBeNull();
+    // The token form is the only way in, so it is shown without a disclosure button.
+    expect(screen.queryByRole('button', { name: 'Use a personal access token' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
       'primary',
     );
   });
 
   it('opens the docs in a tab', () => {
-    renderTokens();
+    render(<OnboardingView />);
     fireEvent.click(screen.getByRole('link', { name: 'How to sign in with a token' }));
     expect(fakeChrome().__state.createdTabs).toEqual([{ url: AUTH_DOCS_URL }]);
   });
