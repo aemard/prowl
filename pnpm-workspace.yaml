@@ -5,3 +5,11 @@ packages:
 # dependencies already ship, so it stays off (docs/decisions.md).
 allowBuilds:
   esbuild: false
+
+# Lighthouse's Sentry build tooling still requests glob 13. Patch GHSA-3g3m-2fjr-6pw4
+# and GHSA-g3hv-75wg-m249 until upstream adopts the fixed majors. Nothing ships in the extension.
+# https://github.com/advisories/GHSA-3g3m-2fjr-6pw4
+# https://github.com/advisories/GHSA-g3hv-75wg-m249
+overrides:
+  'glob@>=9.0.0 <=14.0.1': ^14.0.2
+  'minimatch@<11.0.1': ^11.0.1
