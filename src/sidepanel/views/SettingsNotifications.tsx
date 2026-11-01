@@ -63,7 +63,6 @@ export function NotificationsSettings() {
                   label={EVENT_LABELS[type].label}
                   description={EVENT_LABELS[type].description}
                   checked={events[type]}
-                  disabled={!enabled}
                   onChange={(next) =>
                     update((n) => ({ ...n, events: { ...n.events, [type]: next } }))
                   }
@@ -76,7 +75,6 @@ export function NotificationsSettings() {
             label="Quiet hours"
             description="Silence notifications at set times every day, in your local time."
             checked={quietHours.enabled}
-            disabled={!enabled}
             onChange={(next) =>
               update((n) => ({ ...n, quietHours: { ...n.quietHours, enabled: next } }))
             }
@@ -86,25 +84,21 @@ export function NotificationsSettings() {
               label="From"
               type="time"
               value={quietHours.start}
-              disabled={!enabled || !quietHours.enabled}
+              disabled={!quietHours.enabled}
               onValueChange={(value) => setTime('start', value)}
             />
             <TextField
               label="Until"
               type="time"
               value={quietHours.end}
-              disabled={!enabled || !quietHours.enabled}
+              disabled={!quietHours.enabled}
               onValueChange={(value) => setTime('end', value)}
             />
           </div>
           {note && <p class="settings-note">{note}</p>}
 
           <div class="settings-test">
-            <Button
-              icon={<BellIcon />}
-              disabled={!enabled}
-              onClick={() => void sendTestNotification()}
-            >
+            <Button icon={<BellIcon />} onClick={() => void sendTestNotification()}>
               Send test notification
             </Button>
             <p class="settings-note">
