@@ -142,12 +142,35 @@ export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
   };
 }
 
+function mapConversation(node: PullRequestNode) {
+  const lastComment = present(node.comments).at(-1);
+  return {
+    reviews: present(node.latestReviews)
+      .flatMap(({ id, state, submittedAt, author }) => {
+        const mapped = pick(REVIEW_STATES, state, null);
+        return mapped && submittedAt
+          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
+          : [];
+      })
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+    requestedReviewers: present(node.reviewRequests).flatMap(
+      ({ requestedReviewer }) => requestedReviewer?.login ?? [],
+    ),
+    labels: present(node.labels).map(mapLabel),
+    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
+    unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
+    commentCount: node.totalCommentsCount ?? 0,
+    lastComment: lastComment
+      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
+      : null,
+  };
+}
+
 /** A search result; its merge facts are unknown until `mapMergeState` fills them in. */
 export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>): PullRequest {
   const { repository: repo } = node;
   const head = node.commits.nodes?.at(-1)?.commit;
   const contexts = head?.statusCheckRollup?.contexts;
-  const lastComment = present(node.comments).at(-1);
   const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
   return {
     id: node.id,
@@ -175,24 +198,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
       ...(contexts?.statusContextCountsByState ?? []),
     ]),
     ...mapMergeState(node),
-    reviews: present(node.latestReviews)
-      .flatMap(({ id, state, submittedAt, author }) => {
-        const mapped = pick(REVIEW_STATES, state, null);
-        return mapped && submittedAt
-          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
-          : [];
-      })
-      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
-    requestedReviewers: present(node.reviewRequests).flatMap(
-      ({ requestedReviewer }) => requestedReviewer?.login ?? [],
-    ),
-    labels: present(node.labels).map(mapLabel),
-    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
-    unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
-    commentCount: node.totalCommentsCount ?? 0,
-    lastComment: lastComment
-      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
-      : null,
+    ...mapConversation(node),
     // A search result does not carry the ClosedEvent: closed PRs get their closer from
     // `mapClosedState`, merged ones from `mergedBy`.
     closedBy: node.mergedBy?.login ?? null,

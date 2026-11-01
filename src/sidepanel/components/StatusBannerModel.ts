@@ -63,30 +63,49 @@ export function describeStatus(
     : 'retrying soon';
   const error = poll.lastError;
 
-  if (!error) {
-    // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
-    if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
-      return {
-        kind: 'rate_limited',
-        tone: 'warning',
-        title: 'GitHub rate limit almost used up',
-        detail: `Refreshing resumes at ${clock(until)}.`,
-        age,
-        action: null,
-      };
-    }
-    const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
-    if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  if (!error) return describeQuietPoll(poll, fetchedAt, intervalMinutes, now, age);
+  return describePollError(error, waiting, until, retrying, age);
+}
+
+function describeQuietPoll(
+  poll: PollState,
+  fetchedAt: string | undefined,
+  intervalMinutes: number,
+  now: number,
+  age: string,
+): Banner | null {
+  const waiting = isWaiting(poll.nextAllowedAt, now);
+  const until = poll.nextAllowedAt ? Date.parse(poll.nextAllowedAt) : 0;
+  // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
+  if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
     return {
-      kind: 'stale',
+      kind: 'rate_limited',
       tone: 'warning',
-      title: 'Pull requests may be out of date',
-      detail: '',
+      title: 'GitHub rate limit almost used up',
+      detail: `Refreshing resumes at ${clock(until)}.`,
       age,
-      action: { type: 'retry', label: 'Refresh now' },
+      action: null,
     };
   }
+  const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
+  if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  return {
+    kind: 'stale',
+    tone: 'warning',
+    title: 'Pull requests may be out of date',
+    detail: '',
+    age,
+    action: { type: 'retry', label: 'Refresh now' },
+  };
+}
 
+function describePollError(
+  error: NonNullable<PollState['lastError']>,
+  waiting: boolean,
+  until: number,
+  retrying: string,
+  age: string,
+): Banner {
   switch (error.kind) {
     case 'unauthorized':
       return {

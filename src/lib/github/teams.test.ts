@@ -119,80 +119,81 @@ describe('teamsDue', () => {
   });
 });
 
-describe('discoverTeams', () => {
-  const auth = (overrides: Partial<AuthState> = {}) => ({
-    tokenType: 'classic' as const,
-    scopes: ['repo', 'read:org'],
-    viewer: { login: 'octocat', avatarUrl: '', name: null },
-    ...overrides,
-  });
-  const previous: TeamsState = {
+const auth = (overrides: Partial<AuthState> = {}) => ({
+  tokenType: 'classic' as const,
+  scopes: ['repo', 'read:org'],
+  viewer: { login: 'octocat', avatarUrl: '', name: null },
+  ...overrides,
+});
+const previous: TeamsState = {
+  login: 'octocat',
+  fetchedAt: '2026-10-06T12:00:00.000Z',
+  teams: [{ org: 'acme', slug: 'old', name: 'Old' }],
+  error: null,
+};
+const forbidden = () => jsonResponse({ message: 'Resource not accessible' }, { status: 403 });
+const notFound = () => jsonResponse({ message: 'Not Found' }, { status: 404 });
+
+it('discoverTeams stores the list for the viewer', async () => {
+  const { client } = setup([teamJson('acme/core', 'Core')]);
+  expect(await discoverTeams(client, auth(), previous, NOW)).toEqual({
     login: 'octocat',
-    fetchedAt: '2026-10-06T12:00:00.000Z',
-    teams: [{ org: 'acme', slug: 'old', name: 'Old' }],
+    fetchedAt: new Date(NOW).toISOString(),
+    teams: [{ org: 'acme', slug: 'core', name: 'Core' }],
     error: null,
-  };
-  const forbidden = () => jsonResponse({ message: 'Resource not accessible' }, { status: 403 });
-  const notFound = () => jsonResponse({ message: 'Not Found' }, { status: 404 });
-
-  it('stores the list for the viewer', async () => {
-    const { client } = setup([teamJson('acme/core', 'Core')]);
-    expect(await discoverTeams(client, auth(), previous, NOW)).toEqual({
-      login: 'octocat',
-      fetchedAt: new Date(NOW).toISOString(),
-      teams: [{ org: 'acme', slug: 'core', name: 'Core' }],
-      error: null,
-    });
   });
+});
 
-  it.each([
-    ['a classic token without read:org', auth({ scopes: ['repo'] }), forbidden],
-    ['a fine-grained token', auth({ tokenType: 'fine_grained', scopes: [] }), notFound],
-  ])('reports a missing scope for %s and keeps the previous list', async (_, who, answer) => {
+it.each([
+  ['a classic token without read:org', auth({ scopes: ['repo'] }), forbidden],
+  ['a fine-grained token', auth({ tokenType: 'fine_grained', scopes: [] }), notFound],
+])(
+  'discoverTeams reports a missing scope for %s and keeps the previous list',
+  async (_, who, answer) => {
     const { client } = setup([], answer);
     const result = await discoverTeams(client, who, previous, NOW);
     expect(result.teams).toEqual(previous.teams);
     expect(result.error?.kind).toBe('missing_scope');
     expect(result.error?.message).toMatch(/read:org.*Members: read/);
-  });
+  },
+);
 
-  it.each([
-    ['forbidden', forbidden, 'Resource not accessible'],
-    ['server', () => jsonResponse({ message: 'Server Error' }, { status: 502 }), 'Server Error'],
-    [
-      'rate_limited',
-      () =>
-        jsonResponse(
-          { message: 'API rate limit exceeded' },
-          { status: 403, headers: rateLimitHeaders({ remaining: 0 }) },
-        ),
-      'API rate limit exceeded',
-    ],
-  ] as const)('records any other refusal (%s) as is', async (kind, answer, message) => {
-    const { client } = setup([], answer);
-    const result = await discoverTeams(client, auth(), { ...previous, login: 'hubot' }, NOW);
-    expect(result).toEqual({
-      login: 'octocat',
-      fetchedAt: new Date(NOW).toISOString(),
-      teams: [],
-      error: { kind, message: `Could not list your teams: ${message}` },
-    });
+it.each([
+  ['forbidden', forbidden, 'Resource not accessible'],
+  ['server', () => jsonResponse({ message: 'Server Error' }, { status: 502 }), 'Server Error'],
+  [
+    'rate_limited',
+    () =>
+      jsonResponse(
+        { message: 'API rate limit exceeded' },
+        { status: 403, headers: rateLimitHeaders({ remaining: 0 }) },
+      ),
+    'API rate limit exceeded',
+  ],
+] as const)('discoverTeams records any other refusal (%s) as is', async (kind, answer, message) => {
+  const { client } = setup([], answer);
+  const result = await discoverTeams(client, auth(), { ...previous, login: 'hubot' }, NOW);
+  expect(result).toEqual({
+    login: 'octocat',
+    fetchedAt: new Date(NOW).toISOString(),
+    teams: [],
+    error: { kind, message: `Could not list your teams: ${message}` },
   });
+});
 
-  it.each([
-    ['unauthorized', () => jsonResponse({ message: 'Bad credentials' }, { status: 401 })],
-    ['network', () => new TypeError('Failed to fetch')],
-  ] as const)('throws %s, which fails the whole poll', async (kind, answer) => {
-    const { client } = setup([], answer);
-    await expect(discoverTeams(client, auth(), undefined, NOW)).rejects.toMatchObject({ kind });
-  });
+it.each([
+  ['unauthorized', () => jsonResponse({ message: 'Bad credentials' }, { status: 401 })],
+  ['network', () => new TypeError('Failed to fetch')],
+] as const)('discoverTeams throws %s, which fails the whole poll', async (kind, answer) => {
+  const { client } = setup([], answer);
+  await expect(discoverTeams(client, auth(), undefined, NOW)).rejects.toMatchObject({ kind });
+});
 
-  it('throws what is not a GitHub failure', async () => {
-    const bug = new RangeError('bug');
-    const client = { rest: () => Promise.reject(bug) } as unknown as Parameters<
-      typeof discoverTeams
-    >[0];
-    await expect(discoverTeams(client, auth(), undefined)).rejects.toBe(bug);
-    expect(bug).not.toBeInstanceOf(GitHubError);
-  });
+it('discoverTeams throws what is not a GitHub failure', async () => {
+  const bug = new RangeError('bug');
+  const client = { rest: () => Promise.reject(bug) } as unknown as Parameters<
+    typeof discoverTeams
+  >[0];
+  await expect(discoverTeams(client, auth(), undefined)).rejects.toBe(bug);
+  expect(bug).not.toBeInstanceOf(GitHubError);
 });

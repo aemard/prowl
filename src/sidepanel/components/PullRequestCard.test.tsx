@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/preact';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
@@ -42,284 +42,275 @@ afterEach(() => {
   details.value = {};
 });
 
-describe('PullRequestCard', () => {
-  it('shows a static merge indicator only while this card is actually being refreshed', () => {
-    const pr = pr42();
-    pollState.value = buildPollState({ inFlight: true, mergePending: ['another-pr'] });
-    renderCard();
-    expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
-    act(() => {
-      pollState.value = buildPollState({ inFlight: true, mergePending: [pr.id] });
-    });
-    expect(screen.getByTitle('Checking the latest merge status on GitHub').textContent).toBe(
-      'Updating merge status',
-    );
-    expect(toggleOf().description).toContain('Updating merge status');
-    act(() => {
-      pollState.value = buildPollState({ inFlight: false });
-    });
-    expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
-    expect(toggleOf().description).not.toContain('Updating merge status');
+it('PullRequestCard shows a static merge indicator only while this card is actually being refreshed', () => {
+  const pr = pr42();
+  pollState.value = buildPollState({ inFlight: true, mergePending: ['another-pr'] });
+  renderCard();
+  expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
+  act(() => {
+    pollState.value = buildPollState({ inFlight: true, mergePending: [pr.id] });
   });
-
-  it('shows the repository next to the number, unless it sits under its repository header', () => {
-    const { rerender } = render(
-      <ul>
-        <PullRequestCard pr={pr42()} unseen={false} now={NOW} />
-      </ul>,
-    );
-    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('acme/widgets#42');
-
-    rerender(
-      <ul>
-        <PullRequestCard pr={pr42()} unseen={false} now={NOW} grouped />
-      </ul>,
-    );
-    expect(document.querySelector('.pr-card__repo')?.textContent).toBe('#42');
-    // The title link still names the repository for a screen reader that jumps between links.
-    expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBeTruthy();
+  expect(screen.getByTitle('Checking the latest merge status on GitHub').textContent).toBe(
+    'Updating merge status',
+  );
+  expect(toggleOf().description).toContain('Updating merge status');
+  act(() => {
+    pollState.value = buildPollState({ inFlight: false });
   });
-
-  it('says which of your teams is asked to review, on the card and to a screen reader', () => {
-    render(
-      <ul>
-        <PullRequestCard pr={pr42()} unseen={false} now={NOW} teams={['acme/web', 'acme/api']} />
-      </ul>,
-    );
-    expect(screen.getByTitle('Review requested from @acme/web, @acme/api').textContent).toBe(
-      '@acme/web, @acme/api',
-    );
-    expect(toggleOf().description).toContain('Review requested from @acme/web, @acme/api');
-  });
-
-  it('has a title link and a separate expand button, each named, and describes the rest', () => {
-    const link = renderCard({
-      author: {
-        login: 'bob',
-        avatarUrl: 'https://avatars.githubusercontent.com/bob',
-        isBot: false,
-      },
-      checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
-      reviewDecision: 'changes_requested',
-      commentCount: 4,
-      unresolvedThreads: 2,
-    });
-    expect(link.getAttribute('href')).toBe('https://github.com/acme/widgets/pull/42');
-    expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBe(link);
-
-    const { button, description } = toggleOf();
-    expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(button.getAttribute('aria-controls')).toBeNull();
-    expect(description.startsWith('acme/widgets#42, by bob. ')).toBe(true);
-    for (const fact of [
-      'Checks failing',
-      'Changes requested',
-      '2 unresolved threads',
-      '4 comments',
-    ])
-      expect(description).toContain(fact);
-
-    // Never nested: each is its own tab stop, and the title link is not inside the button.
-    expect(button.contains(link)).toBe(false);
-    expect(link.closest('button')).toBeNull();
-    // The expand button and the "More actions" menu.
-    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
-      expect.stringMatching(/^More actions for /),
-      expect.stringMatching(/^Details for /),
-    ]);
-    expect(screen.getAllByRole('link')).toHaveLength(1);
-  });
-
-  it('shows repo, number, author, times, chips and counts as text', () => {
-    renderCard({
-      checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
-      reviewDecision: 'changes_requested',
-      mergeable: 'conflicting',
-      isDraft: true,
-      commentCount: 4,
-      unresolvedThreads: 2,
-      updatedAt: '2026-10-06T11:55:00.000Z',
-      createdAt: '2026-10-03T12:00:00.000Z',
-    });
-    expect(screen.getByText('acme/widgets')).toBeTruthy();
-    expect(screen.getByText('#42')).toBeTruthy();
-    expect(screen.getByText('5 min ago').getAttribute('datetime')).toBe('2026-10-06T11:55:00.000Z');
-    expect(screen.getByText('Opened 3 d ago')).toBeTruthy();
-    expect(screen.getByTitle('Opened by alice').textContent).toBe('Opened 3 d ago by alice');
-    for (const chip of ['Draft', '1 failing', 'Changes requested', 'Conflicts'])
-      expect(screen.getByText(chip)).toBeTruthy();
-    expect(screen.getByText('2 unresolved')).toBeTruthy();
-    expect(screen.getByTitle('4 comments').textContent).toBe('4');
-    expect(screen.getByTitle('Fix the flaky test').textContent).toBe('Fix the flaky test');
-  });
-
-  it('names no author on your own pull requests', () => {
-    renderCard({
-      author: {
-        login: 'OctoCat',
-        avatarUrl: 'https://avatars.githubusercontent.com/o',
-        isBot: false,
-      },
-    });
-    expect(screen.getByText(/^Opened /).parentElement?.textContent).not.toMatch(/ by /);
-  });
-
-  it('marks unseen changes with a dot and in the description', () => {
-    renderCard();
-    expect(screen.queryByTitle('Unseen changes')).toBeNull();
-    expect(toggleOf().description).not.toContain('Unseen changes');
-    expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBeNull();
-    document.body.innerHTML = '';
-
-    renderCard({}, true);
-    expect(screen.getByTitle('Unseen changes')).toBeTruthy();
-    expect(toggleOf().description).toContain('Unseen changes');
-    expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBe('true');
-  });
-
-  it('marks labels with a dot of their own color, and collapses extras', () => {
-    renderCard({
-      labels: [
-        { name: 'bug', color: 'd73a4a' },
-        { name: 'needs design', color: 'fbca04' },
-        { name: 'ui', color: '0b1f3a' },
-        { name: 'p1', color: 'ffffff' },
-        { name: 'p2', color: '000000' },
-      ],
-    });
-    const style = (name: string) => screen.getByText(name).getAttribute('style') ?? '';
-    expect(style('bug')).toContain('--label-color: #d73a4a');
-    expect(style('needs design')).toContain('--label-color: #fbca04');
-    expect(screen.queryByText('p1')).toBeNull();
-    expect(screen.getByText('+2').getAttribute('title')).toBe('p1, p2');
-    expect(toggleOf().description).toContain('Labels: bug, needs design, ui, p1, p2');
-  });
-
-  it('omits what the PR does not have', () => {
-    renderCard({ mergeable: 'unknown', author: null });
-    const card = document.querySelector('.pr-card__summary') as HTMLElement;
-    expect(card.querySelector('.pr-card__chips')).toBeNull();
-    expect(card.querySelector('.pr-card__labels')).toBeNull();
-    expect(card.querySelector('.pr-card__stat')).toBeNull();
-    expect(card.querySelector('img')).toBeNull();
-  });
-
-  it('opens the PR in a new tab instead of navigating the panel', () => {
-    const link = renderCard();
-    const proceeded = fireEvent.click(link);
-    expect(proceeded).toBe(false);
-    expect(fakeChrome().__state.createdTabs).toEqual([
-      { url: 'https://github.com/acme/widgets/pull/42' },
-    ]);
-  });
-
-  it('never links outside GitHub', () => {
-    const link = renderCard({ url: 'https://evil.example/acme/widgets/pull/42' });
-    expect(link.getAttribute('href')).toBeNull();
-    fireEvent.click(link);
-    expect(fakeChrome().__state.createdTabs).toEqual([]);
-  });
-
-  it('renders untrusted text as text', () => {
-    renderCard({ title: '<img src=x onerror=alert(1)>' });
-    const link = screen.getByRole('link');
-    expect(within(link).getByText('<img src=x onerror=alert(1)>')).toBeTruthy();
-    expect(document.querySelector('img[src="x"]')).toBeNull();
-  });
-
-  it('opens the PR from the title without expanding the card', () => {
-    renderCard();
-    fireEvent.click(screen.getByRole('link'));
-    expect(fakeChrome().__state.createdTabs).toHaveLength(1);
-    expect(expandedIds.value).toEqual([]);
-  });
+  expect(screen.queryByTitle('Checking the latest merge status on GitHub')).toBeNull();
+  expect(toggleOf().description).not.toContain('Updating merge status');
 });
 
-describe('expanding', () => {
-  const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
+it('PullRequestCard shows the repository next to the number, unless it sits under its repository header', () => {
+  const { rerender } = render(
+    <ul>
+      <PullRequestCard pr={pr42()} unseen={false} now={NOW} />
+    </ul>,
+  );
+  expect(document.querySelector('.pr-card__repo')?.textContent).toBe('acme/widgets#42');
 
-  it('opens the details with the button, which then points at them', async () => {
-    renderCard();
-    expect(screen.queryByRole('list', { name: 'Merge' })).toBeNull();
+  rerender(
+    <ul>
+      <PullRequestCard pr={pr42()} unseen={false} now={NOW} grouped />
+    </ul>,
+  );
+  expect(document.querySelector('.pr-card__repo')?.textContent).toBe('#42');
+  // The title link still names the repository for a screen reader that jumps between links.
+  expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBeTruthy();
+});
 
-    fireEvent.click(toggleOf().button);
-    expect(expanded()).toBe(true);
-    // The button points at the detail at once (a placeholder while its chunk loads)...
-    const controls = toggleOf().button.getAttribute('aria-controls') ?? '';
-    expect(document.getElementById(controls)?.classList.contains('pr-detail')).toBe(true);
-    // ...and at the loaded detail afterwards.
-    const merge = await screen.findByRole('list', { name: 'Merge' });
-    expect(merge.closest('.pr-detail')?.id).toBe(controls);
-    await screen.findByRole('link', { name: 'lint' });
-    expect(document.querySelectorAll('.pr-card__summary')).toHaveLength(1);
+it('PullRequestCard says which of your teams is asked to review, on the card and to a screen reader', () => {
+  render(
+    <ul>
+      <PullRequestCard pr={pr42()} unseen={false} now={NOW} teams={['acme/web', 'acme/api']} />
+    </ul>,
+  );
+  expect(screen.getByTitle('Review requested from @acme/web, @acme/api').textContent).toBe(
+    '@acme/web, @acme/api',
+  );
+  expect(toggleOf().description).toContain('Review requested from @acme/web, @acme/api');
+});
 
-    fireEvent.click(toggleOf().button);
-    expect(expanded()).toBe(false);
-    expect(document.querySelector('.pr-detail')).toBeNull();
-    expect(toggleOf().button.getAttribute('aria-controls')).toBeNull();
+it('PullRequestCard has a title link and a separate expand button, each named, and describes the rest', () => {
+  const link = renderCard({
+    author: {
+      login: 'bob',
+      avatarUrl: 'https://avatars.githubusercontent.com/bob',
+      isBot: false,
+    },
+    checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
+    reviewDecision: 'changes_requested',
+    commentCount: 4,
+    unresolvedThreads: 2,
   });
+  expect(link.getAttribute('href')).toBe('https://github.com/acme/widgets/pull/42');
+  expect(screen.getByRole('link', { name: 'Fix the flaky test, acme/widgets#42' })).toBe(link);
 
-  it('opens on a click anywhere on the card but its link, button or a selection', () => {
-    renderCard();
-    fireEvent.click(screen.getByText('acme/widgets'));
-    expect(expanded()).toBe(true);
-    fireEvent.click(screen.getByText('acme/widgets'));
-    expect(expanded()).toBe(false);
+  const { button, description } = toggleOf();
+  expect(button.getAttribute('aria-expanded')).toBe('false');
+  expect(button.getAttribute('aria-controls')).toBeNull();
+  expect(description.startsWith('acme/widgets#42, by bob. ')).toBe(true);
+  for (const fact of ['Checks failing', 'Changes requested', '2 unresolved threads', '4 comments'])
+    expect(description).toContain(fact);
 
-    vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => 'Fix the' } as Selection);
-    fireEvent.click(screen.getByText('acme/widgets'));
-    expect(expanded()).toBe(false);
+  // Never nested: each is its own tab stop, and the title link is not inside the button.
+  expect(button.contains(link)).toBe(false);
+  expect(link.closest('button')).toBeNull();
+  // The expand button and the "More actions" menu.
+  expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
+    expect.stringMatching(/^More actions for /),
+    expect.stringMatching(/^Details for /),
+  ]);
+  expect(screen.getAllByRole('link')).toHaveLength(1);
+});
+
+it('PullRequestCard shows repo, number, author, times, chips and counts as text', () => {
+  renderCard({
+    checks: { state: 'failure', total: 3, passed: 2, failed: 1, pending: 0, neutral: 0 },
+    reviewDecision: 'changes_requested',
+    mergeable: 'conflicting',
+    isDraft: true,
+    commentCount: 4,
+    unresolvedThreads: 2,
+    updatedAt: '2026-10-06T11:55:00.000Z',
+    createdAt: '2026-10-03T12:00:00.000Z',
   });
+  expect(screen.getByText('acme/widgets')).toBeTruthy();
+  expect(screen.getByText('#42')).toBeTruthy();
+  expect(screen.getByText('5 min ago').getAttribute('datetime')).toBe('2026-10-06T11:55:00.000Z');
+  expect(screen.getByText('Opened 3 d ago')).toBeTruthy();
+  expect(screen.getByTitle('Opened by alice').textContent).toBe('Opened 3 d ago by alice');
+  for (const chip of ['Draft', '1 failing', 'Changes requested', 'Conflicts'])
+    expect(screen.getByText(chip)).toBeTruthy();
+  expect(screen.getByText('2 unresolved')).toBeTruthy();
+  expect(screen.getByTitle('4 comments').textContent).toBe('4');
+  expect(screen.getByTitle('Fix the flaky test').textContent).toBe('Fix the flaky test');
+});
 
-  it('does not react to clicks inside the details', async () => {
-    renderCard();
-    fireEvent.click(toggleOf().button);
-    await screen.findByRole('link', { name: 'lint' });
-    fireEvent.click(screen.getByText('Merge', { selector: '.pr-detail__label' }));
-    expect(expanded()).toBe(true);
+it('PullRequestCard names no author on your own pull requests', () => {
+  renderCard({
+    author: {
+      login: 'OctoCat',
+      avatarUrl: 'https://avatars.githubusercontent.com/o',
+      isBot: false,
+    },
   });
+  expect(screen.getByText(/^Opened /).parentElement?.textContent).not.toMatch(/ by /);
+});
 
-  it('folds back on Escape and keeps focus on the card’s button', async () => {
-    renderCard();
-    fireEvent.click(toggleOf().button);
-    const link = await screen.findByRole('link', { name: 'lint' });
-    link.focus();
+it('PullRequestCard marks unseen changes with a dot and in the description', () => {
+  renderCard();
+  expect(screen.queryByTitle('Unseen changes')).toBeNull();
+  expect(toggleOf().description).not.toContain('Unseen changes');
+  expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBeNull();
+  document.body.innerHTML = '';
 
-    fireEvent.keyDown(link, { key: 'Enter' });
-    expect(expanded()).toBe(true);
-    fireEvent.keyDown(link, { key: 'Escape' });
-    expect(expanded()).toBe(false);
-    expect(document.activeElement).toBe(toggleOf().button);
+  renderCard({}, true);
+  expect(screen.getByTitle('Unseen changes')).toBeTruthy();
+  expect(toggleOf().description).toContain('Unseen changes');
+  expect(document.querySelector('[data-pr-id]')?.getAttribute('data-unseen')).toBe('true');
+});
 
-    // Nothing to fold: Escape is left alone for whoever else wants it.
-    const ignored = new KeyboardEvent('keydown', {
-      key: 'Escape',
-      bubbles: true,
-      cancelable: true,
-    });
-    act(() => void toggleOf().button.dispatchEvent(ignored));
-    expect(expanded()).toBe(false);
+it('PullRequestCard marks labels with a dot of their own color, and collapses extras', () => {
+  renderCard({
+    labels: [
+      { name: 'bug', color: 'd73a4a' },
+      { name: 'needs design', color: 'fbca04' },
+      { name: 'ui', color: '0b1f3a' },
+      { name: 'p1', color: 'ffffff' },
+      { name: 'p2', color: '000000' },
+    ],
   });
+  const style = (name: string) => screen.getByText(name).getAttribute('style') ?? '';
+  expect(style('bug')).toContain('--label-color: #d73a4a');
+  expect(style('needs design')).toContain('--label-color: #fbca04');
+  expect(screen.queryByText('p1')).toBeNull();
+  expect(screen.getByText('+2').getAttribute('title')).toBe('p1, p2');
+  expect(toggleOf().description).toContain('Labels: bug, needs design, ui, p1, p2');
+});
 
-  it('leaves Escape to a dialog opened from the details: closing it keeps the card open', async () => {
-    renderCard();
-    fireEvent.click(toggleOf().button);
-    fireEvent.click(await screen.findByRole('button', { name: 'Comment on acme/widgets#42' }));
-    const dialog = screen.getByRole('dialog', { name: 'Comment' });
-    fireEvent.keyDown(within(dialog).getByRole('textbox'), { key: 'Escape' });
-    act(() => {
-      dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
-    });
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(expanded()).toBe(true);
-  });
+it('PullRequestCard omits what the PR does not have', () => {
+  renderCard({ mergeable: 'unknown', author: null });
+  const card = document.querySelector('.pr-card__summary') as HTMLElement;
+  expect(card.querySelector('.pr-card__chips')).toBeNull();
+  expect(card.querySelector('.pr-card__labels')).toBeNull();
+  expect(card.querySelector('.pr-card__stat')).toBeNull();
+  expect(card.querySelector('img')).toBeNull();
+});
 
-  it('leaves an Escape that something inside already handled', async () => {
-    renderCard();
-    fireEvent.click(toggleOf().button);
-    const link = await screen.findByRole('link', { name: 'lint' });
-    link.addEventListener('keydown', (event) => event.preventDefault());
-    fireEvent.keyDown(link, { key: 'Escape' });
-    expect(expanded()).toBe(true);
+it('PullRequestCard opens the PR in a new tab instead of navigating the panel', () => {
+  const link = renderCard();
+  const proceeded = fireEvent.click(link);
+  expect(proceeded).toBe(false);
+  expect(fakeChrome().__state.createdTabs).toEqual([
+    { url: 'https://github.com/acme/widgets/pull/42' },
+  ]);
+});
+
+it('PullRequestCard never links outside GitHub', () => {
+  const link = renderCard({ url: 'https://evil.example/acme/widgets/pull/42' });
+  expect(link.getAttribute('href')).toBeNull();
+  fireEvent.click(link);
+  expect(fakeChrome().__state.createdTabs).toEqual([]);
+});
+
+it('PullRequestCard renders untrusted text as text', () => {
+  renderCard({ title: '<img src=x onerror=alert(1)>' });
+  const link = screen.getByRole('link');
+  expect(within(link).getByText('<img src=x onerror=alert(1)>')).toBeTruthy();
+  expect(document.querySelector('img[src="x"]')).toBeNull();
+});
+
+it('PullRequestCard opens the PR from the title without expanding the card', () => {
+  renderCard();
+  fireEvent.click(screen.getByRole('link'));
+  expect(fakeChrome().__state.createdTabs).toHaveLength(1);
+  expect(expandedIds.value).toEqual([]);
+});
+
+const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
+
+it('expanding opens the details with the button, which then points at them', async () => {
+  renderCard();
+  expect(screen.queryByRole('list', { name: 'Merge' })).toBeNull();
+
+  fireEvent.click(toggleOf().button);
+  expect(expanded()).toBe(true);
+  // The button points at the detail at once (a placeholder while its chunk loads)...
+  const controls = toggleOf().button.getAttribute('aria-controls') ?? '';
+  expect(document.getElementById(controls)?.classList.contains('pr-detail')).toBe(true);
+  // ...and at the loaded detail afterwards.
+  const merge = await screen.findByRole('list', { name: 'Merge' });
+  expect(merge.closest('.pr-detail')?.id).toBe(controls);
+  await screen.findByRole('link', { name: 'lint' });
+  expect(document.querySelectorAll('.pr-card__summary')).toHaveLength(1);
+
+  fireEvent.click(toggleOf().button);
+  expect(expanded()).toBe(false);
+  expect(document.querySelector('.pr-detail')).toBeNull();
+  expect(toggleOf().button.getAttribute('aria-controls')).toBeNull();
+});
+
+it('expanding opens on a click anywhere on the card but its link, button or a selection', () => {
+  renderCard();
+  fireEvent.click(screen.getByText('acme/widgets'));
+  expect(expanded()).toBe(true);
+  fireEvent.click(screen.getByText('acme/widgets'));
+  expect(expanded()).toBe(false);
+
+  vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => 'Fix the' } as Selection);
+  fireEvent.click(screen.getByText('acme/widgets'));
+  expect(expanded()).toBe(false);
+});
+
+it('expanding does not react to clicks inside the details', async () => {
+  renderCard();
+  fireEvent.click(toggleOf().button);
+  await screen.findByRole('link', { name: 'lint' });
+  fireEvent.click(screen.getByText('Merge', { selector: '.pr-detail__label' }));
+  expect(expanded()).toBe(true);
+});
+
+it('expanding folds back on Escape and keeps focus on the card’s button', async () => {
+  renderCard();
+  fireEvent.click(toggleOf().button);
+  const link = await screen.findByRole('link', { name: 'lint' });
+  link.focus();
+
+  fireEvent.keyDown(link, { key: 'Enter' });
+  expect(expanded()).toBe(true);
+  fireEvent.keyDown(link, { key: 'Escape' });
+  expect(expanded()).toBe(false);
+  expect(document.activeElement).toBe(toggleOf().button);
+
+  // Nothing to fold: Escape is left alone for whoever else wants it.
+  const ignored = new KeyboardEvent('keydown', {
+    key: 'Escape',
+    bubbles: true,
+    cancelable: true,
   });
+  act(() => void toggleOf().button.dispatchEvent(ignored));
+  expect(expanded()).toBe(false);
+});
+
+it('expanding leaves Escape to a dialog opened from the details: closing it keeps the card open', async () => {
+  renderCard();
+  fireEvent.click(toggleOf().button);
+  fireEvent.click(await screen.findByRole('button', { name: 'Comment on acme/widgets#42' }));
+  const dialog = screen.getByRole('dialog', { name: 'Comment' });
+  fireEvent.keyDown(within(dialog).getByRole('textbox'), { key: 'Escape' });
+  act(() => {
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+  });
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(expanded()).toBe(true);
+});
+
+it('expanding leaves an Escape that something inside already handled', async () => {
+  renderCard();
+  fireEvent.click(toggleOf().button);
+  const link = await screen.findByRole('link', { name: 'lint' });
+  link.addEventListener('keydown', (event) => event.preventDefault());
+  fireEvent.keyDown(link, { key: 'Escape' });
+  expect(expanded()).toBe(true);
 });

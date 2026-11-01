@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { headCommit, prNode, viewerNode } from '../../tests/fixtures/github';
 import { mapPullRequest } from '../lib/github/mapPullRequest';
 import type { PullRequest, Snapshot } from '../lib/model';
@@ -10,6 +10,7 @@ import { fakeChrome } from '../test/chrome';
 import { BADGE_COLORS, clearBadge, updateBadge, watchBadge } from './badge';
 
 const failing = mapPullRequest(prNode({ number: 1, commits: headCommit({ FAILURE: 1 }) }));
+
 const ready = mapPullRequest(prNode({ number: 2, mergeStateStatus: 'CLEAN' }));
 
 function snapshot(...prs: PullRequest[]): Snapshot {
@@ -22,125 +23,118 @@ function snapshot(...prs: PullRequest[]): Snapshot {
 }
 
 const shown = () => fakeChrome().__state.badge;
+
 /** Waits for the repaint a storage change triggers. */
 const repainted = (text: string) => vi.waitFor(() => expect(shown().text).toBe(text));
 
-describe('updateBadge', () => {
-  it('paints the count, the color and the tooltip from the stored snapshot', async () => {
-    await setItem('snapshot', snapshot(failing, ready));
-    await updateBadge();
-    expect(shown()).toEqual({
-      text: '2',
-      color: BADGE_COLORS.danger,
-      title: 'Prowl: 2 pull requests needing attention (1 CI failing, 1 ready to merge)',
-    });
-
-    await setItem('snapshot', snapshot(ready));
-    await updateBadge();
-    expect(shown()).toMatchObject({ text: '1', color: BADGE_COLORS.accent });
+it('updateBadge paints the count, the color and the tooltip from the stored snapshot', async () => {
+  await setItem('snapshot', snapshot(failing, ready));
+  await updateBadge();
+  expect(shown()).toEqual({
+    text: '2',
+    color: BADGE_COLORS.danger,
+    title: 'Prowl: 2 pull requests needing attention (1 CI failing, 1 ready to merge)',
   });
 
-  it('is empty without a snapshot', async () => {
-    await chrome.action.setBadgeText({ text: '3' });
-    await updateBadge();
-    expect(shown()).toMatchObject({ text: '', title: 'Prowl' });
-  });
-
-  it('follows settings.badge', async () => {
-    await setItem('snapshot', snapshot(failing));
-    await updateSettings({ badge: 'unseen' });
-    await updateBadge();
-    expect(shown().text).toBe('1');
-    await updateSettings({ badge: 'off' });
-    await updateBadge();
-    expect(shown().text).toBe('');
-  });
-
-  it('leaves the latest storage on screen when calls overlap', async () => {
-    await setItem('snapshot', snapshot(failing, ready));
-    const first = updateBadge();
-    await setItem('snapshot', snapshot(ready));
-    await Promise.all([first, updateBadge()]);
-    expect(shown().text).toBe('1');
-  });
-
-  it('never rejects: a failing badge is logged', async () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    vi.spyOn(chrome.action, 'setBadgeText').mockRejectedValue(new Error('no action'));
-    await expect(updateBadge()).resolves.toBeUndefined();
-    expect(log).toHaveBeenCalledWith('Prowl: updating the badge failed', expect.any(Error));
-  });
+  await setItem('snapshot', snapshot(ready));
+  await updateBadge();
+  expect(shown()).toMatchObject({ text: '1', color: BADGE_COLORS.accent });
 });
 
-describe('clearBadge', () => {
-  it('empties the badge and the tooltip whatever is stored', async () => {
-    await setItem('snapshot', snapshot(failing));
-    await updateBadge();
-    await clearBadge();
-    expect(shown()).toMatchObject({ text: '', title: 'Prowl' });
-  });
+it('updateBadge is empty without a snapshot', async () => {
+  await chrome.action.setBadgeText({ text: '3' });
+  await updateBadge();
+  expect(shown()).toMatchObject({ text: '', title: 'Prowl' });
 });
 
-describe('watchBadge', () => {
-  it('repaints when a poll stores a snapshot', async () => {
-    watchBadge();
-    await setItem('snapshot', snapshot(failing));
-    await repainted('1');
-    await chrome.storage.local.remove('snapshot');
-    await repainted('');
-  });
-
-  it('repaints when the local state changes: snooze and seen', async () => {
-    await setItem('snapshot', snapshot(failing, ready));
-    watchBadge();
-    await updateSettings({ badge: 'unseen' });
-    await repainted('2');
-
-    await updatePrLocal((state) => markSeen(state, failing.id, failing.updatedAt));
-    await repainted('1');
-    await updatePrLocal((state) => snooze(state, ready.id, Date.now() + 3_600_000));
-    await repainted('');
-  });
-
-  it('repaints when the badge setting changes', async () => {
-    await setItem('snapshot', snapshot(failing));
-    await updateBadge();
-    watchBadge();
-    await updateSettings({ badge: 'off' });
-    await repainted('');
-    await updateSettings({ badge: 'attention' });
-    await repainted('1');
-  });
-
-  it('repaints when the list starts to hide drafts or bots', async () => {
-    const draft = mapPullRequest(
-      prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
-    );
-    const bot = mapPullRequest(
-      prNode({
-        number: 3,
-        author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
-        commits: headCommit({ FAILURE: 1 }),
-      }),
-    );
-    await setItem('snapshot', snapshot(failing, draft, bot));
-    await updateBadge();
-    watchBadge();
-    await repainted('3');
-    await updateSettings({ hideDrafts: true });
-    await repainted('2');
-    await updateSettings({ hideBots: true });
-    await repainted('1');
-    await updateSettings({ hideDrafts: false, hideBots: false });
-    await repainted('3');
-  });
+it('updateBadge follows settings.badge', async () => {
+  await setItem('snapshot', snapshot(failing));
+  await updateSettings({ badge: 'unseen' });
+  await updateBadge();
+  expect(shown().text).toBe('1');
+  await updateSettings({ badge: 'off' });
+  await updateBadge();
+  expect(shown().text).toBe('');
 });
 
-describe('BADGE_COLORS', () => {
-  it('match the danger and accent tokens', () => {
-    const tokens = readFileSync('src/styles/tokens.css', 'utf8');
-    const light = (name: string) =>
-      new RegExp(`--color-${name}-solid: (#[0-9a-f]{6});`).exec(tokens)?.[1];
-    expect(BADGE_COLORS).toEqual({ danger: light('danger'), accent: light('accent') });
-  });
+it('updateBadge leaves the latest storage on screen when calls overlap', async () => {
+  await setItem('snapshot', snapshot(failing, ready));
+  const first = updateBadge();
+  await setItem('snapshot', snapshot(ready));
+  await Promise.all([first, updateBadge()]);
+  expect(shown().text).toBe('1');
+});
+
+it('updateBadge never rejects: a failing badge is logged', async () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  vi.spyOn(chrome.action, 'setBadgeText').mockRejectedValue(new Error('no action'));
+  await expect(updateBadge()).resolves.toBeUndefined();
+  expect(log).toHaveBeenCalledWith('Prowl: updating the badge failed', expect.any(Error));
+});
+
+it('clearBadge empties the badge and the tooltip whatever is stored', async () => {
+  await setItem('snapshot', snapshot(failing));
+  await updateBadge();
+  await clearBadge();
+  expect(shown()).toMatchObject({ text: '', title: 'Prowl' });
+});
+
+it('watchBadge repaints when a poll stores a snapshot', async () => {
+  watchBadge();
+  await setItem('snapshot', snapshot(failing));
+  await repainted('1');
+  await chrome.storage.local.remove('snapshot');
+  await repainted('');
+});
+
+it('watchBadge repaints when the local state changes: snooze and seen', async () => {
+  await setItem('snapshot', snapshot(failing, ready));
+  watchBadge();
+  await updateSettings({ badge: 'unseen' });
+  await repainted('2');
+
+  await updatePrLocal((state) => markSeen(state, failing.id, failing.updatedAt));
+  await repainted('1');
+  await updatePrLocal((state) => snooze(state, ready.id, Date.now() + 3_600_000));
+  await repainted('');
+});
+
+it('watchBadge repaints when the badge setting changes', async () => {
+  await setItem('snapshot', snapshot(failing));
+  await updateBadge();
+  watchBadge();
+  await updateSettings({ badge: 'off' });
+  await repainted('');
+  await updateSettings({ badge: 'attention' });
+  await repainted('1');
+});
+
+it('watchBadge repaints when the list starts to hide drafts or bots', async () => {
+  const draft = mapPullRequest(
+    prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
+  );
+  const bot = mapPullRequest(
+    prNode({
+      number: 3,
+      author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
+      commits: headCommit({ FAILURE: 1 }),
+    }),
+  );
+  await setItem('snapshot', snapshot(failing, draft, bot));
+  await updateBadge();
+  watchBadge();
+  await repainted('3');
+  await updateSettings({ hideDrafts: true });
+  await repainted('2');
+  await updateSettings({ hideBots: true });
+  await repainted('1');
+  await updateSettings({ hideDrafts: false, hideBots: false });
+  await repainted('3');
+});
+
+it('BADGE_COLORS match the danger and accent tokens', () => {
+  const tokens = readFileSync('src/styles/tokens.base.css', 'utf8');
+  const light = (name: string) =>
+    new RegExp(`--color-${name}-solid: (#[0-9a-f]{6});`).exec(tokens)?.[1];
+  expect(BADGE_COLORS).toEqual({ danger: light('danger'), accent: light('accent') });
 });

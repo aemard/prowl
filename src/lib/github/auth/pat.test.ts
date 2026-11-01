@@ -93,143 +93,141 @@ describe('TOKEN_URLS', () => {
   });
 });
 
-describe('validatePat', () => {
-  it('builds the AuthState from the viewer and the scopes header', async () => {
-    vi.useFakeTimers({ now: Date.parse(NOW), toFake: ['Date'] });
-    const fetch = github();
-    const { auth, warning } = await validatePat(`  ${CLASSIC}\n`, { fetch });
+it('validatePat builds the AuthState from the viewer and the scopes header', async () => {
+  vi.useFakeTimers({ now: Date.parse(NOW), toFake: ['Date'] });
+  const fetch = github();
+  const { auth, warning } = await validatePat(`  ${CLASSIC}\n`, { fetch });
 
-    expect(auth).toEqual({
-      method: 'pat',
-      token: CLASSIC,
-      tokenType: 'classic',
-      scopes: ['repo', 'read:org'],
-      viewer: viewerNode(),
-      createdAt: NOW,
-      expiresAt: null,
-    });
-    expect(warning).toBeNull();
-
-    const calls = fetch.mock.calls.map(([url, init]) => [url, init.method]);
-    expect(calls).toEqual(
-      expect.arrayContaining([
-        ['https://api.github.com/graphql', 'POST'],
-        ['https://api.github.com/user', 'GET'],
-      ]),
-    );
-    expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: `Bearer ${CLASSIC}` });
+  expect(auth).toEqual({
+    method: 'pat',
+    token: CLASSIC,
+    tokenType: 'classic',
+    scopes: ['repo', 'read:org'],
+    viewer: viewerNode(),
+    createdAt: NOW,
+    expiresAt: null,
   });
+  expect(warning).toBeNull();
 
-  it('records when GitHub says the token expires', async () => {
-    const user = jsonResponse(
-      { login: 'octocat' },
-      { headers: { 'github-authentication-token-expiration': '2026-11-30 12:00:00 UTC' } },
-    );
-    const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
-    expect(auth.expiresAt).toBe('2026-11-30T12:00:00.000Z');
-  });
-
-  it('leaves the expiry unknown when GitHub sends one it cannot read', async () => {
-    const user = jsonResponse(
-      { login: 'octocat' },
-      { headers: { 'github-authentication-token-expiration': 'soon' } },
-    );
-    const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
-    expect(auth).not.toHaveProperty('expiresAt');
-  });
-
-  it('honours a custom API URL', async () => {
-    const fetch = github();
-    await validatePat(CLASSIC, { apiUrl: 'http://127.0.0.1:4010/', fetch });
-    expect(fetch.mock.calls[0]?.[0]).toMatch(/^http:\/\/127\.0\.0\.1:4010\//);
-  });
-
-  it('warns when a classic token has no repo scope, and says which scopes it has', async () => {
-    const { auth, warning } = await validatePat(CLASSIC, {
-      fetch: github({ scopes: 'public_repo, read:user' }),
-    });
-    expect(auth.scopes).toEqual(['public_repo', 'read:user']);
-    expect(warning).toMatch(/no repo scope/);
-  });
-
-  it('warns about a token with no scopes at all (empty header)', async () => {
-    const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes: '' }) });
-    expect(auth.scopes).toEqual([]);
-    expect(warning).toMatch(/no repo scope.* Without the read:org scope/);
-  });
-
-  it.each(['repo', 'repo, user'])(
-    'warns (and still signs in) when a %s token has no read:org',
-    async (scopes) => {
-      const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes }) });
-      expect(auth.viewer).toEqual(viewerNode());
-      expect(warning).toBe(
-        'Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.',
-      );
-    },
+  const calls = fetch.mock.calls.map(([url, init]) => [url, init.method]);
+  expect(calls).toEqual(
+    expect.arrayContaining([
+      ['https://api.github.com/graphql', 'POST'],
+      ['https://api.github.com/user', 'GET'],
+    ]),
   );
+  expect(fetch.mock.calls[0]?.[1].headers).toMatchObject({ Authorization: `Bearer ${CLASSIC}` });
+});
 
-  it.each(['repo, read:org', 'repo, admin:org', 'repo, write:org'])(
-    'does not warn when %s includes read:org',
-    async (scopes) => {
-      expect((await validatePat(CLASSIC, { fetch: github({ scopes }) })).warning).toBeNull();
-    },
+it('validatePat records when GitHub says the token expires', async () => {
+  const user = jsonResponse(
+    { login: 'octocat' },
+    { headers: { 'github-authentication-token-expiration': '2026-11-30 12:00:00 UTC' } },
   );
+  const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
+  expect(auth.expiresAt).toBe('2026-11-30T12:00:00.000Z');
+});
 
-  it('does not warn about scopes when GitHub sent no header (unknown token type)', async () => {
-    const { auth, warning } = await validatePat('0123456789abcdef0123456789abcdef01234567', {
-      fetch: github({ scopes: null }),
-    });
-    expect(auth.tokenType).toBe('unknown');
-    expect(auth.scopes).toEqual([]);
-    expect(warning).toBeNull();
-  });
+it('validatePat leaves the expiry unknown when GitHub sends one it cannot read', async () => {
+  const user = jsonResponse(
+    { login: 'octocat' },
+    { headers: { 'github-authentication-token-expiration': 'soon' } },
+  );
+  const { auth } = await validatePat(CLASSIC, { fetch: github({ user }) });
+  expect(auth).not.toHaveProperty('expiresAt');
+});
 
-  it('stores no scopes for a fine-grained token and explains the missing Checks permission', async () => {
-    const { auth, warning } = await validatePat(FINE_GRAINED, { fetch: github({ scopes: null }) });
-    expect(auth.tokenType).toBe('fine_grained');
-    expect(auth.scopes).toEqual([]);
-    expect(warning).toMatch(/Checks permission/);
-  });
+it('validatePat honours a custom API URL', async () => {
+  const fetch = github();
+  await validatePat(CLASSIC, { apiUrl: 'http://127.0.0.1:4010/', fetch });
+  expect(fetch.mock.calls[0]?.[0]).toMatch(/^http:\/\/127\.0\.0\.1:4010\//);
+});
 
-  it('keeps a missing display name as null', async () => {
-    const { auth } = await validatePat(CLASSIC, {
-      fetch: github({ viewer: { login: 'octocat', avatarUrl: 'https://a/b.png', name: null } }),
-    });
-    expect(auth.viewer).toEqual({ login: 'octocat', avatarUrl: 'https://a/b.png', name: null });
+it('validatePat warns when a classic token has no repo scope, and says which scopes it has', async () => {
+  const { auth, warning } = await validatePat(CLASSIC, {
+    fetch: github({ scopes: 'public_repo, read:user' }),
   });
+  expect(auth.scopes).toEqual(['public_repo', 'read:user']);
+  expect(warning).toMatch(/no repo scope/);
+});
 
-  it.each([
-    ['', 'Paste a token'],
-    ['   ', 'Paste a token'],
-    ['ghp_has space', 'does not look like a GitHub token'],
-    ['"ghp_quoted"', 'does not look like a GitHub token'],
-    ['Authorization: Bearer ghp_x', 'does not look like a GitHub token'],
-  ])('refuses %j without calling GitHub', async (input, message) => {
-    const fetch = github();
-    const error = await validatePat(input, { fetch }).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(GitHubError);
-    expect((error as GitHubError).kind).toBe('validation');
-    expect((error as GitHubError).message).toContain(message);
-    expect(fetch).not.toHaveBeenCalled();
-  });
+it('validatePat warns about a token with no scopes at all (empty header)', async () => {
+  const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes: '' }) });
+  expect(auth.scopes).toEqual([]);
+  expect(warning).toMatch(/no repo scope.* Without the read:org scope/);
+});
 
-  it('rejects a token GitHub does not accept', async () => {
-    const rejected = () => jsonResponse({ message: 'Bad credentials' }, { status: 401 });
-    const error = await validatePat(CLASSIC, {
-      fetch: github({ graphql: rejected(), user: rejected() }),
-    }).catch((e: unknown) => e);
-    expect((error as GitHubError).kind).toBe('unauthorized');
-  });
+it.each(['repo', 'repo, user'])(
+  'validatePat warns (and still signs in) when a %s token has no read:org',
+  async (scopes) => {
+    const { auth, warning } = await validatePat(CLASSIC, { fetch: github({ scopes }) });
+    expect(auth.viewer).toEqual(viewerNode());
+    expect(warning).toBe(
+      'Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.',
+    );
+  },
+);
 
-  it('rejects an answer without a viewer', async () => {
-    for (const viewer of [null, { login: 'octocat' }, { login: 7, avatarUrl: 'x' }]) {
-      const error = await validatePat(CLASSIC, { fetch: github({ viewer }) }).catch(
-        (e: unknown) => e,
-      );
-      expect((error as GitHubError).kind).toBe('server');
-    }
+it.each(['repo, read:org', 'repo, admin:org', 'repo, write:org'])(
+  'validatePat does not warn when %s includes read:org',
+  async (scopes) => {
+    expect((await validatePat(CLASSIC, { fetch: github({ scopes }) })).warning).toBeNull();
+  },
+);
+
+it('validatePat does not warn about scopes when GitHub sent no header (unknown token type)', async () => {
+  const { auth, warning } = await validatePat('0123456789abcdef0123456789abcdef01234567', {
+    fetch: github({ scopes: null }),
   });
+  expect(auth.tokenType).toBe('unknown');
+  expect(auth.scopes).toEqual([]);
+  expect(warning).toBeNull();
+});
+
+it('validatePat stores no scopes for a fine-grained token and explains the missing Checks permission', async () => {
+  const { auth, warning } = await validatePat(FINE_GRAINED, { fetch: github({ scopes: null }) });
+  expect(auth.tokenType).toBe('fine_grained');
+  expect(auth.scopes).toEqual([]);
+  expect(warning).toMatch(/Checks permission/);
+});
+
+it('validatePat keeps a missing display name as null', async () => {
+  const { auth } = await validatePat(CLASSIC, {
+    fetch: github({ viewer: { login: 'octocat', avatarUrl: 'https://a/b.png', name: null } }),
+  });
+  expect(auth.viewer).toEqual({ login: 'octocat', avatarUrl: 'https://a/b.png', name: null });
+});
+
+it.each([
+  ['', 'Paste a token'],
+  ['   ', 'Paste a token'],
+  ['ghp_has space', 'does not look like a GitHub token'],
+  ['"ghp_quoted"', 'does not look like a GitHub token'],
+  ['Authorization: Bearer ghp_x', 'does not look like a GitHub token'],
+])('validatePat refuses %j without calling GitHub', async (input, message) => {
+  const fetch = github();
+  const error = await validatePat(input, { fetch }).catch((e: unknown) => e);
+  expect(error).toBeInstanceOf(GitHubError);
+  expect((error as GitHubError).kind).toBe('validation');
+  expect((error as GitHubError).message).toContain(message);
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it('validatePat rejects a token GitHub does not accept', async () => {
+  const rejected = () => jsonResponse({ message: 'Bad credentials' }, { status: 401 });
+  const error = await validatePat(CLASSIC, {
+    fetch: github({ graphql: rejected(), user: rejected() }),
+  }).catch((e: unknown) => e);
+  expect((error as GitHubError).kind).toBe('unauthorized');
+});
+
+it('validatePat rejects an answer without a viewer', async () => {
+  for (const viewer of [null, { login: 'octocat' }, { login: 7, avatarUrl: 'x' }]) {
+    const error = await validatePat(CLASSIC, { fetch: github({ viewer }) }).catch(
+      (e: unknown) => e,
+    );
+    expect((error as GitHubError).kind).toBe('server');
+  }
 });
 
 describe('signInErrorMessage', () => {

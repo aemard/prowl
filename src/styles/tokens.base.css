@@ -1,0 +1,178 @@
+/*
+ * Prowl design tokens. The only place raw colors are allowed.
+ * The panel follows the system theme by default: light, or dark when the system prefers dark.
+ * `data-theme` on <html> forces one (Settings > Theme). The two dark blocks in tokens.css must stay
+ * identical (tokens.test.ts checks it, and checks every text/background pair against WCAG AA).
+ * Neutrals carry a trace of the logo's ink; the accent is the logo's mint. See docs/design.md.
+ */
+
+/* Theme-independent tokens */
+:root {
+  --color-brand-mint: #a8dacd;
+  --color-brand-ink: #1e1e24;
+  --color-brand-surface: color-mix(in srgb, var(--color-brand-mint) 22%, var(--color-bg));
+
+  /* Typography: a compact scale for a narrow side panel */
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --text-xs: 10px;
+  --leading-xs: 14px;
+  --text-sm: 11px;
+  --leading-sm: 16px;
+  --text-md: 12px;
+  --leading-md: 18px;
+  --text-lg: 13px;
+  --leading-lg: 20px;
+  --text-xl: 16px;
+  --leading-xl: 22px;
+  --text-2xl: 20px;
+  --leading-2xl: 26px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Spacing: 4 px grid */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Sizes */
+  --control-sm: 24px;
+  --control-md: 28px;
+  --glass-blur: blur(22px) saturate(1.15);
+  --icon-sm: 12px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  /* Borders */
+  --border-width: 1px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+
+  /* Motion: short and purposeful. Durations collapse under prefers-reduced-motion. */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-spin: 800ms;
+  --duration-shimmer: 1400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-menu: 40;
+  --z-toast: 50;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    /* The spinner is essential feedback: it keeps turning, slowly. */
+    --duration-spin: 1600ms;
+  }
+}
+
+/* Light theme */
+:root {
+  color-scheme: light;
+
+  /* Neutral scale: 1 = app background ... 12 = high-contrast text */
+  --gray-1: #ffffff;
+  --gray-2: #fafafb;
+  --gray-3: #f3f3f6;
+  --gray-4: #ececef;
+  --gray-5: #e6e6e9;
+  --gray-6: #dcdce0;
+  --gray-7: #c3c3c9;
+  --gray-8: #8b8b93;
+  --gray-9: #7b7b83;
+  --gray-10: #6f6f77;
+  --gray-11: #5f6067;
+  --gray-12: #1e1e24;
+
+  --color-bg: var(--gray-1);
+  --color-bg-subtle: var(--gray-2);
+  --color-bg-hover: var(--gray-3);
+  --color-bg-active: var(--gray-4);
+  --color-surface: #ffffff;
+  --color-border-subtle: var(--gray-4);
+  --color-border: var(--gray-6);
+  --color-border-control: var(--gray-8);
+  --color-fg: var(--gray-12);
+  --color-fg-muted: var(--gray-11);
+  --color-fg-disabled: var(--gray-8);
+  --color-fg-on-solid: #ffffff;
+  --color-fg-on-accent: #ffffff;
+  --color-focus: #007a6d;
+  --color-backdrop: rgb(18 18 21 / 0.32);
+  --color-skeleton: var(--gray-4);
+  --color-skeleton-shine: var(--gray-2);
+  --color-scrollbar: var(--gray-7);
+
+  --color-accent-fg: #007467;
+  --color-accent-bg: #e9f9f6;
+  --color-accent-border: #b4e3da;
+  --color-accent-solid: #007a6d;
+  --color-accent-solid-hover: #00675c;
+
+  --color-success-fg: #1d7635;
+  --color-success-bg: #e7f9e8;
+  --color-success-border: #aee0b4;
+  --color-success-solid: #217937;
+
+  --color-danger-fg: #be222a;
+  --color-danger-bg: #ffefed;
+  --color-danger-border: #fcc0ba;
+  --color-danger-solid: #c2272d;
+  --color-danger-solid-hover: #a51e24;
+
+  --color-warning-fg: #a84811;
+  --color-warning-bg: #ffefe6;
+  --color-warning-border: #f9c3ab;
+  --color-warning-solid: #a84811;
+
+  --color-attention-fg: #825b0c;
+  --color-attention-bg: #fff3db;
+  --color-attention-border: #f5cd90;
+  --color-attention-solid: #825b0c;
+
+  --color-done-fg: #7447c8;
+  --color-done-bg: #f4f1ff;
+  --color-done-border: #d7ccfe;
+  --color-done-solid: #774bcb;
+
+  --color-neutral-fg: var(--gray-11);
+  --color-neutral-bg: var(--gray-3);
+  --color-neutral-border: var(--gray-6);
+  --color-neutral-solid: var(--gray-11);
+
+  --glass-canvas: #f3f6f4;
+  --glass-card: rgba(255, 255, 255, 0.8);
+  --glass-chrome: rgba(255, 255, 255, 0.8);
+  --glass-solid: #f8fcfa;
+  --glass-edge: rgba(88, 119, 103, 0.15);
+  --glass-rim: rgba(255, 255, 255, 0.64);
+  --glass-shadow: 0 4px 12px rgba(15, 62, 46, 0.065), 0 1px 3px rgba(27, 67, 52, 0.035);
+  --glass-mint: rgba(58, 183, 139, 0.15);
+  --glass-blue: rgba(92, 153, 225, 0.12);
+
+  --shadow-sm: 0 1px 2px rgb(18 18 21 / 0.08);
+  --shadow-md: 0 1px 2px rgb(18 18 21 / 0.04), 0 8px 24px rgb(18 18 21 / 0.08);
+  --shadow-lg: 0 2px 6px rgb(18 18 21 / 0.04), 0 16px 48px rgb(18 18 21 / 0.14);
+}

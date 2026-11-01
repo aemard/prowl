@@ -88,112 +88,109 @@ test.describe('onboarding', () => {
     });
   });
 });
+test('sign in › validates a classic token, stores it, polls and shows the list', async ({
+  github,
+  openPanel,
+  serviceWorker,
+  expectNoA11yViolations,
+}) => {
+  serveAccount(github);
+  const messages = await recordMessages(serviceWorker);
+  const panel = await openPanel();
 
-test.describe('sign in', () => {
-  test('validates a classic token, stores it, polls and shows the list', async ({
-    github,
-    openPanel,
-    serviceWorker,
-    expectNoA11yViolations,
-  }) => {
-    serveAccount(github);
-    const messages = await recordMessages(serviceWorker);
-    const panel = await openPanel();
+  await signInWith(panel, `  ${CLASSIC}  `);
 
-    await signInWith(panel, `  ${CLASSIC}  `);
-
-    await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
-    await expect(panel).toHaveURL(/#\/$/);
-    expect(await stored(serviceWorker)).toMatchObject({
-      auth: {
-        method: 'pat',
-        token: CLASSIC,
-        tokenType: 'classic',
-        scopes: ['repo', 'read:org'],
-        viewer,
-      },
-    });
-    await expect.poll(messages).toContainEqual({ type: 'poll', force: true });
-
-    for (const request of [github.requestsFor('ProwlViewer')[0], github.requestsFor('/user')[0]]) {
-      expect(request?.headers.authorization).toBe(`Bearer ${CLASSIC}`);
-    }
-    expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
-    await expectNoA11yViolations(panel);
+  await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
+  await expect(panel).toHaveURL(/#\/$/);
+  expect(await stored(serviceWorker)).toMatchObject({
+    auth: {
+      method: 'pat',
+      token: CLASSIC,
+      tokenType: 'classic',
+      scopes: ['repo', 'read:org'],
+      viewer,
+    },
   });
+  await expect.poll(messages).toContainEqual({ type: 'poll', force: true });
 
-  test('warns when a classic token has no repo scope', async ({ github, openPanel }) => {
-    serveAccount(github, 'read:user');
-    const panel = await openPanel();
+  for (const request of [github.requestsFor('ProwlViewer')[0], github.requestsFor('/user')[0]]) {
+    expect(request?.headers.authorization).toBe(`Bearer ${CLASSIC}`);
+  }
+  expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
+  await expectNoA11yViolations(panel);
+});
 
-    await signInWith(panel, CLASSIC);
+test('sign in › warns when a classic token has no repo scope', async ({ github, openPanel }) => {
+  serveAccount(github, 'read:user');
+  const panel = await openPanel();
 
-    await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
-    await expect(
-      panel.getByText(/Signed in as octocat\. This token has no repo scope/),
-    ).toBeVisible();
+  await signInWith(panel, CLASSIC);
+
+  await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
+  await expect(
+    panel.getByText(/Signed in as octocat\. This token has no repo scope/),
+  ).toBeVisible();
+});
+
+test('sign in › accepts a fine-grained token and warns about CI status', async ({
+  github,
+  openPanel,
+  serviceWorker,
+}) => {
+  serveAccount(github, null);
+  const panel = await openPanel();
+
+  await signInWith(panel, FINE_GRAINED);
+
+  await expect(
+    panel.getByText(/Signed in as octocat\. GitHub does not offer the Checks permission/),
+  ).toBeVisible();
+  expect(await stored(serviceWorker)).toMatchObject({
+    auth: { token: FINE_GRAINED, tokenType: 'fine_grained', scopes: [] },
   });
+});
 
-  test('accepts a fine-grained token and warns about CI status', async ({
-    github,
-    openPanel,
-    serviceWorker,
-  }) => {
-    serveAccount(github, null);
-    const panel = await openPanel();
+test('sign in › shows an inline error for an invalid token and stays signed out', async ({
+  github,
+  openPanel,
+  serviceWorker,
+  expectNoA11yViolations,
+}) => {
+  rejectTokens(github);
+  const messages = await recordMessages(serviceWorker);
+  const panel = await openPanel();
 
-    await signInWith(panel, FINE_GRAINED);
+  await signInWith(panel, CLASSIC);
 
-    await expect(
-      panel.getByText(/Signed in as octocat\. GitHub does not offer the Checks permission/),
-    ).toBeVisible();
-    expect(await stored(serviceWorker)).toMatchObject({
-      auth: { token: FINE_GRAINED, tokenType: 'fine_grained', scopes: [] },
-    });
-  });
+  const error = panel.getByText(/GitHub rejected this token/);
+  await expect(error).toBeVisible();
+  await expect(tokenField(panel)).toBeFocused();
+  await expect(tokenField(panel)).toHaveAttribute('aria-invalid', 'true');
+  await expect(panel.getByRole('button', { name: 'Sign in' })).not.toHaveAttribute('aria-busy');
+  expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
+  expect(await stored(serviceWorker)).not.toHaveProperty('auth');
+  expect(await messages()).toEqual([]);
+  await expectNoA11yViolations(panel);
 
-  test('shows an inline error for an invalid token and stays signed out', async ({
-    github,
-    openPanel,
-    serviceWorker,
-    expectNoA11yViolations,
-  }) => {
-    rejectTokens(github);
-    const messages = await recordMessages(serviceWorker);
-    const panel = await openPanel();
+  // Fixing the token works from the same screen.
+  serveAccount(github);
+  await signInWith(panel, CLASSIC);
+  await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
+});
 
-    await signInWith(panel, CLASSIC);
+test('sign in › asks for a token before calling GitHub, and refuses text that is not one', async ({
+  github,
+  openPanel,
+}) => {
+  const panel = await openPanel();
 
-    const error = panel.getByText(/GitHub rejected this token/);
-    await expect(error).toBeVisible();
-    await expect(tokenField(panel)).toBeFocused();
-    await expect(tokenField(panel)).toHaveAttribute('aria-invalid', 'true');
-    await expect(panel.getByRole('button', { name: 'Sign in' })).not.toHaveAttribute('aria-busy');
-    expect(await panel.locator('body').textContent()).not.toContain(CLASSIC);
-    expect(await stored(serviceWorker)).not.toHaveProperty('auth');
-    expect(await messages()).toEqual([]);
-    await expectNoA11yViolations(panel);
+  await panel.getByRole('button', { name: 'Sign in' }).click();
+  await expect(panel.getByText('Paste a token to sign in.')).toBeVisible();
 
-    // Fixing the token works from the same screen.
-    serveAccount(github);
-    await signInWith(panel, CLASSIC);
-    await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
-  });
-
-  test('asks for a token before calling GitHub, and refuses text that is not one', async ({
-    github,
-    openPanel,
-  }) => {
-    const panel = await openPanel();
-
-    await panel.getByRole('button', { name: 'Sign in' }).click();
-    await expect(panel.getByText('Paste a token to sign in.')).toBeVisible();
-
-    await signInWith(panel, 'Bearer ghp_with spaces');
-    await expect(panel.getByText(/does not look like a GitHub token/)).toBeVisible();
-    expect(github.requests).toEqual([]);
-  });
+  await signInWith(panel, 'Bearer ghp_with spaces');
+  await expect(panel.getByText(/does not look like a GitHub token/)).toBeVisible();
+  expect(github.requests).toEqual([]);
 });
 
 test.describe('sign out', () => {

@@ -52,20 +52,26 @@ async function copy(text: string): Promise<boolean> {
   }
 }
 
-/**
- * The card's "More actions" menu: open, copy branch, snooze or unsnooze, mute or unmute, and the
- * GitHub actions that need no dialog (re-run failed checks, draft toggle). Snooze and mute are
- * local only (`prLocal`), so they never reach GitHub.
- */
-export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
-  const local = prLocal.value;
-  const snoozed = isSnoozed(local, pr.id, now);
-  const muted = isMuted(local, pr.id);
-  const viewer = auth.value?.viewer.login ?? '';
-  const busy = pendingActions.value[pr.id] !== undefined;
-  const ref = prRef(pr);
+async function copyBranch(pr: PullRequest) {
+  const ok = await copy(pr.headRefName);
+  showToast(
+    !ok
+      ? { message: 'Could not copy the branch name.', tone: 'danger' }
+      : isRiskyBranchName(pr.headRefName)
+        ? {
+            message:
+              'Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal.',
+            tone: 'danger',
+            durationMs: 10_000,
+          }
+        : { message: `Copied ${pr.headRefName}`, tone: 'success' },
+  );
+}
 
-  const items: MenuEntry[] = [
+function localEntries(pr: PullRequest, now: number): MenuEntry[] {
+  const local = prLocal.value;
+  const muted = isMuted(local, pr.id);
+  return [
     {
       id: 'open',
       label: 'Open in GitHub',
@@ -77,23 +83,10 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
       label: 'Copy branch name',
       hint: pr.headRefName,
       icon: <CopyIcon />,
-      onSelect: () =>
-        void copy(pr.headRefName).then((ok) =>
-          showToast(
-            !ok
-              ? { message: 'Could not copy the branch name.', tone: 'danger' }
-              : isRiskyBranchName(pr.headRefName)
-                ? {
-                    message: `Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal.`,
-                    tone: 'danger',
-                    durationMs: 10_000,
-                  }
-                : { message: `Copied ${pr.headRefName}`, tone: 'success' },
-          ),
-        ),
+      onSelect: () => void copyBranch(pr),
     },
     'separator',
-    ...(snoozed
+    ...(isSnoozed(local, pr.id, now)
       ? [
           {
             id: 'unsnooze',
@@ -109,7 +102,7 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
           onSelect: () => {
             const until = snoozeUntil(preset, Date.now());
             void updatePrLocal((state) => snooze(state, pr.id, until));
-            showToast({ message: `Snoozed ${ref}`, tone: 'info' });
+            showToast({ message: `Snoozed ${prRef(pr)}`, tone: 'info' });
           },
         }))),
     {
@@ -119,10 +112,14 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
       onSelect: () => void updatePrLocal((state) => (muted ? unmute : mute)(state, pr.id)),
     },
   ];
+}
 
-  const github: MenuEntry[] = [];
+function githubEntries(pr: PullRequest): MenuEntry[] {
+  const viewer = auth.value?.viewer.login ?? '';
+  const busy = pendingActions.value[pr.id] !== undefined;
+  const items: MenuEntry[] = [];
   if (canRerun(pr)) {
-    github.push({
+    items.push({
       id: 'rerun',
       label: RERUN,
       icon: <SyncIcon />,
@@ -131,7 +128,7 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
     });
   }
   if (canToggleDraft(pr, viewer)) {
-    github.push({
+    items.push({
       id: 'draft',
       label: draftActionName(pr),
       icon: pr.isDraft ? <GitPullRequestIcon /> : <GitPullRequestDraftIcon />,
@@ -139,13 +136,23 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
       onSelect: () => void toggleDraft(pr),
     });
   }
-  if (github.length > 0) items.push('separator', ...github);
+  return items;
+}
 
+/**
+ * The card's "More actions" menu: open, copy branch, snooze or unsnooze, mute or unmute, and the
+ * GitHub actions that need no dialog (re-run failed checks, draft toggle). Snooze and mute are
+ * local only (`prLocal`), so they never reach GitHub.
+ */
+export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
+  const items = localEntries(pr, now);
+  const github = githubEntries(pr);
+  if (github.length > 0) items.push('separator', ...github);
   return (
     <Menu
       align="end"
       items={items}
-      label={`Actions for ${ref}`}
+      label={`Actions for ${prRef(pr)}`}
       trigger={(props) => (
         <IconButton
           {...props}
