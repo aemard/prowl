@@ -311,12 +311,14 @@ and are shown as GitHub words them. A payload whose pull request is not `merged`
 error. A rebase has no commit of its own, so its `commitHeadline` is dropped. Re-run and the draft
 toggle (US-017) add their functions here.
 
-The panel runs them through `runPrAction(pr, name, done, run)` (`src/sidepanel/state/prActions.ts`):
-it builds a client for the signed-in token, marks `pendingActions[pr.id] = name` (the signal that
-disables the PR's other action buttons; one action per PR at a time), and shows a success toast
-(`<done> owner/name#n`) followed by `{ type: 'poll', force: true }`, or a danger toast `<name>
-failed: <GitHub's message>` (any error that is not a `GitHubError` becomes "Something went
-wrong."). It resolves to whether it worked and never rejects.
+The panel runs them through `runPrAction(pr, name, done, run, onError?)`
+(`src/sidepanel/state/prActions.ts`): it builds a client for the signed-in token, marks
+`pendingActions[pr.id] = name` (the signal that disables the PR's other action buttons; one action
+per PR at a time), and shows a success toast (`<done> owner/name#n`) followed by `{ type: 'poll',
+force: true }`, or a danger toast `<name> failed: <GitHub's message>` (any error that is not a
+`GitHubError` becomes "Something went wrong."), or calls `onError(message)` instead of the toast
+when the caller shows it itself. It resolves to whether it worked and never rejects; an outcome
+that arrives after another account signed in is dropped (no toast, no poll, `false`).
 
 ## Diff engine
 
@@ -675,8 +677,9 @@ signal (`state/store.ts`).
   `.pr-actions` of small buttons, to which later actions are added. `ReviewActions` renders
   Approve, Request changes and Comment, each named with the PR ("Approve acme/web#12"). Approve
   is one click (no dialog; GitHub cannot take an approval back, so the toast offers no Undo). The
-  other two open a `Dialog` with a required message; a failure closes it, shows the reason in a
-  toast (a modal would cover one) and keeps the text for the next try until the card is folded.
+  other two open a `Dialog` with a required message, kept as a session draft (see Written review
+  drafts); a failure stays in the dialog, beside the field. `PullRequestDetails` ends the row with a
+  "View changes on GitHub" link to `<pr.url>/files`.
   Approve and Request changes are hidden on the viewer's own PRs (GitHub refuses them) and on PRs
   that are not open; Comment is always there. While one action of a PR runs its other buttons are
   disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
@@ -893,3 +896,14 @@ check and writes of progressive snapshots, final snapshots/teams, targeted facts
 and notifications. GitHub reads are outside this lock, which is not reentrant. A completed
 sign-out cannot be undone by an old publication, and delayed `signedOut` cleanup cannot clear a
 newly signed-in account.
+
+## Written review drafts
+
+Comment and change-request drafts live in the panel's in-memory `reviewDrafts` signal
+(`state/reviewDrafts.ts`), keyed by PR id and message kind, so folding a card or leaving the list
+does not discard them. Sending successfully clears only that message; signing out, or in as another
+login (not merely with another token), clears all. They are never written to storage or sent
+without a click. A failed send stays in the dialog: `onError` shows GitHub's reason beside the
+field and `ReviewActions` focuses the field (a toast would hide behind the modal, and the field's
+error paragraph is not a live region); actions without a form keep their toast. The changed-files
+link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched into Prowl.
