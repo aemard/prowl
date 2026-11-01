@@ -76,7 +76,10 @@ in-memory updates that the next snapshot replaces.
    Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
    currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
    Deferred PRs keep their previous facts without a freshness timestamp so they stay due;
-   new PRs have unknown merge facts until read. Search updates continue for all PRs.
+   new PRs have unknown merge facts until read. Search updates continue for all PRs. Facts never
+   cross a head commit: a PR whose head changed starts unknown, and `ProwlMergeState` selects
+   `headRefOid` so facts computed for another head are dropped (the poll leaves that PR
+   unknown and unread, a card refresh keeps what the card had).
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
@@ -221,7 +224,7 @@ Mapping (`mapPullRequest`):
 | Field | Rule |
 |---|---|
 | `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
-| enums | Lower-cased when the model knows the value; otherwise `none` (`reviewDecision`, also when null), `unknown` (`mergeable`, `mergeStateStatus`), `open` (`state`). |
+| enums | Lower-cased when the model knows the value; otherwise `unknown` (`reviewDecision`, `mergeable`, `mergeStateStatus`) or `open` (`state`). `reviewDecision` is `none` when GitHub sends null (no review required), so a missing or unrecognized value is never read as "no requirement". |
 | `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. |
 | `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
 | `labels` | Color lower-cased when it is six hex digits, else `NEUTRAL_LABEL_COLOR` (`ededed`). |
@@ -325,7 +328,7 @@ case-insensitively.
 | `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
-| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, and `mergeStateStatus` `clean`, or `reviewDecision` approved / none with checks success / none and `mergeable` | null | `next.fetchedAt` | head SHA |
+| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a

@@ -199,7 +199,11 @@ export async function fetchPullRequests(
         before.mergeStateStatus !== 'unknown' &&
         searchFacts(before) === searchFacts(pr);
       // Preserve the baseline even when this poll has no budget left for its refresh.
-      if (before) result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
+      if (before?.headSha === pr.headSha) {
+        result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
+      } else if (before) {
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
+      }
       if (valid) {
         result.mergeStateAt[pr.id] = readAt;
       } else {
@@ -236,13 +240,12 @@ export async function fetchPullRequests(
       const readAt = new Date().toISOString();
       batch.forEach((pr, index) => {
         const node = nodes?.[index];
-        const before = previous?.pullRequests[pr.id];
-        if (isNode(node)) {
-          result.pullRequests[pr.id] = { ...pr, ...mapMergeState(node) };
-          result.mergeStateAt[pr.id] = readAt;
-        } else if (before) {
-          result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-        }
+        // A hole or a failed batch leaves the baseline above; facts computed for another head
+        // are unknown for this one, and unread, so the next poll asks again.
+        if (!isNode(node)) return;
+        const sameHead = node.headRefOid === pr.headSha;
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState(sameHead ? node : {}) };
+        if (sameHead) result.mergeStateAt[pr.id] = readAt;
       });
     }
     await onProgress?.(result, []);

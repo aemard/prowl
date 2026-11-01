@@ -4,6 +4,7 @@
  * table-tested; `PullRequestDetails` only picks an icon per tone. Works from the list's data
  * alone and sharpens (which checks are required, how many approvals) once the detail is loaded.
  */
+import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 
@@ -97,12 +98,21 @@ export function mergeReadiness(pr: PullRequest, detail?: PullRequestDetail): Mer
     });
   }
   if (lines.every(({ tone }) => tone === 'neutral')) {
-    if (pr.mergeable === 'unknown' || pr.mergeStateStatus === 'unknown') {
-      lines.push({ tone: 'neutral', text: 'GitHub is still checking whether it can be merged' });
+    if (
+      pr.mergeable === 'unknown' ||
+      pr.mergeStateStatus === 'unknown' ||
+      pr.reviewDecision === 'unknown'
+    ) {
+      lines.push({
+        tone: 'neutral',
+        text: 'Merge requirements have not been verified for this commit',
+      });
     } else if (pr.mergeStateStatus === 'blocked') {
       lines.push({ tone: 'attention', text: "Blocked by the base branch's rules" });
-    } else {
+    } else if (isReadyToMerge(pr)) {
       lines.push({ tone: 'success', text: 'Ready to merge' });
+    } else {
+      lines.push({ tone: 'attention', text: 'Merge requirements are not satisfied' });
     }
   }
   return lines;

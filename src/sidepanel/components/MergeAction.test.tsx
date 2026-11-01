@@ -9,7 +9,11 @@ import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
 import { toasts } from './ui/Toast';
 
-const pr = buildPullRequest({ title: 'Improve the widgets', baseRefName: 'release' });
+const pr = buildPullRequest({
+  title: 'Improve the widgets',
+  baseRefName: 'release',
+  mergeStateStatus: 'clean',
+});
 const merged = { mergePullRequest: { pullRequest: { merged: true } } };
 
 interface Sent {
@@ -56,6 +60,14 @@ afterEach(() => {
 });
 
 describe('when the button shows', () => {
+  it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
+    show({ reviewDecision: 'approved', mergeStateStatus: 'blocked', autoMergeAllowed: true });
+    expect(opener().getAttribute('data-variant')).toBe('secondary');
+    fireEvent.click(opener());
+    expect(within(dialog()).getByText(/Not ready: blocked by the base branch/)).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
+  });
+
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
