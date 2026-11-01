@@ -100,9 +100,10 @@ function mergePriority(): string[] {
  * Polls GitHub unless signed out, stopped by a rejected token, or waiting (backoff, rate
  * limit). `force` (a user action) skips the backoff and retries a rejected token, never a
  * rate-limit wait; `refreshTeams` discovers the viewer's teams again even when they are not
- * due. Ordinary triggers share the current poll. Scope/action changes and team refreshes
- * coalesce one trailing poll using the latest stored configuration. Resolves to null when the poll was skipped, failed (see
- * `pollState.lastError`) or was dropped by a sign-out; never rejects.
+ * due. Ordinary triggers share the current poll; `afterCurrent` (a settings change, action or
+ * sign-in) and team refreshes share one trailing poll, which reads the latest configuration.
+ * Resolves to null when the poll was skipped, failed (see `pollState.lastError`) or was dropped
+ * by a sign-out; never rejects.
  */
 export function poll({
   force = false,
