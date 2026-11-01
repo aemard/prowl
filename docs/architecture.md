@@ -4,9 +4,9 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 (`api.github.com`, plus `github.com` for the OAuth device flow).
 
 ```
-            ┌──────────────────────── chrome.storage.local ────────────────────────┐
-            │ settings · auth · snapshot · pollState · prLocal · teams             │
-            └───────▲───────────────────────────────▲──────────────────────────────┘
+            ┌──────────────────────── chrome.storage.local ─────────────────────────┐
+            │ settings · auth · snapshot · pollState · prLocal · teams · panelState │
+            └───────▲───────────────────────────────▲───────────────────────────────┘
                     │ write                          │ read + onChanged
 ┌───────────────────┴───────────┐        ┌───────────┴───────────────────────────┐
 │ Service worker (background)   │◀──msg──│ Side panel (Preact)                    │
@@ -41,7 +41,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now, local)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`; none for a PR in `prLocal.alwaysShown`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
@@ -59,13 +60,16 @@ in-memory updates that the next snapshot replaces.
    `{ type: 'poll', force: true }`.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
    forced), or if `pollState.nextAllowedAt` is in the future: a forced poll skips a backoff
-   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight).
+   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight); a
+   settings change, action or sign-in asks for one trailing poll instead (see
+   [Refresh and session ordering](#refresh-and-session-ordering)).
 3. The viewer's teams are discovered first when due (see [Teams](#teams)): stored teams of
    another account or none, older than 24 h (1 h after a failed attempt), or a
    `{ type: 'refreshTeams' }` from the panel. `fetchPullRequests` (see
    [Fetching pull requests](#fetching-pull-requests)) builds each
    enabled section's search query (`src/lib/github/search.ts`) and fetches it with
-   `query ProwlSearch` (pages of 25, cursor-paginated up to `maxPerSection`), selecting
+   `query ProwlSearch` (pages of 25, cursor-paginated up to `maxPerSection`, see
+   [Bounded search coverage](#bounded-search-coverage-and-partial-publications)), selecting
    `rateLimit { limit remaining resetAt cost }`. A search GitHub refuses or gives up on (502/504
    past its 10 s limit) fails its section only; the poll fails when every search did.
    Merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`, `viewerCanUpdate`) are left
@@ -75,19 +79,25 @@ in-memory updates that the next snapshot replaces.
    (`snapshot.mergeStateAt`); unchanged hidden or snoozed PRs use a one-hour interval.
    Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
    currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
-   Deferred PRs keep their previous facts without a freshness timestamp so they stay due;
-   new PRs have unknown merge facts until read. Search updates continue for all PRs.
+   Deferred PRs keep their previous facts and the date they were read, and are listed in
+   `snapshot.mergeStateDue`; new PRs have unknown merge facts until read. Search updates
+   continue for all PRs. Facts and their date never cross a change of the PR's search data (a new
+   head, review, check, comment): such a PR starts unknown, and `ProwlMergeState` selects
+   `headRefOid` so facts computed for another head are dropped (the poll leaves that PR
+   unknown and unread, a card refresh keeps what the card had).
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt` and `settledChecks` to build the new `Snapshot`, and
-   publishes it before merge reads and after each completed batch. Each publication updates
+   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue`
+   and `settledChecks` to build the new `Snapshot`, and publishes it after each completed
+   section, before merge reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
    first poll suppresses events across all phases. `inFlight` remains true until enrichment
    finishes, while `mergePending` identifies the current batch. Publishing the list stops the
    global loader and announces a manual refresh as complete; only cards in that batch show
    a static "Updating merge status" badge. Completion or failure clears the batch; on enrichment failure the published list stays available. The final snapshot is
-   stored with `pollState` (and teams, when discovered). Local PR state is then pruned.
+   stored with `pollState` (and teams, when discovered). Ended snoozes and the choices for PRs
+   confirmed closed are then pruned from the local PR state.
 6. `diffSnapshots(prev, next, viewer.login)` produces events. The first snapshot after sign-in
    produces none (no notification storm), including its merge-enrichment publications.
 7. Notifier (see [Notifications](#notifications)) drops events already reported, filters the
@@ -186,7 +196,7 @@ never qualifiers.
 
 `fetchPullRequests(client, settings, previous, teams)` (`src/lib/github/fetchPullRequests.ts`) is
 all of a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It
-returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
+returns `{ pullRequests, sections, sectionErrors, sectionCoverage, teamRequests, rateLimit }`:
 
 - Each enabled section runs `query ProwlSearch` (`queries.ts`) with its search string plus
   `sort:updated-desc` (unless a custom query has its own `sort:`), so the `maxPerSection` PRs
@@ -211,17 +221,17 @@ returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
   latest `ClosedEvent`), so the diff can emit `merged` / `closed`. Still-open ones only
   stopped matching and are dropped; merged or closed ones are never looked up again.
 - Both queries pass `{ partial: true }`: an org that requires SAML or a deleted PR leaves a
-  null node, which is skipped. A search whose errors mention SAML also gets a `sectionErrors`
-  entry for its section (an organization requires single sign-on the token is not authorized
-  for), shown above the PRs that did load; a deleted PR is skipped silently. `search` is
-  non-null in the schema, so a search that fails as a whole nulls `data` and still throws.
+  null node, which is skipped. A search with errors gets a `sectionErrors` entry for its section
+  (SAML errors say the token is not authorized for an organization), shown above the PRs that
+  did load; a deleted PR in `ProwlNodes` is skipped silently. `search` is non-null in the
+  schema, so a search that fails as a whole nulls `data` and still throws.
 
 Mapping (`mapPullRequest`):
 
 | Field | Rule |
 |---|---|
 | `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
-| enums | Lower-cased when the model knows the value; otherwise `none` (`reviewDecision`, also when null), `unknown` (`mergeable`, `mergeStateStatus`), `open` (`state`). |
+| enums | Lower-cased when the model knows the value; otherwise `unknown` (`reviewDecision`, `mergeable`, `mergeStateStatus`) or `open` (`state`). `reviewDecision` is `none` when GitHub sends null (no review required), so a missing or unrecognized value is never read as "no requirement". |
 | `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. |
 | `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
 | `labels` | Color lower-cased when it is six hex digits, else `NEUTRAL_LABEL_COLOR` (`ededed`). |
@@ -303,12 +313,14 @@ and are shown as GitHub words them. A payload whose pull request is not `merged`
 error. A rebase has no commit of its own, so its `commitHeadline` is dropped. Re-run and the draft
 toggle (US-017) add their functions here.
 
-The panel runs them through `runPrAction(pr, name, done, run)` (`src/sidepanel/state/prActions.ts`):
-it builds a client for the signed-in token, marks `pendingActions[pr.id] = name` (the signal that
-disables the PR's other action buttons; one action per PR at a time), and shows a success toast
-(`<done> owner/name#n`) followed by `{ type: 'poll', force: true }`, or a danger toast `<name>
-failed: <GitHub's message>` (any error that is not a `GitHubError` becomes "Something went
-wrong."). It resolves to whether it worked and never rejects.
+The panel runs them through `runPrAction(pr, name, done, run, onError?)`
+(`src/sidepanel/state/prActions.ts`): it builds a client for the signed-in token, marks
+`pendingActions[pr.id] = name` (the signal that disables the PR's other action buttons; one action
+per PR at a time), and shows a success toast (`<done> owner/name#n`) followed by `{ type: 'poll',
+force: true }`, or a danger toast `<name> failed: <GitHub's message>` (any error that is not a
+`GitHubError` becomes "Something went wrong."), or calls `onError(message)` instead of the toast
+when the caller shows it itself. It resolves to whether it worked and never rejects; an outcome
+that arrives after another account signed in is dropped (no toast, no poll, `false`).
 
 ## Diff engine
 
@@ -325,7 +337,7 @@ case-insensitively.
 | `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
-| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, and `mergeStateStatus` `clean`, or `reviewDecision` approved / none with checks success / none and `mergeable` | null | `next.fetchedAt` | head SHA |
+| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
@@ -350,11 +362,12 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `poller.ts`:
 
-- `poll({ force, refreshTeams })` runs at most one poll at a time (an in-memory promise;
-  concurrent callers share it, except `refreshTeams`, which waits for the poll in flight and
-  then runs its own so the teams are discovered again) and never rejects. It resolves to `{ snapshot, events }` when a poll ran and
-  stored a snapshot, null otherwise. The badge and notifications update at each progressive
-  publication inside the poll; callers sharing it do not repeat those events.
+- `poll({ force, refreshTeams, afterCurrent })` runs at most one poll at a time (an in-memory
+  promise; concurrent callers share it, except `refreshTeams` and `afterCurrent`, which share
+  one trailing poll that starts when the one in flight ends) and never rejects. It resolves to
+  `{ snapshot, events }` when a poll ran and stored a snapshot, null otherwise. The badge and
+  notifications update at each progressive publication inside the poll; callers sharing it do
+  not repeat those events.
 - Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
   with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
@@ -376,9 +389,9 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 - A custom section that GitHub refuses lands in `snapshot.sectionErrors` and the poll counts as
   a success. While any section failed, pruning keeps the local state of PRs not in the
   snapshot (only ended snoozes go), since that section's PRs are missing.
-- Before storing anything the poller re-reads `auth`: if its token changed (sign-out, another
-  account) the result is dropped; it starts over when someone is signed in, else it clears
-  what a sign-out clears. A snapshot of another account is never used as the baseline.
+- Every write of a poll runs in `withSignedIn(auth, …)`: if the stored token changed (sign-out,
+  another account) the write is skipped and the poll starts over when someone is signed in,
+  else clears what a sign-out clears. A snapshot of another account is never used as the baseline.
 
 `messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
 their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
@@ -396,7 +409,8 @@ settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/back
 
 - `attention` (default) counts the open PRs in a section with failing CI, requested changes,
   conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
-  with activity newer than `prLocal.seen` or useful facts different from `prLocal.seenFacts` (a PR never seen counts; state does not matter);
+  with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
+  never seen counts; state does not matter);
   `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count,
   nor PRs the list hides (`hiddenReasons` with `settings`, the same rule as the list); muted ones
   do (mute only silences notifications). Merged and closed PRs outside every section never
@@ -473,10 +487,13 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
     Unversioned data counts as version 1; data from a newer version is normalized best-effort.
 - `prLocal.ts`: pure reducers over `PrLocalState` (`snooze`, `unsnooze`, `mute`, `unmute`,
-  `markSeen`, `pruneExpired`), which return the same object when nothing changes, and
-  predicates (`isSnoozed`, `isMuted`, `isSeen`); `updatePrLocal(fn)` applies reducers in one
-  locked write. `markSeen` never moves backwards. `pruneExpired(state, now, knownIds)` drops ended snoozes and
-  every entry for PRs not in `knownIds` (the snapshot's PR ids).
+  `markSeen`, `setAlwaysShown`, `baselineSeenFacts`, `pruneExpired`), which return the same object
+  when nothing changes, and predicates (`isSnoozed`, `isMuted`, `isSeen`, `isAlwaysShown`);
+  `updatePrLocal(fn)` applies reducers in one locked write. `markSeen` never moves backwards.
+  `pruneExpired(state, now, knownIds)` drops ended snoozes and every entry for PRs not in
+  `knownIds` (the snapshot's PR ids). `forgetSeenFacts` drops the observed facts only.
+- `panelState.ts`: `normalizePanelState` for the `panelState` key (see
+  [List visibility and local organization](#list-visibility-and-local-organization)).
 
 Readers of `auth`, `snapshot`, `pollState` and `teams` trust the stored shape: only Prowl
 writes them.
@@ -669,8 +686,9 @@ signal (`state/store.ts`).
   `.pr-actions` of small buttons, to which later actions are added. `ReviewActions` renders
   Approve, Request changes and Comment, each named with the PR ("Approve acme/web#12"). Approve
   is one click (no dialog; GitHub cannot take an approval back, so the toast offers no Undo). The
-  other two open a `Dialog` with a required message; a failure closes it, shows the reason in a
-  toast (a modal would cover one) and keeps the text for the next try until the card is folded.
+  other two open a `Dialog` with a required message, kept as a session draft (see Written review
+  drafts); a failure stays in the dialog, beside the field. `PullRequestDetails` ends the row with a
+  "View changes on GitHub" link to `<pr.url>/files`.
   Approve and Request changes are hidden on the viewer's own PRs (GitHub refuses them) and on PRs
   that are not open; Comment is always there. While one action of a PR runs its other buttons are
   disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
@@ -848,26 +866,31 @@ left by a terminated worker.
 ## Bounded search coverage and partial publications
 
 `Snapshot.sectionCoverage` records proven `hasMore`, per-query cursors and available totals,
-plus partial/stale flags. Team queries have independent cursors: overlapping totals are never
-summed. Missing metadata on an older snapshot is unknown, not proof of additional results.
+plus `partial` (nodes or merge facts could not be read) and `stale` (the scan was cut short and
+cached members were kept) flags. Team queries have independent cursors: overlapping totals are
+never summed, and "View on GitHub" follows the first query with more results. Missing metadata
+on an older snapshot is unknown, not proof of additional results.
 The section limit counts loaded PRs before hide/snooze; the list warns only when GitHub reports
 more results or a merged team union exceeds the cap. Local filtering searches only loaded PRs.
 Only loaded PRs are monitored in a section; another section can also load the same PR.
 
-Repository filters apply on each fetched page. A query scans at most 500 nodes and at most
-`max(100, 5 * maxPerSection)`, independently of the retained limit, so rejected pages do not
-silently consume the entire retained capacity. Hitting the scan budget preserves pagination
-metadata. Page failures retain successful pages and eligible cached section members, capped at
-`maxPerSection`, with a partial/stale notice. Partial GraphQL errors retain their field path;
-authentication and quota errors remain global. Partial merge responses cannot make unreadable
-review requirements look absent.
+Repository filters apply on each fetched page. A query scans at most
+`min(500, max(100, 5 * maxPerSection))` nodes, independently of the retained limit, so rejected
+pages do not silently consume the entire retained capacity. Hitting the scan budget preserves
+pagination metadata. A failed page, a cursor that does not advance or a refused search keeps the
+pages read and the cached members of the section (`maxPerSection` at most, never over a PR this
+poll loaded) with a partial/stale notice. Unreadable nodes (SAML) keep nothing: the section lists
+what loaded and says why the rest is missing. Partial GraphQL errors retain their field path;
+authentication and quota errors remain global. A merge response with errors leaves its PRs'
+facts unknown and unread, so unreadable review requirements never look absent.
 
 During search, `sectionsPending` marks sections not yet completed. Publications keep their
 previous cards until their search completes, so a slow team section does not hold back a
-personal list or masquerade as a newly empty section. Merge enrichment still follows search.
+personal list or masquerade as a newly empty section; the list says "Searching" only while
+`pollState.inFlight`, since a failed poll leaves the marker in the snapshot. Merge enrichment
+still follows search.
 Local snoozes expire by date. Mute/seen and unexpired snoozes are removed only after confirmed
 closure, never merely because a PR left a bounded search or the selected scope.
-
 
 ## Refresh and session ordering
 
@@ -875,32 +898,32 @@ Panel setting changes, completed mutations and sign-in request `poll` with `afte
 While a poll is active, these requests share one trailing promise, using the latest saved
 configuration; further changes during that trailing run can schedule one more run. Ordinary
 refreshes still share the current poll. Team rediscovery is coalesced into the trailing request.
-Quota/backoff checks remain in `runPoll`. A worker reconnect hint requests an ordinary poll
-only after a network error and does not bypass those waits.
+Quota/backoff checks remain in `runPoll`.
 
 The short origin-shared `prowl:session` Web Lock serializes sign-in/sign-out with the session
 check and writes of progressive snapshots, final snapshots/teams, targeted facts, poll state
-and notifications. GitHub reads are outside this lock. A completed sign-out cannot be undone
-by an old publication, and delayed `signedOut` cleanup cannot clear a newly signed-in account.
-
+and notifications. GitHub reads are outside this lock, which is not reentrant. A completed
+sign-out cannot be undone by an old publication, and delayed `signedOut` cleanup cannot clear a
+newly signed-in account.
 
 ## Written review drafts
 
-Comment and change-request drafts live in the panel’s in-memory `reviewDrafts` signal, keyed
-by PR id and message kind. Folding a card or navigating between views does not discard them.
-Sending successfully clears only that message; logout/account change clears all drafts.
-They are never written to Chrome storage. Form send errors stay inline with the text and
-editor open, while non-form failures retain toast feedback. Action results from an obsolete
-auth session do not clear current-session drafts or display old-account feedback. A context
-link opens the changed files on the configured GitHub origin; no diff is fetched into Prowl.
-
+Comment and change-request drafts live in the panel's in-memory `reviewDrafts` signal
+(`state/reviewDrafts.ts`), keyed by PR id and message kind, so folding a card or leaving the list
+does not discard them. Sending successfully clears only that message; signing out, or in as another
+login (not merely with another token), clears all. They are never written to storage or sent
+without a click. A failed send stays in the dialog: `onError` shows GitHub's reason beside the
+field and `ReviewActions` focuses the field (a toast would hide behind the modal, and the field's
+error paragraph is not a live region); actions without a form keep their toast. The changed-files
+link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched into Prowl.
 
 ## Merge facts and expanded detail coverage
 
-`mergeStateAt` is the actual successful verification date for the current head, including
-usable same-head cached facts. `mergeStateDue` keeps invalidated/deferred ids eligible without
-inventing a new date. Successful targeted reads clear their due id; no date or facts cross a
-head change. Two of the 20 merge-read slots are reserved for the oldest pending facts so
+`mergeStateAt` is the date the PR's merge facts were actually read; facts carried over from the
+previous poll keep it. `mergeStateDue` lists the PRs whose facts are aged, deferred or unknown,
+without inventing a date; it labels cards, while facts and dates alone decide what a poll reads.
+A read (poll or card) clears its due id; neither facts nor date cross a change of the search data,
+the head included. Two of the 20 merge-read slots are reserved for the oldest pending facts so
 continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
 The header names list freshness; expanded details state merge verification age and cached/due
 or unverified status. Detail cache keys include the head and base, and old-head details are
@@ -910,9 +933,9 @@ the head, scope and evidence their read depends on; merge enrichment does not re
 
 Nested reviews/requests/threads expose connection limits rather than claiming completeness.
 Check requirement flags remain unknown when inaccessible, distinct from false. Expanded-card
-branch rules use the applied-rules REST endpoint; known method restrictions intersect repo
-methods, unreadable rules produce an explicit warning, and GitHub always decides final merge
-permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
+branch rules use the applied-rulesets REST endpoint (classic branch protection is not in it);
+known method restrictions intersect repo methods, unreadable rules (including a full page of
+100) produce an explicit warning, and GitHub always decides final merge permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
 up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
 the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
 Section scans also stop after 20 requests per query, independently of the examined-node bound.

@@ -12,9 +12,10 @@ import {
   buildSnapshot,
   buildSnapshotOf,
 } from '../../test/panel';
+import { activeSectionId, filterQuery, foldedGroups, showHidden } from '../state/listContext';
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, filterQuery, foldedGroups, ListView, showHidden } from './List';
+import { ListView } from './List';
 
 const seenMessage = (pr: PullRequest) => ({
   type: 'markSeen',
@@ -650,6 +651,34 @@ describe('pull requests with no recent commit', () => {
     act(() => void vi.advanceTimersByTime(1500));
     expect(send).toHaveBeenCalledWith(seenMessage(stale));
   });
+
+  it('says how many PRs it loaded, matched, lists, hides and snoozes', () => {
+    const later = pr(3, { title: 'Later' });
+    snapshot.value = buildSnapshotOf({ authored: [stale, fresh, later], review_requested: [] });
+    prLocal.value = {
+      snoozed: { [later.id]: new Date(NOW + 3_600_000).toISOString() },
+      muted: {},
+      seen: {},
+    };
+    render(<ListView />);
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 in list · 1 hidden · 1 snoozed\./,
+    );
+    fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'old' } });
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^3 loaded · 1 matching · 0 in list · 1 hidden · 0 snoozed\./,
+    );
+  });
+
+  it('keeps keyboard focus on a toggle when revealing what was set aside', () => {
+    render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
+    const reveal = screen.getByRole('button', { name: 'Show hidden and snoozed' });
+    reveal.focus();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole('button', { name: 'Show hidden and snoozed' })).toBeNull();
+    expect(document.activeElement).toBe(toggle('Hide again'));
+  });
 });
 
 describe('draft and bot pull requests', () => {
@@ -972,6 +1001,62 @@ it('keeps proven coverage visible even when all loaded cards are hidden', () => 
   expect(screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toContain(
     'author%3A%40me',
   );
+});
+
+describe('a section still being searched', () => {
+  const pending = () => buildSnapshotOf({ authored: [] }, { sectionsPending: ['authored'] });
+
+  it('says so instead of calling the section empty', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: true });
+    snapshot.value = pending();
+    render(<ListView />);
+    expect(screen.getByRole('status').textContent).toContain('Searching');
+    expect(screen.queryByRole('heading', { name: 'No pull requests' })).toBeNull();
+  });
+
+  it('says so for a section the running poll has not loaded yet, unless it failed', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: true });
+    snapshot.value = buildSnapshotOf({});
+    const { unmount } = render(<ListView />);
+    expect(screen.getByRole('status').textContent).toContain('Searching');
+    unmount();
+    snapshot.value = buildSnapshotOf({}, { sectionErrors: { authored: 'GitHub refused it.' } });
+    render(<ListView />);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('forgets the marker a failed or interrupted poll left in the snapshot', () => {
+    withSections(['authored']);
+    pollState.value = buildPollState({ inFlight: false });
+    snapshot.value = pending();
+    render(<ListView />);
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'No pull requests' })).toBeTruthy();
+  });
+});
+
+it('links to the one search that has more results, not to all the team searches', () => {
+  withSections(['authored']);
+  snapshot.value = buildSnapshotOf(
+    { authored: [buildPullRequest()] },
+    {
+      sectionCoverage: {
+        authored: {
+          hasMore: true,
+          queries: [
+            { query: 'team:first', cursor: null },
+            { query: 'team:second', cursor: '50' },
+          ],
+        },
+      },
+    },
+  );
+  render(<ListView />);
+  const href = screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href');
+  expect(href).toContain('team%3Asecond');
+  expect(href).not.toContain('team%3Afirst');
 });
 
 it('qualifies a local search with no matches when other GitHub results exist', () => {

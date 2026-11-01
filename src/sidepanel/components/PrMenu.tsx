@@ -104,12 +104,11 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
       checkRole: 'menuitemcheckbox',
       icon: <EyeIcon />,
       onSelect: () => {
-        const shown = !isAlwaysShown(prLocal.value, pr.id);
-        void updatePrLocal((state) => setAlwaysShown(state, pr.id, shown)).then(() =>
+        void updatePrLocal((state) => setAlwaysShown(state, pr.id, !alwaysShown)).then(() =>
           showToast({
-            message: shown
-              ? 'Always shown in the list and badge. Snooze still applies.'
-              : 'Automatic hiding applies to this PR again.',
+            message: alwaysShown
+              ? 'Automatic hiding applies to this PR again.'
+              : 'Always shown in the list and badge. Snooze still applies.',
             tone: 'info',
           }),
         );

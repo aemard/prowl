@@ -3,7 +3,8 @@ import { isRecord } from './guards';
 
 /** Repair local view context without carrying filters or accepting unbounded stored data. */
 export function normalizePanelState(raw: unknown): PanelState | undefined {
-  if (!isRecord(raw) || typeof raw.login !== 'string' || !/^[a-z0-9-]{1,39}$/i.test(raw.login))
+  // Logins other than github.com's `[a-z0-9-]` exist (Managed Users have `_`): bound, don't judge.
+  if (!isRecord(raw) || typeof raw.login !== 'string' || !/^[\w.-]{1,100}$/.test(raw.login))
     return undefined;
   return {
     login: raw.login.toLowerCase(),
