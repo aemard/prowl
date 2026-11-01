@@ -42,9 +42,8 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
   const entry = details.value[pr.id];
   const detail =
     entry?.key === detailKey(pr) && !entry.loading && !entry.error ? entry.detail : undefined;
-  const methods = detail?.allowedMergeMethods
-    ? pr.allowedMergeMethods.filter((method) => detail.allowedMergeMethods?.includes(method))
-    : pr.allowedMergeMethods;
+  // The read starts from `pr.allowedMergeMethods` (part of the detail's key), so it only narrows.
+  const methods = detail?.allowedMergeMethods ?? pr.allowedMergeMethods;
   const method =
     [picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
   if (!method || !auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) {

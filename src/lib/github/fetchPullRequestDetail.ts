@@ -58,16 +58,23 @@ export async function fetchPullRequestDetail(
   return detail;
 }
 
-/** Applied branch rules, not all rulesets of a repository. Read only on card expansion. */
+/** The endpoint pages (30 by default); a full page may hide rules, so it counts as unreadable. */
+const RULES_PER_PAGE = 100;
+
+/**
+ * The rulesets that apply to the base branch (classic branch protection is not among them),
+ * not all rulesets of a repository. Read only on card expansion.
+ */
 async function applyBranchRules(
   client: GitHubClient,
   pr: Pick<PullRequest, 'repo' | 'baseRefName' | 'allowedMergeMethods'>,
   detail: PullRequestDetail,
 ): Promise<PullRequestDetail> {
-  const path = `/repos/${encodeURIComponent(pr.repo.owner)}/${encodeURIComponent(pr.repo.name)}/rules/branches/${encodeURIComponent(pr.baseRefName)}`;
+  const path = `/repos/${encodeURIComponent(pr.repo.owner)}/${encodeURIComponent(pr.repo.name)}/rules/branches/${encodeURIComponent(pr.baseRefName)}?per_page=${RULES_PER_PAGE}`;
   try {
     const rules = await client.rest<unknown>('GET', path);
-    if (!Array.isArray(rules)) throw new GitHubError('server', 'Branch rules unavailable.');
+    if (!Array.isArray(rules) || rules.length >= RULES_PER_PAGE)
+      throw new GitHubError('server', 'Branch rules unavailable.');
     let methods = [...pr.allowedMergeMethods];
     let requiredApprovals = detail.requiredApprovals;
     let conversations = detail.requiresConversationResolution;

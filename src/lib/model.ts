@@ -33,6 +33,7 @@ export interface CheckItem {
   required: boolean | null;
 }
 
+/** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
 export type ReviewDecision =
   | 'approved'
   | 'changes_requested'
@@ -260,7 +261,7 @@ export interface Snapshot {
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
-  /** Cached facts can retain their actual date while still needing verification. */
+  /** PR ids whose merge facts are aged, deferred, dropped or unread; those with a date keep it. */
   mergeStateDue?: string[];
 }
 

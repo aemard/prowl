@@ -53,9 +53,7 @@ export async function signOut(): Promise<void> {
     );
   });
   await sendToBackground({ type: 'signedOut' });
-  await withLock(SESSION_LOCK, async () => {
-    if (!(await getItem('auth'))) await releaseGitHubWebAccess();
-  });
+  await releaseGitHubWebAccess();
 }
 
 /**

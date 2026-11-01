@@ -185,6 +185,8 @@ test.describe('expanding a card', () => {
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('button', { name: /^Convert to draft: / })).toBeFocused();
     await panel.keyboard.press('Tab');
+    await expect(checkout.getByRole('link', { name: 'View changes on GitHub' })).toBeFocused();
+    await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: 'build' })).toBeFocused();
 
     await panel.keyboard.press('Escape');

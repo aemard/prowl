@@ -314,9 +314,11 @@ export function ListView() {
   );
   const error = snap.sectionErrors?.[selected.id];
   const coverage = snap.sectionCoverage?.[selected.id];
+  // The pending marker is stored with the snapshot: a poll that failed or was cut off leaves it
+  // behind, so it only counts while a poll runs.
   const searching =
-    snap.sectionsPending?.includes(selected.id) ||
-    (!(selected.id in snap.sections) && !error && pollState.value?.inFlight);
+    pollState.value?.inFlight === true &&
+    (snap.sectionsPending?.includes(selected.id) || (!(selected.id in snap.sections) && !error));
   const empty = shown.length + hidden.length + snoozed.length === 0;
   const loaded = pullRequestsOf(snap, selected.id).length;
   const matches = shown.length + hidden.length + snoozed.length;
@@ -400,9 +402,6 @@ export function ListView() {
         )}
         {error !== undefined && (
           <SectionNotice section={selected} message={error} partial={coverage?.partial} />
-        )}
-        {coverage?.stale && (
-          <p class="list__notice">Some results are cached and may reflect earlier settings.</p>
         )}
         {coverage && (
           <SectionCoverageNotice
