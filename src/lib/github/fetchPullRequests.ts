@@ -337,7 +337,7 @@ export async function fetchPullRequests(
         if (partialMessages.length) {
           result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
           delete result.mergeStateAt[pr.id];
-        } else if (isNode(node) && node.headRefOid && node.headRefOid !== pr.headSha) {
+        } else if (isNode(node) && node.headRefOid !== pr.headSha) {
           result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
           delete result.mergeStateAt[pr.id];
         } else if (isNode(node)) {
