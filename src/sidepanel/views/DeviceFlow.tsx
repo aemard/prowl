@@ -53,11 +53,12 @@ export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }
   }, [showingCode]);
 
   /** Back to the start button, with `message` as the reason when there is one. */
-  function reset(message?: string) {
+  function reset(message?: string, offerToken = false) {
     flow.current = undefined;
     setCode(undefined);
     setStarting(false);
     setError(message);
+    if (offerToken) onTokenFallback?.();
   }
 
   async function start() {
@@ -70,10 +71,7 @@ export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) {
-        onTokenFallback?.();
-        return reset(PERMISSION_DENIED);
-      }
+      if (!(await permission)) return reset(PERMISSION_DENIED, true);
       const device = await requestDeviceCode({ signal: controller.signal });
       setCode(device);
       void openGitHubUrl(device.verificationUri);
@@ -83,9 +81,11 @@ export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }
       await completeSignIn(auth, warning);
     } catch (failure) {
       if (controller.signal.aborted) return;
-      if (failure instanceof DeviceFlowError && failure.reason === 'unsupported')
-        onTokenFallback?.();
-      reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
+      const known = failure instanceof DeviceFlowError;
+      reset(
+        known ? failure.message : signInErrorMessage(failure),
+        known && failure.reason === 'unsupported',
+      );
     } finally {
       // github.com is only needed while the flow runs; give the permission back afterwards.
       void releaseGitHubWebAccess();
