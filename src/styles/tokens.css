@@ -183,7 +183,6 @@
   --glass-violet: rgba(190, 166, 213, 0.055);
   --glass-light: rgba(255, 255, 255, 0.26);
   --glass-reflect: rgba(255, 255, 255, 0.36);
-  --glass-detail: rgba(247, 253, 249, 0.92);
   --glass-shadow: 0 4px 12px rgba(15, 62, 46, 0.065), 0 1px 3px rgba(27, 67, 52, 0.035);
   --glass-mint: rgba(58, 183, 139, 0.15);
   --glass-blue: rgba(92, 153, 225, 0.12);
@@ -289,7 +288,6 @@
     --glass-violet: rgba(102, 61, 122, 0.06);
     --glass-light: rgba(95, 151, 111, 0.05);
     --glass-reflect: rgba(216, 255, 237, 0.11);
-    --glass-detail: rgba(16, 33, 25, 0.94);
     --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
     --glass-mint: rgba(19, 117, 74, 0.15);
     --glass-blue: rgba(31, 76, 151, 0.12);
@@ -395,7 +393,6 @@
   --glass-violet: rgba(102, 61, 122, 0.06);
   --glass-light: rgba(95, 151, 111, 0.05);
   --glass-reflect: rgba(216, 255, 237, 0.11);
-  --glass-detail: rgba(16, 33, 25, 0.94);
   --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.17), 0 1px 3px rgba(0, 0, 0, 0.08);
   --glass-mint: rgba(19, 117, 74, 0.15);
   --glass-blue: rgba(31, 76, 151, 0.12);
@@ -418,7 +415,6 @@
   :root:not([data-theme]) {
     --glass-blur: none;
     --glass-reflect: transparent;
-    --glass-detail: var(--glass-solid);
     --glass-card: var(--glass-solid);
     --glass-chrome: var(--glass-solid);
   }
