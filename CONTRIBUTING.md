@@ -1,8 +1,9 @@
 # Contributing
 
 Prowl is open source under the MIT License, and fixes, features and docs are welcome. This page
-is the short version. [`CLAUDE.md`](https://github.com/aemard/prowl/blob/main/CLAUDE.md) and
-[`docs/architecture.md`](https://github.com/aemard/prowl/blob/main/docs/architecture.md) hold the
+is the short version. [`CLAUDE.md`](https://github.com/aemard/prowl/blob/main/CLAUDE.md),
+[`docs/architecture.md`](https://github.com/aemard/prowl/blob/main/docs/architecture.md) and
+[`docs/patterns.md`](https://github.com/aemard/prowl/blob/main/docs/patterns.md) hold the
 details. Who decides and who holds which access is in
 [`GOVERNANCE.md`](https://github.com/aemard/prowl/blob/main/GOVERNANCE.md).
 
