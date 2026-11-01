@@ -40,13 +40,10 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .panel img { display: block; }
 .marquee { padding: 28px 87px; gap: 90px; }
 .marquee .copy { width: 610px; flex: none; gap: 0; }
-.marquee .brand { gap: 16px; font-size: 44px; font-weight: 600;
-  letter-spacing: -0.04em; height: 88px; margin-left: -13px; }
-.marquee h1 { margin: 18px 0 14px; font-size: 56px; line-height: 1.08;
-  letter-spacing: -0.04em; font-weight: 600; text-wrap: initial; }
-.marquee p { font-size: 30px; line-height: 1.4; }
+.marquee .brand { height: 88px; margin-left: -13px; }
+.marquee h1 { margin: 18px 0 14px; text-wrap: initial; }
 .marquee .trust { display: flex; align-items: center; gap: 18px; margin-top: 24px;
-  font-size: 20px; color: var(--color-fg-muted); white-space: nowrap; }
+  font-size: 14px; color: var(--color-fg-muted); white-space: nowrap; }
 .marquee .trust span + span::before { content: '·'; margin-right: 18px; }
 .marquee .trust .open { color: var(--color-accent-fg); font-weight: 600; }
 .marquee .hero-product { flex: 1; margin-top: 14px; }
