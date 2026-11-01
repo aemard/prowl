@@ -183,7 +183,6 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
               const effect = animation.effect;
               const target = effect instanceof KeyframeEffect ? effect.target : null;
               return (
-                animation.playState !== 'paused' &&
                 effect?.getComputedTiming().endTime !== Infinity &&
                 (!target || target.checkVisibility())
               );
