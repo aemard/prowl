@@ -4,9 +4,9 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 (`api.github.com`, plus `github.com` for the OAuth device flow).
 
 ```
-            ┌──────────────────────── chrome.storage.local ────────────────────────┐
-            │ settings · auth · snapshot · pollState · prLocal · teams             │
-            └───────▲───────────────────────────────▲──────────────────────────────┘
+            ┌──────────────────────── chrome.storage.local ─────────────────────────┐
+            │ settings · auth · snapshot · pollState · prLocal · teams · panelState │
+            └───────▲───────────────────────────────▲───────────────────────────────┘
                     │ write                          │ read + onChanged
 ┌───────────────────┴───────────┐        ┌───────────┴───────────────────────────┐
 │ Service worker (background)   │◀──msg──│ Side panel (Preact)                    │
@@ -41,7 +41,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now, local)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`; none for a PR in `prLocal.alwaysShown`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
+| `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
@@ -408,7 +409,8 @@ settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/back
 
 - `attention` (default) counts the open PRs in a section with failing CI, requested changes,
   conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
-  with activity newer than `prLocal.seen` or useful facts different from `prLocal.seenFacts` (a PR never seen counts; state does not matter);
+  with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
+  never seen counts; state does not matter);
   `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count,
   nor PRs the list hides (`hiddenReasons` with `settings`, the same rule as the list); muted ones
   do (mute only silences notifications). Merged and closed PRs outside every section never
@@ -485,10 +487,13 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
     Unversioned data counts as version 1; data from a newer version is normalized best-effort.
 - `prLocal.ts`: pure reducers over `PrLocalState` (`snooze`, `unsnooze`, `mute`, `unmute`,
-  `markSeen`, `pruneExpired`), which return the same object when nothing changes, and
-  predicates (`isSnoozed`, `isMuted`, `isSeen`); `updatePrLocal(fn)` applies reducers in one
-  locked write. `markSeen` never moves backwards. `pruneExpired(state, now, knownIds)` drops ended snoozes and
-  every entry for PRs not in `knownIds` (the snapshot's PR ids).
+  `markSeen`, `setAlwaysShown`, `baselineSeenFacts`, `pruneExpired`), which return the same object
+  when nothing changes, and predicates (`isSnoozed`, `isMuted`, `isSeen`, `isAlwaysShown`);
+  `updatePrLocal(fn)` applies reducers in one locked write. `markSeen` never moves backwards.
+  `pruneExpired(state, now, knownIds)` drops ended snoozes and every entry for PRs not in
+  `knownIds` (the snapshot's PR ids). `forgetSeenFacts` drops the observed facts only.
+- `panelState.ts`: `normalizePanelState` for the `panelState` key (see
+  [List visibility and local organization](#list-visibility-and-local-organization)).
 
 Readers of `auth`, `snapshot`, `pollState` and `teams` trust the stored shape: only Prowl
 writes them.
