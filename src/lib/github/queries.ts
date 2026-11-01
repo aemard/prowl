@@ -134,7 +134,7 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
     ... on PullRequest {
       latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { state author { login avatarUrl(size: 64) } } }
       reviewRequests(first: 20) {
-          totalCount pageInfo { hasNextPage }
+        totalCount pageInfo { hasNextPage }
         nodes {
           requestedReviewer {
             ... on User { login avatarUrl(size: 64) }
