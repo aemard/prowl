@@ -10,9 +10,10 @@ before changing anything structural. `src/lib/model.ts` is the shared contract.
 
 | Command | What |
 |---|---|
-| `pnpm verify` | Everything CI runs: Biome, types, unit + coverage gates, build, size budget, all E2E. CI runs it on every push; it must be green before merging. |
+| `pnpm verify` | Everything CI runs: Biome, file lengths, types, unit + coverage gates, build, size budget, all E2E. CI runs it on every push; it must be green before merging. |
 | `pnpm verify:changed` | Before every commit: `verify:fast`, build and size budget. E2E runs in CI only; run one spec locally (`pnpm build:e2e && pnpm exec playwright test <spec> --reporter=dot`) only while writing it or to chase a CI failure. |
-| `pnpm verify:fast` | Lint + types + unit tests (inner loop) |
+| `pnpm verify:fast` | Lint + file lengths + types + unit tests (inner loop) |
+| `pnpm lines` | File length gate (`scripts/check-file-size.mjs`) and its shrink-only baseline |
 | `pnpm test` / `pnpm coverage` | Vitest (coverage gates: 80% global, 95% `src/lib/diff` and `src/lib/github`) |
 | `pnpm e2e` | Builds `dist-e2e/` then runs Playwright against the mock GitHub server |
 | `pnpm screenshots` | Same as `pnpm e2e` but writes `docs/screenshots/*.png` at 2x, 800 px wide (only way they change) |
@@ -44,6 +45,12 @@ Load the built extension: `chrome://extensions` → Developer mode → Load unpa
 - Listeners in the service worker are registered synchronously at startup (`src/background/register.ts`).
 - Accessibility: every interactive element is reachable by keyboard and labelled; dialogs trap
   focus and restore it; color is never the only signal. axe must report zero violations.
+- Size limits (CI): a file has at most 400 lines (tests, specs and `tests/fixtures`: 800), a function
+  at most 80 lines (tests exempt) and cognitive complexity 15 (Biome `complexity` rules). Split by
+  responsibility, not by line count: a file or function that does two things becomes two.
+- The file limit is a ratchet: `BASELINE` in `scripts/check-file-size.mjs` lists the files already
+  over (path → lines). They may shrink, never grow: lower the entry when one shrinks, delete it when
+  it fits, never add one. `biome-ignore ... legacy` marks the old functions over a limit: no new ones.
 
 ## Write the least code that works
 

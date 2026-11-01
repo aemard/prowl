@@ -34,8 +34,8 @@ unpacked and pick the `dist` folder. `pnpm dev` rebuilds on every change; reload
 
 | Command | What it does |
 |---|---|
-| `pnpm verify:fast` | Lint, types and unit tests. Use it while you work. |
-| `pnpm verify` | Everything CI runs: lint, types, unit tests with coverage gates, build, size budget and end-to-end tests. |
+| `pnpm verify:fast` | Lint, file lengths, types and unit tests. Use it while you work. |
+| `pnpm verify` | Everything CI runs: lint, file lengths, types, unit tests with coverage gates, build, size budget and end-to-end tests. |
 | `pnpm lint:fix` | Formats the code with Biome and applies its safe fixes. |
 
 A pull request needs a green `pnpm verify`. Tests never call the real GitHub API: they use the
@@ -53,6 +53,9 @@ tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once
 - Everything is keyboard accessible and labelled, and axe reports no violations.
 - Render GitHub text as text, never as HTML. Only open GitHub URLs.
 - Write the least code that works: reuse what exists, prefer the platform, keep the diff short.
+- Keep files to 400 lines (tests 800), functions to 80 lines and cognitive complexity to 15; CI
+  checks all three. Split by responsibility, not by line count. A few older files are
+  over and may only shrink (`BASELINE` in `scripts/check-file-size.mjs`).
 
 ## Dependencies
 
