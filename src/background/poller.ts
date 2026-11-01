@@ -12,7 +12,7 @@ import { mapMergeState } from '../lib/github/mapPullRequest';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
-import type { AuthState, PollState, PrEvent, Snapshot } from '../lib/model';
+import type { PollState, PrEvent, Snapshot } from '../lib/model';
 import { normalizePrLocal, pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
 import { SESSION_LOCK, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
@@ -345,7 +345,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
         if (!active) return;
         const client = createGitHubClient({ token: auth.token, apiUrl: env.apiUrl });
         const data = await client.graphql<MergeStateData>(MERGE_STATE_QUERY, { ids: [id] });
-        if (!(await stillSignedIn(auth))) return;
         await withSignedIn(auth, async () => {
           const node = data.nodes?.[0];
           const latest = await getItem('snapshot');
@@ -376,7 +375,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
               normalizePrLocal(await getItem('prLocal')),
             );
           }
-          if (!(await stillSignedIn(auth))) return;
           const rateLimit = parseRateLimit(data.rateLimit) ?? state.rateLimit;
           await setItem('pollState', {
             ...state,
@@ -418,11 +416,6 @@ export async function refreshMergeState(id: string, headSha: string): Promise<vo
     if (remaining) consulted.set(id, remaining);
     else consulted.delete(id);
   }
-}
-
-/** The token the poll started with is still the stored one. */
-async function stillSignedIn(auth: AuthState): Promise<boolean> {
-  return (await getItem('auth'))?.token === auth.token;
 }
 
 /** The poll's account is gone: start over for whoever signed in, or clean up after sign-out. */
