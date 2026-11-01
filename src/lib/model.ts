@@ -33,7 +33,7 @@ export interface CheckItem {
   required: boolean;
 }
 
-/** `none`: GitHub requires no review (null). `unknown`: not read yet for this commit, or not recognized. */
+/** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
 export type ReviewDecision =
   | 'approved'
   | 'changes_requested'
