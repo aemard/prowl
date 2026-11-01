@@ -35,6 +35,13 @@ test('blurs only the chrome and keeps menus inside the panel, light and dark, at
       .evaluate((element, which) => getComputedStyle(element, which).backdropFilter, pseudo);
   expect(await blur('.header', '::after')).toContain('blur');
   expect(await blur('.pr-card')).toBe('none');
+  // A transform does the same, and a stacking context would paint other cards over the menu.
+  expect(
+    await cards.first().evaluate((element) => {
+      const { transform, isolation, zIndex } = getComputedStyle(element);
+      return { transform, isolation, zIndex };
+    }),
+  ).toEqual({ transform: 'none', isolation: 'auto', zIndex: 'auto' });
   for (const width of [400, 320]) {
     await panel.setViewportSize({ width, height: 760 });
     for (const colorScheme of ['light', 'dark'] as const) {
