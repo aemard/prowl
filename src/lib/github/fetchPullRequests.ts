@@ -150,9 +150,7 @@ async function searchTeams(context: FetchContext, section: Section): Promise<voi
   if (context.samlHoles) problems.push(SSO_REQUIRED);
   const skipped = followed.length - MAX_TEAM_SEARCHES;
   if (skipped > 0) {
-    problems.push(
-      t('skippedTeams', MAX_TEAM_SEARCHES, skipped),
-    );
+    problems.push(t('skippedTeams', MAX_TEAM_SEARCHES, skipped));
   }
   const kept = [...found.values()]
     .sort((a, b) => Date.parse(b.pr.updatedAt) - Date.parse(a.pr.updatedAt))
