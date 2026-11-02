@@ -1,6 +1,23 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
+import { expect, saveScreenshot, test } from './fixtures';
+import { MOCK_ORIGIN } from './mock-github/server';
+
+async function captureLocalizedSettings(page: Page, locale: string) {
+  if (process.env.PROWL_SCREENSHOTS !== '1' || !['fr', 'ja'].includes(locale)) return;
+  // Show the shipped host, as the existing English settings screenshot does.
+  await page.evaluate((mock) => {
+    for (const name of document.querySelectorAll('.settings-permissions__name'))
+      if (name.textContent === mock) name.textContent = 'api.github.com';
+    (document.activeElement as HTMLElement | null)?.blur();
+    window.scrollTo(0, 0);
+  }, new URL(MOCK_ORIGIN).host);
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await saveScreenshot(page, `settings-${locale}-${theme}`, { fullPage: true });
+  }
+}
 
 for (const locale of ['ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es', 'it']) {
   test.describe(`Chrome language ${locale}`, () => {
@@ -45,7 +62,11 @@ for (const locale of ['ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es', 'it']) {
       await expect(
         settings.getByRole('heading', { name: messages.pullRequests?.message, exact: true }),
       ).toBeFocused();
-      await expectNoA11yViolations(settings);
+      for (const theme of ['light', 'dark'] as const) {
+        await settings.emulateMedia({ colorScheme: theme });
+        await expectNoA11yViolations(settings);
+      }
+      await captureLocalizedSettings(settings, locale);
       await settings.setViewportSize({ width: 320, height: 760 });
       expect(
         await settings.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
