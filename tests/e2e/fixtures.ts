@@ -7,6 +7,7 @@ import {
   type Page,
   type Worker,
 } from '@playwright/test';
+import { saveCapture } from '../../scripts/capture';
 import type { AuthState } from '../../src/lib/model';
 import { PEOPLE } from './helpers/listData';
 import { MockGitHub } from './mock-github/server';
@@ -16,6 +17,8 @@ const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
 export const PRODUCTION_PATH = resolve(import.meta.dirname, '../../dist');
 /** `pnpm screenshots`: the run that writes docs/screenshots/. */
 const WRITE_SCREENSHOTS = process.env.PROWL_SCREENSHOTS === '1';
+/** Comma-separated names, e.g. settings,settings-ja; omit to refresh the full existing set. */
+const SCREENSHOT_NAMES = process.env.PROWL_SCREENSHOT_NAMES?.split(',');
 
 export interface ExtensionFixtures {
   context: BrowserContext;
@@ -214,10 +217,10 @@ export async function saveScreenshot(
   name: string,
   options: { fullPage?: boolean } = {},
 ): Promise<void> {
-  await page.screenshot({
-    ...options,
-    ...(WRITE_SCREENSHOTS && {
-      path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`),
-    }),
-  });
+  const write = WRITE_SCREENSHOTS && (!SCREENSHOT_NAMES || SCREENSHOT_NAMES.includes(name));
+  await saveCapture(
+    page,
+    write ? resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`) : undefined,
+    options,
+  );
 }
