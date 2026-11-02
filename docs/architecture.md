@@ -44,9 +44,9 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
-| `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts`, `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
+| `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts` (poll orchestration), `mergeState.ts` (consulted-card refresh and priority hints), `pollState.ts` (auth guards and failure state), `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
-| `src/styles/` | `tokens.css` (design tokens, light/dark), `base.css` | n/a |
+| `src/styles/` | `tokens.css` (theme entry and dark themes), `tokens.base.css` (shared scale and light theme), `base.css` | n/a |
 | `src/test/` | `chrome.ts` fake used by every unit test | excluded |
 | `tests/fixtures/` | Builders for GitHub-shaped GraphQL nodes, shared by unit tests and the E2E mock | n/a |
 | `tests/e2e/` | Playwright specs, fixtures, `mock-github/` server | n/a |
@@ -186,7 +186,10 @@ never qualifiers.
 
 `fetchPullRequests(client, settings, previous, teams)` (`src/lib/github/fetchPullRequests.ts`) is
 all of a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It
-returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`:
+returns `{ pullRequests, sections, sectionErrors, teamRequests, rateLimit }`.
+`fetchMergeState.ts` handles merge-fact caching, prioritization and progressive enrichment.
+
+The search and closure phases follow these rules:
 
 - Each enabled section runs `query ProwlSearch` (`queries.ts`) with its search string plus
   `sort:updated-desc` (unless a custom query has its own `sort:`), so the `maxPerSection` PRs
@@ -602,7 +605,7 @@ signal (`state/store.ts`).
   compose them. One CSS file per component, tokens only (no raw colors).
 - List (`views/List.tsx`): sections come from `settings.sections` (enabled ones; a single one has
   no section bar), each item of the bar at the bottom shows its number of PRs that match the
-  quick filter; `KINDS` maps each `SectionKind` to its bar icon, short name and empty-list hint.
+  quick filter; `KINDS` in `views/ListSections.tsx` maps each `SectionKind` to its bar icon, short name and empty-list hint.
   PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
   split by `splitSection` into cards (what the bar counts), hidden PRs (`hiddenReasons`, for every

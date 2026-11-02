@@ -129,9 +129,9 @@ describe('describeStatus', () => {
   });
 });
 
-describe('describeTokenExpiry', () => {
-  const days = (n: number) => n * 24 * minutes(60);
+const days = (n: number) => n * 24 * minutes(60);
 
+describe('describeTokenExpiry', () => {
   it('says nothing without a known expiry, a week or more ahead, or once it has passed', () => {
     expect(describeTokenExpiry(undefined, NOW)).toBeNull();
     expect(describeTokenExpiry(null, NOW)).toBeNull();

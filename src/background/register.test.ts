@@ -8,6 +8,7 @@ import { POLL_ALARM, scheduleAlarm } from './poller';
 import { registerBackground } from './register';
 
 const alarm = () => fakeChrome().__state.alarms.get(POLL_ALARM);
+
 /** Lets the listeners' storage and alarm calls settle. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 

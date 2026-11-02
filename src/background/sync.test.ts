@@ -5,7 +5,9 @@ import { setItem } from '../lib/storage/storage';
 import { pullSettings, pushSettings, SYNCED_KEY, watchSettingsSync } from './sync';
 
 const synced = async (): Promise<Record<string, unknown>> => chrome.storage.sync.get(null);
+
 const syncState = async () => (await chrome.storage.local.get<{ sync: SyncState }>('sync')).sync;
+
 /** Lets the listeners' storage round trips finish. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 

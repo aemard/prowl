@@ -50,22 +50,22 @@ describe('filterPullRequests', () => {
   });
 });
 
-describe('groupByRepo', () => {
-  const inRepo = (number: number, nameWithOwner: string, updatedAt: string) => {
-    const [owner = '', name = ''] = nameWithOwner.split('/');
-    return buildPullRequest({ number, repo: { owner, name, nameWithOwner }, updatedAt });
-  };
-  // Newest first: web 1, mobile 2, web 3, api 4, mobile 5.
-  const mixed = [
-    inRepo(1, 'acme/web', '2026-10-06T05:00:00.000Z'),
-    inRepo(2, 'acme/mobile', '2026-10-06T04:00:00.000Z'),
-    inRepo(3, 'acme/web', '2026-10-06T03:00:00.000Z'),
-    inRepo(4, 'acme/api', '2026-10-06T02:00:00.000Z'),
-    inRepo(5, 'acme/mobile', '2026-10-06T01:00:00.000Z'),
-  ];
-  const shape = (list: ReturnType<typeof groupByRepo>) =>
-    list.map(({ repo, prs: inside }) => [repo, inside.map((pr) => pr.number)]);
+const inRepo = (number: number, nameWithOwner: string, updatedAt: string) => {
+  const [owner = '', name = ''] = nameWithOwner.split('/');
+  return buildPullRequest({ number, repo: { owner, name, nameWithOwner }, updatedAt });
+};
+// Newest first: web 1, mobile 2, web 3, api 4, mobile 5.
+const mixed = [
+  inRepo(1, 'acme/web', '2026-10-06T05:00:00.000Z'),
+  inRepo(2, 'acme/mobile', '2026-10-06T04:00:00.000Z'),
+  inRepo(3, 'acme/web', '2026-10-06T03:00:00.000Z'),
+  inRepo(4, 'acme/api', '2026-10-06T02:00:00.000Z'),
+  inRepo(5, 'acme/mobile', '2026-10-06T01:00:00.000Z'),
+];
+const shape = (list: ReturnType<typeof groupByRepo>) =>
+  list.map(({ repo, prs: inside }) => [repo, inside.map((pr) => pr.number)]);
 
+describe('groupByRepo', () => {
   it('orders the groups by their first PR, and keeps the order inside', () => {
     expect(shape(groupByRepo(sortPullRequests(mixed, 'updated')))).toEqual([
       ['acme/web', [1, 3]],
@@ -104,18 +104,18 @@ describe('sortPullRequests', () => {
   });
 });
 
-describe('splitSection', () => {
-  const NOW = Date.parse('2026-10-27T12:00:00.000Z');
-  const recent = buildPullRequest({ number: 1, lastCommitAt: '2026-10-20T00:00:00.000Z' });
-  const stale = buildPullRequest({ number: 2, lastCommitAt: '2026-09-20T00:00:00.000Z' });
-  const staleSnoozed = buildPullRequest({ number: 3, lastCommitAt: '2026-09-01T00:00:00.000Z' });
-  const snoozed = buildPullRequest({ number: 4, lastCommitAt: '2026-10-26T00:00:00.000Z' });
-  const local = [staleSnoozed, snoozed].reduce(
-    (state, pr) => snooze(state, pr.id, NOW + 3_600_000),
-    emptyPrLocal(),
-  );
-  const all = [stale, recent, staleSnoozed, snoozed];
+const NOW = Date.parse('2026-10-27T12:00:00.000Z');
+const recent = buildPullRequest({ number: 1, lastCommitAt: '2026-10-20T00:00:00.000Z' });
+const stale = buildPullRequest({ number: 2, lastCommitAt: '2026-09-20T00:00:00.000Z' });
+const staleSnoozed = buildPullRequest({ number: 3, lastCommitAt: '2026-09-01T00:00:00.000Z' });
+const snoozed = buildPullRequest({ number: 4, lastCommitAt: '2026-10-26T00:00:00.000Z' });
+const local = [staleSnoozed, snoozed].reduce(
+  (state, pr) => snooze(state, pr.id, NOW + 3_600_000),
+  emptyPrLocal(),
+);
+const all = [stale, recent, staleSnoozed, snoozed];
 
+describe('splitSection', () => {
   it('shows recent PRs, hides stale ones with the reason, and keeps snoozed ones apart', () => {
     const parts = splitSection(all, local, DEFAULT_SETTINGS, NOW);
     expect(numbers(parts.shown)).toEqual([1]);

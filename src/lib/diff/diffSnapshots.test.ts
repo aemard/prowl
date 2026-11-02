@@ -1,54 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { prNode, viewerNode } from '../../../tests/fixtures/github';
-import { mapPullRequest } from '../github/mapPullRequest';
-import type { CheckState, PrEventType, PullRequest, Review, Snapshot } from '../model';
+import type { CheckState, PrEventType, PullRequest, Snapshot } from '../model';
 import { carrySettledChecks, diffSnapshots, isReadyToMerge } from './diffSnapshots';
-
-const VIEWER = 'octocat';
-const FETCHED_AT = '2026-10-06T09:00:00.000Z';
-const YESTERDAY = '2026-10-05T08:00:00Z';
-const REVIEWED = '2026-10-06T08:00:00Z';
-const COMMENTED = '2026-10-06T08:30:00Z';
-const CLOSED = '2026-10-06T08:45:00Z';
-const SHA = 'a'.repeat(40);
-const NEW_SHA = 'b'.repeat(40);
-
-/** Open, checks passing, review required, mergeable but `blocked`: not ready to merge. */
-const base = mapPullRequest(prNode());
-const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({ ...base, ...overrides });
-const ci = (state: CheckState, headSha = SHA): Partial<PullRequest> => ({
-  checks: { ...base.checks, state },
-  headSha,
-});
-const review = (author: string, state: Review['state'], submittedAt = REVIEWED): Review => ({
-  id: `PRR_${author}_${state}`,
-  author,
-  state,
-  submittedAt,
-});
-const reviews = (...list: Review[]) => ({ reviews: list });
-const comments = (commentCount: number, author?: string, createdAt = COMMENTED) => ({
-  commentCount,
-  lastComment: author ? { author, createdAt } : null,
-});
-const ready = (overrides: Partial<PullRequest> = {}): Partial<PullRequest> => ({
-  mergeStateStatus: 'clean',
-  ...overrides,
-});
-const ended = (state: 'merged' | 'closed', closedBy: string | null): Partial<PullRequest> => ({
-  state,
-  closedBy,
-  updatedAt: CLOSED,
-});
-
-function snapshot(prs: PullRequest[], fetchedAt = FETCHED_AT, login = VIEWER): Snapshot {
-  return {
-    fetchedAt,
-    viewer: viewerNode({ login }),
-    pullRequests: Object.fromEntries(prs.map((p) => [p.id, p])),
-    sections: { authored: prs.map(({ id }) => id) },
-  };
-}
+import {
+  base,
+  CLOSED,
+  COMMENTED,
+  ci,
+  comments,
+  ended,
+  FETCHED_AT,
+  NEW_SHA,
+  pr,
+  REVIEWED,
+  ready,
+  review,
+  reviews,
+  SHA,
+  snapshot,
+  VIEWER,
+  YESTERDAY,
+} from './diffSnapshots.test-support';
 
 /** `actor` defaults to null and `at` to the poll time. */
 type Expected = [type: PrEventType, actor?: string | null, at?: string];
