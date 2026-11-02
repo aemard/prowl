@@ -1,6 +1,7 @@
 import { useSignalEffect } from '@preact/signals';
 import type { ComponentType } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
+import { t } from '../lib/i18n';
 import type { Theme } from '../lib/model';
 import { Header } from './components/Header';
 import { lazy } from './components/lazy';
@@ -25,9 +26,9 @@ const VIEWS: Record<Route, ComponentType> = {
 
 /** Accessible name of the main landmark, announced when focus moves there on navigation. */
 const LABELS: Record<Route, string> = {
-  list: 'Pull requests',
-  settings: 'Settings',
-  onboarding: 'Sign in',
+  list: t('pullRequests'),
+  settings: t('settings'),
+  onboarding: t('signIn'),
 };
 
 /** `system` removes the override so tokens.css follows `prefers-color-scheme`. */
@@ -40,10 +41,10 @@ function Loading() {
   return (
     <>
       <Header />
-      <main class="app-main" aria-busy="true" aria-label="Loading">
+      <main class="app-main" aria-busy="true" aria-label={t('loading')}>
         <div class="app-loading">
           <span class="sr-only" role="status">
-            Loading
+            {t('loading')}
           </span>
           {[0, 1, 2].map((row) => (
             <div class="app-loading__row" key={row}>

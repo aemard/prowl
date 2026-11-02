@@ -1,5 +1,7 @@
 # Codebase patterns
 
+- Localization: call `t` from `src/lib/i18n.ts` with a key in `public/_locales/en/messages.json`; add each message to all seven catalogs. Use complete sentences and `$P1$` placeholders (`placeholders.p1.content: "$1"`), `countMessage` for singular/plural variants, `formatNumber` for visible counts and `uiLocale()` for date formatting. `Message` renders reorderable markup slots as Preact children, never HTML. Display stored sections through `sectionLabel`; never translate IDs, queries, repository names or custom labels. The Chrome fake's `__state.locale` selects a test language; `tests/e2e/i18n.spec.ts` exercises native Chrome catalogs and English fallback.
+
 Where things live, which helper to call, the test builders and the gotchas, for anyone
 changing Prowl. [architecture.md](architecture.md) explains the design; this page is the
 working knowledge. Keep it short and current: newest knowledge wins.

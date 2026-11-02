@@ -5,6 +5,7 @@
  */
 import { isReadyToMerge } from '../diff/diffSnapshots';
 import { type HideSettings, hiddenReasons } from '../hidden';
+import { countMessage, formatNumber, t } from '../i18n';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
 
@@ -22,14 +23,14 @@ const MAX_SHOWN = 99;
 
 /** Why an open PR needs attention, in the order the tooltip lists them. */
 const REASONS: { label: string; red: boolean; applies: (pr: PullRequest) => boolean }[] = [
-  { label: 'CI failing', red: true, applies: (pr) => pr.checks.state === 'failure' },
+  { label: t('ciFailing'), red: true, applies: (pr) => pr.checks.state === 'failure' },
   {
-    label: 'changes requested',
+    label: t('changesRequested'),
     red: true,
     applies: (pr) => pr.reviewDecision === 'changes_requested',
   },
-  { label: 'conflicts', red: false, applies: (pr) => pr.mergeable === 'conflicting' },
-  { label: 'ready to merge', red: false, applies: isReadyToMerge },
+  { label: t('conflictsLower'), red: false, applies: (pr) => pr.mergeable === 'conflicting' },
+  { label: t('readyToMerge'), red: false, applies: isReadyToMerge },
 ];
 
 /** A cleared badge: no text, the plain tooltip. */
@@ -62,19 +63,19 @@ export function computeBadge(
   if (counted.length === 0) return NO_BADGE;
 
   const count = counted.length;
-  const pulls = `${count} pull request${count === 1 ? '' : 's'}`;
+  const pulls = countMessage(count, 'pullCountOne', 'pullCountOther');
   const why = REASONS.map((reason) => ({
     label: reason.label,
     n: counted.filter((pr) => reasonsOf(pr).includes(reason)).length,
   }))
     .filter(({ n }) => n > 0)
-    .map(({ label, n }) => `${n} ${label}`);
+    .map(({ label, n }) => `${formatNumber(n)} ${label}`);
   return {
     text: count > MAX_SHOWN ? `${MAX_SHOWN}+` : String(count),
     title:
       mode === 'unseen'
-        ? `${BADGE_TITLE}: ${pulls} with unseen changes`
-        : `${BADGE_TITLE}: ${pulls} needing attention (${why.join(', ')})`,
+        ? t('withUnseenChanges', BADGE_TITLE, pulls)
+        : t('needingAttention', BADGE_TITLE, pulls, why.join(', ')),
     danger: counted.some((pr) => reasonsOf(pr).some((reason) => reason.red)),
   };
 }

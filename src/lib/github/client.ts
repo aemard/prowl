@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * The one HTTP client for GitHub (GraphQL and REST). It runs in the service worker and the
  * side panel, so it only uses `fetch` and `AbortController`. It never retries: the poller owns
@@ -45,7 +46,7 @@ const API_VERSION = '2022-11-28';
 /** GitHub: without `retry-after`, wait at least a minute after a secondary rate limit. */
 const SECONDARY_RETRY_SECONDS = 60;
 const MAX_MESSAGE_LENGTH = 300;
-const UNEXPECTED = 'GitHub returned an unexpected response.';
+const UNEXPECTED = t('githubReturnedAnUnexpectedResponse');
 const UNPARSEABLE = Symbol('unparseable');
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -81,7 +82,7 @@ export function createGitHubClient({
       headerCount(headers, 'x-ratelimit-remaining') === 0 ||
       headerCount(headers, 'retry-after') !== null;
     const kind = classifyHttpStatus(status, { limited, message });
-    return fail(kind, message || `GitHub responded with HTTP ${status}.`, status, headers);
+    return fail(kind, message || t('githubRespondedWithHttp', status), status, headers);
   }
 
   async function send(method: HttpMethod, path: string, body: unknown, rest: boolean) {
@@ -117,8 +118,8 @@ export function createGitHubClient({
       throw new GitHubError(
         'network',
         timedOut
-          ? `GitHub did not respond within ${TIMEOUT_MS / 1000} seconds.`
-          : 'Could not reach GitHub.',
+          ? t('githubDidNotRespondWithinSeconds', TIMEOUT_MS / 1000)
+          : t('couldNotReachGithub'),
       );
     } finally {
       clearTimeout(timer);
@@ -166,12 +167,12 @@ export function createGitHubClient({
         const { type, message } = isRecord(first) ? first : ({} as Record<string, unknown>);
         throw fail(
           classifyGraphQLType(type),
-          typeof message === 'string' && message ? clean(message) : 'GitHub returned an error.',
+          typeof message === 'string' && message ? clean(message) : t('githubReturnedAnError'),
           status,
           headers,
         );
       }
-      if (!isRecord(data)) throw fail('server', 'GitHub returned no data.', status, headers);
+      if (!isRecord(data)) throw fail('server', t('githubReturnedNoData'), status, headers);
       return data as T;
     },
 

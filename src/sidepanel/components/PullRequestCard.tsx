@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
+import { countMessage, formatNumber, t, uiLocale } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
@@ -72,8 +73,6 @@ export interface PullRequestCardProps {
   teams?: readonly string[];
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
 /**
  * One pull request in the list. The title is the link to GitHub; the chevron button (and a click
  * anywhere else on the card) expands it into its details, merge readiness first. The link and
@@ -99,7 +98,7 @@ export function PullRequestCard({
   const labels = pr.labels.slice(0, MAX_LABELS);
   const hidden = pr.labels.slice(MAX_LABELS);
   const teamRequest =
-    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
+    teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));
   // Who opened it, in words: the avatar alone is a 16 px picture with a tooltip. Not for your own.
   const author = pr.author?.login;
   const by =
@@ -136,7 +135,7 @@ export function PullRequestCard({
   return (
     <li class="pr-card" ref={card}>
       <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
-        {unseen && <span class="pr-card__dot" title="Unseen changes" />}
+        {unseen && <span class="pr-card__dot" title={t('unseenChanges')} />}
         <span class="pr-card__head">
           <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
           <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
@@ -146,20 +145,20 @@ export function PullRequestCard({
           <time
             class="pr-card__updated"
             dateTime={pr.updatedAt}
-            title={`Last activity ${new Date(pr.updatedAt).toLocaleString()}`}
+            title={t('lastActivity', new Date(pr.updatedAt).toLocaleString(uiLocale()))}
           >
             {formatRelativeTime(pr.updatedAt, now)}
           </time>
           {muted && (
-            <span class="pr-card__flag" title="Notifications muted">
+            <span class="pr-card__flag" title={t('notificationsMuted')}>
               <BellSlashIcon size={12} />
-              <span class="sr-only">Notifications muted</span>
+              <span class="sr-only">{t('notificationsMuted')}</span>
             </span>
           )}
           {snoozedUntil && (
             <span
               class="pr-card__flag"
-              title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
+              title={t('snoozedUntil', new Date(snoozedUntil).toLocaleString(uiLocale()))}
             >
               <ClockIcon size={12} />
               {formatSnoozeEnd(snoozedUntil, now)}
@@ -169,7 +168,7 @@ export function PullRequestCard({
           <IconButton
             class="pr-card__toggle"
             size="sm"
-            label={`Details for ${pr.title}`}
+            label={t('detailsFor', pr.title)}
             aria-expanded={expanded}
             aria-controls={expanded ? detailId : undefined}
             aria-describedby={`${detailId}-facts`}
@@ -192,16 +191,16 @@ export function PullRequestCard({
               <Badge
                 variant="plain"
                 icon={<SyncIcon size={12} />}
-                title="Checking the latest merge status on GitHub"
+                title={t('checkingTheLatestMergeStatusOnGithub')}
               >
-                Updating merge status
+                {t('updatingMergeStatus')}
               </Badge>
             )}
             {hiddenBecause && (
               <Badge
                 variant="plain"
                 icon={<EyeClosedIcon size={12} />}
-                title="Why it is hidden from the list"
+                title={t('whyItIsHiddenFromTheList')}
               >
                 {hiddenBecause}
               </Badge>
@@ -242,40 +241,50 @@ export function PullRequestCard({
               ))}
               {hidden.length > 0 && (
                 <span class="pr-label pr-label--more" title={hidden.map((l) => l.name).join(', ')}>
-                  +{hidden.length}
+                  +{formatNumber(hidden.length)}
                 </span>
               )}
             </span>
           )}
           <span class="pr-card__foot">
             {pr.commentCount > 0 && (
-              <span class="pr-card__stat" title={plural(pr.commentCount, 'comment')}>
+              <span
+                class="pr-card__stat"
+                title={countMessage(pr.commentCount, 'commentCountOne', 'commentCountOther')}
+              >
                 <CommentIcon size={12} />
-                {pr.commentCount}
+                {formatNumber(pr.commentCount)}
               </span>
             )}
             {pr.unresolvedThreads > 0 && (
-              <span class="pr-card__stat" title={plural(pr.unresolvedThreads, 'unresolved thread')}>
+              <span
+                class="pr-card__stat"
+                title={countMessage(
+                  pr.unresolvedThreads,
+                  'unresolvedCountOne',
+                  'unresolvedCountOther',
+                )}
+              >
                 <CommentDiscussionIcon size={12} />
-                {pr.unresolvedThreads} unresolved
+                {formatNumber(pr.unresolvedThreads)} {t('unresolved')}
               </span>
             )}
-            <span class="pr-card__age" title={by ? `Opened by ${by}` : undefined}>
+            <span class="pr-card__age" title={by ? t('openedBy', by) : undefined}>
               <time
                 dateTime={pr.createdAt}
-                title={`Opened ${new Date(pr.createdAt).toLocaleString()}`}
+                title={t('opened', new Date(pr.createdAt).toLocaleString(uiLocale()))}
               >
-                Opened {formatRelativeTime(pr.createdAt, now)}
+                {t('openedAge', formatRelativeTime(pr.createdAt, now))}
               </time>
-              {by && ` by ${by}`}
+              {by && t('by2', by)}
             </span>
           </span>
         </span>
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
-          {refreshingMerge && `. Updating merge status`}
+          {refreshingMerge && `. ${t('updatingMergeStatus')}`}
           {teamRequest && `. ${teamRequest}`}
-          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
+          {hiddenBecause && t('hiddenFromTheList', hiddenBecause)}
         </span>
       </div>
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}

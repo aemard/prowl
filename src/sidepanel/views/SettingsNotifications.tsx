@@ -1,4 +1,5 @@
 import { useId } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import type { NotificationSettings } from '../../lib/model';
 import { normalizeTime, PR_EVENT_TYPES } from '../../lib/storage/settings';
 import { BellIcon } from '../components/icons';
@@ -20,12 +21,12 @@ async function sendTestNotification(): Promise<void> {
     await chrome.notifications.create(`test:${Date.now()}`, {
       type: 'basic',
       iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
-      title: 'Prowl test notification',
-      message: 'Notifications from Prowl look like this.',
+      title: t('prowlTestNotification'),
+      message: t('notificationsFromProwlLookLikeThis'),
     });
-    showToast({ message: 'Test notification sent.' });
+    showToast({ message: t('testNotificationSent') });
   } catch {
-    showToast({ message: 'Could not show a notification.', tone: 'danger' });
+    showToast({ message: t('couldNotShowANotification'), tone: 'danger' });
   }
 }
 
@@ -43,16 +44,16 @@ export function NotificationsSettings() {
   };
 
   return (
-    <SettingsGroup title="Notifications">
+    <SettingsGroup title={t('notifications')}>
       <Switch
-        label="Desktop notifications"
-        description="Show a notification when a pull request changes."
+        label={t('desktopNotifications')}
+        description={t('showANotificationWhenAPullRequestChanges')}
         checked={enabled}
         onChange={(next) => update((n) => ({ ...n, enabled: next }))}
       />
 
       <h4 id={eventsId} class="settings-subtitle">
-        Notify me when
+        {t('notifyMeWhen')}
       </h4>
       <ul class="settings-list" aria-labelledby={eventsId}>
         {PR_EVENT_TYPES.map((type) => (
@@ -69,8 +70,8 @@ export function NotificationsSettings() {
       </ul>
 
       <Switch
-        label="Quiet hours"
-        description="Silence notifications at set times every day, in your local time."
+        label={t('quietHours')}
+        description={t('silenceNotificationsAtSetTimesEveryDayInYour')}
         checked={quietHours.enabled}
         disabled={!enabled}
         onChange={(next) =>
@@ -79,14 +80,14 @@ export function NotificationsSettings() {
       />
       <div class="settings-pair">
         <TextField
-          label="From"
+          label={t('from')}
           type="time"
           value={quietHours.start}
           disabled={!enabled || !quietHours.enabled}
           onValueChange={(value) => setTime('start', value)}
         />
         <TextField
-          label="Until"
+          label={t('until')}
           type="time"
           value={quietHours.end}
           disabled={!enabled || !quietHours.enabled}
@@ -97,11 +98,9 @@ export function NotificationsSettings() {
 
       <div class="settings-test">
         <Button icon={<BellIcon />} disabled={!enabled} onClick={() => void sendTestNotification()}>
-          Send test notification
+          {t('sendTestNotification')}
         </Button>
-        <p class="settings-note">
-          Nothing appears? Check that your system lets Chrome show notifications.
-        </p>
+        <p class="settings-note">{t('nothingAppearsCheckThatYourSystemLetsChromeShow')}</p>
       </div>
     </SettingsGroup>
   );

@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * The read behind an expanded card: `ProwlPullRequestDetail` for one PR, mapped to the model.
  */
@@ -30,7 +31,7 @@ export async function fetchPullRequestDetail(
       { partial: true },
     );
     if (!isPullRequest(node))
-      throw new GitHubError('not_found', 'This pull request is not available.');
+      throw new GitHubError('not_found', t('thisPullRequestIsNotAvailable'));
     return node;
   };
   const contextsOf = (node: DetailPullRequestNode) =>

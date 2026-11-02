@@ -1,0 +1,2240 @@
+{
+  "open": {
+    "message": "Abrir"
+  },
+  "snooze1H": {
+    "message": "Posponer 1 h"
+  },
+  "somethingWentWrongWhileRefreshing": {
+    "message": "Se ha producido un error al actualizar."
+  },
+  "yourSettingsTakeKbMoreThanThe8Kb": {
+    "message": "Tus ajustes ocupan $P1$ KB y superan los 8 KB de Chrome Sync. Elimina repositorios o secciones. Se conservan en este dispositivo.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeSyncDidNotTakeYourSettingsTheyStay": {
+    "message": "Chrome Sync no ha guardado tus ajustes. Se conservan en este dispositivo."
+  },
+  "ciFailing": {
+    "message": "CI fallida"
+  },
+  "changesRequested": {
+    "message": "cambios solicitados"
+  },
+  "readyToMerge": {
+    "message": "lista para fusionar"
+  },
+  "withUnseenChanges": {
+    "message": "$P1$: $P2$ con cambios sin ver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "needingAttention": {
+    "message": "$P1$: $P2$ que requieren atención ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "writeAMessageFirst": {
+    "message": "Escribe primero un mensaje."
+  },
+  "theMessageIsLongerThanCharacters": {
+    "message": "El mensaje supera los $P1$ caracteres.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheReview": {
+    "message": "GitHub no ha confirmado la revisión."
+  },
+  "githubDidNotConfirmTheComment": {
+    "message": "GitHub no ha confirmado el comentario."
+  },
+  "githubDidNotConfirmTheMerge": {
+    "message": "GitHub no ha confirmado la fusión."
+  },
+  "noFailedChecksToReRun": {
+    "message": "No hay comprobaciones fallidas que repetir."
+  },
+  "somethingWentWrong": {
+    "message": "Se ha producido un error."
+  },
+  "reRanOf": {
+    "message": "Se han repetido $P1$ de $P2$. $P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "theCodeExpiredBeforeItWasUsedStartAgain": {
+    "message": "El código ha caducado. Vuelve a empezar para obtener otro."
+  },
+  "accessWasDeniedOnGithubStartAgainToAuthorize": {
+    "message": "GitHub ha denegado el acceso. Vuelve a autorizar Prowl o pega un token."
+  },
+  "signingInFromTheBrowserIsNotAvailableFor": {
+    "message": "Esta versión de Prowl no permite iniciar sesión desde el navegador. Pega un token."
+  },
+  "couldNotReachGithubCheckYourConnectionAndTry": {
+    "message": "No se puede conectar con GitHub. Comprueba la conexión e inténtalo de nuevo."
+  },
+  "githubIsHavingTroubleRightNowTryAgainIn": {
+    "message": "GitHub tiene problemas en este momento. Inténtalo de nuevo más tarde."
+  },
+  "withoutTheReadOrgScopeTeamReviewsMayNot": {
+    "message": "Sin el ámbito read:org, puede que no se encuentren tus equipos. Añádelo para seguir sus solicitudes de revisión."
+  },
+  "githubDoesNotOfferTheChecksPermissionToFine": {
+    "message": "GitHub no ofrece el permiso Checks para tokens de acceso detallado, por lo que puede faltar el estado de CI. Un token clásico con el ámbito repo lo muestra completo."
+  },
+  "githubReturnedAnUnexpectedResponse": {
+    "message": "GitHub ha devuelto una respuesta inesperada."
+  },
+  "pasteATokenToSignIn": {
+    "message": "Pega un token para iniciar sesión."
+  },
+  "thatDoesNotLookLikeAGithubTokenCopy": {
+    "message": "No parece un token de GitHub. Cópialo de nuevo sin espacios ni comillas."
+  },
+  "couldNotSignInTryAgain": {
+    "message": "No se ha podido iniciar sesión. Inténtalo de nuevo."
+  },
+  "githubRejectedThisTokenCheckThatYouCopiedAll": {
+    "message": "GitHub ha rechazado este token. Comprueba que esté completo y que no haya caducado ni se haya revocado."
+  },
+  "githubRefusedThisToken": {
+    "message": "GitHub ha rechazado este token: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitReachedTryAgainInAMinute": {
+    "message": "Se ha alcanzado el límite de GitHub. Inténtalo de nuevo en un minuto."
+  },
+  "githubRespondedWithHttp": {
+    "message": "GitHub ha respondido con HTTP $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotRespondWithinSeconds": {
+    "message": "GitHub no ha respondido en $P1$ segundos.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotReachGithub": {
+    "message": "No se puede conectar con GitHub."
+  },
+  "githubReturnedAnError": {
+    "message": "GitHub ha devuelto un error."
+  },
+  "githubReturnedNoData": {
+    "message": "GitHub no ha devuelto datos."
+  },
+  "thisPullRequestIsNotAvailable": {
+    "message": "Esta PR no está disponible."
+  },
+  "youFollowNoneOfYourTeamsFollowOneIn": {
+    "message": "No sigues a ningún equipo. Selecciona uno en Ajustes."
+  },
+  "githubRefusedTheSearchFor": {
+    "message": "GitHub ha rechazado la búsqueda de $P1$: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "enterAGithubSearchQueryForExampleAuthorMe": {
+    "message": "Introduce una búsqueda de GitHub, por ejemplo: author:@me label:bug"
+  },
+  "prowlFollowsPullRequestsOnlyRemoveIsIssueOr": {
+    "message": "Prowl solo sigue PR: elimina is:issue (o type:issue, -is:pr)."
+  },
+  "githubAllowsAtMostAndOrNotOperatorsIn": {
+    "message": "GitHub permite un máximo de $P1$ operadores AND / OR / NOT (hay $P2$).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotListYourTeams": {
+    "message": "No se han podido listar tus equipos: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "bot": {
+    "message": "Bot"
+  },
+  "noCommitForD": {
+    "message": "Sin commits desde hace $P1$ d",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "someone": {
+    "message": "Alguien"
+  },
+  "ciFailed": {
+    "message": "CI fallida"
+  },
+  "ciPassed": {
+    "message": "CI superada"
+  },
+  "reviewed": {
+    "message": "$P1$ ha revisado",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approved": {
+    "message": "$P1$ ha aprobado",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestedChanges": {
+    "message": "$P1$ ha solicitado cambios",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commented": {
+    "message": "$P1$ ha comentado",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyToMerge2": {
+    "message": "Lista para fusionar"
+  },
+  "merged": {
+    "message": "Fusionada"
+  },
+  "closed": {
+    "message": "Cerrada"
+  },
+  "justNow": {
+    "message": "ahora mismo"
+  },
+  "minAgo": {
+    "message": "hace $P1$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hAgo": {
+    "message": "hace $P1$ h",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dAgo": {
+    "message": "hace $P1$ d",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "for1Hour": {
+    "message": "durante 1 hora"
+  },
+  "for4Hours": {
+    "message": "durante 4 horas"
+  },
+  "untilTomorrow": {
+    "message": "hasta mañana"
+  },
+  "untilMonday": {
+    "message": "hasta el lunes"
+  },
+  "pullRequests": {
+    "message": "Pull requests"
+  },
+  "settings": {
+    "message": "Ajustes"
+  },
+  "signIn": {
+    "message": "Iniciar sesión"
+  },
+  "loading": {
+    "message": "Cargando"
+  },
+  "updating": {
+    "message": "Actualizando…"
+  },
+  "notUpdatedYet": {
+    "message": "Aún sin actualizar"
+  },
+  "updated": {
+    "message": "Actualizado"
+  },
+  "refresh": {
+    "message": "Actualizar"
+  },
+  "backToPullRequests": {
+    "message": "Volver a las PR"
+  },
+  "viewGithubProfile": {
+    "message": "Ver perfil de GitHub"
+  },
+  "keyboardShortcuts": {
+    "message": "Atajos de teclado"
+  },
+  "signOut": {
+    "message": "Cerrar sesión"
+  },
+  "account": {
+    "message": "Cuenta: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reRunFailedChecks": {
+    "message": "Repetir comprobaciones fallidas"
+  },
+  "updateBranch": {
+    "message": "Actualizar rama"
+  },
+  "updatedTheBranchOf": {
+    "message": "Rama actualizada de"
+  },
+  "readyForReview": {
+    "message": "Lista para revisión"
+  },
+  "convertToDraft": {
+    "message": "Convertir en borrador"
+  },
+  "reRunningFailedChecksOf": {
+    "message": "Repitiendo comprobaciones fallidas de"
+  },
+  "markedReadyForReview": {
+    "message": "Marcada como lista para revisión:"
+  },
+  "convertedToDraft": {
+    "message": "Convertida en borrador:"
+  },
+  "of": {
+    "message": "$P1$ de $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "updateWithARebase": {
+    "message": "Actualizar con rebase"
+  },
+  "createAMergeCommit": {
+    "message": "Crear un commit de fusión"
+  },
+  "squashAndMerge": {
+    "message": "Squash y fusión"
+  },
+  "rebaseAndMerge": {
+    "message": "Rebase y fusión"
+  },
+  "merge": {
+    "message": "Fusionar"
+  },
+  "enableAutoMerge": {
+    "message": "Activar fusión automática"
+  },
+  "disableAutoMerge": {
+    "message": "Desactivar fusión automática"
+  },
+  "autoMergeIsOnFor": {
+    "message": "Fusión automática activada para"
+  },
+  "message2": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeIsOffFor": {
+    "message": "Fusión automática desactivada para"
+  },
+  "mergePullRequest": {
+    "message": "Fusionar PR"
+  },
+  "mergeIntoNowOrLetGithubMergeItOnce": {
+    "message": "Fusiona $P1$ en $P2$ ahora, o deja que GitHub lo haga cuando se superen las comprobaciones y revisiones.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "mergeInto": {
+    "message": "Fusionar $P1$ en $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "commitsAreKeptAsTheyAreSoThereIs": {
+    "message": "Los commits se mantienen tal cual, por lo que no hay título de commit."
+  },
+  "commitTitleOptional": {
+    "message": "Título del commit (opcional)"
+  },
+  "emptyUsesGithubSDefault": {
+    "message": "Vacío usa el valor predeterminado de GitHub."
+  },
+  "enterAWholeNumberFromTo": {
+    "message": "Introduce un entero entre $P1$ y $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openInGithub": {
+    "message": "Abrir en GitHub"
+  },
+  "copyBranchName": {
+    "message": "Copiar nombre de rama"
+  },
+  "couldNotCopyTheBranchName": {
+    "message": "No se ha podido copiar el nombre de rama."
+  },
+  "copiedButThisBranchNameContainsShellCharactersQuote": {
+    "message": "Copiado. El nombre contiene caracteres especiales del shell. Ponlo entre comillas antes de pegarlo en un terminal."
+  },
+  "copied": {
+    "message": "$P1$ copiado",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unsnooze": {
+    "message": "Quitar aplazamiento"
+  },
+  "snooze": {
+    "message": "Posponer $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "snoozed": {
+    "message": "Pospuesta $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unmuteNotifications": {
+    "message": "Reactivar notificaciones"
+  },
+  "muteNotifications": {
+    "message": "Silenciar notificaciones"
+  },
+  "actionsFor": {
+    "message": "Acciones de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreActionsFor": {
+    "message": "Más acciones de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequestedFrom": {
+    "message": "Revisión solicitada a $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unseenChanges": {
+    "message": "Cambios sin ver"
+  },
+  "lastActivity": {
+    "message": "Última actividad $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationsMuted": {
+    "message": "Notificaciones silenciadas"
+  },
+  "snoozedUntil": {
+    "message": "Pospuesta hasta $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkingTheLatestMergeStatusOnGithub": {
+    "message": "Comprobando el estado de fusión en GitHub"
+  },
+  "updatingMergeStatus": {
+    "message": "Actualizando estado de fusión"
+  },
+  "whyItIsHiddenFromTheList": {
+    "message": "Motivo por el que se oculta"
+  },
+  "unresolved": {
+    "message": "sin resolver"
+  },
+  "openedBy": {
+    "message": "Abierta por $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opened": {
+    "message": "Abierta $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "by2": {
+    "message": " por $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenFromTheList": {
+    "message": ". Oculta en la lista: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failed": {
+    "message": "Fallida"
+  },
+  "pending": {
+    "message": "Pendiente"
+  },
+  "passed": {
+    "message": "Superada"
+  },
+  "skipped": {
+    "message": "Omitida"
+  },
+  "approved2": {
+    "message": "Aprobada"
+  },
+  "changesRequested2": {
+    "message": "Cambios solicitados"
+  },
+  "reviewRequested": {
+    "message": "Revisión solicitada"
+  },
+  "commented2": {
+    "message": "Comentada"
+  },
+  "dismissed": {
+    "message": "Descartada"
+  },
+  "theBaseBranchRequiresThisCheckToPass": {
+    "message": "La rama base exige superar esta comprobación"
+  },
+  "required": {
+    "message": "Obligatoria"
+  },
+  "passed2": {
+    "message": "$P1$ superadas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2": {
+    "message": "$P1$ omitidas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotReturnTheChecksAFineGrained": {
+    "message": "GitHub no ha devuelto las comprobaciones. Un token de acceso detallado no puede leerlas."
+  },
+  "noChecksOnTheLatestCommit": {
+    "message": "No hay comprobaciones en el último commit."
+  },
+  "noReviewsYet": {
+    "message": "Aún no hay revisiones."
+  },
+  "actions": {
+    "message": "Acciones"
+  },
+  "tryAgain": {
+    "message": "Reintentar"
+  },
+  "loadingChecksAndReviewers": {
+    "message": "Cargando comprobaciones y revisores"
+  },
+  "checks": {
+    "message": "Comprobaciones"
+  },
+  "reviewers": {
+    "message": "Revisores"
+  },
+  "enterAnOwnerOrOwnerNameForExampleAcme": {
+    "message": "Introduce un propietario o propietario/nombre, por ejemplo acme o acme/widgets."
+  },
+  "isAlreadyInTheList": {
+    "message": "$P1$ ya está en la lista $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToTheList": {
+    "message": "$P1$ se ha añadido a la lista $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "removedFromTheList": {
+    "message": "$P1$ se ha eliminado de la lista $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "remove": {
+    "message": "Eliminar $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repository": {
+    "message": "Repositorio: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ownerOrOwnerName": {
+    "message": "propietario o propietario/nombre"
+  },
+  "addToList": {
+    "message": "Añadir a la lista $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "add": {
+    "message": "Añadir"
+  },
+  "pullRequests2": {
+    "message": "PR de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestChanges": {
+    "message": "Solicitar cambios"
+  },
+  "requestedChangesOn": {
+    "message": "Cambios solicitados en"
+  },
+  "comment": {
+    "message": "Comentar"
+  },
+  "commentedOn": {
+    "message": "Comentario añadido en"
+  },
+  "addACommentToTheConversationOf": {
+    "message": "Añade un comentario a la conversación de $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approve": {
+    "message": "Aprobar"
+  },
+  "on": {
+    "message": "$P1$ en $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "cancel": {
+    "message": "Cancelar"
+  },
+  "message3": {
+    "message": "Mensaje"
+  },
+  "sections": {
+    "message": "Secciones"
+  },
+  "couldNotLoadThisSection": {
+    "message": "No se ha podido cargar esta sección"
+  },
+  "couldNotLoad": {
+    "message": "Error al cargar"
+  },
+  "moreSections": {
+    "message": "Más secciones"
+  },
+  "more": {
+    "message": "Más"
+  },
+  "refreshFailed": {
+    "message": "Error al actualizar: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotSignOutTryAgain": {
+    "message": "No se ha podido cerrar sesión. Inténtalo de nuevo."
+  },
+  "signOut2": {
+    "message": "¿Cerrar sesión?"
+  },
+  "prowlForgetsYourTokenAndThePullRequestsIt": {
+    "message": "Prowl elimina el token y las PR guardadas en este navegador. El token seguirá siendo válido en GitHub hasta que lo revoques."
+  },
+  "retry": {
+    "message": "Reintentar"
+  },
+  "lastUpdated": {
+    "message": "Última actualización $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingInMin": {
+    "message": "reintentando en $P1$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingSoon": {
+    "message": "reintentando en breve"
+  },
+  "githubRateLimitAlmostUsedUp": {
+    "message": "Casi se ha alcanzado el límite de GitHub"
+  },
+  "refreshingResumesAt": {
+    "message": "La actualización se reanudará a las $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullRequestsMayBeOutOfDate": {
+    "message": "Las PR pueden estar desactualizadas"
+  },
+  "refreshNow": {
+    "message": "Actualizar ahora"
+  },
+  "yourGithubTokenWasRevokedOrExpired": {
+    "message": "Tu token de GitHub ha caducado o se ha revocado"
+  },
+  "prowlStoppedRefreshingSignInAgainToContinue": {
+    "message": "Prowl ha dejado de actualizar. Inicia sesión de nuevo para continuar."
+  },
+  "reAuthenticate": {
+    "message": "Volver a autenticar"
+  },
+  "rateLimitedUntil": {
+    "message": "Límite alcanzado hasta las $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitHasReset": {
+    "message": "El límite de GitHub se ha restablecido"
+  },
+  "githubIsLimitingProwlSRequestsSoRefreshingIs": {
+    "message": "GitHub está limitando las solicitudes de Prowl. Las actualizaciones están en pausa."
+  },
+  "prowlRefreshesAgainShortly": {
+    "message": "Prowl volverá a actualizar en breve."
+  },
+  "offline": {
+    "message": "Sin conexión — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubError": {
+    "message": "Error de GitHub — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inLessThanADay": {
+    "message": "en menos de un día"
+  },
+  "yourGithubTokenExpires": {
+    "message": "Tu token de GitHub caduca $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "createANewOneAndSignInWithIt": {
+    "message": "Crea otro token e inicia sesión con él para que Prowl siga actualizando."
+  },
+  "renewToken": {
+    "message": "Renovar token"
+  },
+  "blockedReviewRequired": {
+    "message": "Bloqueada: se requiere revisión"
+  },
+  "blockedFailing": {
+    "message": "Bloqueada por fallo en $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingButNotRequired": {
+    "message": "Error en $P1$; no se exige un resultado correcto",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "waitingForToFinish": {
+    "message": "Esperando a la finalización de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergedBy": {
+    "message": "Fusionada por $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedWithoutMerging": {
+    "message": "Cerrada sin fusionar"
+  },
+  "blockedDraftMarkItReadyForReviewToMerge": {
+    "message": "Bloqueada: borrador, márcala como lista para revisión"
+  },
+  "conflictsWith": {
+    "message": "Conflictos con $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedBranchIsBehind": {
+    "message": "Bloqueada: la rama va por detrás de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubIsStillCheckingWhetherItCanBeMerged": {
+    "message": "GitHub aún está comprobando si se puede fusionar"
+  },
+  "blockedByTheBaseBranchSRules": {
+    "message": "Bloqueada por las reglas de la rama base"
+  },
+  "mergeCommit": {
+    "message": "commit de fusión"
+  },
+  "failed2": {
+    "message": "$P1$ fallidas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2": {
+    "message": "$P1$ pendientes",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failing": {
+    "message": "$P1$ fallidas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailing": {
+    "message": "Comprobaciones fallidas: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning": {
+    "message": "Comprobaciones en curso: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksPassed": {
+    "message": "Comprobaciones superadas: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequired": {
+    "message": "Revisión requerida"
+  },
+  "draft": {
+    "message": "Borrador"
+  },
+  "conflicts": {
+    "message": "Conflictos"
+  },
+  "hasMergeConflicts": {
+    "message": "Hay conflictos de fusión"
+  },
+  "autoMerge": {
+    "message": "Fusión automática"
+  },
+  "labels": {
+    "message": "Etiquetas: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updated2": {
+    "message": "Actualizada $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "Cerrar"
+  },
+  "messages": {
+    "message": "Mensajes"
+  },
+  "dismiss": {
+    "message": "Descartar"
+  },
+  "failed3": {
+    "message": "Error en $P1$: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotLoadTheDetails": {
+    "message": "No se han podido cargar los detalles."
+  },
+  "signedInAs": {
+    "message": "Sesión iniciada como $P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotSaveTheSettingTryAgain": {
+    "message": "No se ha podido guardar el ajuste. Inténtalo de nuevo."
+  },
+  "nextPullRequest": {
+    "message": "Siguiente PR"
+  },
+  "previousPullRequest": {
+    "message": "PR anterior"
+  },
+  "expandOrCollapseTheFocusedPullRequest": {
+    "message": "Expandir o contraer la PR enfocada"
+  },
+  "openTheFocusedPullRequestOnGithub": {
+    "message": "Abrir la PR enfocada en GitHub"
+  },
+  "filterPullRequests": {
+    "message": "Filtrar PR"
+  },
+  "showKeyboardShortcuts": {
+    "message": "Mostrar atajos de teclado"
+  },
+  "closeADialogOrMenuCollapseAPullRequest": {
+    "message": "Cerrar un diálogo o menú, contraer una PR"
+  },
+  "prowlNeedsAccessToGithubComToSignYou": {
+    "message": "Prowl necesita acceder a github.com para pedir un código y tu autorización. Permítelo y reintenta, o pega abajo un token, que no requiere acceso adicional."
+  },
+  "codeCopied": {
+    "message": "Código copiado"
+  },
+  "couldNotCopySelectTheCodeAndCopyIt": {
+    "message": "No se ha podido copiar. Selecciona el código y cópialo manualmente."
+  },
+  "authorizeProwlOnGithub": {
+    "message": "Autorizar Prowl en GitHub"
+  },
+  "enterThisCodeOnGithubToFinishSigningIn": {
+    "message": "Introduce este código en GitHub para terminar de iniciar sesión."
+  },
+  "copyCode": {
+    "message": "Copiar código $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openGithub": {
+    "message": "Abrir GitHub"
+  },
+  "waitingForYouToApproveProwlOnGithub": {
+    "message": "Esperando a que autorices Prowl en GitHub…"
+  },
+  "continueWithGithub": {
+    "message": "Continuar con GitHub"
+  },
+  "approveProwlOnGithubComWithAOneTime": {
+    "message": "Autoriza Prowl en github.com con un código de un solo uso. Chrome primero te pedirá permiso para acceder a github.com."
+  },
+  "mine": {
+    "message": "Mías"
+  },
+  "pullRequestsYouOpenWillShowUpHere": {
+    "message": "Las PR que abras aparecerán aquí."
+  },
+  "review": {
+    "message": "Revisiones"
+  },
+  "whenSomeoneAsksYouForAReviewItWill": {
+    "message": "Las solicitudes de revisión que recibas aparecerán aquí."
+  },
+  "teams": {
+    "message": "Equipos"
+  },
+  "whenSomeoneAsksOneOfYourTeamsForA": {
+    "message": "Las solicitudes de revisión para tus equipos aparecerán aquí."
+  },
+  "mentions": {
+    "message": "Menciones"
+  },
+  "pullRequestsThatMentionYouWillShowUpHere": {
+    "message": "Las PR que te mencionen aparecerán aquí."
+  },
+  "assigned": {
+    "message": "Asignadas"
+  },
+  "pullRequestsAssignedToYouWillShowUpHere": {
+    "message": "Las PR que te asignen aparecerán aquí."
+  },
+  "noOpenPullRequestsMatchThisSearch": {
+    "message": "Ninguna PR abierta coincide con esta búsqueda."
+  },
+  "loadingPullRequests": {
+    "message": "Cargando PR"
+  },
+  "noSectionsTurnedOn": {
+    "message": "No hay secciones activadas"
+  },
+  "chooseWhichPullRequestsProwlFollowsInSettings": {
+    "message": "Elige en Ajustes qué PR seguirá Prowl."
+  },
+  "openSettings": {
+    "message": "Abrir ajustes"
+  },
+  "couldNotLoadPullRequests": {
+    "message": "No se han podido cargar las PR"
+  },
+  "nothingHasBeenFetchedYetTheNoticeAboveSays": {
+    "message": "Todavía no se han obtenido datos. El aviso de arriba indica el motivo."
+  },
+  "filterByTitleRepoAuthorOrLabel": {
+    "message": "Filtrar por título, repositorio, autor o etiqueta"
+  },
+  "snoozedPullRequests": {
+    "message": "PR pospuestas: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hideAgain": {
+    "message": "Volver a ocultar"
+  },
+  "showHidden": {
+    "message": "Mostrar $P1$ ocultas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenPullRequests": {
+    "message": "PR ocultas: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatches": {
+    "message": "Sin coincidencias"
+  },
+  "noPullRequests": {
+    "message": "No hay PR"
+  },
+  "nothingInMatches": {
+    "message": "Nada en «$P1$» coincide con «$P2$».",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "clearFilter": {
+    "message": "Borrar filtro"
+  },
+  "signInWithGithub": {
+    "message": "Iniciar sesión con GitHub"
+  },
+  "orPasteAToken": {
+    "message": "o pega un token"
+  },
+  "signingInFromTheBrowserIsNotAvailableIn": {
+    "message": "Esta versión no permite iniciar sesión desde el navegador."
+  },
+  "howToSignInWithAToken": {
+    "message": "Cómo iniciar sesión con un token"
+  },
+  "personalAccessToken": {
+    "message": "Token de acceso personal"
+  },
+  "createAToken": {
+    "message": "Crear token"
+  },
+  "classicToken": {
+    "message": "Token clásico"
+  },
+  "recommended": {
+    "message": "Recomendado"
+  },
+  "createAClassicToken": {
+    "message": "Crear un token clásico"
+  },
+  "fineGrainedToken": {
+    "message": "Token de acceso detallado"
+  },
+  "limited": {
+    "message": "Limitado"
+  },
+  "coversOneAccountOrOrganizationAndTheRepositoriesYou": {
+    "message": "Cubre una cuenta u organización y los repositorios elegidos. Concede Pull requests, Contents y Actions (lectura y escritura, para aprobar, fusionar y repetir comprobaciones), Commit statuses (lectura) y Members (lectura) para encontrar equipos de una organización. GitHub no ofrece Checks para estos tokens, por lo que puede faltar el estado de CI."
+  },
+  "createAFineGrainedToken": {
+    "message": "Crear token de acceso detallado"
+  },
+  "matchSystem": {
+    "message": "Usar tema del sistema"
+  },
+  "light": {
+    "message": "Claro"
+  },
+  "dark": {
+    "message": "Oscuro"
+  },
+  "recentlyUpdated": {
+    "message": "Actualizadas recientemente"
+  },
+  "newestFirst": {
+    "message": "Más nuevas primero"
+  },
+  "repository2": {
+    "message": "Repositorio"
+  },
+  "needsAttention": {
+    "message": "Requiere atención"
+  },
+  "off": {
+    "message": "Desactivado"
+  },
+  "checkEveryMinutes": {
+    "message": "Comprobar cada (minutos)"
+  },
+  "pullRequestsPerSection": {
+    "message": "PR por sección"
+  },
+  "appearance": {
+    "message": "Apariencia"
+  },
+  "theme": {
+    "message": "Tema"
+  },
+  "sortPullRequestsBy": {
+    "message": "Ordenar PR por"
+  },
+  "groupPullRequestsByRepository": {
+    "message": "Agrupar PR por repositorio"
+  },
+  "listsEachRepositorySPullRequestsUnderAHeader": {
+    "message": "Muestra las PR de cada repositorio bajo un encabezado plegable, en el orden elegido arriba."
+  },
+  "hidePrsWithNoCommitForDays": {
+    "message": "Ocultar PR sin commits desde hace (días)"
+  },
+  "theyStayOutOfTheListTheCountsAnd": {
+    "message": "Se ocultan de la lista, los contadores y la insignia hasta elegir «Mostrar ocultas», pero siguen notificando. 0 no oculta nada."
+  },
+  "hideDraftPrs": {
+    "message": "Ocultar PR en borrador"
+  },
+  "shownAgainWithShowHiddenTheyStillNotifyYou": {
+    "message": "Se muestran de nuevo con «Mostrar ocultas». Siguen enviando notificaciones."
+  },
+  "hidePrsOpenedByBots": {
+    "message": "Ocultar PR abiertas por bots"
+  },
+  "dependabotRenovateAndOtherAppsShownAgainWithShow": {
+    "message": "Dependabot, Renovate y otras apps. Se muestran con «Mostrar ocultas». Siguen enviando notificaciones."
+  },
+  "toolbarBadge": {
+    "message": "Insignia de la barra de herramientas"
+  },
+  "notifications": {
+    "message": "Notificaciones"
+  },
+  "account2": {
+    "message": "Cuenta"
+  },
+  "privacyAndPermissions": {
+    "message": "Privacidad y permisos"
+  },
+  "privacy": {
+    "message": "Privacidad"
+  },
+  "about": {
+    "message": "Acerca de"
+  },
+  "settingsSections": {
+    "message": "Secciones de ajustes"
+  },
+  "documentation": {
+    "message": "Documentación"
+  },
+  "sourceCode": {
+    "message": "Código fuente"
+  },
+  "token": {
+    "message": "Token"
+  },
+  "scopes": {
+    "message": "Ámbitos"
+  },
+  "noneFineGrainedTokensUsePerRepositoryPermissions": {
+    "message": "Ninguno: los tokens de acceso detallado usan permisos por repositorio."
+  },
+  "none": {
+    "message": "Ninguno"
+  },
+  "expires": {
+    "message": "Caduca"
+  },
+  "version": {
+    "message": "Versión"
+  },
+  "noKeyboardShortcutOpensProwlYet": {
+    "message": "Aún no hay atajo de teclado para abrir Prowl."
+  },
+  "changeItAtChromeExtensionsShortcuts": {
+    "message": "Cámbialo en chrome://extensions/shortcuts."
+  },
+  "pullRequestsYouOpened": {
+    "message": "PR que has abierto"
+  },
+  "pullRequestsThatAskYouForAReviewYour": {
+    "message": "PR cuya revisión se te solicita (tus equipos tienen su propia sección)"
+  },
+  "pullRequestsThatAskOneOfYourTeamsFor": {
+    "message": "PR cuya revisión se solicita a uno de tus equipos"
+  },
+  "pullRequestsThatMentionYou": {
+    "message": "PR que te mencionan"
+  },
+  "pullRequestsAssignedToYou": {
+    "message": "PR que tienes asignadas"
+  },
+  "ciFails": {
+    "message": "La CI falla"
+  },
+  "ciPasses": {
+    "message": "La CI se supera"
+  },
+  "afterItFailedBefore": {
+    "message": "Tras haber fallado antes."
+  },
+  "newReview": {
+    "message": "Nueva revisión"
+  },
+  "aReviewThatOnlyLeavesComments": {
+    "message": "Una revisión que solo deja comentarios."
+  },
+  "newComment": {
+    "message": "Nuevo comentario"
+  },
+  "countsPullRequestsThatNeedYouFailingCiChanges": {
+    "message": "Cuenta las PR que requieren atención: CI fallida, cambios solicitados, conflictos o listas para fusionar."
+  },
+  "countsPullRequestsWithChangesYouHaveNotLooked": {
+    "message": "Cuenta las PR con cambios que aún no has visto."
+  },
+  "theToolbarIconShowsNoNumber": {
+    "message": "El icono de la barra de herramientas no muestra ningún número."
+  },
+  "startAndEndAreTheSameSoNothingIs": {
+    "message": "El inicio y el fin coinciden, por lo que no se silencia nada."
+  },
+  "thisWindowCrossesMidnightAndEndsTheNextDay": {
+    "message": "Este intervalo cruza la medianoche y termina al día siguiente."
+  },
+  "classicPersonalAccessToken": {
+    "message": "Token de acceso personal clásico"
+  },
+  "fineGrainedPersonalAccessToken": {
+    "message": "Token de acceso personal detallado"
+  },
+  "oauthTokenSignedInWithGithub": {
+    "message": "Token OAuth (sesión con GitHub)"
+  },
+  "unknown": {
+    "message": "Desconocido"
+  },
+  "never": {
+    "message": "Nunca"
+  },
+  "expiredOn": {
+    "message": "Caducó el $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sidePanel": {
+    "message": "Panel lateral"
+  },
+  "showProwlInChromeSSidePanel": {
+    "message": "Mostrar Prowl en el panel lateral de Chrome."
+  },
+  "storage": {
+    "message": "Almacenamiento"
+  },
+  "keepYourSettingsAndPullRequestsInThisBrowser": {
+    "message": "Guardar tus ajustes y PR en este navegador."
+  },
+  "alarms": {
+    "message": "Alarmas"
+  },
+  "checkGithubOnAScheduleEvenWhenThePanel": {
+    "message": "Comprobar GitHub periódicamente, incluso con el panel cerrado."
+  },
+  "tellYouWhenAPullRequestChanges": {
+    "message": "Avisarte cuando cambie una PR."
+  },
+  "readYourPullRequestsAndActOnThemUsing": {
+    "message": "Leer tus PR y realizar acciones con tu token."
+  },
+  "signInWithGithubProwlAsksForThisOnly": {
+    "message": "Iniciar sesión con GitHub. Prowl solo pide este acceso durante el inicio de sesión y después lo retira."
+  },
+  "readAndChangeYourDataOnThisSite": {
+    "message": "Leer y modificar tus datos en este sitio."
+  },
+  "notDescribedByThisVersionOfProwl": {
+    "message": "No se describe en esta versión de Prowl."
+  },
+  "prowlTestNotification": {
+    "message": "Notificación de prueba de Prowl"
+  },
+  "notificationsFromProwlLookLikeThis": {
+    "message": "Así son las notificaciones de Prowl."
+  },
+  "testNotificationSent": {
+    "message": "Notificación de prueba enviada."
+  },
+  "couldNotShowANotification": {
+    "message": "No se ha podido mostrar una notificación."
+  },
+  "desktopNotifications": {
+    "message": "Notificaciones de escritorio"
+  },
+  "showANotificationWhenAPullRequestChanges": {
+    "message": "Mostrar una notificación cuando cambie una PR."
+  },
+  "notifyMeWhen": {
+    "message": "Notificarme cuando"
+  },
+  "quietHours": {
+    "message": "Horario de silencio"
+  },
+  "silenceNotificationsAtSetTimesEveryDayInYour": {
+    "message": "Silenciar notificaciones a determinadas horas cada día, según tu hora local."
+  },
+  "from": {
+    "message": "Desde"
+  },
+  "until": {
+    "message": "Hasta"
+  },
+  "sendTestNotification": {
+    "message": "Enviar notificación de prueba"
+  },
+  "nothingAppearsCheckThatYourSystemLetsChromeShow": {
+    "message": "¿No aparece nada? Comprueba que tu sistema permita las notificaciones de Chrome."
+  },
+  "prowlCannotSeeOrChangeThePagesYouVisit": {
+    "message": "Prowl no puede ver ni modificar las páginas que visitas: no tiene acceso a tus pestañas ni a su contenido."
+  },
+  "syncSettingsWithYourChromeProfile": {
+    "message": "Sincronizar ajustes con tu perfil de Chrome"
+  },
+  "yourSettingsFollowYouToChromeOnYourOther": {
+    "message": "Tus ajustes te acompañan a otros ordenadores mediante Chrome Sync (tu cuenta de Google). El token y las PR pospuestas o silenciadas se quedan en este dispositivo."
+  },
+  "whatProwlMayDo": {
+    "message": "Qué puede hacer Prowl"
+  },
+  "readThePrivacyPolicy": {
+    "message": "Leer política de privacidad"
+  },
+  "giveTheSectionAName": {
+    "message": "Ponle un nombre a la sección."
+  },
+  "editCustomSection": {
+    "message": "Editar sección personalizada"
+  },
+  "addCustomSection": {
+    "message": "Añadir sección personalizada"
+  },
+  "aTabInTheListThatFollowsAnyGithub": {
+    "message": "Una pestaña que sigue cualquier búsqueda de PR de GitHub."
+  },
+  "save": {
+    "message": "Guardar"
+  },
+  "name": {
+    "message": "Nombre"
+  },
+  "shownOnTheTab": {
+    "message": "Se muestra en la pestaña."
+  },
+  "searchQuery": {
+    "message": "Consulta de búsqueda"
+  },
+  "githubSSearchSyntaxForExampleLabelBugReview": {
+    "message": "Sintaxis de GitHub, por ejemplo: label:bug review-requested:@me. Prowl añade is:pr."
+  },
+  "removed": {
+    "message": "«$P1$» eliminada",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "undo": {
+    "message": "Deshacer"
+  },
+  "edit": {
+    "message": "Editar $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "edit2": {
+    "message": "Editar"
+  },
+  "remove2": {
+    "message": "Eliminar"
+  },
+  "chooseWhichPullRequestsProwlFollows": {
+    "message": "Elige qué PR seguirá Prowl."
+  },
+  "onlyFollowPullRequestsInTheseLeaveEmptyTo": {
+    "message": "Seguir solo las PR de estos repositorios. Déjalo vacío para seguirlos todos."
+  },
+  "hidePullRequestsInTheseEvenWhenTheyMatch": {
+    "message": "Ocultar las PR de estos repositorios, aunque coincidan con una inclusión."
+  },
+  "teamReviewsListsThePullRequestsThatAskOne": {
+    "message": "Revisiones de equipo muestra las PR que solicitan revisión a uno de estos equipos."
+  },
+  "turnOnTeamReviewsUnderSectionsToSeeThem": {
+    "message": "Activa Revisiones de equipo en Secciones para verlas en la lista."
+  },
+  "signInAgain": {
+    "message": "Volver a iniciar sesión"
+  },
+  "githubListsNoTeamForYourAccount": {
+    "message": "GitHub no muestra equipos para tu cuenta."
+  },
+  "refreshTeams": {
+    "message": "Actualizar equipos"
+  },
+  "checked": {
+    "message": "Comprobados $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notCheckedYet": {
+    "message": "Aún sin comprobar"
+  },
+  "pollingBudget": {
+    "message": "GitHub concede $P1$ puntos por hora a cada token. Cada comprobación de sección consume puntos: más PR e intervalos cortos cuestan más. Prowl utiliza unos $P2$ puntos por hora y espera al restablecimiento si quedan pocos.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "teamSearchBudget": {
+    "message": "Sigues a $P1$ equipos; Prowl busca en los primeros $P2$ para respetar el límite de GitHub. Deja de seguir los que no necesites.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "onboardingDeviceIntro": {
+    "message": "Autoriza Prowl en GitHub o pega un token de acceso personal. Se guarda en este navegador y solo se envía a GitHub."
+  },
+  "onboardingTokenIntro": {
+    "message": "Pega un token de acceso personal. Se guarda en este navegador y solo se envía a GitHub."
+  },
+  "classicTokenHelp": {
+    "message": "Accede a todos tus repositorios con el estado de CI completo. Necesita el ámbito $P1$ y $P2$ para encontrar las solicitudes de revisión de tus equipos; el enlace selecciona ambos.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openWithShortcut": {
+    "message": "Abre Prowl con el atajo $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "codeCountdown": {
+    "message": "El código caduca en $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "versionNumber": {
+    "message": "Versión $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openedAge": {
+    "message": "Abierta $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updatedAgo": {
+    "message": "Actualizado $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionLoadError": {
+    "message": "No se ha podido cargar «$P1$»: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "snoozedCount": {
+    "message": "Pospuestas ($P1$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notReadyReasons": {
+    "message": "No está lista: $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "andMore": {
+    "message": " y $P1$ más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedBy": {
+    "message": "Cerrada por $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewChangesBy": {
+    "message": "Bloqueada: $P1$ ha solicitado cambios",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedChanges": {
+    "message": "Bloqueada: cambios solicitados"
+  },
+  "pullCountOne": {
+    "message": "$P1$ pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOther": {
+    "message": "$P1$ pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOne": {
+    "message": "$P1$ comentario",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOther": {
+    "message": "$P1$ comentarios",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOne": {
+    "message": "$P1$ hilo sin resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOther": {
+    "message": "$P1$ hilos sin resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOne": {
+    "message": "$P1$ comprobación",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOther": {
+    "message": "$P1$ comprobaciones",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckCountOne": {
+    "message": "$P1$ comprobación obligatoria",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckCountOther": {
+    "message": "$P1$ comprobaciones obligatorias",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOne": {
+    "message": "$P1$ comprobación más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOther": {
+    "message": "$P1$ comprobaciones más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedApprovalOne": {
+    "message": "Bloqueada: se requiere $P1$ aprobación",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedApprovalOther": {
+    "message": "Bloqueada: se requieren $P1$ aprobaciones",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedMoreApprovalOne": {
+    "message": "Bloqueada: se requiere $P1$ aprobación más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedMoreApprovalOther": {
+    "message": "Bloqueada: se requieren $P1$ aprobaciones más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedConversationOne": {
+    "message": "Bloqueada: $P1$ conversación por resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedConversationOther": {
+    "message": "Bloqueada: $P1$ conversaciones por resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOne": {
+    "message": "Actualizado. $P1$ pull request.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOther": {
+    "message": "Actualizado. $P1$ pull requests.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOne": {
+    "message": "en $P1$ día",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOther": {
+    "message": "en $P1$ días",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expiryDate": {
+    "message": "$P1$ ($P2$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notificationUpdateOne": {
+    "message": "$P1$ actualización de PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationUpdateOther": {
+    "message": "$P1$ actualizaciones de PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conflictsLower": {
+    "message": "conflictos"
+  },
+  "include": {
+    "message": "Incluir"
+  },
+  "exclude": {
+    "message": "Excluir"
+  },
+  "createdByMe": {
+    "message": "Creadas por mí"
+  },
+  "reviewRequestedSection": {
+    "message": "Revisión solicitada"
+  },
+  "teamReviews": {
+    "message": "Revisiones de equipo"
+  },
+  "mentionedSection": {
+    "message": "Menciones"
+  },
+  "assignedToMe": {
+    "message": "Asignadas a mí"
+  },
+  "extensionName": {
+    "message": "Prowl — Gestor de PR de GitHub"
+  },
+  "extensionDescription": {
+    "message": "Gestor de PR de GitHub de código abierto para Chrome. Sigue CI, revisiones y fusiones en el panel lateral. Sin rastreo."
+  },
+  "openProwl": {
+    "message": "Abrir Prowl"
+  },
+  "noTeamsHelp": {
+    "message": "GitHub no muestra equipos para tu cuenta. Las organizaciones que exigen inicio de sesión único o restringen apps OAuth solo muestran sus equipos tras aprobar tu token o Prowl."
+  },
+  "samlHelp": {
+    "message": "Una organización exige inicio de sesión único (SAML) y este token no está autorizado, por lo que faltan sus PR. Autoriza el token para esa organización en GitHub."
+  },
+  "skippedTeams": {
+    "message": "Prowl busca en un máximo de $P1$ equipos; se han omitido $P2$ más. Elige cuáles seguir en Ajustes.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "searchOperatorsHelp": {
+    "message": "AND, OR y NOT solo funcionan entre palabras, no entre calificadores: GitHub rechaza «author:a OR author:b». Usa una sección por calificador."
+  },
+  "searchWordsLimit": {
+    "message": "GitHub limita las palabras de búsqueda a $P1$ caracteres, sin contar calificadores como author:@me (hay $P2$).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listTeamsScopeHelp": {
+    "message": "GitHub no ha listado tus equipos. Inicia sesión con el ámbito read:org o usa un token de acceso detallado de la organización con el permiso Members: read."
+  },
+  "autoMergeBy": {
+    "message": "Fusión automática activada ($P1$), por $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeMethod": {
+    "message": "Fusión automática activada ($P1$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "tokenPlaceholder": {
+    "message": "ghp_… o github_pat_…"
+  },
+  "githubDidNotFindPullRequest": {
+    "message": "GitHub no ha encontrado la PR."
+  },
+  "githubDidNotConfirmChange": {
+    "message": "GitHub no ha confirmado el cambio."
+  },
+  "githubDidNotConfirmUpdate": {
+    "message": "GitHub no ha confirmado la actualización."
+  },
+  "noRepoScope": {
+    "message": "Este token no tiene el ámbito repo, por lo que Prowl solo ve repositorios públicos. Crea uno con repo para seguir los privados."
+  },
+  "githubErrorDetail": {
+    "message": "GitHub ha devuelto un error: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updateWithMerge": {
+    "message": "Actualizar con un commit de fusión"
+  },
+  "rerunFailed": {
+    "message": "Repetir fallidas"
+  },
+  "mergeMethod": {
+    "message": "Método de fusión"
+  },
+  "detailsFor": {
+    "message": "Detalles de $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "onGithub": {
+    "message": "en GitHub"
+  },
+  "requestChangesDescription": {
+    "message": "Indica al autor qué debe cambiar en $P1$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repositories": {
+    "message": "Repositorios"
+  },
+  "authorBy": {
+    "message": ", por $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "actionReference": {
+    "message": "$P1$: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "selectedSection": {
+    "message": " secciones, $P1$ seleccionada",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionsSuffix": {
+    "message": " secciones"
+  },
+  "copy": {
+    "message": "Copiar"
+  },
+  "pullNounOne": {
+    "message": " pull request"
+  },
+  "pullNounOther": {
+    "message": " pull requests"
+  },
+  "failed2One": {
+    "message": "$P1$ fallida",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2One": {
+    "message": "$P1$ pendiente",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "passed2One": {
+    "message": "$P1$ superada",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2One": {
+    "message": "$P1$ omitida",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingOne": {
+    "message": "$P1$ fallida",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "languageTag": {
+    "message": "es",
+    "description": "BCP 47 language of this catalog, used for document language and plural rules."
+  },
+  "keyEnter": {
+    "message": "Intro",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keySpace": {
+    "message": "Espacio",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keyEscape": {
+    "message": "Esc",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "squashMethod": {
+    "message": "squash",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "rebaseMethod": {
+    "message": "rebase",
+    "description": "Keyboard key or GitHub merge method label."
+  }
+}

@@ -12,6 +12,7 @@ import { mapMergeState } from '../lib/github/mapPullRequest';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
+import { t } from '../lib/i18n';
 import type { AuthState, PollState, PrEvent, Snapshot } from '../lib/model';
 import { normalizePrLocal, pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
 import { normalizeSettings } from '../lib/storage/settings';
@@ -371,5 +372,5 @@ async function restartOrStop(force: boolean): Promise<PollResult | null> {
 /** Not a GitHub failure: a bug, or data Prowl could not handle. Details go to the console. */
 function unexpected(error: unknown): GitHubError {
   console.error('Prowl: poll failed', error);
-  return new GitHubError('server', 'Something went wrong while refreshing.');
+  return new GitHubError('server', t('somethingWentWrongWhileRefreshing'));
 }

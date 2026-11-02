@@ -1,0 +1,2240 @@
+{
+  "open": {
+    "message": "開啟"
+  },
+  "snooze1H": {
+    "message": "暫停 1 小時"
+  },
+  "somethingWentWrongWhileRefreshing": {
+    "message": "重新整理時發生問題。"
+  },
+  "yourSettingsTakeKbMoreThanThe8Kb": {
+    "message": "設定佔用 $P1$ KB，超出 Chrome 同步的 8 KB 限制。請減少儲存庫或區段。設定仍保留在此裝置上。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeSyncDidNotTakeYourSettingsTheyStay": {
+    "message": "Chrome 同步未能儲存設定。設定仍保留在此裝置上。"
+  },
+  "ciFailing": {
+    "message": "CI 失敗"
+  },
+  "changesRequested": {
+    "message": "已要求變更"
+  },
+  "readyToMerge": {
+    "message": "可合併"
+  },
+  "withUnseenChanges": {
+    "message": "$P1$：$P2$ 有未檢視的變更",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "needingAttention": {
+    "message": "$P1$：$P2$ 需要關注（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "writeAMessageFirst": {
+    "message": "請先填寫訊息。"
+  },
+  "theMessageIsLongerThanCharacters": {
+    "message": "訊息超過了 $P1$ 個字元。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheReview": {
+    "message": "GitHub 未確認此次審查。"
+  },
+  "githubDidNotConfirmTheComment": {
+    "message": "GitHub 未確認此留言。"
+  },
+  "githubDidNotConfirmTheMerge": {
+    "message": "GitHub 未確認此次合併。"
+  },
+  "noFailedChecksToReRun": {
+    "message": "沒有可重新執行的失敗檢查。"
+  },
+  "somethingWentWrong": {
+    "message": "發生問題。"
+  },
+  "reRanOf": {
+    "message": "已重新執行 $P1$ 項，共 $P2$ 項。$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "theCodeExpiredBeforeItWasUsedStartAgain": {
+    "message": "代碼已過期。請重新開始以取得新代碼。"
+  },
+  "accessWasDeniedOnGithubStartAgainToAuthorize": {
+    "message": "GitHub 拒絕存取。請重新授權 Prowl，或貼上權杖。"
+  },
+  "signingInFromTheBrowserIsNotAvailableFor": {
+    "message": "此版本的 Prowl 不支援透過瀏覽器登入。請貼上權杖。"
+  },
+  "couldNotReachGithubCheckYourConnectionAndTry": {
+    "message": "無法連線至 GitHub。請檢查網路後重試。"
+  },
+  "githubIsHavingTroubleRightNowTryAgainIn": {
+    "message": "GitHub 暫時發生問題。請稍後重試。"
+  },
+  "withoutTheReadOrgScopeTeamReviewsMayNot": {
+    "message": "缺少 read:org 權限範圍可能導致找不到團隊。請加入此權限，以追蹤團隊收到的審查要求。"
+  },
+  "githubDoesNotOfferTheChecksPermissionToFine": {
+    "message": "GitHub 不向細緻權杖提供 Checks 權限，因此可能缺少 CI 狀態。具有 repo 權限範圍的傳統權杖可完整顯示。"
+  },
+  "githubReturnedAnUnexpectedResponse": {
+    "message": "GitHub 傳回非預期的回應。"
+  },
+  "pasteATokenToSignIn": {
+    "message": "請貼上權杖以登入。"
+  },
+  "thatDoesNotLookLikeAGithubTokenCopy": {
+    "message": "這似乎不是 GitHub 權杖。請重新複製，不要包含空格或引號。"
+  },
+  "couldNotSignInTryAgain": {
+    "message": "登入失敗。請重試。"
+  },
+  "githubRejectedThisTokenCheckThatYouCopiedAll": {
+    "message": "GitHub 拒絕此權杖。請確認複製完整，且未過期或被撤銷。"
+  },
+  "githubRefusedThisToken": {
+    "message": "GitHub 拒絕此權杖：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitReachedTryAgainInAMinute": {
+    "message": "已達 GitHub 速率限制。請一分鐘後重試。"
+  },
+  "githubRespondedWithHttp": {
+    "message": "GitHub 傳回 HTTP $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotRespondWithinSeconds": {
+    "message": "GitHub 未在 $P1$ 秒內回應。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotReachGithub": {
+    "message": "無法連線至 GitHub。"
+  },
+  "githubReturnedAnError": {
+    "message": "GitHub 傳回錯誤。"
+  },
+  "githubReturnedNoData": {
+    "message": "GitHub 未傳回資料。"
+  },
+  "thisPullRequestIsNotAvailable": {
+    "message": "此 PR 無法使用。"
+  },
+  "youFollowNoneOfYourTeamsFollowOneIn": {
+    "message": "你尚未關注任何團隊。請在設定中選擇一個。"
+  },
+  "githubRefusedTheSearchFor": {
+    "message": "GitHub 拒絕 $P1$ 的搜尋：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "enterAGithubSearchQueryForExampleAuthorMe": {
+    "message": "請輸入 GitHub 搜尋查詢，例如：author:@me label:bug"
+  },
+  "prowlFollowsPullRequestsOnlyRemoveIsIssueOr": {
+    "message": "Prowl 僅追蹤 PR：請移除 is:issue（或 type:issue、-is:pr）。"
+  },
+  "githubAllowsAtMostAndOrNotOperatorsIn": {
+    "message": "GitHub 最多允許 $P1$ 個 AND / OR / NOT 運算子（目前有 $P2$ 個）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotListYourTeams": {
+    "message": "無法列出你的團隊：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "bot": {
+    "message": "機器人"
+  },
+  "noCommitForD": {
+    "message": "$P1$ 天無提交",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "someone": {
+    "message": "有人"
+  },
+  "ciFailed": {
+    "message": "CI 失敗"
+  },
+  "ciPassed": {
+    "message": "CI 通過"
+  },
+  "reviewed": {
+    "message": "$P1$ 已審查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approved": {
+    "message": "$P1$ 已核准",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestedChanges": {
+    "message": "$P1$ 已要求變更",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commented": {
+    "message": "$P1$ 已留言",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyToMerge2": {
+    "message": "可合併"
+  },
+  "merged": {
+    "message": "已合併"
+  },
+  "closed": {
+    "message": "已關閉"
+  },
+  "justNow": {
+    "message": "剛剛"
+  },
+  "minAgo": {
+    "message": "$P1$ 分鐘前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hAgo": {
+    "message": "$P1$ 小時前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dAgo": {
+    "message": "$P1$ 天前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "for1Hour": {
+    "message": "1 小時"
+  },
+  "for4Hours": {
+    "message": "4 小時"
+  },
+  "untilTomorrow": {
+    "message": "直到明天"
+  },
+  "untilMonday": {
+    "message": "直到週一"
+  },
+  "pullRequests": {
+    "message": "提取要求"
+  },
+  "settings": {
+    "message": "設定"
+  },
+  "signIn": {
+    "message": "登入"
+  },
+  "loading": {
+    "message": "載入中"
+  },
+  "updating": {
+    "message": "正在重新整理…"
+  },
+  "notUpdatedYet": {
+    "message": "尚未重新整理"
+  },
+  "updated": {
+    "message": "已重新整理"
+  },
+  "refresh": {
+    "message": "重新整理"
+  },
+  "backToPullRequests": {
+    "message": "返回 PR"
+  },
+  "viewGithubProfile": {
+    "message": "檢視 GitHub 個人檔案"
+  },
+  "keyboardShortcuts": {
+    "message": "鍵盤快捷鍵"
+  },
+  "signOut": {
+    "message": "登出"
+  },
+  "account": {
+    "message": "帳戶：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reRunFailedChecks": {
+    "message": "重新執行失敗的檢查"
+  },
+  "updateBranch": {
+    "message": "更新分支"
+  },
+  "updatedTheBranchOf": {
+    "message": "已更新分支："
+  },
+  "readyForReview": {
+    "message": "標記為可審查"
+  },
+  "convertToDraft": {
+    "message": "轉換為草稿"
+  },
+  "reRunningFailedChecksOf": {
+    "message": "正在重新執行失敗的檢查："
+  },
+  "markedReadyForReview": {
+    "message": "已標記為可審查："
+  },
+  "convertedToDraft": {
+    "message": "已轉換為草稿："
+  },
+  "of": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "updateWithARebase": {
+    "message": "透過重訂基底更新"
+  },
+  "createAMergeCommit": {
+    "message": "建立合併提交"
+  },
+  "squashAndMerge": {
+    "message": "壓縮並合併"
+  },
+  "rebaseAndMerge": {
+    "message": "重訂基底並合併"
+  },
+  "merge": {
+    "message": "合併"
+  },
+  "enableAutoMerge": {
+    "message": "啟用自動合併"
+  },
+  "disableAutoMerge": {
+    "message": "停用自動合併"
+  },
+  "autoMergeIsOnFor": {
+    "message": "已啟用自動合併："
+  },
+  "message2": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeIsOffFor": {
+    "message": "已停用自動合併："
+  },
+  "mergePullRequest": {
+    "message": "合併 PR"
+  },
+  "mergeIntoNowOrLetGithubMergeItOnce": {
+    "message": "立即將 $P1$ 合併至 $P2$，或讓 GitHub 在檢查和審查通過後合併。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "mergeInto": {
+    "message": "將 $P1$ 合併至 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "commitsAreKeptAsTheyAreSoThereIs": {
+    "message": "提交將保持原樣，因此沒有提交標題。"
+  },
+  "commitTitleOptional": {
+    "message": "提交標題（選填）"
+  },
+  "emptyUsesGithubSDefault": {
+    "message": "留空則使用 GitHub 預設值。"
+  },
+  "enterAWholeNumberFromTo": {
+    "message": "請輸入 $P1$ 到 $P2$ 之間的整數。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openInGithub": {
+    "message": "在 GitHub 中開啟"
+  },
+  "copyBranchName": {
+    "message": "複製分支名稱"
+  },
+  "couldNotCopyTheBranchName": {
+    "message": "無法複製分支名稱。"
+  },
+  "copiedButThisBranchNameContainsShellCharactersQuote": {
+    "message": "已複製，但分支名稱包含 Shell 特殊字元。貼至終端機前請用引號括起來。"
+  },
+  "copied": {
+    "message": "已複製 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unsnooze": {
+    "message": "取消暫停"
+  },
+  "snooze": {
+    "message": "暫停 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "snoozed": {
+    "message": "已暫停 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unmuteNotifications": {
+    "message": "取消靜音通知"
+  },
+  "muteNotifications": {
+    "message": "靜音通知"
+  },
+  "actionsFor": {
+    "message": "$P1$ 的操作",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreActionsFor": {
+    "message": "$P1$ 的更多操作",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequestedFrom": {
+    "message": "已向 $P1$ 要求審查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unseenChanges": {
+    "message": "未檢視的變更"
+  },
+  "lastActivity": {
+    "message": "最近活動 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationsMuted": {
+    "message": "通知已靜音"
+  },
+  "snoozedUntil": {
+    "message": "暫停至 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkingTheLatestMergeStatusOnGithub": {
+    "message": "正在 GitHub 上檢查最新合併狀態"
+  },
+  "updatingMergeStatus": {
+    "message": "正在更新合併狀態"
+  },
+  "whyItIsHiddenFromTheList": {
+    "message": "從清單中隱藏的原因"
+  },
+  "unresolved": {
+    "message": "未解決"
+  },
+  "openedBy": {
+    "message": "由 $P1$ 建立",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opened": {
+    "message": "建立於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "by2": {
+    "message": "，由 $P1$ 建立",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenFromTheList": {
+    "message": "。從清單中隱藏：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failed": {
+    "message": "失敗"
+  },
+  "pending": {
+    "message": "等待中"
+  },
+  "passed": {
+    "message": "通過"
+  },
+  "skipped": {
+    "message": "已略過"
+  },
+  "approved2": {
+    "message": "已核准"
+  },
+  "changesRequested2": {
+    "message": "已要求變更"
+  },
+  "reviewRequested": {
+    "message": "已要求審查"
+  },
+  "commented2": {
+    "message": "已留言"
+  },
+  "dismissed": {
+    "message": "已駁回"
+  },
+  "theBaseBranchRequiresThisCheckToPass": {
+    "message": "基底分支要求此檢查通過"
+  },
+  "required": {
+    "message": "必要"
+  },
+  "passed2": {
+    "message": "$P1$ 項通過",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2": {
+    "message": "$P1$ 項已略過",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotReturnTheChecksAFineGrained": {
+    "message": "GitHub 未傳回檢查資訊。細緻權杖無法讀取。"
+  },
+  "noChecksOnTheLatestCommit": {
+    "message": "最新提交沒有檢查。"
+  },
+  "noReviewsYet": {
+    "message": "尚無審查。"
+  },
+  "actions": {
+    "message": "操作"
+  },
+  "tryAgain": {
+    "message": "重試"
+  },
+  "loadingChecksAndReviewers": {
+    "message": "正在載入檢查和審查者"
+  },
+  "checks": {
+    "message": "檢查"
+  },
+  "reviewers": {
+    "message": "審查者"
+  },
+  "enterAnOwnerOrOwnerNameForExampleAcme": {
+    "message": "請輸入擁有者或擁有者/儲存庫名稱，例如 acme 或 acme/widgets。"
+  },
+  "isAlreadyInTheList": {
+    "message": "$P1$ 已在「$P2$」清單中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToTheList": {
+    "message": "已將 $P1$ 加入「$P2$」清單。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "removedFromTheList": {
+    "message": "已將 $P1$ 從「$P2$」清單移除。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "remove": {
+    "message": "移除 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repository": {
+    "message": "$P1$儲存庫",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ownerOrOwnerName": {
+    "message": "擁有者或擁有者/儲存庫名稱"
+  },
+  "addToList": {
+    "message": "新增至「$P1$」清單",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "add": {
+    "message": "新增"
+  },
+  "pullRequests2": {
+    "message": "$P1$ 的 PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestChanges": {
+    "message": "要求變更"
+  },
+  "requestedChangesOn": {
+    "message": "已要求變更："
+  },
+  "comment": {
+    "message": "留言"
+  },
+  "commentedOn": {
+    "message": "已留言："
+  },
+  "addACommentToTheConversationOf": {
+    "message": "在 $P1$ 的討論中新增留言。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approve": {
+    "message": "核准"
+  },
+  "on": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "cancel": {
+    "message": "取消"
+  },
+  "message3": {
+    "message": "訊息"
+  },
+  "sections": {
+    "message": "區段"
+  },
+  "couldNotLoadThisSection": {
+    "message": "無法載入此區段"
+  },
+  "couldNotLoad": {
+    "message": "載入失敗"
+  },
+  "moreSections": {
+    "message": "更多區段"
+  },
+  "more": {
+    "message": "更多"
+  },
+  "refreshFailed": {
+    "message": "重新整理失敗：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotSignOutTryAgain": {
+    "message": "無法登出。請重試。"
+  },
+  "signOut2": {
+    "message": "登出？"
+  },
+  "prowlForgetsYourTokenAndThePullRequestsIt": {
+    "message": "Prowl 會刪除此瀏覽器中儲存的權杖和 PR。權杖在 GitHub 上仍然有效，直到你將其撤銷。"
+  },
+  "retry": {
+    "message": "重試"
+  },
+  "lastUpdated": {
+    "message": "上次重新整理 $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingInMin": {
+    "message": "$P1$ 分鐘後重試",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingSoon": {
+    "message": "即將重試"
+  },
+  "githubRateLimitAlmostUsedUp": {
+    "message": "即將達到 GitHub 速率限制"
+  },
+  "refreshingResumesAt": {
+    "message": "將於 $P1$ 恢復重新整理。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullRequestsMayBeOutOfDate": {
+    "message": "PR 資訊可能已過期"
+  },
+  "refreshNow": {
+    "message": "立即重新整理"
+  },
+  "yourGithubTokenWasRevokedOrExpired": {
+    "message": "你的 GitHub 權杖已被撤銷或已過期"
+  },
+  "prowlStoppedRefreshingSignInAgainToContinue": {
+    "message": "Prowl 已停止重新整理。請重新登入以繼續。"
+  },
+  "reAuthenticate": {
+    "message": "重新驗證"
+  },
+  "rateLimitedUntil": {
+    "message": "速率限制持續至 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitHasReset": {
+    "message": "GitHub 速率限制已重設"
+  },
+  "githubIsLimitingProwlSRequestsSoRefreshingIs": {
+    "message": "GitHub 正在限制 Prowl 的要求，重新整理已暫停。"
+  },
+  "prowlRefreshesAgainShortly": {
+    "message": "Prowl 即將恢復重新整理。"
+  },
+  "offline": {
+    "message": "離線 — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubError": {
+    "message": "GitHub 錯誤 — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inLessThanADay": {
+    "message": "不到一天後"
+  },
+  "yourGithubTokenExpires": {
+    "message": "你的 GitHub 權杖將於$P1$過期",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "createANewOneAndSignInWithIt": {
+    "message": "請建立新權杖並使用它登入，以維持 Prowl 重新整理。"
+  },
+  "renewToken": {
+    "message": "更新權杖"
+  },
+  "blockedReviewRequired": {
+    "message": "已阻擋：需要審查"
+  },
+  "blockedFailing": {
+    "message": "已阻擋：$P1$失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingButNotRequired": {
+    "message": "$P1$失敗，但非必要",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "waitingForToFinish": {
+    "message": "等待$P1$完成",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergedBy": {
+    "message": "由 $P1$ 合併",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedWithoutMerging": {
+    "message": "已關閉，未合併"
+  },
+  "blockedDraftMarkItReadyForReviewToMerge": {
+    "message": "已阻擋：草稿，請先標記為可審查"
+  },
+  "conflictsWith": {
+    "message": "與 $P1$ 衝突",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedBranchIsBehind": {
+    "message": "已阻擋：分支落後於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubIsStillCheckingWhetherItCanBeMerged": {
+    "message": "GitHub 仍在檢查是否可以合併"
+  },
+  "blockedByTheBaseBranchSRules": {
+    "message": "被基底分支規則阻擋"
+  },
+  "mergeCommit": {
+    "message": "合併提交"
+  },
+  "failed2": {
+    "message": "$P1$ 項失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2": {
+    "message": "$P1$ 項等待中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failing": {
+    "message": "$P1$ 項失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailing": {
+    "message": "檢查失敗：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning": {
+    "message": "檢查執行中：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksPassed": {
+    "message": "檢查通過：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequired": {
+    "message": "需要審查"
+  },
+  "draft": {
+    "message": "草稿"
+  },
+  "conflicts": {
+    "message": "衝突"
+  },
+  "hasMergeConflicts": {
+    "message": "存在合併衝突"
+  },
+  "autoMerge": {
+    "message": "自動合併"
+  },
+  "labels": {
+    "message": "標籤：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updated2": {
+    "message": "更新於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "關閉"
+  },
+  "messages": {
+    "message": "訊息"
+  },
+  "dismiss": {
+    "message": "關閉"
+  },
+  "failed3": {
+    "message": "$P1$失敗：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotLoadTheDetails": {
+    "message": "無法載入詳細資料。"
+  },
+  "signedInAs": {
+    "message": "已以 $P1$ 身分登入。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotSaveTheSettingTryAgain": {
+    "message": "無法儲存設定。請重試。"
+  },
+  "nextPullRequest": {
+    "message": "下一個 PR"
+  },
+  "previousPullRequest": {
+    "message": "上一個 PR"
+  },
+  "expandOrCollapseTheFocusedPullRequest": {
+    "message": "展開或摺疊目前聚焦的 PR"
+  },
+  "openTheFocusedPullRequestOnGithub": {
+    "message": "在 GitHub 中開啟目前聚焦的 PR"
+  },
+  "filterPullRequests": {
+    "message": "篩選 PR"
+  },
+  "showKeyboardShortcuts": {
+    "message": "顯示鍵盤快捷鍵"
+  },
+  "closeADialogOrMenuCollapseAPullRequest": {
+    "message": "關閉對話框或選單，摺疊 PR"
+  },
+  "prowlNeedsAccessToGithubComToSignYou": {
+    "message": "Prowl 需要存取 github.com 以要求登入代碼和你的授權。請允許後重試，或在下方貼上權杖，無需額外存取權限。"
+  },
+  "codeCopied": {
+    "message": "代碼已複製"
+  },
+  "couldNotCopySelectTheCodeAndCopyIt": {
+    "message": "複製失敗。請選取代碼並手動複製。"
+  },
+  "authorizeProwlOnGithub": {
+    "message": "在 GitHub 上授權 Prowl"
+  },
+  "enterThisCodeOnGithubToFinishSigningIn": {
+    "message": "在 GitHub 上輸入此代碼以完成登入。"
+  },
+  "copyCode": {
+    "message": "複製代碼 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openGithub": {
+    "message": "開啟 GitHub"
+  },
+  "waitingForYouToApproveProwlOnGithub": {
+    "message": "正在等待你在 GitHub 上授權 Prowl…"
+  },
+  "continueWithGithub": {
+    "message": "透過 GitHub 繼續"
+  },
+  "approveProwlOnGithubComWithAOneTime": {
+    "message": "使用一次性代碼在 github.com 上授權 Prowl。Chrome 會先要求允許 Prowl 存取 github.com。"
+  },
+  "mine": {
+    "message": "我的"
+  },
+  "pullRequestsYouOpenWillShowUpHere": {
+    "message": "你建立的 PR 將顯示在這裡。"
+  },
+  "review": {
+    "message": "審查"
+  },
+  "whenSomeoneAsksYouForAReviewItWill": {
+    "message": "別人向你要求審查的 PR 將顯示在這裡。"
+  },
+  "teams": {
+    "message": "團隊"
+  },
+  "whenSomeoneAsksOneOfYourTeamsForA": {
+    "message": "你的團隊收到的審查要求將顯示在這裡。"
+  },
+  "mentions": {
+    "message": "提及"
+  },
+  "pullRequestsThatMentionYouWillShowUpHere": {
+    "message": "提及你的 PR 將顯示在這裡。"
+  },
+  "assigned": {
+    "message": "已指派"
+  },
+  "pullRequestsAssignedToYouWillShowUpHere": {
+    "message": "指派給你的 PR 將顯示在這裡。"
+  },
+  "noOpenPullRequestsMatchThisSearch": {
+    "message": "沒有符合此搜尋的未關閉 PR。"
+  },
+  "loadingPullRequests": {
+    "message": "正在載入 PR"
+  },
+  "noSectionsTurnedOn": {
+    "message": "未啟用任何區段"
+  },
+  "chooseWhichPullRequestsProwlFollowsInSettings": {
+    "message": "請在設定中選擇 Prowl 要追蹤的 PR。"
+  },
+  "openSettings": {
+    "message": "開啟設定"
+  },
+  "couldNotLoadPullRequests": {
+    "message": "無法載入 PR"
+  },
+  "nothingHasBeenFetchedYetTheNoticeAboveSays": {
+    "message": "尚未取得任何資料。原因請見上方提示。"
+  },
+  "filterByTitleRepoAuthorOrLabel": {
+    "message": "依標題、儲存庫、作者或標籤篩選"
+  },
+  "snoozedPullRequests": {
+    "message": "已暫停的 $P1$ PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hideAgain": {
+    "message": "再次隱藏"
+  },
+  "showHidden": {
+    "message": "顯示 $P1$ 個隱藏項",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenPullRequests": {
+    "message": "隱藏的 $P1$ PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatches": {
+    "message": "無符合項目"
+  },
+  "noPullRequests": {
+    "message": "沒有 PR"
+  },
+  "nothingInMatches": {
+    "message": "「$P1$」中沒有與「$P2$」相符的內容。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "clearFilter": {
+    "message": "清除篩選"
+  },
+  "signInWithGithub": {
+    "message": "透過 GitHub 登入"
+  },
+  "orPasteAToken": {
+    "message": "或貼上權杖"
+  },
+  "signingInFromTheBrowserIsNotAvailableIn": {
+    "message": "此版本不支援透過瀏覽器登入。"
+  },
+  "howToSignInWithAToken": {
+    "message": "如何使用權杖登入"
+  },
+  "personalAccessToken": {
+    "message": "個人存取權杖"
+  },
+  "createAToken": {
+    "message": "建立權杖"
+  },
+  "classicToken": {
+    "message": "傳統權杖"
+  },
+  "recommended": {
+    "message": "建議"
+  },
+  "createAClassicToken": {
+    "message": "建立傳統權杖"
+  },
+  "fineGrainedToken": {
+    "message": "細緻權杖"
+  },
+  "limited": {
+    "message": "受限"
+  },
+  "coversOneAccountOrOrganizationAndTheRepositoriesYou": {
+    "message": "適用於一個帳戶或組織及你選擇的儲存庫。請授予 Pull requests、Contents 和 Actions 讀寫權限，以核准、合併和重新執行檢查；授予 Commit statuses 讀取權限。要尋找組織團隊，還需 Members 讀取權限。GitHub 不向細緻權杖提供 Checks 權限，因此可能缺少 CI 狀態。"
+  },
+  "createAFineGrainedToken": {
+    "message": "建立細緻權杖"
+  },
+  "matchSystem": {
+    "message": "跟隨系統"
+  },
+  "light": {
+    "message": "淺色"
+  },
+  "dark": {
+    "message": "深色"
+  },
+  "recentlyUpdated": {
+    "message": "最近更新"
+  },
+  "newestFirst": {
+    "message": "最新優先"
+  },
+  "repository2": {
+    "message": "儲存庫"
+  },
+  "needsAttention": {
+    "message": "需要關注"
+  },
+  "off": {
+    "message": "關閉"
+  },
+  "checkEveryMinutes": {
+    "message": "檢查間隔（分鐘）"
+  },
+  "pullRequestsPerSection": {
+    "message": "每個區段的 PR 數"
+  },
+  "appearance": {
+    "message": "外觀"
+  },
+  "theme": {
+    "message": "佈景主題"
+  },
+  "sortPullRequestsBy": {
+    "message": "PR 排序方式"
+  },
+  "groupPullRequestsByRepository": {
+    "message": "依儲存庫分組 PR"
+  },
+  "listsEachRepositorySPullRequestsUnderAHeader": {
+    "message": "依上方選擇的順序，將各儲存庫的 PR 顯示在可摺疊的標題下。"
+  },
+  "hidePrsWithNoCommitForDays": {
+    "message": "隱藏無提交的 PR（天數）"
+  },
+  "theyStayOutOfTheListTheCountsAnd": {
+    "message": "在選擇「顯示隱藏項」之前，將從清單、計數和徽章中隱藏，但仍會通知。設為 0 則不隱藏。"
+  },
+  "hideDraftPrs": {
+    "message": "隱藏草稿 PR"
+  },
+  "shownAgainWithShowHiddenTheyStillNotifyYou": {
+    "message": "選擇「顯示隱藏項」後重新顯示。仍會傳送通知。"
+  },
+  "hidePrsOpenedByBots": {
+    "message": "隱藏機器人建立的 PR"
+  },
+  "dependabotRenovateAndOtherAppsShownAgainWithShow": {
+    "message": "包括 Dependabot、Renovate 和其他應用程式。選擇「顯示隱藏項」後重新顯示。仍會傳送通知。"
+  },
+  "toolbarBadge": {
+    "message": "工具列徽章"
+  },
+  "notifications": {
+    "message": "通知"
+  },
+  "account2": {
+    "message": "帳戶"
+  },
+  "privacyAndPermissions": {
+    "message": "隱私與權限"
+  },
+  "privacy": {
+    "message": "隱私"
+  },
+  "about": {
+    "message": "關於"
+  },
+  "settingsSections": {
+    "message": "設定區段"
+  },
+  "documentation": {
+    "message": "文件"
+  },
+  "sourceCode": {
+    "message": "原始碼"
+  },
+  "token": {
+    "message": "權杖"
+  },
+  "scopes": {
+    "message": "權限範圍"
+  },
+  "noneFineGrainedTokensUsePerRepositoryPermissions": {
+    "message": "無：細緻權杖使用依儲存庫設定的權限。"
+  },
+  "none": {
+    "message": "無"
+  },
+  "expires": {
+    "message": "到期時間"
+  },
+  "version": {
+    "message": "版本"
+  },
+  "noKeyboardShortcutOpensProwlYet": {
+    "message": "尚未設定開啟 Prowl 的鍵盤快捷鍵。"
+  },
+  "changeItAtChromeExtensionsShortcuts": {
+    "message": "可在 chrome://extensions/shortcuts 中變更。"
+  },
+  "pullRequestsYouOpened": {
+    "message": "你建立的 PR"
+  },
+  "pullRequestsThatAskYouForAReviewYour": {
+    "message": "向你要求審查的 PR（團隊有獨立區段）"
+  },
+  "pullRequestsThatAskOneOfYourTeamsFor": {
+    "message": "向你的團隊要求審查的 PR"
+  },
+  "pullRequestsThatMentionYou": {
+    "message": "提及你的 PR"
+  },
+  "pullRequestsAssignedToYou": {
+    "message": "指派給你的 PR"
+  },
+  "ciFails": {
+    "message": "CI 失敗"
+  },
+  "ciPasses": {
+    "message": "CI 通過"
+  },
+  "afterItFailedBefore": {
+    "message": "在先前失敗之後。"
+  },
+  "newReview": {
+    "message": "新審查"
+  },
+  "aReviewThatOnlyLeavesComments": {
+    "message": "僅留下留言的審查。"
+  },
+  "newComment": {
+    "message": "新留言"
+  },
+  "countsPullRequestsThatNeedYouFailingCiChanges": {
+    "message": "統計需要關注的 PR：CI 失敗、已要求變更、衝突或可合併。"
+  },
+  "countsPullRequestsWithChangesYouHaveNotLooked": {
+    "message": "統計包含你尚未檢視的變更的 PR。"
+  },
+  "theToolbarIconShowsNoNumber": {
+    "message": "工具列圖示不顯示數字。"
+  },
+  "startAndEndAreTheSameSoNothingIs": {
+    "message": "開始與結束時間相同，因此不會靜音。"
+  },
+  "thisWindowCrossesMidnightAndEndsTheNextDay": {
+    "message": "此時段跨越午夜，於次日結束。"
+  },
+  "classicPersonalAccessToken": {
+    "message": "傳統個人存取權杖"
+  },
+  "fineGrainedPersonalAccessToken": {
+    "message": "細緻個人存取權杖"
+  },
+  "oauthTokenSignedInWithGithub": {
+    "message": "OAuth 權杖（透過 GitHub 登入）"
+  },
+  "unknown": {
+    "message": "未知"
+  },
+  "never": {
+    "message": "永不"
+  },
+  "expiredOn": {
+    "message": "已於 $P1$ 過期",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sidePanel": {
+    "message": "側邊面板"
+  },
+  "showProwlInChromeSSidePanel": {
+    "message": "在 Chrome 側邊面板中顯示 Prowl。"
+  },
+  "storage": {
+    "message": "儲存空間"
+  },
+  "keepYourSettingsAndPullRequestsInThisBrowser": {
+    "message": "將設定和 PR 儲存在此瀏覽器中。"
+  },
+  "alarms": {
+    "message": "排程"
+  },
+  "checkGithubOnAScheduleEvenWhenThePanel": {
+    "message": "即使面板已關閉，也依排程檢查 GitHub。"
+  },
+  "tellYouWhenAPullRequestChanges": {
+    "message": "PR 有變更時通知你。"
+  },
+  "readYourPullRequestsAndActOnThemUsing": {
+    "message": "使用你的權杖讀取並操作 PR。"
+  },
+  "signInWithGithubProwlAsksForThisOnly": {
+    "message": "透過 GitHub 登入。Prowl 僅在登入時要求此權限，之後會將其釋放。"
+  },
+  "readAndChangeYourDataOnThisSite": {
+    "message": "讀取和變更你在此網站上的資料。"
+  },
+  "notDescribedByThisVersionOfProwl": {
+    "message": "此版本的 Prowl 尚無說明。"
+  },
+  "prowlTestNotification": {
+    "message": "Prowl 測試通知"
+  },
+  "notificationsFromProwlLookLikeThis": {
+    "message": "Prowl 的通知將以此形式顯示。"
+  },
+  "testNotificationSent": {
+    "message": "測試通知已傳送。"
+  },
+  "couldNotShowANotification": {
+    "message": "無法顯示通知。"
+  },
+  "desktopNotifications": {
+    "message": "桌面通知"
+  },
+  "showANotificationWhenAPullRequestChanges": {
+    "message": "PR 有變更時顯示通知。"
+  },
+  "notifyMeWhen": {
+    "message": "通知我的時機"
+  },
+  "quietHours": {
+    "message": "勿擾時段"
+  },
+  "silenceNotificationsAtSetTimesEveryDayInYour": {
+    "message": "每天依當地時間在指定時段靜音通知。"
+  },
+  "from": {
+    "message": "從"
+  },
+  "until": {
+    "message": "至"
+  },
+  "sendTestNotification": {
+    "message": "傳送測試通知"
+  },
+  "nothingAppearsCheckThatYourSystemLetsChromeShow": {
+    "message": "沒有顯示？請檢查系統是否允許 Chrome 顯示通知。"
+  },
+  "prowlCannotSeeOrChangeThePagesYouVisit": {
+    "message": "Prowl 無法檢視或變更你造訪的頁面：它無權存取你的分頁或其內容。"
+  },
+  "syncSettingsWithYourChromeProfile": {
+    "message": "透過 Chrome 個人資料同步設定"
+  },
+  "yourSettingsFollowYouToChromeOnYourOther": {
+    "message": "設定將透過 Chrome 同步（你的 Google 帳戶）同步至其他電腦。權杖以及暫停或靜音的 PR 資訊保留在此裝置上。"
+  },
+  "whatProwlMayDo": {
+    "message": "Prowl 可以做什麼"
+  },
+  "readThePrivacyPolicy": {
+    "message": "閱讀隱私權政策"
+  },
+  "giveTheSectionAName": {
+    "message": "請為區段命名。"
+  },
+  "editCustomSection": {
+    "message": "編輯自訂區段"
+  },
+  "addCustomSection": {
+    "message": "新增自訂區段"
+  },
+  "aTabInTheListThatFollowsAnyGithub": {
+    "message": "追蹤任意 GitHub PR 搜尋的清單分頁。"
+  },
+  "save": {
+    "message": "儲存"
+  },
+  "name": {
+    "message": "名稱"
+  },
+  "shownOnTheTab": {
+    "message": "顯示在分頁上。"
+  },
+  "searchQuery": {
+    "message": "搜尋查詢"
+  },
+  "githubSSearchSyntaxForExampleLabelBugReview": {
+    "message": "使用 GitHub 搜尋語法，例如：label:bug review-requested:@me。Prowl 會加入 is:pr。"
+  },
+  "removed": {
+    "message": "已移除「$P1$」",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "undo": {
+    "message": "復原"
+  },
+  "edit": {
+    "message": "編輯 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "edit2": {
+    "message": "編輯"
+  },
+  "remove2": {
+    "message": "移除"
+  },
+  "chooseWhichPullRequestsProwlFollows": {
+    "message": "選擇 Prowl 要追蹤的 PR。"
+  },
+  "onlyFollowPullRequestsInTheseLeaveEmptyTo": {
+    "message": "僅追蹤這些儲存庫中的 PR。留空則追蹤所有儲存庫。"
+  },
+  "hidePullRequestsInTheseEvenWhenTheyMatch": {
+    "message": "隱藏這些儲存庫中的 PR，即使它們符合包含條件。"
+  },
+  "teamReviewsListsThePullRequestsThatAskOne": {
+    "message": "團隊審查會列出向這些團隊要求審查的 PR。"
+  },
+  "turnOnTeamReviewsUnderSectionsToSeeThem": {
+    "message": "在「區段」下啟用「團隊審查」，即可在清單中檢視。"
+  },
+  "signInAgain": {
+    "message": "重新登入"
+  },
+  "githubListsNoTeamForYourAccount": {
+    "message": "GitHub 未列出你的帳戶所屬團隊。"
+  },
+  "refreshTeams": {
+    "message": "重新整理團隊"
+  },
+  "checked": {
+    "message": "檢查於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notCheckedYet": {
+    "message": "尚未檢查"
+  },
+  "pollingBudget": {
+    "message": "GitHub 為每個權杖每小時提供 $P1$ 點額度。每次檢查各區段都會消耗額度：PR 越多、間隔越短，消耗越大。目前 Prowl 每小時約使用 $P2$ 點，額度不足時會等待重設。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "teamSearchBudget": {
+    "message": "你關注了 $P1$ 個團隊；為遵守 GitHub 速率限制，Prowl 僅搜尋前 $P2$ 個。請取消關注不需要的團隊。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "onboardingDeviceIntro": {
+    "message": "在 GitHub 上授權 Prowl，或貼上個人存取權杖。權杖儲存在此瀏覽器中，僅傳送給 GitHub。"
+  },
+  "onboardingTokenIntro": {
+    "message": "貼上個人存取權杖。權杖儲存在此瀏覽器中，僅傳送給 GitHub。"
+  },
+  "classicTokenHelp": {
+    "message": "可存取你有權限的所有儲存庫，並完整顯示 CI 狀態。需要 $P1$ 權限範圍，以及用於尋找團隊審查要求的 $P2$；連結會自動選取兩者。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openWithShortcut": {
+    "message": "使用快捷鍵 $P1$ 開啟 Prowl。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "codeCountdown": {
+    "message": "代碼將在 $P1$ 後過期",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "versionNumber": {
+    "message": "版本 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openedAge": {
+    "message": "建立於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updatedAgo": {
+    "message": "重新整理於 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionLoadError": {
+    "message": "無法載入「$P1$」：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "snoozedCount": {
+    "message": "已暫停（$P1$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notReadyReasons": {
+    "message": "尚未就緒：$P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "andMore": {
+    "message": "，另有 $P1$ 項",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedBy": {
+    "message": "由 $P1$ 關閉",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewChangesBy": {
+    "message": "已阻擋：$P1$ 要求了變更",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedChanges": {
+    "message": "已阻擋：已要求變更"
+  },
+  "pullCountOne": {
+    "message": "$P1$ 個 PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOther": {
+    "message": "$P1$ 個 PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOne": {
+    "message": "$P1$ 則留言",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOther": {
+    "message": "$P1$ 則留言",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOne": {
+    "message": "$P1$ 個未解決的討論",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOther": {
+    "message": "$P1$ 個未解決的討論",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOne": {
+    "message": "$P1$ 項檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOther": {
+    "message": "$P1$ 項檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckCountOne": {
+    "message": "$P1$ 項必要檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckCountOther": {
+    "message": "$P1$ 項必要檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOne": {
+    "message": "另有 $P1$ 項檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOther": {
+    "message": "另有 $P1$ 項檢查",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedApprovalOne": {
+    "message": "已阻擋：需要 $P1$ 項核准",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedApprovalOther": {
+    "message": "已阻擋：需要 $P1$ 項核准",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedMoreApprovalOne": {
+    "message": "已阻擋：還需要 $P1$ 項核准",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedMoreApprovalOther": {
+    "message": "已阻擋：還需要 $P1$ 項核准",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedConversationOne": {
+    "message": "已阻擋：有 $P1$ 個討論待解決",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "blockedConversationOther": {
+    "message": "已阻擋：有 $P1$ 個討論待解決",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOne": {
+    "message": "已重新整理。$P1$ 個 PR。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOther": {
+    "message": "已重新整理。$P1$ 個 PR。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOne": {
+    "message": "$P1$ 天後",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOther": {
+    "message": "$P1$ 天後",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expiryDate": {
+    "message": "$P1$（$P2$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notificationUpdateOne": {
+    "message": "$P1$ 項 PR 更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationUpdateOther": {
+    "message": "$P1$ 項 PR 更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conflictsLower": {
+    "message": "衝突"
+  },
+  "include": {
+    "message": "包含"
+  },
+  "exclude": {
+    "message": "排除"
+  },
+  "createdByMe": {
+    "message": "由我建立"
+  },
+  "reviewRequestedSection": {
+    "message": "已要求審查"
+  },
+  "teamReviews": {
+    "message": "團隊審查"
+  },
+  "mentionedSection": {
+    "message": "提及我"
+  },
+  "assignedToMe": {
+    "message": "指派給我"
+  },
+  "extensionName": {
+    "message": "Prowl — GitHub PR 管理工具"
+  },
+  "extensionDescription": {
+    "message": "適用於 Chrome 的開源 GitHub PR 管理工具。在側邊面板追蹤 CI、審查和合併狀態。無追蹤。"
+  },
+  "openProwl": {
+    "message": "開啟 Prowl"
+  },
+  "noTeamsHelp": {
+    "message": "GitHub 未列出你的帳戶所屬團隊。要求單一登入或限制 OAuth 應用程式的組織，只有在核准你的權杖或 Prowl 後才會列出團隊。"
+  },
+  "samlHelp": {
+    "message": "某個組織要求單一登入（SAML），但此權杖未經授權，因此缺少該組織的 PR。請在 GitHub 上為該組織授權權杖。"
+  },
+  "skippedTeams": {
+    "message": "Prowl 最多搜尋 $P1$ 個團隊，另有 $P2$ 個已略過。請在設定中取消關注部分團隊以選擇搜尋範圍。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "searchOperatorsHelp": {
+    "message": "AND、OR 和 NOT 只能用於搜尋詞之間，不能用於限定詞之間：GitHub 會拒絕「author:a OR author:b」。請為每個限定詞建立獨立區段。"
+  },
+  "searchWordsLimit": {
+    "message": "GitHub 將搜尋詞限制為 $P1$ 個字元，不包含 author:@me 等限定詞（目前有 $P2$ 個）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listTeamsScopeHelp": {
+    "message": "GitHub 未列出你的團隊。請使用 read:org 權限範圍重新登入，或使用屬於該組織且具有 Members: read 權限的細緻權杖。"
+  },
+  "autoMergeBy": {
+    "message": "已啟用自動合併（$P1$），由 $P2$ 設定",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeMethod": {
+    "message": "已啟用自動合併（$P1$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "tokenPlaceholder": {
+    "message": "ghp_… 或 github_pat_…"
+  },
+  "githubDidNotFindPullRequest": {
+    "message": "GitHub 未找到此 PR。"
+  },
+  "githubDidNotConfirmChange": {
+    "message": "GitHub 未確認變更。"
+  },
+  "githubDidNotConfirmUpdate": {
+    "message": "GitHub 未確認更新。"
+  },
+  "noRepoScope": {
+    "message": "此權杖沒有 repo 權限範圍，因此 Prowl 只能檢視公開儲存庫。請建立具有 repo 權限範圍的權杖以追蹤私人儲存庫。"
+  },
+  "githubErrorDetail": {
+    "message": "GitHub 傳回錯誤：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updateWithMerge": {
+    "message": "透過合併提交更新"
+  },
+  "rerunFailed": {
+    "message": "重新執行失敗項"
+  },
+  "mergeMethod": {
+    "message": "合併方式"
+  },
+  "detailsFor": {
+    "message": "$P1$ 的詳細資料",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "onGithub": {
+    "message": "在 GitHub 上"
+  },
+  "requestChangesDescription": {
+    "message": "告訴作者 $P1$ 需要進行哪些變更。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repositories": {
+    "message": "儲存庫"
+  },
+  "authorBy": {
+    "message": "，作者：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "actionReference": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "selectedSection": {
+    "message": "區段，已選擇 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionsSuffix": {
+    "message": "區段"
+  },
+  "copy": {
+    "message": "複製"
+  },
+  "pullNounOne": {
+    "message": " 個 PR"
+  },
+  "pullNounOther": {
+    "message": " 個 PR"
+  },
+  "failed2One": {
+    "message": "$P1$ 項失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2One": {
+    "message": "$P1$ 項等待中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "passed2One": {
+    "message": "$P1$ 項通過",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2One": {
+    "message": "$P1$ 項已略過",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingOne": {
+    "message": "$P1$ 項失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "languageTag": {
+    "message": "zh-TW",
+    "description": "BCP 47 language of this catalog, used for document language and plural rules."
+  },
+  "keyEnter": {
+    "message": "Enter",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keySpace": {
+    "message": "空白鍵",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keyEscape": {
+    "message": "Esc",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "squashMethod": {
+    "message": "壓縮",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "rebaseMethod": {
+    "message": "重訂基底",
+    "description": "Keyboard key or GitHub merge method label."
+  }
+}

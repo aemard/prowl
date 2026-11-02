@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * Team discovery: the teams the viewer belongs to, for the `team_review_requested` section.
  * REST `GET /user/teams` lists them across organizations in one call; GraphQL has no such
@@ -33,9 +34,7 @@ export const teamKey = ({ org, slug }: Pick<Team, 'org' | 'slug'>): string =>
 export const hasReadOrg = (scopes: readonly string[]): boolean =>
   scopes.some((scope) => READ_ORG_SCOPES.includes(scope));
 
-const MISSING_SCOPE =
-  'GitHub would not list your teams. Sign in again with the read:org scope, or use a ' +
-  'fine-grained token owned by the organization with the Members: read permission.';
+const MISSING_SCOPE = t('listTeamsScopeHelp');
 
 /** A team as GitHub lists it, or null; its key goes into a search query, so it is validated. */
 function toTeam(json: unknown): Team | null {
@@ -74,7 +73,7 @@ export async function fetchViewerTeams(client: GitHubClient): Promise<Team[]> {
       `/user/teams?per_page=${PER_PAGE}&page=${page}`,
     );
     if (!Array.isArray(batch)) {
-      throw new GitHubError('server', 'GitHub returned an unexpected response.');
+      throw new GitHubError('server', t('githubReturnedAnUnexpectedResponse'));
     }
     teams.push(...batch.flatMap(toTeams));
     if (batch.length < PER_PAGE) break;
@@ -114,7 +113,7 @@ export async function discoverTeams(
       teams: previous?.login === login ? previous.teams : [],
       error: missingScope
         ? { kind: 'missing_scope', message: MISSING_SCOPE }
-        : { kind: error.kind, message: `Could not list your teams: ${error.message}` },
+        : { kind: error.kind, message: t('couldNotListYourTeams', error.message) },
     };
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
+import { t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
@@ -15,14 +16,14 @@ import { TextField } from './ui/TextField';
 import './MergeAction.css';
 
 const METHODS: Record<MergeMethod, string> = {
-  merge: 'Create a merge commit',
-  squash: 'Squash and merge',
-  rebase: 'Rebase and merge',
+  merge: t('createAMergeCommit'),
+  squash: t('squashAndMerge'),
+  rebase: t('rebaseAndMerge'),
 };
 
-const MERGE = 'Merge';
-const ENABLE_AUTO_MERGE = 'Enable auto-merge';
-const DISABLE_AUTO_MERGE = 'Disable auto-merge';
+const MERGE = t('merge');
+const ENABLE_AUTO_MERGE = t('enableAutoMerge');
+const DISABLE_AUTO_MERGE = t('disableAutoMerge');
 
 /**
  * Merge, for the row of an expanded card's Actions: shown to someone with write access on an
@@ -61,7 +62,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async () => {
-    const merged = await runPrAction(pr, MERGE, 'Merged', (client) =>
+    const merged = await runPrAction(pr, MERGE, t('merged'), (client) =>
       mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title }),
     );
     setConfirming(false);
@@ -69,7 +70,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
     else void sendToBackground({ type: 'poll', force: true });
   };
   const enableAutoMerge = async () => {
-    const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, 'Auto-merge is on for', (client) =>
+    const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, t('autoMergeIsOnFor'), (client) =>
       setAutoMerge(client, pr.id, method, pr.headSha, title),
     );
     setConfirming(false);
@@ -82,7 +83,7 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
         size="sm"
         variant={ready ? 'primary' : 'secondary'}
         icon={<GitMergeIcon size={12} />}
-        aria-label={`${MERGE} ${ref}`}
+        aria-label={t('message2', MERGE, ref)}
         loading={pending === MERGE}
         disabled={pending !== undefined && pending !== MERGE}
         onClick={() => setConfirming(true)}
@@ -92,11 +93,11 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
       {pr.autoMerge && (
         <Button
           size="sm"
-          aria-label={`${DISABLE_AUTO_MERGE} of ${ref}`}
+          aria-label={t('of', DISABLE_AUTO_MERGE, ref)}
           loading={pending === DISABLE_AUTO_MERGE}
           disabled={pending !== undefined && pending !== DISABLE_AUTO_MERGE}
           onClick={() =>
-            void runPrAction(pr, DISABLE_AUTO_MERGE, 'Auto-merge is off for', (client) =>
+            void runPrAction(pr, DISABLE_AUTO_MERGE, t('autoMergeIsOffFor'), (client) =>
               setAutoMerge(client, pr.id, null, pr.headSha),
             )
           }
@@ -108,16 +109,16 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
         <Dialog
           open
           onClose={close}
-          title="Merge pull request"
+          title={t('mergePullRequest')}
           description={
             offerAutoMerge
-              ? `Merge ${ref} into ${pr.baseRefName} now, or let GitHub merge it once its checks and reviews pass.`
-              : `Merge ${ref} into ${pr.baseRefName}.`
+              ? t('mergeIntoNowOrLetGithubMergeItOnce', ref, pr.baseRefName)
+              : t('mergeInto', ref, pr.baseRefName)
           }
           footer={
             <>
               <Button disabled={pending !== undefined} onClick={close}>
-                Cancel
+                {t('cancel')}
               </Button>
               {offerAutoMerge && (
                 <Button
@@ -144,25 +145,21 @@ export function MergeAction({ pr }: { pr: PullRequest }) {
           {blockers.length > 0 && (
             <p class="merge-dialog__blockers">
               <AlertIcon size={12} />
-              <span>Not ready: {blockers.join('; ')}.</span>
+              <span>{t('notReadyReasons', blockers.join('; '))}</span>
             </p>
           )}
           <Select
-            label="Merge method"
+            label={t('mergeMethod')}
             value={method}
             options={methods.map((value) => ({ value, label: METHODS[value] }))}
             disabled={pending !== undefined}
-            hint={
-              method === 'rebase'
-                ? 'Commits are kept as they are, so there is no commit title.'
-                : undefined
-            }
+            hint={method === 'rebase' ? t('commitsAreKeptAsTheyAreSoThereIs') : undefined}
             onValueChange={setPicked}
           />
           {method !== 'rebase' && (
             <TextField
-              label="Commit title (optional)"
-              hint="Empty uses GitHub's default."
+              label={t('commitTitleOptional')}
+              hint={t('emptyUsesGithubSDefault')}
               value={title}
               readOnly={pending !== undefined}
               onValueChange={setTitle}

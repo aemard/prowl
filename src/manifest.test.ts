@@ -19,7 +19,7 @@ describe('createManifest', () => {
     expect(createManifest('production').commands).toEqual({
       'open-panel': {
         suggested_key: { default: 'Ctrl+Shift+P', mac: 'Command+Shift+P' },
-        description: 'Open Prowl',
+        description: '__MSG_openProwl__',
       },
     });
   });

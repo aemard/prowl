@@ -1,5 +1,6 @@
 import { signal, useSignalEffect } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { countMessage, t } from '../../lib/i18n';
 import { refreshRequested, requestRefresh, SHORTCUTS, shortcutFor } from '../state/shortcuts';
 import { pollState, snapshot } from '../state/store';
 import { Dialog } from './ui/Dialog';
@@ -64,7 +65,7 @@ export function ShortcutsDialog() {
     shortcutsOpen.value = false;
   };
   return (
-    <Dialog open onClose={close} title="Keyboard shortcuts">
+    <Dialog open onClose={close} title={t('keyboardShortcuts')}>
       <dl class="shortcuts">
         {SHORTCUTS.map(({ keys, action }) => (
           <div class="shortcuts__row" key={action}>
@@ -105,8 +106,8 @@ export function RefreshAnnouncer() {
       const count = Object.keys(snapshot.value?.pullRequests ?? {}).length;
       setMessage(
         error
-          ? `Refresh failed: ${error.message}`
-          : `Updated. ${count} pull request${count === 1 ? '' : 's'}.`,
+          ? t('refreshFailed', error.message)
+          : countMessage(count, 'refreshedOne', 'refreshedOther'),
       );
       refreshRequested.value = null;
     }

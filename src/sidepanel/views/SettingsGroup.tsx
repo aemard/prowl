@@ -3,7 +3,7 @@ import './Settings.css';
 
 /** The id of the group titled `title`, which the settings screen's section links point at. */
 export const settingsGroupId = (title: string) =>
-  `settings-${title.toLowerCase().replace(/[^a-z]+/g, '-')}`;
+  `settings-${title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-')}`;
 
 /** One titled block of the settings screen. Its title takes focus when a section link jumps to it. */
 export function SettingsGroup({

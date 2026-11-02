@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { env } from '../../lib/env';
+import { t, uiLocale } from '../../lib/i18n';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { openGitHubUrl } from '../openUrl';
 import { navigate, route } from '../state/router';
@@ -25,12 +26,14 @@ function UpdatedAt() {
   useNow(15_000);
   const fetchedAt = snapshot.value?.fetchedAt;
   if (!fetchedAt) {
-    return <p class="header__updated">{listRefreshing.value ? 'Updating…' : 'Not updated yet'}</p>;
+    return (
+      <p class="header__updated">{listRefreshing.value ? t('updating') : t('notUpdatedYet')}</p>
+    );
   }
   return (
     <p class="header__updated">
-      <time dateTime={fetchedAt} title={new Date(fetchedAt).toLocaleString()}>
-        Updated {formatRelativeTime(fetchedAt)}
+      <time dateTime={fetchedAt} title={new Date(fetchedAt).toLocaleString(uiLocale())}>
+        {t('updatedAgo', formatRelativeTime(fetchedAt))}
       </time>
     </p>
   );
@@ -51,11 +54,11 @@ export function Header() {
       </div>
       {viewer && (
         <div class="header__actions">
-          <IconButton label="Refresh" loading={listRefreshing.value} onClick={requestRefresh}>
+          <IconButton label={t('refresh')} loading={listRefreshing.value} onClick={requestRefresh}>
             <SyncIcon />
           </IconButton>
           <IconButton
-            label={inSettings ? 'Back to pull requests' : 'Settings'}
+            label={inSettings ? t('backToPullRequests') : t('settings')}
             onClick={() => navigate(inSettings ? 'list' : 'settings')}
           >
             {inSettings ? <ArrowLeftIcon /> : <GearIcon />}
@@ -65,14 +68,14 @@ export function Header() {
             items={[
               {
                 id: 'profile',
-                label: 'View GitHub profile',
+                label: t('viewGithubProfile'),
                 icon: <LinkExternalIcon />,
                 onSelect: () =>
                   void openGitHubUrl(`${env.webUrl}/${encodeURIComponent(viewer.login)}`),
               },
               {
                 id: 'shortcuts',
-                label: 'Keyboard shortcuts',
+                label: t('keyboardShortcuts'),
                 hint: '?',
                 icon: <InfoIcon />,
                 onSelect: () => {
@@ -82,14 +85,14 @@ export function Header() {
               'separator',
               {
                 id: 'sign-out',
-                label: 'Sign out',
+                label: t('signOut'),
                 icon: <SignOutIcon />,
                 danger: true,
                 onSelect: () => setConfirmingSignOut(true),
               },
             ]}
             trigger={(props) => (
-              <IconButton {...props} label={`Account: ${viewer.login}`}>
+              <IconButton {...props} label={t('account', viewer.login)}>
                 <img class="header__avatar" src={viewer.avatarUrl} alt="" width="20" height="20" />
               </IconButton>
             )}

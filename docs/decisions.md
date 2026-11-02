@@ -2,6 +2,8 @@
 
 One line each, with the reason. Product decisions from the brief are not repeated here.
 
+- 2026-11-02 — Localize the extension with Chrome's native `_locales` catalogs (`en`, `ja`, `zh_CN`, `zh_TW`, `fr`, `de`, `es`); follow Chrome's UI language, with English as `default_locale` and a bundled fallback when the API has no message. No language picker, remote translation service, new permission or runtime dependency. Dates, numbers, relative times and plurals follow the UI locale. Built-in section names translate at display time so stored and synced settings stay stable; GitHub content and custom names remain user-authored. The website and store listing remain outside this change.
+
 - 2026-10-06 — Sections 3–13 of the brief were collapsed and unreadable to the orchestrator; conventions they may have defined (stack, design, agents, phases) were reconstructed from the visible sections and are recorded below.
 - 2026-10-06 — Name "Prowl" kept: the only Chrome extension with that name (afjmhofmjbffpakdiiilmkcdclabhmmb, last updated 2012) was removed from the Chrome Web Store on 2023-08-12; caarlos0/prowl is a terminal tool, not an extension.
 - 2026-10-06 — Ralph runs as one fresh-context subagent per iteration driven by the orchestrator, because nested `claude --dangerously-skip-permissions` sessions are blocked in this sandbox; `scripts/ralph/ralph.sh` is still provided for local runs.
