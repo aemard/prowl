@@ -5,7 +5,7 @@ import { expect, saveScreenshot, test } from './fixtures';
 import { MOCK_ORIGIN } from './mock-github/server';
 
 async function captureLocalizedSettings(page: Page, locale: string) {
-  if (process.env.PROWL_SCREENSHOTS !== '1' || !['fr', 'ja'].includes(locale)) return;
+  if (process.env.PROWL_SCREENSHOTS !== '1' || locale !== 'ja') return;
   // Show the shipped host, as the existing English settings screenshot does.
   await page.evaluate((mock) => {
     for (const name of document.querySelectorAll('.settings-permissions__name'))
@@ -13,10 +13,8 @@ async function captureLocalizedSettings(page: Page, locale: string) {
     (document.activeElement as HTMLElement | null)?.blur();
     window.scrollTo(0, 0);
   }, new URL(MOCK_ORIGIN).host);
-  for (const theme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: theme });
-    await saveScreenshot(page, `settings-${locale}-${theme}`, { fullPage: true });
-  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await saveScreenshot(page, 'settings-ja', { fullPage: true });
 }
 
 for (const locale of ['ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es', 'it']) {
