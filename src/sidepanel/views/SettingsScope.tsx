@@ -18,14 +18,27 @@ import { PRESET_DESCRIPTIONS } from './SettingsModel';
 
 const FORM_ID = 'custom-section-form';
 
-/** Adds (`section` null) or edits a custom section; the query is checked as GitHub would. */
-function CustomSectionDialog({
-  section,
-  onClose,
-}: {
-  section: Section | null;
-  onClose: () => void;
-}) {
+function saveSection(section: Section | null, changes: { label: string; query: string }) {
+  return saveSettings(
+    (current) => ({
+      ...current,
+      sections: section
+        ? current.sections.map((s) => (s.id === section.id ? { ...s, ...changes } : s))
+        : [
+            ...current.sections,
+            {
+              id: `custom-${crypto.randomUUID().slice(0, 8)}`,
+              kind: 'custom',
+              enabled: true,
+              ...changes,
+            },
+          ],
+    }),
+    { refresh: true },
+  );
+}
+
+function useCustomSectionForm(section: Section | null, onClose: () => void) {
   const [label, setLabel] = useState(section?.label ?? '');
   const [query, setQuery] = useState(section?.query ?? '');
   const [submitted, setSubmitted] = useState(false);
@@ -42,27 +55,72 @@ function CustomSectionDialog({
       (nameError ? nameInput : queryInput).current?.focus();
       return;
     }
-    const changes = { label: label.trim(), query: query.trim() };
-    await saveSettings(
-      (current) => ({
-        ...current,
-        sections: section
-          ? current.sections.map((s) => (s.id === section.id ? { ...s, ...changes } : s))
-          : [
-              ...current.sections,
-              {
-                id: `custom-${crypto.randomUUID().slice(0, 8)}`,
-                kind: 'custom',
-                enabled: true,
-                ...changes,
-              },
-            ],
-      }),
-      { refresh: true },
-    );
+    await saveSection(section, { label: label.trim(), query: query.trim() });
     onClose();
   }
+  return {
+    label,
+    setLabel,
+    query,
+    setQuery,
+    submitted,
+    nameInput,
+    queryInput,
+    queryErrors,
+    nameError,
+    save,
+  };
+}
 
+function CustomSectionFields({ form }: { form: ReturnType<typeof useCustomSectionForm> }) {
+  const {
+    label,
+    setLabel,
+    query,
+    setQuery,
+    submitted,
+    nameInput,
+    queryInput,
+    queryErrors,
+    nameError,
+  } = form;
+  return (
+    <>
+      <TextField
+        label={t('name')}
+        value={label}
+        onValueChange={setLabel}
+        error={submitted ? nameError : undefined}
+        hint={t('shownOnTheTab')}
+        maxLength={MAX_SECTION_LABEL_LENGTH}
+        autoComplete="off"
+        inputRef={nameInput}
+      />
+      <TextField
+        label={t('searchQuery')}
+        value={query}
+        onValueChange={setQuery}
+        multiline
+        rows={3}
+        error={submitted || query !== '' ? queryErrors.join(' ') || undefined : undefined}
+        hint={t('githubSSearchSyntaxForExampleLabelBugReview')}
+        autoComplete="off"
+        spellcheck={false}
+        inputRef={queryInput}
+      />
+    </>
+  );
+}
+
+/** Adds (`section` null) or edits a custom section; the query is checked as GitHub would. */
+function CustomSectionDialog({
+  section,
+  onClose,
+}: {
+  section: Section | null;
+  onClose: () => void;
+}) {
+  const form = useCustomSectionForm(section, onClose);
   return (
     <Dialog
       open
@@ -78,29 +136,13 @@ function CustomSectionDialog({
         </>
       }
     >
-      <form id={FORM_ID} class="settings-form" onSubmit={(event) => void save(event)} noValidate>
-        <TextField
-          label={t('name')}
-          value={label}
-          onValueChange={setLabel}
-          error={submitted ? nameError : undefined}
-          hint={t('shownOnTheTab')}
-          maxLength={MAX_SECTION_LABEL_LENGTH}
-          autoComplete="off"
-          inputRef={nameInput}
-        />
-        <TextField
-          label={t('searchQuery')}
-          value={query}
-          onValueChange={setQuery}
-          multiline
-          rows={3}
-          error={submitted || query !== '' ? queryErrors.join(' ') || undefined : undefined}
-          hint={t('githubSSearchSyntaxForExampleLabelBugReview')}
-          autoComplete="off"
-          spellcheck={false}
-          inputRef={queryInput}
-        />
+      <form
+        id={FORM_ID}
+        class="settings-form"
+        onSubmit={(event) => void form.save(event)}
+        noValidate
+      >
+        <CustomSectionFields form={form} />
       </form>
     </Dialog>
   );
@@ -164,6 +206,28 @@ function changeRepos(
   void saveSettings((current) => ({ ...current, [key]: update(current[key]) }), { refresh: true });
 }
 
+function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => void }) {
+  return (
+    <li class="settings-row">
+      <Switch
+        label={sectionLabel(section)}
+        description={section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]}
+        checked={section.enabled}
+        onChange={(enabled) =>
+          void saveSettings(
+            (current) => ({
+              ...current,
+              sections: current.sections.map((s) => (s.id === section.id ? { ...s, enabled } : s)),
+            }),
+            { refresh: true },
+          )
+        }
+      />
+      {section.kind === 'custom' && <CustomActions section={section} onEdit={onEdit} />}
+    </li>
+  );
+}
+
 /** Which pull requests Prowl follows: preset and custom sections, and the repository filters. */
 export function ScopeSettings() {
   const { sections, repoInclude, repoExclude } = settings.value;
@@ -175,29 +239,7 @@ export function ScopeSettings() {
       <h4 class="settings-subtitle">{t('sections')}</h4>
       <ul class="settings-list">
         {sections.map((section) => (
-          <li class="settings-row" key={section.id}>
-            <Switch
-              label={sectionLabel(section)}
-              description={
-                section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]
-              }
-              checked={section.enabled}
-              onChange={(enabled) =>
-                void saveSettings(
-                  (current) => ({
-                    ...current,
-                    sections: current.sections.map((s) =>
-                      s.id === section.id ? { ...s, enabled } : s,
-                    ),
-                  }),
-                  { refresh: true },
-                )
-              }
-            />
-            {section.kind === 'custom' && (
-              <CustomActions section={section} onEdit={() => setEditing(section)} />
-            )}
-          </li>
+          <SectionSwitch key={section.id} section={section} onEdit={() => setEditing(section)} />
         ))}
       </ul>
       <Button class="settings-add" icon={<PlusIcon />} onClick={() => setEditing(null)}>

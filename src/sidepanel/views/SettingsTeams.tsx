@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
 import { t } from '../../lib/i18n';
-import type { Team } from '../../lib/model';
+import type { Team, TeamsState } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { SyncIcon } from '../components/icons';
 import { Button } from '../components/ui/Button';
@@ -20,38 +20,21 @@ function byOrg(list: readonly Team[]): [string, Team[]][] {
   return [...orgs];
 }
 
-/**
- * The teams the worker discovered for "Team reviews", each followed unless unfollowed here, with
- * a refresh and the way out when the token cannot list them (no read:org).
- */
-export function TeamsSettings() {
-  useNow(60_000);
-  const [refreshing, setRefreshing] = useState(false);
-  const state = teams.value;
-  const { unfollowedTeams, sections } = settings.value;
-  const unfollowed = new Set(unfollowedTeams);
-  const sectionOn = sections.some((s) => s.kind === 'team_review_requested' && s.enabled);
-  const followed = (state?.teams ?? []).filter((team) => !unfollowed.has(teamKey(team))).length;
+function followTeam(key: string, on: boolean) {
+  void saveSettings(
+    (current) => ({
+      ...current,
+      unfollowedTeams: on
+        ? current.unfollowedTeams.filter((k) => k !== key)
+        : [...current.unfollowedTeams.filter((k) => k !== key), key],
+    }),
+    { refresh: true },
+  );
+}
 
-  const follow = (key: string, on: boolean) =>
-    void saveSettings(
-      (current) => ({
-        ...current,
-        unfollowedTeams: on
-          ? current.unfollowedTeams.filter((k) => k !== key)
-          : [...current.unfollowedTeams.filter((k) => k !== key), key],
-      }),
-      { refresh: true },
-    );
-  const refresh = async () => {
-    setRefreshing(true);
-    await sendToBackground({ type: 'refreshTeams' });
-    setRefreshing(false);
-  };
-
+function TeamNotice({ state }: { state: TeamsState | undefined }) {
   return (
-    <SettingsGroup title={t('teams')} description={t('teamReviewsListsThePullRequestsThatAskOne')}>
-      {!sectionOn && <p class="settings-note">{t('turnOnTeamReviewsUnderSectionsToSeeThem')}</p>}
+    <>
       {state?.error && (
         <div class="settings-teams__error" role="status">
           <p class="settings-note">{state.error.message}</p>
@@ -65,7 +48,14 @@ export function TeamsSettings() {
       {state && !state.error && state.teams.length === 0 && (
         <p class="settings-note">{t('githubListsNoTeamForYourAccount')}</p>
       )}
-      {byOrg(state?.teams ?? []).map(([org, list]) => (
+    </>
+  );
+}
+
+function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: Set<string> }) {
+  return (
+    <>
+      {byOrg(list).map(([org, list]) => (
         <fieldset class="settings-teams__org" key={org}>
           <legend class="settings-teams__legend">{org}</legend>
           {list.map((team) => {
@@ -76,12 +66,38 @@ export function TeamsSettings() {
                 label={team.name}
                 description={`@${team.org}/${team.slug}`}
                 checked={!unfollowed.has(key)}
-                onChange={(on) => follow(key, on)}
+                onChange={(on) => followTeam(key, on)}
               />
             );
           })}
         </fieldset>
       ))}
+    </>
+  );
+}
+
+/**
+ * The teams the worker discovered for "Team reviews", each followed unless unfollowed here, with
+ * a refresh and the way out when the token cannot list them (no read:org).
+ */
+export function TeamsSettings() {
+  useNow(60_000);
+  const [refreshing, setRefreshing] = useState(false);
+  const state = teams.value;
+  const { unfollowedTeams, sections } = settings.value;
+  const unfollowed = new Set(unfollowedTeams);
+  const sectionOn = sections.some((s) => s.kind === 'team_review_requested' && s.enabled);
+  const followed = (state?.teams ?? []).filter((team) => !unfollowed.has(teamKey(team))).length;
+  const refresh = async () => {
+    setRefreshing(true);
+    await sendToBackground({ type: 'refreshTeams' });
+    setRefreshing(false);
+  };
+  return (
+    <SettingsGroup title={t('teams')} description={t('teamReviewsListsThePullRequestsThatAskOne')}>
+      {!sectionOn && <p class="settings-note">{t('turnOnTeamReviewsUnderSectionsToSeeThem')}</p>}
+      <TeamNotice state={state} />
+      <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} />
       {followed > MAX_TEAM_SEARCHES && (
         <p class="settings-note">{t('teamSearchBudget', followed, MAX_TEAM_SEARCHES)}</p>
       )}
