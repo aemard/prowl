@@ -48,7 +48,7 @@ const API_VERSION = '2022-11-28';
 /** GitHub: without `retry-after`, wait at least a minute after a secondary rate limit. */
 const SECONDARY_RETRY_SECONDS = 60;
 const MAX_MESSAGE_LENGTH = 300;
-const UNEXPECTED = t('githubReturnedAnUnexpectedResponse');
+const unexpected = () => t('githubReturnedAnUnexpectedResponse');
 const UNPARSEABLE = Symbol('unparseable');
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -142,7 +142,7 @@ async function readGraphQL<T>(
 ) {
   const { response, payload } = await send(client, 'POST', '/graphql', { query, variables }, false);
   const { status, headers } = response;
-  if (!isRecord(payload)) throw fail('server', UNEXPECTED, status, headers);
+  if (!isRecord(payload)) throw fail('server', unexpected(), status, headers);
   const { data, errors } = payload;
   const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
   if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
@@ -178,7 +178,7 @@ export function createGitHubClient({
   async function restResponse<T = void>(method: HttpMethod, path: string, body?: unknown) {
     const { response, payload } = await send(client, method, path, body, true);
     if (payload === UNPARSEABLE)
-      throw fail('server', UNEXPECTED, response.status, response.headers);
+      throw fail('server', unexpected(), response.status, response.headers);
     return { data: payload as T, headers: response.headers };
   }
   return {

@@ -1,4 +1,4 @@
-import { t } from '../lib/i18n';
+import { setLanguage, t } from '../lib/i18n';
 /**
  * Optional settings sync (US-041). While this device's `sync.enabled` is on, settings are mirrored
  * to `chrome.storage.sync` (Chrome's own sync, one key), and settings another device synced come
@@ -26,6 +26,7 @@ const recordError = (error: string | null) =>
 
 /** Writes this device's settings to Chrome sync, unless they are already there. */
 export async function pushSettings(settings: Settings): Promise<void> {
+  await setLanguage(settings.language);
   if (jsonEqual(await remoteSettings(), settings)) return recordError(null).then(() => undefined);
   const bytes = new TextEncoder().encode(SYNCED_KEY + JSON.stringify(settings)).length;
   let error: string | null = null;

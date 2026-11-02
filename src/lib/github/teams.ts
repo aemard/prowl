@@ -34,8 +34,6 @@ export const teamKey = ({ org, slug }: Pick<Team, 'org' | 'slug'>): string =>
 export const hasReadOrg = (scopes: readonly string[]): boolean =>
   scopes.some((scope) => READ_ORG_SCOPES.includes(scope));
 
-const MISSING_SCOPE = t('listTeamsScopeHelp');
-
 /** A team as GitHub lists it, or null; its key goes into a search query, so it is validated. */
 function toTeam(json: unknown): Team | null {
   const { slug, name, organization } = (json ?? {}) as Record<string, unknown>;
@@ -112,7 +110,7 @@ export async function discoverTeams(
       ...base,
       teams: previous?.login === login ? previous.teams : [],
       error: missingScope
-        ? { kind: 'missing_scope', message: MISSING_SCOPE }
+        ? { kind: 'missing_scope', message: t('listTeamsScopeHelp') }
         : { kind: error.kind, message: t('couldNotListYourTeams', error.message) },
     };
   }

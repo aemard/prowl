@@ -44,7 +44,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
-| `src/lib/i18n.ts`, `public/_locales/` | Typed Chrome messages with English fallback; localized counts, numbers and dates. `sectionLabel.ts` translates built-in names without changing stored settings. | 80% |
+| `src/lib/i18n.ts`, `public/_locales/` | Typed Chrome messages, a saved language preference and English fallback; localized counts, numbers and dates. `sectionLabel.ts` translates built-in names without changing stored settings. | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts` (poll orchestration), `mergeState.ts` (consulted-card refresh and priority hints), `pollState.ts` (auth guards and failure state), `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
 | `src/styles/` | `tokens.css` (theme entry and dark themes), `tokens.base.css` (shared scale and light theme), `base.css` | n/a |

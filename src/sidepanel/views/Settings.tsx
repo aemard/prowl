@@ -1,5 +1,5 @@
 import { t } from '../../lib/i18n';
-import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
+import type { BadgeMode, Language, SortOrder, Theme } from '../../lib/model';
 import {
   MAX_HIDE_STALE_DAYS,
   MAX_PER_SECTION,
@@ -38,6 +38,30 @@ const BADGES: SelectOption<BadgeMode>[] = [
   { value: 'unseen', label: t('unseenChanges') },
   { value: 'off', label: t('off') },
 ];
+
+const LANGUAGES: SelectOption<Language>[] = [
+  { value: 'system', label: t('matchChromeLanguage') },
+  { value: 'en', label: 'English' },
+  { value: 'ja', label: '日本語' },
+  { value: 'zh-CN', label: '简体中文' },
+  { value: 'zh-TW', label: '繁體中文' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'es', label: 'Español' },
+];
+
+function LanguageSettings() {
+  return (
+    <Select
+      label={t('language')}
+      name="language"
+      value={settings.value.language}
+      options={LANGUAGES}
+      hint={t('languageHint')}
+      onValueChange={(language) => void saveSettings({ language })}
+    />
+  );
+}
 
 /** How often Prowl asks GitHub, and what that costs of the hourly rate limit. */
 function PollingSettings() {
@@ -81,6 +105,7 @@ function AppearanceSettings() {
     settings.value;
   return (
     <SettingsGroup title={t('appearance')}>
+      <LanguageSettings />
       <Select
         label={t('theme')}
         value={theme}

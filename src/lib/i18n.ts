@@ -1,11 +1,41 @@
 import english from '../../public/_locales/en/messages.json';
+import type { Language } from './model';
+import { isRecord } from './storage/guards';
 
 export type MessageKey = keyof typeof english;
 type Substitution = string | number;
+type Catalog = Partial<Record<MessageKey, { message: string }>>;
 
-/** Chrome selects the catalog and supplies its built-in English fallback. */
+let language: Language = 'system';
+let catalog: Catalog = english;
+let pending: Promise<void> | undefined;
+let revision = 0;
+
+/** Read only packaged catalogs: Chrome's message API cannot select an explicit language. */
+export function setLanguage(next: Language): Promise<void> {
+  if (next === language && pending) return pending;
+  language = next;
+  catalog = english;
+  const current = ++revision;
+  pending = (async () => {
+    if (next === 'system' || next === 'en') return;
+    try {
+      const response = await fetch(
+        chrome.runtime.getURL(`_locales/${next.replace('-', '_')}/messages.json`),
+      );
+      if (!response.ok) return;
+      const messages: unknown = await response.json();
+      if (current === revision && isRecord(messages)) catalog = messages as Catalog;
+    } catch {
+      // English stays usable if a packaged catalog cannot be read.
+    }
+  })();
+  return pending;
+}
+
+/** Formats follow the explicit choice, or Chrome's interface language in automatic mode. */
 export function uiLocale(): string {
-  return globalThis.chrome?.i18n?.getUILanguage() || 'en';
+  return language === 'system' ? globalThis.chrome?.i18n?.getUILanguage() || 'en' : language;
 }
 
 export function formatNumber(value: number): string {
@@ -18,12 +48,17 @@ export function substituteMessage(message: string, values: readonly string[]): s
 }
 
 export function t(key: MessageKey, ...values: Substitution[]): string {
+  const message = catalog[key]?.message;
   const substitutions = values.map((value) =>
     typeof value === 'number' ? formatNumber(value) : value,
   );
   return (
-    globalThis.chrome?.i18n?.getMessage(key, substitutions) ||
-    substituteMessage(english[key].message, substitutions)
+    (language === 'system'
+      ? globalThis.chrome?.i18n?.getMessage(key, substitutions)
+      : substituteMessage(
+          typeof message === 'string' && message ? message : english[key].message,
+          substitutions,
+        )) || substituteMessage(english[key].message, substitutions)
   );
 }
 
