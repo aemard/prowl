@@ -52,7 +52,10 @@ export const E2E_AUTH: AuthState = {
  * Chromium with the unpacked extension in `extensionPath` loaded, in a fresh profile, once its
  * service worker is running.
  */
-export async function launchExtension(extensionPath: string): Promise<BrowserContext> {
+export async function launchExtension(
+  extensionPath: string,
+  locale?: string,
+): Promise<BrowserContext> {
   const launch = () =>
     chromium.launchPersistentContext('', {
       channel: 'chromium',
@@ -61,10 +64,16 @@ export async function launchExtension(extensionPath: string): Promise<BrowserCon
       executablePath: process.env.PROWL_CHROMIUM || undefined,
       headless: !process.env.HEADED,
       viewport: { width: 400, height: 760 },
+      locale,
+      ...(locale && { env: { ...process.env, LANGUAGE: locale } }),
       // The images in docs/ are shown on HiDPI screens: capture them at twice the pixel density
       // (800 x 1520). Routine runs stay at 1x, which renders four times fewer pixels.
       deviceScaleFactor: WRITE_SCREENSHOTS ? 2 : 1,
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        ...(locale ? [`--lang=${locale}`] : []),
+      ],
     });
   // On a machine under heavy load Chrome sometimes never starts the extension's service worker
   // (seen twice in a few hundred launches, both while other builds ran). A new profile fixes it,
@@ -96,9 +105,9 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     { scope: 'worker' },
   ],
 
-  context: async ({ github }, use) => {
+  context: async ({ github, locale }, use) => {
     github.reset();
-    const context = await launchExtension(EXTENSION_PATH);
+    const context = await launchExtension(EXTENSION_PATH, locale);
     await use(context);
     await context.close();
   },

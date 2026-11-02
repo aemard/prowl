@@ -1,6 +1,8 @@
 import { useRef, useState } from 'preact/hooks';
 import { validateCustomQuery } from '../../lib/github/search';
+import { t } from '../../lib/i18n';
 import type { Section } from '../../lib/model';
+import { sectionLabel } from '../../lib/sectionLabel';
 import { MAX_SECTION_LABEL_LENGTH } from '../../lib/storage/settings';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { RepoFilter } from '../components/RepoFilter';
@@ -31,7 +33,7 @@ function CustomSectionDialog({
   const queryInput = useRef<HTMLElement>(null);
 
   const queryErrors = validateCustomQuery(query);
-  const nameError = label.trim() === '' ? 'Give the section a name.' : undefined;
+  const nameError = label.trim() === '' ? t('giveTheSectionAName') : undefined;
 
   async function save(event: Event) {
     event.preventDefault();
@@ -65,36 +67,36 @@ function CustomSectionDialog({
     <Dialog
       open
       onClose={onClose}
-      title={section ? 'Edit custom section' : 'Add custom section'}
-      description="A tab in the list that follows any GitHub pull request search."
+      title={section ? t('editCustomSection') : t('addCustomSection')}
+      description={t('aTabInTheListThatFollowsAnyGithub')}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('cancel')}</Button>
           <Button type="submit" form={FORM_ID} variant="primary">
-            Save
+            {t('save')}
           </Button>
         </>
       }
     >
       <form id={FORM_ID} class="settings-form" onSubmit={(event) => void save(event)} noValidate>
         <TextField
-          label="Name"
+          label={t('name')}
           value={label}
           onValueChange={setLabel}
           error={submitted ? nameError : undefined}
-          hint="Shown on the tab."
+          hint={t('shownOnTheTab')}
           maxLength={MAX_SECTION_LABEL_LENGTH}
           autoComplete="off"
           inputRef={nameInput}
         />
         <TextField
-          label="Search query"
+          label={t('searchQuery')}
           value={query}
           onValueChange={setQuery}
           multiline
           rows={3}
           error={submitted || query !== '' ? queryErrors.join(' ') || undefined : undefined}
-          hint="GitHub's search syntax, for example: label:bug review-requested:@me. Prowl adds is:pr."
+          hint={t('githubSSearchSyntaxForExampleLabelBugReview')}
           autoComplete="off"
           spellcheck={false}
           inputRef={queryInput}
@@ -112,9 +114,9 @@ function CustomActions({ section, onEdit }: { section: Section; onEdit: () => vo
       { refresh: true },
     );
     showToast({
-      message: `Removed “${section.label}”`,
+      message: t('removed', sectionLabel(section)),
       action: {
-        label: 'Undo',
+        label: t('undo'),
         onClick: () =>
           void saveSettings(
             (current) =>
@@ -136,19 +138,19 @@ function CustomActions({ section, onEdit }: { section: Section; onEdit: () => vo
         size="sm"
         variant="ghost"
         icon={<PencilIcon />}
-        aria-label={`Edit ${section.label}`}
+        aria-label={t('edit', sectionLabel(section))}
         onClick={onEdit}
       >
-        Edit
+        {t('edit2')}
       </Button>
       <Button
         size="sm"
         variant="ghost"
         icon={<TrashIcon />}
-        aria-label={`Remove ${section.label}`}
+        aria-label={t('remove', sectionLabel(section))}
         onClick={remove}
       >
-        Remove
+        {t('remove2')}
       </Button>
     </div>
   );
@@ -169,13 +171,13 @@ export function ScopeSettings() {
   const [editing, setEditing] = useState<Section | null>();
 
   return (
-    <SettingsGroup title="Pull requests" description="Choose which pull requests Prowl follows.">
-      <h4 class="settings-subtitle">Sections</h4>
+    <SettingsGroup title={t('pullRequests')} description={t('chooseWhichPullRequestsProwlFollows')}>
+      <h4 class="settings-subtitle">{t('sections')}</h4>
       <ul class="settings-list">
         {sections.map((section) => (
           <li class="settings-row" key={section.id}>
             <Switch
-              label={section.label}
+              label={sectionLabel(section)}
               description={
                 section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]
               }
@@ -199,19 +201,19 @@ export function ScopeSettings() {
         ))}
       </ul>
       <Button class="settings-add" icon={<PlusIcon />} onClick={() => setEditing(null)}>
-        Add custom section
+        {t('addCustomSection')}
       </Button>
 
-      <h4 class="settings-subtitle">Repositories</h4>
+      <h4 class="settings-subtitle">{t('repositories')}</h4>
       <RepoFilter
-        name="Include"
-        hint="Only follow pull requests in these. Leave empty to follow every repository."
+        name={t('include')}
+        hint={t('onlyFollowPullRequestsInTheseLeaveEmptyTo')}
         patterns={repoInclude}
         onChange={(update) => changeRepos('repoInclude', update)}
       />
       <RepoFilter
-        name="Exclude"
-        hint="Hide pull requests in these, even when they match an include."
+        name={t('exclude')}
+        hint={t('hidePullRequestsInTheseEvenWhenTheyMatch')}
         patterns={repoExclude}
         onChange={(update) => changeRepos('repoExclude', update)}
       />

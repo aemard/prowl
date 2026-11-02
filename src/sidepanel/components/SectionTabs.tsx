@@ -1,4 +1,5 @@
 import type { ComponentChildren, TargetedKeyboardEvent } from 'preact';
+import { formatNumber, t } from '../../lib/i18n';
 import { AlertIcon, KebabHorizontalIcon } from './icons';
 import { Badge } from './ui/Badge';
 import { Menu } from './ui/Menu';
@@ -62,7 +63,12 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
 
   return (
     <div class="section-tabs" data-bottom-bar="">
-      <div class="section-tabs__list" role="tablist" aria-label="Sections" onKeyDown={onKeyDown}>
+      <div
+        class="section-tabs__list"
+        role="tablist"
+        aria-label={t('sections')}
+        onKeyDown={onKeyDown}
+      >
         {shown.map((tab) => {
           const selected = tab.id === selectedId;
           return (
@@ -83,13 +89,13 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
               <span class="section-tabs__top">
                 {tab.icon}
                 {tab.failed ? (
-                  <span class="section-tabs__failed" title="Could not load this section">
+                  <span class="section-tabs__failed" title={t('couldNotLoadThisSection')}>
                     <AlertIcon size={12} />
-                    <span class="sr-only">Could not load</span>
+                    <span class="sr-only">{t('couldNotLoad')}</span>
                   </span>
                 ) : (
                   <Badge size="sm" tone={selected ? 'accent' : 'neutral'}>
-                    {tab.count}
+                    {formatNumber(tab.count)}
                   </Badge>
                 )}
               </span>
@@ -100,12 +106,12 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
       {overflow.length > 0 && (
         <Menu
           align="end"
-          label="More sections"
+          label={t('moreSections')}
           items={overflow.map((tab) => ({
             id: tab.id,
             label: tab.fullLabel,
             icon: tab.icon,
-            hint: tab.failed ? 'Could not load' : String(tab.count),
+            hint: tab.failed ? t('couldNotLoad') : formatNumber(tab.count),
             checked: tab.id === selectedId,
             onSelect: () => onSelect(tab.id),
           }))}
@@ -117,10 +123,9 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
               data-selected={inMore !== undefined}
             >
               <span class="section-tabs__label">
-                More
+                {t('more')}
                 <span class="sr-only">
-                  {' sections'}
-                  {inMore && `, ${inMore.fullLabel} selected`}
+                  {inMore ? t('selectedSection', inMore.fullLabel) : t('sectionsSuffix')}
                 </span>
               </span>
               <span class="section-tabs__top">

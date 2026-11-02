@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
+import { countMessage, t } from '../../lib/i18n';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
 import { detailKey, details, loadDetail } from '../state/prDetail';
 import { GitHubLink } from './GitHubLink';
@@ -34,18 +35,18 @@ interface Look {
 }
 
 const CHECK_LOOK: Record<CheckItemState, Look> = {
-  failed: { tone: 'danger', Icon: XIcon, label: 'Failed' },
-  pending: { tone: 'attention', Icon: DotFillIcon, label: 'Pending' },
-  passed: { tone: 'success', Icon: CheckIcon, label: 'Passed' },
-  neutral: { tone: 'neutral', Icon: SkipIcon, label: 'Skipped' },
+  failed: { tone: 'danger', Icon: XIcon, label: t('failed') },
+  pending: { tone: 'attention', Icon: DotFillIcon, label: t('pending') },
+  passed: { tone: 'success', Icon: CheckIcon, label: t('passed') },
+  neutral: { tone: 'neutral', Icon: SkipIcon, label: t('skipped') },
 };
 
 const REVIEWER_LOOK: Record<Reviewer['state'], Look> = {
-  approved: { tone: 'success', Icon: CheckIcon, label: 'Approved' },
-  changes_requested: { tone: 'danger', Icon: FileDiffIcon, label: 'Changes requested' },
-  requested: { tone: 'attention', Icon: EyeIcon, label: 'Review requested' },
-  commented: { tone: 'neutral', Icon: CommentIcon, label: 'Commented' },
-  dismissed: { tone: 'neutral', Icon: SkipIcon, label: 'Dismissed' },
+  approved: { tone: 'success', Icon: CheckIcon, label: t('approved2') },
+  changes_requested: { tone: 'danger', Icon: FileDiffIcon, label: t('changesRequested2') },
+  requested: { tone: 'attention', Icon: EyeIcon, label: t('reviewRequested') },
+  commented: { tone: 'neutral', Icon: CommentIcon, label: t('commented2') },
+  dismissed: { tone: 'neutral', Icon: SkipIcon, label: t('dismissed') },
 };
 
 const LINE_ICONS: Partial<Record<Tone, IconComponent>> = {
@@ -55,8 +56,6 @@ const LINE_ICONS: Partial<Record<Tone, IconComponent>> = {
   attention: DotFillIcon,
   done: GitMergeIcon,
 };
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 /** A labelled block; the list inside it points at the label with `aria-labelledby={id}`. */
 function Group({
@@ -107,8 +106,8 @@ function CheckRow({ check }: { check: CheckItem }) {
         {check.url ? <GitHubLink href={check.url}>{check.name}</GitHubLink> : check.name}
       </span>
       {check.required && (
-        <Badge size="sm" tone="neutral" title="The base branch requires this check to pass">
-          Required
+        <Badge size="sm" tone="neutral" title={t('theBaseBranchRequiresThisCheckToPass')}>
+          {t('required')}
         </Badge>
       )}
       <span class="pr-detail__state">{label}</span>
@@ -132,8 +131,8 @@ function Checks({
   const done = checks.filter(({ state }) => state === 'passed' || state === 'neutral');
   const passed = done.filter(({ state }) => state === 'passed').length;
   const summary = [
-    passed > 0 && `${passed} passed`,
-    done.length > passed && `${done.length - passed} skipped`,
+    passed > 0 && countMessage(passed, 'passed2One', 'passed2'),
+    done.length > passed && countMessage(done.length - passed, 'skipped2One', 'skipped2'),
   ];
   return (
     <>
@@ -157,14 +156,14 @@ function Checks({
       {checks.length === 0 && (
         <p class="pr-detail__hint">
           {pr.checks.total > 0
-            ? 'GitHub did not return the checks. A fine-grained token cannot read them.'
-            : 'No checks on the latest commit.'}
+            ? t('githubDidNotReturnTheChecksAFineGrained')
+            : t('noChecksOnTheLatestCommit')}
         </p>
       )}
       {checks.length > 0 && checks.length < total && (
         <p class="pr-detail__hint">
-          {plural(total - checks.length, 'more check')}{' '}
-          <GitHubLink href={`${pr.url}/checks`}>on GitHub</GitHubLink>
+          {countMessage(total - checks.length, 'moreCheckCountOne', 'moreCheckCountOther')}{' '}
+          <GitHubLink href={`${pr.url}/checks`}>{t('onGithub')}</GitHubLink>
         </p>
       )}
     </>
@@ -172,7 +171,7 @@ function Checks({
 }
 
 function Reviewers({ reviewers, labelledBy }: { reviewers: Reviewer[]; labelledBy: string }) {
-  if (reviewers.length === 0) return <p class="pr-detail__hint">No reviews yet.</p>;
+  if (reviewers.length === 0) return <p class="pr-detail__hint">{t('noReviewsYet')}</p>;
   return (
     <ul class="pr-detail__list" aria-labelledby={labelledBy}>
       {reviewers.map(({ login, avatarUrl, state }) => {
@@ -225,10 +224,10 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
   const waiting = !detail && !entry?.error;
   return (
     <div id={id} class="pr-detail">
-      <Group id={`${id}-merge`} label="Merge">
+      <Group id={`${id}-merge`} label={t('merge')}>
         <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
       </Group>
-      <Group id={`${id}-actions`} label="Actions">
+      <Group id={`${id}-actions`} label={t('actions')}>
         <div class="pr-actions">
           <ReviewActions pr={pr} />
           <MergeAction pr={pr} />
@@ -240,18 +239,18 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
           <AlertIcon size={16} />
           <span>{entry.error}</span>
           <Button size="sm" onClick={() => void loadDetail(pr)}>
-            Try again
+            {t('tryAgain')}
           </Button>
         </p>
       )}
       {waiting && (
         <span class="sr-only" role="status">
-          Loading checks and reviewers
+          {t('loadingChecksAndReviewers')}
         </span>
       )}
       {(detail || waiting) && (
         <>
-          <Group id={`${id}-checks`} label="Checks">
+          <Group id={`${id}-checks`} label={t('checks')}>
             {detail ? (
               <Checks
                 pr={pr}
@@ -263,7 +262,7 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
               <DetailSkeleton />
             )}
           </Group>
-          <Group id={`${id}-reviewers`} label="Reviewers">
+          <Group id={`${id}-reviewers`} label={t('reviewers')}>
             {detail ? (
               <Reviewers reviewers={detail.reviewers} labelledBy={`${id}-reviewers`} />
             ) : (

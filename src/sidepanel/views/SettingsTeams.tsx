@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
+import { t } from '../../lib/i18n';
 import type { Team } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { SyncIcon } from '../components/icons';
@@ -49,25 +50,20 @@ export function TeamsSettings() {
   };
 
   return (
-    <SettingsGroup
-      title="Teams"
-      description="Team reviews lists the pull requests that ask one of these teams for a review."
-    >
-      {!sectionOn && (
-        <p class="settings-note">Turn on Team reviews under Sections to see them in the list.</p>
-      )}
+    <SettingsGroup title={t('teams')} description={t('teamReviewsListsThePullRequestsThatAskOne')}>
+      {!sectionOn && <p class="settings-note">{t('turnOnTeamReviewsUnderSectionsToSeeThem')}</p>}
       {state?.error && (
         <div class="settings-teams__error" role="status">
           <p class="settings-note">{state.error.message}</p>
           {state.error.kind === 'missing_scope' && (
             <Button size="sm" variant="secondary" onClick={() => navigate('onboarding')}>
-              Sign in again
+              {t('signInAgain')}
             </Button>
           )}
         </div>
       )}
       {state && !state.error && state.teams.length === 0 && (
-        <p class="settings-note">GitHub lists no team for your account.</p>
+        <p class="settings-note">{t('githubListsNoTeamForYourAccount')}</p>
       )}
       {byOrg(state?.teams ?? []).map(([org, list]) => (
         <fieldset class="settings-teams__org" key={org}>
@@ -87,10 +83,7 @@ export function TeamsSettings() {
         </fieldset>
       ))}
       {followed > MAX_TEAM_SEARCHES && (
-        <p class="settings-note">
-          You follow {followed} teams; Prowl searches the first {MAX_TEAM_SEARCHES} to stay within
-          GitHub’s rate limit. Unfollow the ones you do not need.
-        </p>
+        <p class="settings-note">{t('teamSearchBudget', followed, MAX_TEAM_SEARCHES)}</p>
       )}
       <div class="settings-teams__refresh">
         <Button
@@ -100,10 +93,12 @@ export function TeamsSettings() {
           loading={refreshing}
           onClick={() => void refresh()}
         >
-          Refresh teams
+          {t('refreshTeams')}
         </Button>
         <span class="settings-note">
-          {state ? `Checked ${formatRelativeTime(state.fetchedAt, Date.now())}` : 'Not checked yet'}
+          {state
+            ? t('checked', formatRelativeTime(state.fetchedAt, Date.now()))
+            : t('notCheckedYet')}
         </span>
       </div>
     </SettingsGroup>

@@ -1,7 +1,9 @@
 import { signal } from '@preact/signals';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import { describeHiddenReasons } from '../../lib/hidden';
+import { t } from '../../lib/i18n';
 import type { PullRequest, Section, SectionKind, Snapshot } from '../../lib/model';
+import { sectionLabel } from '../../lib/sectionLabel';
 import { isMuted, isSeen } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
@@ -66,30 +68,30 @@ const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
 const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
   authored: {
     icon: GitPullRequestIcon,
-    short: 'Mine',
-    empty: 'Pull requests you open will show up here.',
+    short: t('mine'),
+    empty: t('pullRequestsYouOpenWillShowUpHere'),
   },
   review_requested: {
     icon: EyeIcon,
-    short: 'Review',
-    empty: 'When someone asks you for a review, it will show up here.',
+    short: t('review'),
+    empty: t('whenSomeoneAsksYouForAReviewItWill'),
   },
   team_review_requested: {
     icon: PeopleIcon,
-    short: 'Teams',
-    empty: 'When someone asks one of your teams for a review, it will show up here.',
+    short: t('teams'),
+    empty: t('whenSomeoneAsksOneOfYourTeamsForA'),
   },
   mentioned: {
     icon: MentionIcon,
-    short: 'Mentions',
-    empty: 'Pull requests that mention you will show up here.',
+    short: t('mentions'),
+    empty: t('pullRequestsThatMentionYouWillShowUpHere'),
   },
   assigned: {
     icon: PersonIcon,
-    short: 'Assigned',
-    empty: 'Pull requests assigned to you will show up here.',
+    short: t('assigned'),
+    empty: t('pullRequestsAssignedToYouWillShowUpHere'),
   },
-  custom: { icon: FilterIcon, empty: 'No open pull requests match this search.' },
+  custom: { icon: FilterIcon, empty: t('noOpenPullRequestsMatchThisSearch') },
 };
 
 const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
@@ -163,7 +165,12 @@ function useMarkSeen(
 
 function ListSkeleton() {
   return (
-    <div class="list__skeleton" aria-busy="true" aria-label="Loading pull requests" role="status">
+    <div
+      class="list__skeleton"
+      aria-busy="true"
+      aria-label={t('loadingPullRequests')}
+      role="status"
+    >
       {[0, 1, 2, 3].map((row) => (
         <div class="list__skeleton-row" key={row}>
           <div class="list__skeleton-head">
@@ -185,9 +192,7 @@ function SectionNotice({ section, message }: { section: Section; message: string
   return (
     <p class="list__notice">
       <AlertIcon size={16} />
-      <span>
-        Could not load “{section.label}”: {message}
-      </span>
+      <span>{t('sectionLoadError', sectionLabel(section), message)}</span>
     </p>
   );
 }
@@ -259,9 +264,9 @@ export function ListView() {
         <StatusBanner />
         <EmptyState
           icon={<InboxIcon size={24} />}
-          title="No sections turned on"
-          description="Choose which pull requests Prowl follows in Settings."
-          action={<Button onClick={() => navigate('settings')}>Open settings</Button>}
+          title={t('noSectionsTurnedOn')}
+          description={t('chooseWhichPullRequestsProwlFollowsInSettings')}
+          action={<Button onClick={() => navigate('settings')}>{t('openSettings')}</Button>}
         />
       </>
     );
@@ -276,8 +281,8 @@ export function ListView() {
         {failure?.lastError && !failure.inFlight ? (
           <EmptyState
             icon={<AlertIcon size={24} />}
-            title="Could not load pull requests"
-            description="Nothing has been fetched yet. The notice above says why."
+            title={t('couldNotLoadPullRequests')}
+            description={t('nothingHasBeenFetchedYetTheNoticeAboveSays')}
           />
         ) : (
           <ListSkeleton />
@@ -306,8 +311,8 @@ export function ListView() {
     const { icon: Icon, short } = KINDS[section.kind];
     return {
       id: section.id,
-      label: short ?? section.label,
-      fullLabel: section.label,
+      label: short ?? sectionLabel(section),
+      fullLabel: sectionLabel(section),
       icon: <Icon />,
       count: parts.get(section.id)?.shown.length ?? 0,
       failed: snap.sectionErrors?.[section.id] !== undefined,
@@ -317,18 +322,18 @@ export function ListView() {
   // A lone section has no tabs. The panel is named by the section's full name rather than by its
   // tab, which is not there when the section is under "More".
   const panelProps =
-    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': selected.label } : {};
+    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': sectionLabel(selected) } : {};
 
   return (
     <div class="list">
       {anyPullRequests && (
         <div class="list__filter">
           <TextField
-            label="Filter pull requests"
+            label={t('filterPullRequests')}
             hideLabel
             type="search"
             icon={<SearchIcon />}
-            placeholder="Filter by title, repo, author or label"
+            placeholder={t('filterByTitleRepoAuthorOrLabel')}
             value={query}
             onValueChange={(value) => {
               filterQuery.value = value;
@@ -355,7 +360,7 @@ export function ListView() {
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
         {error !== undefined && <SectionNotice section={selected} message={error} />}
         {shown.length > 0 && (
-          <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
+          <ul class="pr-list" aria-label={t('pullRequests2', sectionLabel(selected))}>
             {grouped
               ? groups.map(({ repo, prs }) => (
                   <RepoGroup
@@ -381,10 +386,10 @@ export function ListView() {
               aria-expanded={snoozedOpen}
               onClick={() => setSnoozedOpen(!snoozedOpen)}
             >
-              Snoozed ({snoozed.length})
+              {t('snoozedCount', snoozed.length)}
             </Button>
             {snoozedOpen && (
-              <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
+              <ul class="pr-list" aria-label={t('snoozedPullRequests', sectionLabel(selected))}>
                 {snoozed.map((pr) => (
                   <PullRequestCard
                     key={pr.id}
@@ -412,10 +417,10 @@ export function ListView() {
                 showHidden.value = !showHidden.value;
               }}
             >
-              {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
+              {showHidden.value ? t('hideAgain') : t('showHidden', hidden.length)}
             </Button>
             {showHidden.value && (
-              <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
+              <ul class="pr-list" aria-label={t('hiddenPullRequests', sectionLabel(selected))}>
                 {hidden.map(({ pr, reasons }) => (
                   <PullRequestCard
                     key={pr.id}
@@ -434,10 +439,10 @@ export function ListView() {
         {empty && error === undefined && (
           <EmptyState
             icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
-            title={filteredOut ? 'No matches' : 'No pull requests'}
+            title={filteredOut ? t('noMatches') : t('noPullRequests')}
             description={
               filteredOut
-                ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
+                ? t('nothingInMatches', sectionLabel(selected), query.trim())
                 : KINDS[selected.kind].empty
             }
             action={
@@ -448,7 +453,7 @@ export function ListView() {
                     filterInput.current?.focus();
                   }}
                 >
-                  Clear filter
+                  {t('clearFilter')}
                 </Button>
               ) : undefined
             }

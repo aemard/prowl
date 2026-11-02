@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n';
 /**
  * Desktop notifications for a poll's events. The worker can stop at any time, so what must
  * survive lives in `chrome.storage.session` (cleared when the browser closes): `notified`
@@ -25,7 +26,7 @@ const MAX_NOTIFIED = 300;
 const MAX_SEPARATE = 3;
 const ICON = 'icons/icon-128.png';
 /** The buttons of a notification about one pull request, in this order. */
-const BUTTONS = [{ title: 'Open' }, { title: 'Snooze 1 h' }];
+const BUTTONS = [{ title: t('open') }, { title: t('snooze1H') }];
 const SNOOZE_MS = 60 * 60 * 1000;
 
 type Notified = Record<string, string>;

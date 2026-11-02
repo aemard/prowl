@@ -1,3 +1,4 @@
+import { t } from '../../lib/i18n';
 /** Writing settings from the panel: saved at once, and the list refreshed when the scope changed. */
 import { updateSettings } from '../../lib/storage/settings';
 import { showToast } from '../components/ui/Toast';
@@ -32,7 +33,7 @@ export async function saveSettings(
   try {
     await updateSettings(patch);
   } catch {
-    showToast({ message: 'Could not save the setting. Try again.', tone: 'danger' });
+    showToast({ message: t('couldNotSaveTheSettingTryAgain'), tone: 'danger' });
     return;
   }
   if (refresh) refreshSoon();

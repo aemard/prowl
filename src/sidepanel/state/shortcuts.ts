@@ -3,19 +3,20 @@
  * `useShortcuts` in components/Shortcuts.tsx performs it.
  */
 import { signal } from '@preact/signals';
+import { t } from '../../lib/i18n';
 import { sendToBackground } from './background';
 
 export type Shortcut = 'next' | 'previous' | 'open' | 'refresh' | 'filter' | 'help';
 
 export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
-  { keys: ['j', '↓'], action: 'Next pull request' },
-  { keys: ['k', '↑'], action: 'Previous pull request' },
-  { keys: ['Enter', 'Space'], action: 'Expand or collapse the focused pull request' },
-  { keys: ['o'], action: 'Open the focused pull request on GitHub' },
-  { keys: ['r'], action: 'Refresh now' },
-  { keys: ['/'], action: 'Filter pull requests' },
-  { keys: ['?'], action: 'Show keyboard shortcuts' },
-  { keys: ['Esc'], action: 'Close a dialog or menu, collapse a pull request' },
+  { keys: ['j', '↓'], action: t('nextPullRequest') },
+  { keys: ['k', '↑'], action: t('previousPullRequest') },
+  { keys: [t('keyEnter'), t('keySpace')], action: t('expandOrCollapseTheFocusedPullRequest') },
+  { keys: ['o'], action: t('openTheFocusedPullRequestOnGithub') },
+  { keys: ['r'], action: t('refreshNow') },
+  { keys: ['/'], action: t('filterPullRequests') },
+  { keys: ['?'], action: t('showKeyboardShortcuts') },
+  { keys: [t('keyEscape')], action: t('closeADialogOrMenuCollapseAPullRequest') },
 ];
 
 interface KeyLike {

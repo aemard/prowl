@@ -4,6 +4,7 @@
  * `PullRequestCard` only picks an icon per `StatusIcon` and renders.
  */
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
+import { countMessage, t } from '../../lib/i18n';
 import type { CheckSummary, MergeMethod, PullRequest } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import type { Tone } from './ui/cx';
@@ -22,49 +23,47 @@ export interface Status {
 
 /** How GitHub names each merge method in its merge box. */
 export const MERGE_METHOD_NAMES: Record<MergeMethod, string> = {
-  merge: 'merge commit',
-  squash: 'squash',
-  rebase: 'rebase',
+  merge: t('mergeCommit'),
+  squash: t('squashMethod'),
+  rebase: t('rebaseMethod'),
 };
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 /** CI rollup chip, or null when the commit has no checks. */
 export function ciStatus(checks: CheckSummary): Status | null {
   const { failed, pending, passed, neutral, total } = checks;
   const counts = [
-    failed && `${failed} failed`,
-    pending && `${pending} pending`,
-    passed && `${passed} passed`,
-    neutral && `${neutral} skipped`,
+    failed && countMessage(failed, 'failed2One', 'failed2'),
+    pending && countMessage(pending, 'pending2One', 'pending2'),
+    passed && countMessage(passed, 'passed2One', 'passed2'),
+    neutral && countMessage(neutral, 'skipped2One', 'skipped2'),
   ]
     .filter(Boolean)
     .join(', ');
-  const of = `${counts} (${plural(total, 'check')})`;
+  const of = `${counts} (${countMessage(total, 'checkCountOne', 'checkCountOther')})`;
   switch (checks.state) {
     case 'failure':
       return {
         id: 'ci',
         tone: 'danger',
         icon: 'x',
-        label: `${failed} failing`,
-        detail: `Checks failing: ${of}`,
+        label: countMessage(failed, 'failingOne', 'failing'),
+        detail: t('checksFailing', of),
       };
     case 'pending':
       return {
         id: 'ci',
         tone: 'attention',
         icon: 'dot',
-        label: `${pending} pending`,
-        detail: `Checks running: ${of}`,
+        label: countMessage(pending, 'pending2One', 'pending2'),
+        detail: t('checksRunning', of),
       };
     case 'success':
       return {
         id: 'ci',
         tone: 'success',
         icon: 'check',
-        label: passed > 0 ? `${passed} passed` : 'Passed',
-        detail: `Checks passed: ${of}`,
+        label: passed > 0 ? countMessage(passed, 'passed2One', 'passed2') : t('passed'),
+        detail: t('checksPassed', of),
       };
     default:
       return null;
@@ -78,16 +77,16 @@ function reviewStatus(pr: PullRequest): Status | null {
         id: 'review',
         tone: 'success',
         icon: 'check',
-        label: 'Approved',
-        detail: 'Approved',
+        label: t('approved2'),
+        detail: t('approved2'),
       };
     case 'changes_requested':
       return {
         id: 'review',
         tone: 'danger',
         icon: 'diff',
-        label: 'Changes requested',
-        detail: 'Changes requested',
+        label: t('changesRequested2'),
+        detail: t('changesRequested2'),
       };
     case 'review_required':
       // Nobody is expected to review a draft yet.
@@ -97,8 +96,8 @@ function reviewStatus(pr: PullRequest): Status | null {
             id: 'review',
             tone: 'attention',
             icon: 'eye',
-            label: 'Review required',
-            detail: 'Review required',
+            label: t('reviewRequired'),
+            detail: t('reviewRequired'),
           };
     default:
       return null;
@@ -110,7 +109,7 @@ export function pullRequestStatuses(pr: PullRequest): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
     pr.isDraft
-      ? { id: 'draft', tone: 'neutral', icon: 'draft', label: 'Draft', detail: 'Draft' }
+      ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,
     ciStatus(pr.checks),
     // "Ready to merge" already says approved.
@@ -120,26 +119,26 @@ export function pullRequestStatuses(pr: PullRequest): Status[] {
           id: 'merge',
           tone: 'warning',
           icon: 'alert',
-          label: 'Conflicts',
-          detail: 'Has merge conflicts',
+          label: t('conflicts'),
+          detail: t('hasMergeConflicts'),
         }
       : pr.autoMerge && pr.state === 'open'
         ? {
             id: 'merge',
             tone: 'accent',
             icon: 'merge',
-            label: 'Auto-merge',
-            detail: `Auto-merge on (${MERGE_METHOD_NAMES[pr.autoMerge.method]})${
-              pr.autoMerge.enabledBy ? `, by ${pr.autoMerge.enabledBy}` : ''
-            }`,
+            label: t('autoMerge'),
+            detail: pr.autoMerge.enabledBy
+              ? t('autoMergeBy', MERGE_METHOD_NAMES[pr.autoMerge.method], pr.autoMerge.enabledBy)
+              : t('autoMergeMethod', MERGE_METHOD_NAMES[pr.autoMerge.method]),
           }
         : ready
           ? {
               id: 'merge',
               tone: 'success',
               icon: 'merge',
-              label: 'Ready to merge',
-              detail: 'Ready to merge',
+              label: t('readyToMerge2'),
+              detail: t('readyToMerge2'),
             }
           : null,
   ];
@@ -153,15 +152,16 @@ export function describePullRequest(
   unseen: boolean,
   now: number,
 ): string {
-  const by = pr.author ? `, by ${pr.author.login}` : '';
+  const by = pr.author ? t('authorBy', pr.author.login) : '';
   const facts = [
     ...statuses.map((status) => status.detail),
-    pr.unresolvedThreads > 0 && plural(pr.unresolvedThreads, 'unresolved thread'),
-    pr.commentCount > 0 && plural(pr.commentCount, 'comment'),
-    pr.labels.length > 0 && `Labels: ${pr.labels.map((label) => label.name).join(', ')}`,
-    `Updated ${formatRelativeTime(pr.updatedAt, now)}`,
-    `Opened ${formatRelativeTime(pr.createdAt, now)}`,
-    unseen && 'Unseen changes',
+    pr.unresolvedThreads > 0 &&
+      countMessage(pr.unresolvedThreads, 'unresolvedCountOne', 'unresolvedCountOther'),
+    pr.commentCount > 0 && countMessage(pr.commentCount, 'commentCountOne', 'commentCountOther'),
+    pr.labels.length > 0 && t('labels', pr.labels.map((label) => label.name).join(', ')),
+    t('updated2', formatRelativeTime(pr.updatedAt, now)),
+    t('opened', formatRelativeTime(pr.createdAt, now)),
+    unseen && t('unseenChanges'),
   ].filter(Boolean);
   return `${pr.repo.nameWithOwner}#${pr.number}${by}. ${facts.join('. ')}`;
 }

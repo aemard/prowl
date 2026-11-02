@@ -1,3 +1,4 @@
+import { t } from './i18n';
 /**
  * Which pull requests are kept out of the way: left out of the list, the section counts and the
  * badge (a "Show N hidden" button reveals them), but still fetched and still notified. Pure.
@@ -37,9 +38,9 @@ export function describeHiddenReasons(reasons: HiddenReason[]): string {
   return reasons
     .flatMap((reason) =>
       reason.kind === 'bot'
-        ? ['Bot']
+        ? [t('bot')]
         : reason.kind === 'stale'
-          ? [`No commit for ${reason.days} d`]
+          ? [t('noCommitForD', reason.days)]
           : [],
     )
     .join(', ');

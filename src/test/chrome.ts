@@ -4,7 +4,24 @@
  * Extend it here (not in individual tests) when a new API is needed.
  */
 import { isDeepStrictEqual } from 'node:util';
+import { substituteMessage } from '../lib/i18n';
 import { createManifest } from '../manifest';
+
+type Catalog = Record<string, { message: string }>;
+const catalogs = import.meta.glob<Catalog>('../../public/_locales/*/messages.json', {
+  eager: true,
+  import: 'default',
+});
+
+function catalogMessage(locale: string, key: string, values: string[]): string {
+  const normalized = locale.replaceAll('-', '_');
+  const language = normalized.split('_')[0];
+  for (const code of [normalized, language, 'en']) {
+    const entry = catalogs[`../../public/_locales/${code}/messages.json`]?.[key];
+    if (entry) return substituteMessage(entry.message, values);
+  }
+  return '';
+}
 
 type Listener<A extends unknown[]> = (...args: A) => unknown;
 
@@ -126,6 +143,15 @@ export function createFakeChrome() {
   let notificationSeq = 0;
 
   const fake = {
+    i18n: {
+      getUILanguage: (): string => fake.__state.locale,
+      getMessage: (key: string, substitutions?: string | string[]): string =>
+        catalogMessage(
+          fake.__state.locale,
+          key,
+          typeof substitutions === 'string' ? [substitutions] : (substitutions ?? []),
+        ),
+    },
     runtime: {
       id: 'prowl-test-extension',
       lastError: undefined as chrome.runtime.LastError | undefined,
@@ -239,7 +265,15 @@ export function createFakeChrome() {
       onCommand: new FakeEvent<[string, chrome.tabs.Tab | undefined]>(),
     },
     /** Test-only inspection handles. Not part of the real API. */
-    __state: { alarms, notifications, badge, createdTabs, grantedOrigins, commands },
+    __state: {
+      alarms,
+      notifications,
+      badge,
+      createdTabs,
+      grantedOrigins,
+      commands,
+      locale: 'en-US',
+    },
   };
 
   fake.storage.local = new FakeStorageArea('local', storageOnChanged);
