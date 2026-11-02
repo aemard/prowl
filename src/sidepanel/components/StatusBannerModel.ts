@@ -64,30 +64,47 @@ export function describeStatus(
     : t('retryingSoon');
   const error = poll.lastError;
 
-  if (!error) {
-    // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
-    if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
-      return {
-        kind: 'rate_limited',
-        tone: 'warning',
-        title: t('githubRateLimitAlmostUsedUp'),
-        detail: t('refreshingResumesAt', clock(until)),
-        age,
-        action: null,
-      };
-    }
-    const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
-    if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  if (error) return describePollError(error, waiting, until, retrying, age);
+  // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
+  if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
     return {
-      kind: 'stale',
+      kind: 'rate_limited',
       tone: 'warning',
-      title: t('pullRequestsMayBeOutOfDate'),
-      detail: '',
+      title: t('githubRateLimitAlmostUsedUp'),
+      detail: t('refreshingResumesAt', clock(until)),
       age,
-      action: { type: 'retry', label: t('refreshNow') },
+      action: null,
     };
   }
+  return describeStale(poll, fetchedAt, intervalMinutes, now, age);
+}
 
+function describeStale(
+  poll: PollState,
+  fetchedAt: string | undefined,
+  intervalMinutes: number,
+  now: number,
+  age: string,
+): Banner | null {
+  const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
+  if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  return {
+    kind: 'stale',
+    tone: 'warning',
+    title: t('pullRequestsMayBeOutOfDate'),
+    detail: '',
+    age,
+    action: { type: 'retry', label: t('refreshNow') },
+  };
+}
+
+function describePollError(
+  error: NonNullable<PollState['lastError']>,
+  waiting: boolean,
+  until: number,
+  retrying: string,
+  age: string,
+): Banner {
   switch (error.kind) {
     case 'unauthorized':
       return {

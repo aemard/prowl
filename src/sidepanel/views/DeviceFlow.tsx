@@ -31,27 +31,26 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
   );
 }
 
-/** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
-export function DeviceFlow() {
+async function completeDeviceFlow(
+  controller: AbortController,
+  setCode: (code: DeviceCode) => void,
+) {
+  const device = await requestDeviceCode({ signal: controller.signal });
+  setCode(device);
+  void openGitHubUrl(device.verificationUri);
+  const token = await pollForToken(device, { signal: controller.signal });
+  const { auth, warning } = await validateDeviceToken(token);
+  controller.signal.throwIfAborted(); // cancelled while GitHub was checking the token
+  await completeSignIn(auth, warning);
+}
+
+function useDeviceFlow() {
   const [code, setCode] = useState<DeviceCode>();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string>();
   const flow = useRef<AbortController>();
-  const root = useRef<HTMLDivElement>(null);
-  const waiting = useRef<HTMLElement>(null);
-  const wasWaiting = useRef(false);
-
   // Leaving the view (signed in with a token, route change) ends the flow.
   useEffect(() => () => flow.current?.abort(), []);
-
-  // The code panel replaces the start button: move focus with the content, and back.
-  const showingCode = code !== undefined;
-  useEffect(() => {
-    if (showingCode) waiting.current?.focus();
-    else if (wasWaiting.current) root.current?.querySelector('button')?.focus();
-    wasWaiting.current = showingCode;
-  }, [showingCode]);
-
   /** Back to the start button, with `message` as the reason when there is one. */
   function reset(message?: string) {
     flow.current = undefined;
@@ -71,13 +70,7 @@ export function DeviceFlow() {
     setStarting(true);
     try {
       if (!(await permission)) return reset(PERMISSION_DENIED);
-      const device = await requestDeviceCode({ signal: controller.signal });
-      setCode(device);
-      void openGitHubUrl(device.verificationUri);
-      const token = await pollForToken(device, { signal: controller.signal });
-      const { auth, warning } = await validateDeviceToken(token);
-      controller.signal.throwIfAborted(); // cancelled while GitHub was checking the token
-      await completeSignIn(auth, warning);
+      await completeDeviceFlow(controller, setCode);
     } catch (failure) {
       if (controller.signal.aborted) return;
       reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
@@ -91,68 +84,96 @@ export function DeviceFlow() {
     flow.current?.abort();
     reset();
   }
+  return { code, starting, error, start, cancel };
+}
 
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast({ message: t('codeCopied'), tone: 'success', durationMs: 2000 });
-    } catch {
-      showToast({
-        message: t('couldNotCopySelectTheCodeAndCopyIt'),
-        tone: 'danger',
-      });
-    }
+async function copyCode(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast({ message: t('codeCopied'), tone: 'success', durationMs: 2000 });
+  } catch {
+    showToast({
+      message: t('couldNotCopySelectTheCodeAndCopyIt'),
+      tone: 'danger',
+    });
   }
+}
 
+function DeviceCodePanel({ code, cancel }: { code: DeviceCode; cancel: () => void }) {
+  const waiting = useRef<HTMLElement>(null);
+  // The code panel replaces the start button: focus moves with the content (and back, below).
+  useEffect(() => waiting.current?.focus(), []);
+  return (
+    <section
+      class="device-flow__code-panel"
+      aria-label={t('authorizeProwlOnGithub')}
+      tabIndex={-1}
+      ref={waiting}
+    >
+      <p>{t('enterThisCodeOnGithubToFinishSigningIn')}</p>
+      <div class="device-flow__code-row">
+        <code class="device-flow__code">{code.userCode}</code>
+        <Button
+          size="sm"
+          icon={<CopyIcon size={12} />}
+          onClick={() => void copyCode(code.userCode)}
+          aria-label={t('copyCode', code.userCode)}
+        >
+          {t('copy')}
+        </Button>
+      </div>
+      <Button
+        variant="primary"
+        icon={<LinkExternalIcon size={12} />}
+        onClick={() => void openGitHubUrl(code.verificationUri)}
+      >
+        {t('openGithub')}
+      </Button>
+      <Countdown expiresAt={code.expiresAt} />
+      <p class="device-flow__status" role="status">
+        <Spinner size={12} />
+        {t('waitingForYouToApproveProwlOnGithub')}
+      </p>
+      <Button variant="ghost" onClick={cancel}>
+        {t('cancel')}
+      </Button>
+    </section>
+  );
+}
+
+function StartDeviceFlow({ starting, start }: { starting: boolean; start: () => Promise<void> }) {
+  return (
+    <>
+      <Button
+        variant="primary"
+        loading={starting}
+        icon={<MarkGithubIcon size={16} />}
+        onClick={() => void start()}
+      >
+        {t('continueWithGithub')}
+      </Button>
+      <p class="device-flow__hint">{t('approveProwlOnGithubComWithAOneTime')}</p>
+    </>
+  );
+}
+
+/** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
+export function DeviceFlow() {
+  const { code, starting, error, start, cancel } = useDeviceFlow();
+  const root = useRef<HTMLDivElement>(null);
+  const wasWaiting = useRef(false);
+  const showingCode = code !== undefined;
+  // Restore focus when the code panel gives way to the start button.
+  useEffect(() => {
+    if (!showingCode && wasWaiting.current) root.current?.querySelector('button')?.focus();
+    wasWaiting.current = showingCode;
+  }, [showingCode]);
   return (
     <div class="device-flow" ref={root}>
       {code ? (
-        <section
-          class="device-flow__code-panel"
-          aria-label={t('authorizeProwlOnGithub')}
-          tabIndex={-1}
-          ref={waiting}
-        >
-          <p>{t('enterThisCodeOnGithubToFinishSigningIn')}</p>
-          <div class="device-flow__code-row">
-            <code class="device-flow__code">{code.userCode}</code>
-            <Button
-              size="sm"
-              icon={<CopyIcon size={12} />}
-              onClick={() => void copy(code.userCode)}
-              aria-label={t('copyCode', code.userCode)}
-            >
-              {t('copy')}
-            </Button>
-          </div>
-          <Button
-            variant="primary"
-            icon={<LinkExternalIcon size={12} />}
-            onClick={() => void openGitHubUrl(code.verificationUri)}
-          >
-            {t('openGithub')}
-          </Button>
-          <Countdown expiresAt={code.expiresAt} />
-          <p class="device-flow__status" role="status">
-            <Spinner size={12} />
-            {t('waitingForYouToApproveProwlOnGithub')}
-          </p>
-          <Button variant="ghost" onClick={cancel}>
-            {t('cancel')}
-          </Button>
-        </section>
+        <DeviceCodePanel code={code} cancel={cancel} />
       ) : (
-        <>
-          <Button
-            variant="primary"
-            loading={starting}
-            icon={<MarkGithubIcon size={16} />}
-            onClick={() => void start()}
-          >
-            {t('continueWithGithub')}
-          </Button>
-          <p class="device-flow__hint">{t('approveProwlOnGithubComWithAOneTime')}</p>
-        </>
+        <StartDeviceFlow starting={starting} start={start} />
       )}
       {error && (
         <p class="device-flow__error" role="alert">
