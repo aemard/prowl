@@ -2236,5 +2236,14 @@
   "rebaseMethod": {
     "message": "重訂基底",
     "description": "Keyboard key or GitHub merge method label."
+  },
+  "language": {
+    "message": "語言"
+  },
+  "matchChromeLanguage": {
+    "message": "使用 Chrome 的語言"
+  },
+  "languageHint": {
+    "message": "變更立即生效。沒有可用翻譯時使用英文。"
   }
 }

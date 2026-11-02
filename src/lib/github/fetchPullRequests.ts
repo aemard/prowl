@@ -46,10 +46,7 @@ export type FetchSettings = Pick<
   | 'hideStaleAfterDays'
 >;
 
-const NO_TEAM = t('noTeamsHelp');
-const NO_FOLLOWED_TEAM = t('youFollowNoneOfYourTeamsFollowOneIn');
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
-const SSO_REQUIRED = t('samlHelp');
 const SAML = /\bSAML\b/i;
 
 /** Search page size: about 4 s on busy organizations, inside GitHub's 10 s execution limit. */
@@ -126,7 +123,9 @@ async function searchTeams(context: FetchContext, section: Section): Promise<voi
   const followed = all.filter((team) => !settings.unfollowedTeams.includes(teamKey(team)));
   if (followed.length === 0) {
     result.sectionErrors[section.id] =
-      all.length > 0 ? NO_FOLLOWED_TEAM : (teams?.error?.message ?? NO_TEAM);
+      all.length > 0
+        ? t('youFollowNoneOfYourTeamsFollowOneIn')
+        : (teams?.error?.message ?? t('noTeamsHelp'));
     return;
   }
   const problems: string[] = [];
@@ -147,7 +146,7 @@ async function searchTeams(context: FetchContext, section: Section): Promise<voi
       problems.push(t('githubRefusedTheSearchFor', key, error.message));
     }
   }
-  if (context.samlHoles) problems.push(SSO_REQUIRED);
+  if (context.samlHoles) problems.push(t('samlHelp'));
   const skipped = followed.length - MAX_TEAM_SEARCHES;
   if (skipped > 0) {
     problems.push(t('skippedTeams', MAX_TEAM_SEARCHES, skipped));
@@ -186,7 +185,7 @@ async function searchSections(context: FetchContext): Promise<void> {
       );
       for (const pr of prs) result.pullRequests[pr.id] = pr;
       result.sections[section.id] = [...new Set(prs.map(({ id }) => id))];
-      if (context.samlHoles) result.sectionErrors[section.id] = SSO_REQUIRED;
+      if (context.samlHoles) result.sectionErrors[section.id] = t('samlHelp');
     } catch (error) {
       if (!sectionLevel(context, error)) throw error;
       result.sectionErrors[section.id] = error.message;

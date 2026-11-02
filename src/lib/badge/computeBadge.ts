@@ -5,7 +5,7 @@
  */
 import { isReadyToMerge } from '../diff/diffSnapshots';
 import { type HideSettings, hiddenReasons } from '../hidden';
-import { countMessage, formatNumber, t } from '../i18n';
+import { countMessage, formatNumber, type MessageKey, t } from '../i18n';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
 
@@ -22,15 +22,15 @@ export const BADGE_TITLE = 'Prowl';
 const MAX_SHOWN = 99;
 
 /** Why an open PR needs attention, in the order the tooltip lists them. */
-const REASONS: { label: string; red: boolean; applies: (pr: PullRequest) => boolean }[] = [
-  { label: t('ciFailing'), red: true, applies: (pr) => pr.checks.state === 'failure' },
+const REASONS: { label: MessageKey; red: boolean; applies: (pr: PullRequest) => boolean }[] = [
+  { label: 'ciFailing', red: true, applies: (pr) => pr.checks.state === 'failure' },
   {
-    label: t('changesRequested'),
+    label: 'changesRequested',
     red: true,
     applies: (pr) => pr.reviewDecision === 'changes_requested',
   },
-  { label: t('conflictsLower'), red: false, applies: (pr) => pr.mergeable === 'conflicting' },
-  { label: t('readyToMerge'), red: false, applies: isReadyToMerge },
+  { label: 'conflictsLower', red: false, applies: (pr) => pr.mergeable === 'conflicting' },
+  { label: 'readyToMerge', red: false, applies: isReadyToMerge },
 ];
 
 /** A cleared badge: no text, the plain tooltip. */
@@ -65,7 +65,7 @@ export function computeBadge(
   const count = counted.length;
   const pulls = countMessage(count, 'pullCountOne', 'pullCountOther');
   const why = REASONS.map((reason) => ({
-    label: reason.label,
+    label: t(reason.label),
     n: counted.filter((pr) => reasonsOf(pr).includes(reason)).length,
   }))
     .filter(({ n }) => n > 0)

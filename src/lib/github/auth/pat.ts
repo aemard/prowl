@@ -51,10 +51,6 @@ function parseScopes(header: string | null): string[] | null {
         .filter(Boolean);
 }
 
-const NO_REPO_SCOPE = t('noRepoScope');
-const NO_READ_ORG_SCOPE = t('withoutTheReadOrgScopeTeamReviewsMayNot');
-const NO_CHECKS_PERMISSION = t('githubDoesNotOfferTheChecksPermissionToFine');
-
 const EXPIRATION = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (UTC|[+-]\d{2}:?\d{2})$/;
 
 /**
@@ -73,11 +69,11 @@ export function parseTokenExpiration(header: string | null): string | null | und
 
 /** Why the token works but not fully; null when nothing is known to be missing. */
 function warningFor(tokenType: TokenType, scopes: string[] | null): string | null {
-  if (tokenType === 'fine_grained') return NO_CHECKS_PERMISSION;
+  if (tokenType === 'fine_grained') return t('githubDoesNotOfferTheChecksPermissionToFine');
   if (scopes === null) return null;
   const warnings = [
-    scopes.includes('repo') ? '' : NO_REPO_SCOPE,
-    hasReadOrg(scopes) ? '' : NO_READ_ORG_SCOPE,
+    scopes.includes('repo') ? '' : t('noRepoScope'),
+    hasReadOrg(scopes) ? '' : t('withoutTheReadOrgScopeTeamReviewsMayNot'),
   ];
   return warnings.filter(Boolean).join(' ') || null;
 }

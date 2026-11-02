@@ -6,6 +6,7 @@ import {
   ensureSettings,
   loadSettings,
   migrateSettings,
+  normalizeSettings,
   SETTINGS_MIGRATIONS,
   SETTINGS_VERSION,
   type SettingsMigration,
@@ -14,6 +15,28 @@ import {
 } from './settings';
 
 describe('migrateSettings', () => {
+  it('adds automatic language selection to v1 without changing existing choices', async () => {
+    await chrome.storage.local.set({
+      settings: { version: 1, theme: 'dark', sort: 'repo', groupByRepo: false },
+    });
+    await ensureSettings();
+    expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
+      version: 2,
+      language: 'system',
+      theme: 'dark',
+      sort: 'repo',
+      groupByRepo: false,
+    });
+  });
+
+  it('accepts every supported language and repairs unsupported stored values', () => {
+    for (const language of ['system', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es']) {
+      expect(normalizeSettings({ language }).language).toBe(language);
+    }
+    for (const language of [undefined, null, '', 'it', 'toString', '../../fr', 3, []]) {
+      expect(normalizeSettings({ language }).language).toBe('system');
+    }
+  });
   const migrations: Record<number, SettingsMigration> = {
     1: (raw) => ({ ...raw, pollMinutes: undefined, pollIntervalMinutes: raw.pollMinutes }),
     2: (raw) => ({ ...raw, theme: raw.theme === 'auto' ? 'system' : raw.theme }),

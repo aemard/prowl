@@ -2236,5 +2236,14 @@
   "rebaseMethod": {
     "message": "rebase",
     "description": "Keyboard key or GitHub merge method label."
+  },
+  "language": {
+    "message": "Idioma"
+  },
+  "matchChromeLanguage": {
+    "message": "Usar el idioma de Chrome"
+  },
+  "languageHint": {
+    "message": "Los cambios se aplican de inmediato. Si falta una traducción, se usa el inglés."
   }
 }

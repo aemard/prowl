@@ -1,6 +1,7 @@
 /** Routes the side panel's `BackgroundRequest`s. Answers (with nothing) once one is handled. */
 import type { BackgroundRequest } from '../lib/model';
 import { isRecord } from '../lib/storage/guards';
+import { loadLanguage } from '../lib/storage/language';
 import { markSeen, updatePrLocal } from '../lib/storage/prLocal';
 import { getItem } from '../lib/storage/storage';
 import { clearSignedOut, poll, refreshMergeState, setMergePriority } from './poller';
@@ -30,6 +31,7 @@ function isRequest(message: unknown): message is BackgroundRequest {
 }
 
 async function route(request: BackgroundRequest, document: string): Promise<void> {
+  await loadLanguage();
   switch (request.type) {
     case 'poll':
       await poll({ force: request.force === true });

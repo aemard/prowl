@@ -13,7 +13,7 @@ import { presets } from './settings.test-support';
 describe('DEFAULT_SETTINGS', () => {
   it('matches the product defaults', () => {
     expect(DEFAULT_SETTINGS).toEqual({
-      version: 1,
+      version: 2,
       sections: presets(),
       repoInclude: [],
       repoExclude: [],
@@ -36,6 +36,7 @@ describe('DEFAULT_SETTINGS', () => {
       },
       badge: 'attention',
       theme: 'system',
+      language: 'system',
       sort: 'updated',
       groupByRepo: true,
       hideStaleAfterDays: 20,

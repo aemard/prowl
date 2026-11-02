@@ -26,7 +26,7 @@ const MAX_NOTIFIED = 300;
 const MAX_SEPARATE = 3;
 const ICON = 'icons/icon-128.png';
 /** The buttons of a notification about one pull request, in this order. */
-const BUTTONS = [{ title: t('open') }, { title: t('snooze1H') }];
+const buttons = () => [{ title: t('open') }, { title: t('snooze1H') }];
 const SNOOZE_MS = 60 * 60 * 1000;
 
 type Notified = Record<string, string>;
@@ -41,7 +41,7 @@ export function forgetNotified(): Promise<void> {
   return chrome.storage.session.remove(NOTIFIED);
 }
 
-function show(id: string, content: NotificationContent, buttons?: typeof BUTTONS) {
+function show(id: string, content: NotificationContent, buttons?: { title: string }[]) {
   return chrome.notifications.create(id, {
     type: 'basic',
     iconUrl: chrome.runtime.getURL(ICON),
@@ -67,7 +67,7 @@ export async function notifyEvents(
     if (shown.length === 0) return;
     const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
     if (shown.length <= MAX_SEPARATE) {
-      for (const event of shown) await show(event.id, notificationContent(event), BUTTONS);
+      for (const event of shown) await show(event.id, notificationContent(event), buttons());
     } else {
       const id = `summary:${Date.now()}`;
       await show(id, summaryContent(shown));
