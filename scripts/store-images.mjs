@@ -15,7 +15,10 @@ const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
 const logo = dataUrl('src/assets/logo.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
-const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
+const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8').replace(
+  '@import "./tokens.base.css";',
+  readFileSync(resolve(root, 'src/styles/tokens.base.css'), 'utf8'),
+);
 
 const style = `
 ${tokens}
