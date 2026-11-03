@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { messageLocale } from '../lib/i18n';
 import { loadLanguage } from '../lib/storage/language';
 import { subscribeSettings } from '../lib/storage/settings';
+import { Loading } from './components/Loading';
 import { hydrateStore } from './state/store';
 import '../styles/tokens.css';
 import '../styles/base.css';
@@ -24,4 +25,8 @@ async function start(root: HTMLElement) {
 }
 
 const root = document.getElementById('app');
-if (root) void start(root);
+if (root) {
+  document.documentElement.lang = messageLocale();
+  render(<Loading />, root);
+  void start(root);
+}

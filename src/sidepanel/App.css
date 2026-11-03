@@ -14,36 +14,6 @@ html {
   outline: none;
 }
 
-.app-loading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-}
-
-.app-loading__row {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.app-loading__lines {
-  flex: 1;
-}
-
-/* Soft color lives behind the reading surfaces; only chrome needs blur. */
-body {
-  background-image:
-    radial-gradient(ellipse 370px 430px at -15% 25%, var(--glass-mint), transparent),
-    radial-gradient(ellipse 360px 580px at 120% 74%, var(--glass-blue), transparent),
-    linear-gradient(var(--glass-canvas), var(--glass-canvas));
-  background-attachment: fixed;
-}
-@media (prefers-reduced-transparency: reduce) {
-  body {
-    background-image: linear-gradient(var(--glass-canvas), var(--glass-canvas));
-  }
-}
-
 /* A separate backdrop avoids making fixed menus relative to the glass container. */
 .header::after,
 .list__filter::after,
