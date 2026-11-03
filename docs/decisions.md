@@ -2,6 +2,8 @@
 
 One line each, with the reason. Product decisions from the brief are not repeated here.
 
+- 2026-11-03 — Remove the panel's mint/blue body gradients and fixed background introduced in PR #38. Use the solid `--color-bg` from the existing theme, consistently across languages and full-page captures.
+
 - 2026-11-02 — Localize the extension with Chrome's native `_locales` catalogs (`en`, `ja`, `zh_CN`, `zh_TW`, `fr`, `de`, `es`). Settings → Appearance → Language defaults to Chrome's UI language and offers a saved manual choice. Explicit choices load only the selected packaged catalog; English is the fallback for missing messages or failed catalog loads. Initialize the panel before importing views, and reopen its current route on a language change so every label updates, including other open panels and synced preferences. Worker messages, notifications and badge text use the same preference; Chrome controls manifest text through its own UI language. Settings v2 adds `language`, migrating v1 to automatic selection while preserving existing choices. No remote translation service, new permission or runtime dependency. Dates, numbers, relative times and plurals follow the selected locale. Built-in section names translate at display time so stored and synced settings stay stable; GitHub content and custom names remain user-authored. The website and store listing remain outside this change.
 
 - 2026-10-06 — Sections 3–13 of the brief were collapsed and unreadable to the orchestrator; conventions they may have defined (stack, design, agents, phases) were reconstructed from the visible sections and are recorded below.
