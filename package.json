@@ -46,7 +46,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@preact/signals": "^2.11.3",
+    "@preact/signals": "^2.11.4",
     "preact": "^10.29.8"
   }
 }
