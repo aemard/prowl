@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useId } from 'preact/hooks';
+import { countMessage, formatNumber, t } from '../../lib/i18n';
 import { ChevronDownIcon, ChevronRightIcon } from './icons';
 import { Badge } from './ui/Badge';
 import './RepoGroup.css';
@@ -40,13 +41,13 @@ export function RepoGroup({ repo, count, expanded, onToggle, children }: RepoGro
             {repo}
           </span>
           <Badge size="sm">
-            {count}
-            <span class="sr-only"> pull request{count === 1 ? '' : 's'}</span>
+            {formatNumber(count)}
+            <span class="sr-only">{countMessage(count, 'pullNounOne', 'pullNounOther')}</span>
           </Badge>
         </button>
       </h2>
       {expanded && (
-        <ul id={listId} class="pr-list" aria-label={`${repo} pull requests`}>
+        <ul id={listId} class="pr-list" aria-label={t('pullRequests2', repo)}>
           {children}
         </ul>
       )}

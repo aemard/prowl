@@ -32,6 +32,9 @@ your browser profile can read your token.
 
 Nothing is stored anywhere else, and none of it is sent to the Prowl project.
 
+Translations ship inside the extension. Chrome selects the display language locally; translating
+the interface sends no text to a translation service and requires no additional permissions.
+
 ## Who Prowl talks to
 
 - **`api.github.com`:** on every poll, and when you act on a pull request. Prowl sends your token

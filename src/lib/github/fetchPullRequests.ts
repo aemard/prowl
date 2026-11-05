@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * One poll's worth of GitHub reads: every enabled section's search, the merge facts of the PRs
  * that left all sections, then merge facts of the PRs that changed (`fetchMergeState.ts`).
@@ -45,14 +46,7 @@ export type FetchSettings = Pick<
   | 'hideStaleAfterDays'
 >;
 
-const NO_TEAM =
-  'GitHub lists no team for your account. An organization that requires single sign-on, or ' +
-  'restricts OAuth apps, lists its teams only once it has approved your token or Prowl.';
-const NO_FOLLOWED_TEAM = 'You follow none of your teams. Follow one in Settings.';
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
-const SSO_REQUIRED =
-  'An organization requires single sign-on (SAML) that this token is not authorized for, so ' +
-  'its pull requests are missing. Authorize the token for that organization on GitHub.';
 const SAML = /\bSAML\b/i;
 
 /** Search page size: about 4 s on busy organizations, inside GitHub's 10 s execution limit. */
@@ -129,7 +123,9 @@ async function searchTeams(context: FetchContext, section: Section): Promise<voi
   const followed = all.filter((team) => !settings.unfollowedTeams.includes(teamKey(team)));
   if (followed.length === 0) {
     result.sectionErrors[section.id] =
-      all.length > 0 ? NO_FOLLOWED_TEAM : (teams?.error?.message ?? NO_TEAM);
+      all.length > 0
+        ? t('youFollowNoneOfYourTeamsFollowOneIn')
+        : (teams?.error?.message ?? t('noTeamsHelp'));
     return;
   }
   const problems: string[] = [];
@@ -147,16 +143,13 @@ async function searchTeams(context: FetchContext, section: Section): Promise<voi
       }
     } catch (error) {
       if (!sectionLevel(context, error)) throw error;
-      problems.push(`GitHub refused the search for ${key}: ${error.message}`);
+      problems.push(t('githubRefusedTheSearchFor', key, error.message));
     }
   }
-  if (context.samlHoles) problems.push(SSO_REQUIRED);
+  if (context.samlHoles) problems.push(t('samlHelp'));
   const skipped = followed.length - MAX_TEAM_SEARCHES;
   if (skipped > 0) {
-    problems.push(
-      `Prowl searches ${MAX_TEAM_SEARCHES} teams at most, ${skipped} more were skipped. ` +
-        'Unfollow teams in Settings to choose which.',
-    );
+    problems.push(t('skippedTeams', MAX_TEAM_SEARCHES, skipped));
   }
   const kept = [...found.values()]
     .sort((a, b) => Date.parse(b.pr.updatedAt) - Date.parse(a.pr.updatedAt))
@@ -192,7 +185,7 @@ async function searchSections(context: FetchContext): Promise<void> {
       );
       for (const pr of prs) result.pullRequests[pr.id] = pr;
       result.sections[section.id] = [...new Set(prs.map(({ id }) => id))];
-      if (context.samlHoles) result.sectionErrors[section.id] = SSO_REQUIRED;
+      if (context.samlHoles) result.sectionErrors[section.id] = t('samlHelp');
     } catch (error) {
       if (!sectionLevel(context, error)) throw error;
       result.sectionErrors[section.id] = error.message;

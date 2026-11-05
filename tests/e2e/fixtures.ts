@@ -7,6 +7,7 @@ import {
   type Page,
   type Worker,
 } from '@playwright/test';
+import { saveCapture } from '../../scripts/capture';
 import type { AuthState } from '../../src/lib/model';
 import { PEOPLE } from './helpers/listData';
 import { MockGitHub } from './mock-github/server';
@@ -16,6 +17,8 @@ const EXTENSION_PATH = resolve(import.meta.dirname, '../../dist-e2e');
 export const PRODUCTION_PATH = resolve(import.meta.dirname, '../../dist');
 /** `pnpm screenshots`: the run that writes docs/screenshots/. */
 const WRITE_SCREENSHOTS = process.env.PROWL_SCREENSHOTS === '1';
+/** Comma-separated names, e.g. settings,settings-ja; omit to refresh the full existing set. */
+const SCREENSHOT_NAMES = process.env.PROWL_SCREENSHOT_NAMES?.split(',');
 
 export interface ExtensionFixtures {
   context: BrowserContext;
@@ -52,7 +55,10 @@ export const E2E_AUTH: AuthState = {
  * Chromium with the unpacked extension in `extensionPath` loaded, in a fresh profile, once its
  * service worker is running.
  */
-export async function launchExtension(extensionPath: string): Promise<BrowserContext> {
+export async function launchExtension(
+  extensionPath: string,
+  locale?: string,
+): Promise<BrowserContext> {
   const launch = () =>
     chromium.launchPersistentContext('', {
       channel: 'chromium',
@@ -61,10 +67,16 @@ export async function launchExtension(extensionPath: string): Promise<BrowserCon
       executablePath: process.env.PROWL_CHROMIUM || undefined,
       headless: !process.env.HEADED,
       viewport: { width: 400, height: 760 },
+      locale,
+      ...(locale && { env: { ...process.env, LANGUAGE: locale } }),
       // The images in docs/ are shown on HiDPI screens: capture them at twice the pixel density
       // (800 x 1520). Routine runs stay at 1x, which renders four times fewer pixels.
       deviceScaleFactor: WRITE_SCREENSHOTS ? 2 : 1,
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        ...(locale ? [`--lang=${locale}`] : []),
+      ],
     });
   // On a machine under heavy load Chrome sometimes never starts the extension's service worker
   // (seen twice in a few hundred launches, both while other builds ran). A new profile fixes it,
@@ -96,9 +108,9 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     { scope: 'worker' },
   ],
 
-  context: async ({ github }, use) => {
+  context: async ({ github, locale }, use) => {
     github.reset();
-    const context = await launchExtension(EXTENSION_PATH);
+    const context = await launchExtension(EXTENSION_PATH, locale);
     await use(context);
     await context.close();
   },
@@ -205,10 +217,10 @@ export async function saveScreenshot(
   name: string,
   options: { fullPage?: boolean } = {},
 ): Promise<void> {
-  await page.screenshot({
-    ...options,
-    ...(WRITE_SCREENSHOTS && {
-      path: resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`),
-    }),
-  });
+  const write = WRITE_SCREENSHOTS && (!SCREENSHOT_NAMES || SCREENSHOT_NAMES.includes(name));
+  await saveCapture(
+    page,
+    write ? resolve(import.meta.dirname, `../../docs/screenshots/${name}.png`) : undefined,
+    options,
+  );
 }

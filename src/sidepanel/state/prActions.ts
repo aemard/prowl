@@ -8,6 +8,7 @@ import { signal } from '@preact/signals';
 import { env } from '../../lib/env';
 import { createGitHubClient, type GitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
@@ -40,8 +41,8 @@ export async function runPrAction(
     void sendToBackground({ type: 'poll', force: true });
     return true;
   } catch (error) {
-    const reason = error instanceof GitHubError ? error.message : 'Something went wrong.';
-    showToast({ message: `${name} failed: ${reason}`, tone: 'danger' });
+    const reason = error instanceof GitHubError ? error.message : t('somethingWentWrong');
+    showToast({ message: t('failed3', name, reason), tone: 'danger' });
     return false;
   } finally {
     const { [pr.id]: _finished, ...others } = pendingActions.value;

@@ -6,6 +6,26 @@ import { group, open, saved, toggle } from './Settings.test-support';
 
 describe('SettingsView', () => {
   describe('appearance', () => {
+    it('offers automatic selection and all seven languages, and saves the choice', async () => {
+      await open();
+      const field = group('Appearance').getByLabelText('Language') as HTMLSelectElement;
+      expect(field.value).toBe('system');
+      expect([...field.options].map(({ value, textContent }) => [value, textContent])).toEqual([
+        ['system', 'Match Chrome’s language'],
+        ['en', 'English'],
+        ['ja', '日本語'],
+        ['zh-CN', '简体中文'],
+        ['zh-TW', '繁體中文'],
+        ['fr', 'Français'],
+        ['de', 'Deutsch'],
+        ['es', 'Español'],
+      ]);
+      fireEvent.change(field, { target: { value: 'ja' } });
+      await waitFor(async () => expect((await saved()).language).toBe('ja'));
+      fireEvent.change(field, { target: { value: 'system' } });
+      await waitFor(async () => expect((await saved()).language).toBe('system'));
+    });
+
     it('saves theme, sort order and badge mode', async () => {
       await open();
       const appearance = group('Appearance');

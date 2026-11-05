@@ -1,5 +1,6 @@
 /** State and error handling shared by scheduled polls and consulted-card refreshes. */
 import { GitHubError } from '../lib/github/errors';
+import { t } from '../lib/i18n';
 import type { AuthState, PollState } from '../lib/model';
 import { getItem, setItem } from '../lib/storage/storage';
 import { retryAt } from '../lib/time/backoff';
@@ -37,7 +38,7 @@ export async function recordPollFailure(
   const failure =
     error instanceof GitHubError
       ? error
-      : new GitHubError('server', 'Something went wrong while refreshing.');
+      : new GitHubError('server', t('somethingWentWrongWhileRefreshing'));
   const failures = state.consecutiveFailures + 1;
   if (failure.kind === 'unauthorized') await chrome.alarms.clear(POLL_ALARM);
   await setItem('pollState', {

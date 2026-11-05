@@ -1,3 +1,4 @@
+import { countMessage, t } from '../i18n';
 import type { PrEvent, PrEventType } from '../model';
 
 export interface NotificationContent {
@@ -6,19 +7,18 @@ export interface NotificationContent {
   contextMessage?: string;
 }
 
-const someone = (actor: string | null) => actor ?? 'Someone';
-const by = (verb: string) => (actor: string | null) => (actor ? `${verb} by ${actor}` : verb);
+const someone = (actor: string | null) => actor ?? t('someone');
 
 const TITLES: Record<PrEventType, (actor: string | null) => string> = {
-  ci_failed: () => 'CI failed',
-  ci_passed: () => 'CI passed',
-  review_new: (actor) => `${someone(actor)} reviewed`,
-  approved: (actor) => `${someone(actor)} approved`,
-  changes_requested: (actor) => `${someone(actor)} requested changes`,
-  comment_new: (actor) => `${someone(actor)} commented`,
-  ready_to_merge: () => 'Ready to merge',
-  merged: by('Merged'),
-  closed: by('Closed'),
+  ci_failed: () => t('ciFailed'),
+  ci_passed: () => t('ciPassed'),
+  review_new: (actor) => t('reviewed', someone(actor)),
+  approved: (actor) => t('approved', someone(actor)),
+  changes_requested: (actor) => t('requestedChanges', someone(actor)),
+  comment_new: (actor) => t('commented', someone(actor)),
+  ready_to_merge: () => t('readyToMerge2'),
+  merged: (actor) => (actor ? t('mergedBy', actor) : t('merged')),
+  closed: (actor) => (actor ? t('closedBy', actor) : t('closed')),
 };
 
 /** `acme/widgets#12` */
@@ -40,7 +40,7 @@ export function summaryContent(events: PrEvent[]): NotificationContent {
   const refs = [...new Set(events.map(ref))];
   const more = refs.length - LISTED;
   return {
-    title: `${events.length} pull request updates`,
-    message: refs.slice(0, LISTED).join(', ') + (more > 0 ? ` and ${more} more` : ''),
+    title: countMessage(events.length, 'notificationUpdateOne', 'notificationUpdateOther'),
+    message: refs.slice(0, LISTED).join(', ') + (more > 0 ? t('andMore', more) : ''),
   };
 }

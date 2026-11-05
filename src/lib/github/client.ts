@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * The one HTTP client for GitHub (GraphQL and REST). It runs in the service worker and the
  * side panel, so it only uses `fetch` and `AbortController`. It never retries: the poller owns
@@ -47,7 +48,7 @@ const API_VERSION = '2022-11-28';
 /** GitHub: without `retry-after`, wait at least a minute after a secondary rate limit. */
 const SECONDARY_RETRY_SECONDS = 60;
 const MAX_MESSAGE_LENGTH = 300;
-const UNEXPECTED = 'GitHub returned an unexpected response.';
+const unexpected = () => t('githubReturnedAnUnexpectedResponse');
 const UNPARSEABLE = Symbol('unparseable');
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -74,7 +75,7 @@ function httpError({ status, headers }: Response, payload: unknown, token: strin
     headerCount(headers, 'x-ratelimit-remaining') === 0 ||
     headerCount(headers, 'retry-after') !== null;
   const kind = classifyHttpStatus(status, { limited, message });
-  return fail(kind, message || `GitHub responded with HTTP ${status}.`, status, headers);
+  return fail(kind, message || t('githubRespondedWithHttp', status), status, headers);
 }
 
 async function send(
@@ -116,8 +117,8 @@ async function send(
     throw new GitHubError(
       'network',
       timedOut
-        ? `GitHub did not respond within ${TIMEOUT_MS / 1000} seconds.`
-        : 'Could not reach GitHub.',
+        ? t('githubDidNotRespondWithinSeconds', TIMEOUT_MS / 1000)
+        : t('couldNotReachGithub'),
     );
   } finally {
     clearTimeout(timer);
@@ -141,7 +142,7 @@ async function readGraphQL<T>(
 ) {
   const { response, payload } = await send(client, 'POST', '/graphql', { query, variables }, false);
   const { status, headers } = response;
-  if (!isRecord(payload)) throw fail('server', UNEXPECTED, status, headers);
+  if (!isRecord(payload)) throw fail('server', unexpected(), status, headers);
   const { data, errors } = payload;
   const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
   if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
@@ -159,12 +160,12 @@ async function readGraphQL<T>(
       classifyGraphQLType(type),
       typeof message === 'string' && message
         ? clean(message, client.token)
-        : 'GitHub returned an error.',
+        : t('githubReturnedAnError'),
       status,
       headers,
     );
   }
-  if (!isRecord(data)) throw fail('server', 'GitHub returned no data.', status, headers);
+  if (!isRecord(data)) throw fail('server', t('githubReturnedNoData'), status, headers);
   return data as T;
 }
 
@@ -177,7 +178,7 @@ export function createGitHubClient({
   async function restResponse<T = void>(method: HttpMethod, path: string, body?: unknown) {
     const { response, payload } = await send(client, method, path, body, true);
     if (payload === UNPARSEABLE)
-      throw fail('server', UNEXPECTED, response.status, response.headers);
+      throw fail('server', unexpected(), response.status, response.headers);
     return { data: payload as T, headers: response.headers };
   }
   return {

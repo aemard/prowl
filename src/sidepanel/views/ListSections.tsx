@@ -1,7 +1,9 @@
 import type { RefObject } from 'preact';
 import { useState } from 'preact/hooks';
 import { describeHiddenReasons } from '../../lib/hidden';
+import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
+import { sectionLabel } from '../../lib/sectionLabel';
 import { isMuted, isSeen } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
@@ -37,30 +39,30 @@ import {
 export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
   authored: {
     icon: GitPullRequestIcon,
-    short: 'Mine',
-    empty: 'Pull requests you open will show up here.',
+    short: t('mine'),
+    empty: t('pullRequestsYouOpenWillShowUpHere'),
   },
   review_requested: {
     icon: EyeIcon,
-    short: 'Review',
-    empty: 'When someone asks you for a review, it will show up here.',
+    short: t('review'),
+    empty: t('whenSomeoneAsksYouForAReviewItWill'),
   },
   team_review_requested: {
     icon: PeopleIcon,
-    short: 'Teams',
-    empty: 'When someone asks one of your teams for a review, it will show up here.',
+    short: t('teams'),
+    empty: t('whenSomeoneAsksOneOfYourTeamsForA'),
   },
   mentioned: {
     icon: MentionIcon,
-    short: 'Mentions',
-    empty: 'Pull requests that mention you will show up here.',
+    short: t('mentions'),
+    empty: t('pullRequestsThatMentionYouWillShowUpHere'),
   },
   assigned: {
     icon: PersonIcon,
-    short: 'Assigned',
-    empty: 'Pull requests assigned to you will show up here.',
+    short: t('assigned'),
+    empty: t('pullRequestsAssignedToYouWillShowUpHere'),
   },
-  custom: { icon: FilterIcon, empty: 'No open pull requests match this search.' },
+  custom: { icon: FilterIcon, empty: t('noOpenPullRequestsMatchThisSearch') },
 };
 
 function ListCard({
@@ -95,7 +97,7 @@ function ShownRequests({ data }: { data: LoadedListData }) {
   const card = (pr: PullRequest) => <ListCard key={pr.id} pr={pr} data={data} grouped={grouped} />;
   return (
     shown.length > 0 && (
-      <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
+      <ul class="pr-list" aria-label={t('pullRequests2', sectionLabel(selected))}>
         {grouped
           ? groups.map(({ repo, prs }) => (
               <RepoGroup
@@ -128,10 +130,10 @@ function SnoozedRequests({ data }: { data: LoadedListData }) {
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
-          Snoozed ({snoozed.length})
+          {t('snoozedCount', snoozed.length)}
         </Button>
         {open && (
-          <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
+          <ul class="pr-list" aria-label={t('snoozedPullRequests', sectionLabel(selected))}>
             {snoozed.map((pr) => (
               <ListCard key={pr.id} pr={pr} data={data} snoozed />
             ))}
@@ -157,10 +159,10 @@ function HiddenRequests({ data }: { data: LoadedListData }) {
             showHidden.value = !showHidden.value;
           }}
         >
-          {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
+          {showHidden.value ? t('hideAgain') : t('showHidden', hidden.length)}
         </Button>
         {showHidden.value && (
-          <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
+          <ul class="pr-list" aria-label={t('hiddenPullRequests', sectionLabel(selected))}>
             {hidden.map(({ pr, reasons }) => (
               <ListCard
                 key={pr.id}
@@ -194,10 +196,10 @@ function EmptySection({
   return (
     <EmptyState
       icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
-      title={filteredOut ? 'No matches' : 'No pull requests'}
+      title={filteredOut ? t('noMatches') : t('noPullRequests')}
       description={
         filteredOut
-          ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
+          ? t('nothingInMatches', sectionLabel(selected), query.trim())
           : KINDS[selected.kind].empty
       }
       action={
@@ -208,7 +210,7 @@ function EmptySection({
               filterInput.current?.focus();
             }}
           >
-            Clear filter
+            {t('clearFilter')}
           </Button>
         ) : undefined
       }
@@ -229,9 +231,7 @@ export function SectionContent({
       {error !== undefined && (
         <p class="list__notice">
           <AlertIcon size={16} />
-          <span>
-            Could not load “{data.selected.label}”: {error}
-          </span>
+          <span>{t('sectionLoadError', sectionLabel(data.selected), error)}</span>
         </p>
       )}
       <ShownRequests data={data} />

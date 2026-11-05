@@ -1,3 +1,4 @@
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import {
   isMuted,
@@ -56,15 +57,14 @@ async function copyBranch(pr: PullRequest) {
   const ok = await copy(pr.headRefName);
   showToast(
     !ok
-      ? { message: 'Could not copy the branch name.', tone: 'danger' }
+      ? { message: t('couldNotCopyTheBranchName'), tone: 'danger' }
       : isRiskyBranchName(pr.headRefName)
         ? {
-            message:
-              'Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal.',
+            message: t('copiedButThisBranchNameContainsShellCharactersQuote'),
             tone: 'danger',
             durationMs: 10_000,
           }
-        : { message: `Copied ${pr.headRefName}`, tone: 'success' },
+        : { message: t('copied', pr.headRefName), tone: 'success' },
   );
 }
 
@@ -74,13 +74,13 @@ function localEntries(pr: PullRequest, now: number): MenuEntry[] {
   return [
     {
       id: 'open',
-      label: 'Open in GitHub',
+      label: t('openInGithub'),
       icon: <LinkExternalIcon />,
       onSelect: () => void openGitHubUrl(pr.url),
     },
     {
       id: 'copy',
-      label: 'Copy branch name',
+      label: t('copyBranchName'),
       hint: pr.headRefName,
       icon: <CopyIcon />,
       onSelect: () => void copyBranch(pr),
@@ -90,24 +90,24 @@ function localEntries(pr: PullRequest, now: number): MenuEntry[] {
       ? [
           {
             id: 'unsnooze',
-            label: 'Unsnooze',
+            label: t('unsnooze'),
             icon: <ClockIcon />,
             onSelect: () => void updatePrLocal((state) => unsnooze(state, pr.id)),
           },
         ]
       : SNOOZE_PRESETS.map((preset) => ({
           id: `snooze-${preset}`,
-          label: `Snooze ${snoozeLabel(preset)}`,
+          label: t('snooze', snoozeLabel(preset)),
           icon: <ClockIcon />,
           onSelect: () => {
             const until = snoozeUntil(preset, Date.now());
             void updatePrLocal((state) => snooze(state, pr.id, until));
-            showToast({ message: `Snoozed ${prRef(pr)}`, tone: 'info' });
+            showToast({ message: t('snoozed', prRef(pr)), tone: 'info' });
           },
         }))),
     {
       id: 'mute',
-      label: muted ? 'Unmute notifications' : 'Mute notifications',
+      label: muted ? t('unmuteNotifications') : t('muteNotifications'),
       icon: muted ? <BellIcon /> : <BellSlashIcon />,
       onSelect: () => void updatePrLocal((state) => (muted ? unmute : mute)(state, pr.id)),
     },
@@ -152,13 +152,13 @@ export function PrMenu({ pr, now }: { pr: PullRequest; now: number }) {
     <Menu
       align="end"
       items={items}
-      label={`Actions for ${prRef(pr)}`}
+      label={t('actionsFor', prRef(pr))}
       trigger={(props) => (
         <IconButton
           {...props}
           class="pr-card__menu"
           size="sm"
-          label={`More actions for ${pr.title}`}
+          label={t('moreActionsFor', pr.title)}
         >
           <KebabHorizontalIcon />
         </IconButton>

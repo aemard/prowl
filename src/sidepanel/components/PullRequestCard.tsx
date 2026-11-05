@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { pollState } from '../state/store';
@@ -88,12 +89,12 @@ export function PullRequestCard({
   const statuses = pullRequestStatuses(pr);
   const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const teamRequest =
-    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
+    teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));
 
   return (
     <li class="pr-card" ref={card}>
       <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
-        {unseen && <span class="pr-card__dot" title="Unseen changes" />}
+        {unseen && <span class="pr-card__dot" title={t('unseenChanges')} />}
         <CardHead
           pr={pr}
           now={now}
@@ -121,9 +122,9 @@ export function PullRequestCard({
         <CardMeta pr={pr} now={now} />
         <span id={`${detailId}-facts`} hidden>
           {describePullRequest(pr, statuses, unseen, now)}
-          {refreshingMerge && `. Updating merge status`}
+          {refreshingMerge && `. ${t('updatingMergeStatus')}`}
           {teamRequest && `. ${teamRequest}`}
-          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
+          {hiddenBecause && t('hiddenFromTheList', hiddenBecause)}
         </span>
       </div>
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}

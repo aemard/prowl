@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * What the panel changes on GitHub, as named operations (`mutation ProwlApprove`, ...): the E2E
  * mock dispatches on the name, and each call's variables say exactly what is being done. Every
@@ -62,12 +63,9 @@ interface CommentData {
 /** The message a person has to write: trimmed, never empty, within GitHub's limit. */
 function messageOf(body: string): string {
   const text = body.trim();
-  if (text === '') throw new GitHubError('validation', 'Write a message first.');
+  if (text === '') throw new GitHubError('validation', t('writeAMessageFirst'));
   if (text.length > MAX_BODY_LENGTH) {
-    throw new GitHubError(
-      'validation',
-      `The message is longer than ${MAX_BODY_LENGTH} characters.`,
-    );
+    throw new GitHubError('validation', t('theMessageIsLongerThanCharacters', MAX_BODY_LENGTH));
   }
   return text;
 }
@@ -83,7 +81,7 @@ async function review(
   const data = await client.graphql<ReviewData>(query, { id, event, body, oid: headSha });
   // Strict GraphQL throws on `errors`; a null payload without them still must not read as done.
   if (!data.addPullRequestReview?.pullRequestReview) {
-    throw new GitHubError('server', 'GitHub did not confirm the review.');
+    throw new GitHubError('server', t('githubDidNotConfirmTheReview'));
   }
 }
 
@@ -114,7 +112,7 @@ export async function comment(client: GitHubClient, prId: string, body: string):
     body: messageOf(body),
   });
   if (!data.addComment?.commentEdge?.node) {
-    throw new GitHubError('server', 'GitHub did not confirm the comment.');
+    throw new GitHubError('server', t('githubDidNotConfirmTheComment'));
   }
 }
 
@@ -139,7 +137,7 @@ export async function mergePullRequest(
     headline: method === 'rebase' ? undefined : title?.trim() || undefined,
   });
   if (!data.mergePullRequest?.pullRequest?.merged) {
-    throw new GitHubError('server', 'GitHub did not confirm the merge.');
+    throw new GitHubError('server', t('githubDidNotConfirmTheMerge'));
   }
 }
 
@@ -194,8 +192,7 @@ const RERUNNABLE = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE']);
  */
 export async function rerunFailedChecks(client: GitHubClient, prId: string): Promise<number> {
   const { node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, { id: prId });
-  if (!node?.repository)
-    throw new GitHubError('not_found', 'GitHub did not find the pull request.');
+  if (!node?.repository) throw new GitHubError('not_found', t('githubDidNotFindPullRequest'));
   const repo = `/repos/${encodeURIComponent(node.repository.owner.login)}/${encodeURIComponent(node.repository.name)}`;
   const suites = node.commits?.nodes[0]?.commit.checkSuites?.nodes ?? [];
   const paths = new Set<string>();
@@ -207,7 +204,7 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
         : `${repo}/check-suites/${suite.databaseId}/rerequest`,
     );
   }
-  if (paths.size === 0) throw new GitHubError('validation', 'No failed checks to re-run.');
+  if (paths.size === 0) throw new GitHubError('validation', t('noFailedChecksToReRun'));
 
   const results = await Promise.allSettled([...paths].map((path) => client.rest('POST', path)));
   const failure = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
@@ -215,11 +212,11 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
     const reason =
       failure.reason instanceof GitHubError
         ? failure.reason
-        : new GitHubError('server', 'Something went wrong.');
+        : new GitHubError('server', t('somethingWentWrong'));
     const worked = results.length - results.filter((r) => r.status === 'rejected').length;
     throw worked === 0
       ? reason
-      : new GitHubError(reason.kind, `Re-ran ${worked} of ${results.length}. ${reason.message}`);
+      : new GitHubError(reason.kind, t('reRanOf', worked, results.length, reason.message));
   }
   return paths.size;
 }
@@ -244,7 +241,7 @@ export async function setDraft(client: GitHubClient, prId: string, draft: boolea
   }>(draft ? CONVERT_TO_DRAFT_MUTATION : MARK_READY_MUTATION, { id: prId });
   const payload = draft ? data.convertPullRequestToDraft : data.markPullRequestReadyForReview;
   if (payload?.pullRequest?.isDraft !== draft) {
-    throw new GitHubError('server', 'GitHub did not confirm the change.');
+    throw new GitHubError('server', t('githubDidNotConfirmChange'));
   }
 }
 
@@ -269,7 +266,7 @@ export async function updateBranch(
     updatePullRequestBranch: { pullRequest: { headRefOid: string } | null } | null;
   }>(UPDATE_BRANCH_MUTATION, { id: prId, oid: headSha, method: method.toUpperCase() });
   if (!data.updatePullRequestBranch?.pullRequest) {
-    throw new GitHubError('server', 'GitHub did not confirm the update.');
+    throw new GitHubError('server', t('githubDidNotConfirmUpdate'));
   }
 }
 
@@ -321,6 +318,6 @@ export async function setAutoMerge(
     !payload?.pullRequest ||
     (payload.pullRequest.autoMergeRequest !== null) !== (method !== null)
   ) {
-    throw new GitHubError('server', 'GitHub did not confirm the change.');
+    throw new GitHubError('server', t('githubDidNotConfirmChange'));
   }
 }

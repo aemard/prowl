@@ -3,24 +3,33 @@
 // docs/screenshots (captured at 2x, 800 x 1520, and drawn at their 400 x 760 CSS size, so the
 // browser downsamples them 2:1) with the logo and colors from tokens.css. The store wants exact
 // pixel sizes, so these pages render at 1x.
-// Usage: pnpm screenshots, then pnpm store-images (commit the PNGs). Headlines use Inter when
-// it is installed, else the system UI font.
+// Usage: pnpm screenshots, then pnpm store-images (commit the PNGs).
+// An optional output directory allows previewing without replacing the committed images.
+// Bundle Roboto for exports so installed fonts cannot change wrapping or sizes.
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
+import { saveCapture } from './capture.ts';
 
 const root = resolve(import.meta.dirname, '..');
-const outDir = resolve(root, 'docs/store');
+const outDir = resolve(process.argv[2] ?? resolve(root, 'docs/store'));
 const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
 const logo = dataUrl('src/assets/logo.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
-const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
+const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8').replace(
+  '@import "./tokens.base.css";',
+  readFileSync(resolve(root, 'src/styles/tokens.base.css'), 'utf8'),
+);
 
 const style = `
 ${tokens}
+@font-face { font-family: "Store Sans"; font-style: normal; font-weight: 400;
+  src: url("${dataUrl('scripts/fonts/Roboto-Regular.ttf', 'font/ttf')}") format("truetype"); }
+@font-face { font-family: "Store Sans"; font-style: normal; font-weight: 600;
+  src: url("${dataUrl('scripts/fonts/Roboto-SemiBold.ttf', 'font/ttf')}") format("truetype"); }
 * { box-sizing: border-box; margin: 0; }
-body { width: 100vw; height: 100vh; overflow: hidden; font-family: Inter, var(--font-sans);
+body { width: 100vw; height: 100vh; overflow: hidden; font-family: "Store Sans", sans-serif;
   color: var(--color-fg); -webkit-font-smoothing: antialiased; }
 .canvas { position: relative; display: flex; align-items: center; width: 100%; height: 100%;
   overflow: hidden; background: var(--color-brand-mint); }
@@ -28,7 +37,7 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: Inter, var(--
 .canvas[data-tone="teal"] { background: var(--color-brand-mint); color: var(--color-brand-ink); }
 .copy { display: flex; flex-direction: column; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; }
-h1 { font-family: "Inter Display", Inter, var(--font-sans); font-size: 56px; line-height: 1.08;
+h1 { font-size: 56px; line-height: 1.08;
   font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
 p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: pretty; }
 [data-tone] p { color: inherit; opacity: 0.8; }
@@ -144,14 +153,19 @@ const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMI
 try {
   for (const { file, size, html } of IMAGES) {
     const [width, height] = size;
-    const page = await browser.newPage({ viewport: { width, height } });
+    const page = await browser.newPage({
+      viewport: { width, height },
+      deviceScaleFactor: 1,
+      locale: 'en-US',
+      timezoneId: 'UTC',
+      colorScheme: 'light',
+    });
     await page.setContent(
       `<!doctype html><html data-theme="light"><head><style>${style}</style></head><body>${html}</body></html>`,
     );
-    await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: resolve(outDir, file) });
+    await saveCapture(page, resolve(outDir, file));
     await page.close();
-    console.log(`docs/store/${file}`);
+    console.log(resolve(outDir, file));
   }
 } finally {
   await browser.close();
