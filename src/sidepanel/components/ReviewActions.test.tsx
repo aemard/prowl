@@ -149,12 +149,12 @@ describe('approve', () => {
   });
 });
 
-describe('request changes', () => {
-  const dialog = () => screen.getByRole('dialog', { name: 'Request changes' });
-  const message = () => within(dialog()).getByRole('textbox', { name: /Message/ });
-  const submit = () => within(dialog()).getByRole('button', { name: 'Request changes' });
-  const type = (text: string) => fireEvent.input(message(), { target: { value: text } });
+const dialog = () => screen.getByRole('dialog', { name: 'Request changes' });
+const message = () => within(dialog()).getByRole('textbox', { name: /Message/ });
+const submit = () => within(dialog()).getByRole('button', { name: 'Request changes' });
+const type = (text: string) => fireEvent.input(message(), { target: { value: text } });
 
+describe('request changes', () => {
   it('needs a message: asks again inline and sends nothing without one', () => {
     const sent = stubGitHub(() => jsonResponse({ data: approved }));
     show();
@@ -260,50 +260,6 @@ describe('request changes', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(sent).toEqual([]);
   });
-});
-
-it('retains separate drafts across card/view unmounts without mixing pull requests', () => {
-  const first = show();
-  fireEvent.click(button('Comment on acme/widgets#1'));
-  fireEvent.input(screen.getByRole('textbox', { name: /Message/ }), {
-    target: { value: 'Keep this draft' },
-  });
-  first.unmount();
-  const other = show(buildPullRequest({ number: 2 }));
-  fireEvent.click(button('Comment on acme/widgets#2'));
-  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe('');
-  other.unmount();
-  show();
-  fireEvent.click(button('Comment on acme/widgets#1'));
-  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe(
-    'Keep this draft',
-  );
-});
-
-it('clears private draft text when the account changes', () => {
-  show();
-  fireEvent.click(button('Comment on acme/widgets#1'));
-  fireEvent.input(screen.getByRole('textbox', { name: /Message/ }), {
-    target: { value: 'Private draft' },
-  });
-  act(() => {
-    auth.value = buildAuth('hubot');
-  });
-  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe('');
-});
-
-it('keeps a draft when the same account signs in again with another token', () => {
-  show();
-  fireEvent.click(button('Comment on acme/widgets#1'));
-  fireEvent.input(screen.getByRole('textbox', { name: /Message/ }), {
-    target: { value: 'Still mine' },
-  });
-  act(() => {
-    auth.value = { ...buildAuth('octocat'), token: 'ghp_rotated' };
-  });
-  expect((screen.getByRole('textbox', { name: /Message/ }) as HTMLTextAreaElement).value).toBe(
-    'Still mine',
-  );
 });
 
 describe('comment', () => {

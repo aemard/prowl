@@ -119,22 +119,22 @@ describe('teamsDue', () => {
   });
 });
 
-describe('discoverTeams', () => {
-  const auth = (overrides: Partial<AuthState> = {}) => ({
-    tokenType: 'classic' as const,
-    scopes: ['repo', 'read:org'],
-    viewer: { login: 'octocat', avatarUrl: '', name: null },
-    ...overrides,
-  });
-  const previous: TeamsState = {
-    login: 'octocat',
-    fetchedAt: '2026-10-06T12:00:00.000Z',
-    teams: [{ org: 'acme', slug: 'old', name: 'Old' }],
-    error: null,
-  };
-  const forbidden = () => jsonResponse({ message: 'Resource not accessible' }, { status: 403 });
-  const notFound = () => jsonResponse({ message: 'Not Found' }, { status: 404 });
+const auth = (overrides: Partial<AuthState> = {}) => ({
+  tokenType: 'classic' as const,
+  scopes: ['repo', 'read:org'],
+  viewer: { login: 'octocat', avatarUrl: '', name: null },
+  ...overrides,
+});
+const previous: TeamsState = {
+  login: 'octocat',
+  fetchedAt: '2026-10-06T12:00:00.000Z',
+  teams: [{ org: 'acme', slug: 'old', name: 'Old' }],
+  error: null,
+};
+const forbidden = () => jsonResponse({ message: 'Resource not accessible' }, { status: 403 });
+const notFound = () => jsonResponse({ message: 'Not Found' }, { status: 404 });
 
+describe('discoverTeams', () => {
   it('stores the list for the viewer', async () => {
     const { client } = setup([teamJson('acme/core', 'Core')]);
     expect(await discoverTeams(client, auth(), previous, NOW)).toEqual({
