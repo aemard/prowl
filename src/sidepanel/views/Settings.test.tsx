@@ -53,9 +53,12 @@ describe('SettingsView', () => {
       const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
       fireEvent.click(toggle('Mentioned'));
       fireEvent.click(toggle('Assigned to me'));
-      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true }), {
-        timeout: 2000,
-      });
+      await waitFor(
+        () => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true }),
+        {
+          timeout: 2000,
+        },
+      );
       expect(send).toHaveBeenCalledTimes(1);
     });
 
@@ -124,7 +127,7 @@ describe('SettingsView', () => {
 
     it('saves how many pull requests to fetch per section', async () => {
       await open();
-      fireEvent.input(group('Refresh').getByLabelText('Pull requests per section'), {
+      fireEvent.input(group('Refresh').getByLabelText('Maximum PRs loaded per section'), {
         target: { value: '100' },
       });
       await waitFor(async () => expect((await saved()).maxPerSection).toBe(100));

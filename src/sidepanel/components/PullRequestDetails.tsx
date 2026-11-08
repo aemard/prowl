@@ -1,7 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
+import { formatRelativeTime } from '../../lib/time/relative';
 import { detailKey, details, loadDetail } from '../state/prDetail';
+import { snapshot } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -25,6 +27,7 @@ import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import type { Tone } from './ui/cx';
 import { Skeleton } from './ui/Skeleton';
+import { useNow } from './useNow';
 import './PullRequestDetails.css';
 
 interface Look {
@@ -109,6 +112,11 @@ function CheckRow({ check }: { check: CheckItem }) {
       {check.required && (
         <Badge size="sm" tone="neutral" title="The base branch requires this check to pass">
           Required
+        </Badge>
+      )}
+      {check.required === null && (
+        <Badge size="sm" tone="neutral">
+          Requirement unknown
         </Badge>
       )}
       <span class="pr-detail__state">{label}</span>
@@ -212,27 +220,50 @@ export interface PullRequestDetailsProps {
  * What an expanded card shows: why the PR can or cannot be merged (at once, from the list's own
  * data), the actions on it (review, comment, merge), then, once `ProwlPullRequestDetail` has
  * loaded, its checks (failed first, with links) and reviewers. Loads on mount and again when the
- * PR changes; the last detail stays on screen while a newer one loads.
+ * PR changes; a changed head or changed evidence shows a loading state until its detail is read.
  */
 export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
+  const now = useNow(30_000);
   const key = detailKey(pr);
   useEffect(() => {
     void loadDetail(pr);
   }, [key]);
 
   const entry = details.value[pr.id];
-  const detail = entry?.detail;
+  const detail = entry?.key === key && !entry.loading && !entry.error ? entry.detail : undefined;
+  const checkedAt = snapshot.value?.mergeStateAt?.[pr.id];
+  const due = snapshot.value?.mergeStateDue?.includes(pr.id);
   const waiting = !detail && !entry?.error;
   return (
     <div id={id} class="pr-detail">
       <Group id={`${id}-merge`} label="Merge">
         <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
+        <p class="pr-detail__freshness">
+          {checkedAt ? (
+            <time dateTime={checkedAt} title={new Date(checkedAt).toLocaleString()}>
+              Merge facts verified {formatRelativeTime(checkedAt, now)}
+              {due ? ' · cached, verification due' : ''}.
+            </time>
+          ) : (
+            'Merge facts have not been verified for this commit.'
+          )}
+        </p>
       </Group>
+      {pr.incomplete?.length || detail?.warnings?.length ? (
+        <p class="pr-detail__freshness" role="note">
+          {pr.incomplete?.length ? `Some ${pr.incomplete.join(', ')} are not loaded. ` : ''}
+          {detail?.warnings?.join(' ')}{' '}
+          <GitHubLink href={pr.url}>View full details on GitHub</GitHubLink>
+        </p>
+      ) : null}
       <Group id={`${id}-actions`} label="Actions">
         <div class="pr-actions">
           <ReviewActions pr={pr} />
           <MergeAction pr={pr} />
           <MaintenanceActions pr={pr} />
+          <GitHubLink class="pr-actions__link" href={`${pr.url}/files`}>
+            View changes on GitHub
+          </GitHubLink>
         </div>
       </Group>
       {entry?.error && (

@@ -1,7 +1,7 @@
 /** State and error handling shared by scheduled polls and consulted-card refreshes. */
 import { GitHubError } from '../lib/github/errors';
-import type { AuthState, PollState } from '../lib/model';
-import { getItem, setItem } from '../lib/storage/storage';
+import type { PollState } from '../lib/model';
+import { setItem } from '../lib/storage/storage';
 import { retryAt } from '../lib/time/backoff';
 
 export const POLL_ALARM = 'poll';
@@ -17,11 +17,6 @@ export const IDLE: PollState = {
 };
 
 export const iso = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
-
-/** The token the request started with is still the stored one. */
-export async function stillSignedIn(auth: AuthState): Promise<boolean> {
-  return (await getItem('auth'))?.token === auth.token;
-}
 
 /**
  * Stores a failed poll or card read and when to try again. Anything but a `GitHubError` is not a

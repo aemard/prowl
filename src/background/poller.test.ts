@@ -239,11 +239,23 @@ describe('clearSignedOut', () => {
       message: 'y',
       iconUrl: 'i',
     });
+    await removeItems('auth');
     await clearSignedOut();
     expect(alarm()).toBeUndefined();
-    expect(await getItems(['auth', 'pollState'])).toEqual({ auth: buildAuth() });
+    expect(await getItems(['auth', 'pollState'])).toEqual({});
     expect(fakeChrome().__state.badge.text).toBe('');
     expect(fakeChrome().__state.notifications.size).toBe(0);
     expect(await chrome.storage.session.get('notified')).toEqual({});
   });
+});
+
+it('ignores delayed signed-out cleanup after another account has signed in', async () => {
+  await signIn(buildAuth('new-account'));
+  const state = buildPollState();
+  await setItem('pollState', state);
+  await scheduleAlarm(5);
+  await clearSignedOut();
+  expect(await getItem('auth')).toEqual(buildAuth('new-account'));
+  expect(await getItem('pollState')).toEqual(state);
+  expect(alarm()).toBeDefined();
 });

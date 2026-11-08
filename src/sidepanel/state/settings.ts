@@ -11,12 +11,12 @@ let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 /**
  * Asks the worker for a forced poll once changes stop, so enabling three sections in a row polls
  * once. The worker keeps its schedule: only a new interval reschedules (see `registerBackground`).
- * ponytail: a poll already in flight keeps the old scope; its result is replaced at the next one.
+ * An in-flight poll is followed by one coalesced run using the most recent saved settings.
  */
 function refreshSoon(): void {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
-    void sendToBackground({ type: 'poll', force: true });
+    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   }, REFRESH_DELAY_MS);
 }
 

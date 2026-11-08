@@ -177,7 +177,7 @@ describe('mapPullRequestDetail', () => {
     ).toMatchObject({ requiredApprovals: 2, requiresConversationResolution: true });
     expect(
       rules({ requiredApprovingReviewCount: 0, requiresConversationResolution: false }),
-    ).toMatchObject({ requiredApprovals: null, requiresConversationResolution: false });
+    ).toMatchObject({ requiredApprovals: 0, requiresConversationResolution: false });
     expect(rules(null)).toMatchObject({
       requiredApprovals: null,
       requiresConversationResolution: false,
@@ -191,4 +191,11 @@ describe('mapPullRequestDetail', () => {
     ]);
     expect(detail.reviewers).toEqual([]);
   });
+});
+
+it('keeps an inaccessible check requirement unknown', () => {
+  const detail = mapPullRequestDetail([
+    detailNode({ checks: [checkRunNode('CI', 'FAILURE', { isRequired: null })] }),
+  ]);
+  expect(detail.checks[0]?.required).toBeNull();
 });

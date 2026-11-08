@@ -6,6 +6,7 @@ import {
   detailReview,
 } from '../../../tests/fixtures/github';
 import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
+import { buildPullRequest } from '../../test/panel';
 import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
 import { fetchPullRequestDetail } from './fetchPullRequestDetail';
@@ -118,4 +119,110 @@ describe('fetchPullRequestDetail', () => {
       kind: 'rate_limited',
     });
   });
+});
+
+/** Reads GraphQL detail normally, with a controlled applied-rules response. */
+function withRules(rules: unknown, status = 200) {
+  const fetch = vi.fn<FetchLike>(async (_url, init) =>
+    init.method === 'GET'
+      ? jsonResponse(rules, { status })
+      : jsonResponse({ data: detailResponse(detailNode()) }),
+  );
+  return {
+    client: createGitHubClient({ token: 'test-token', apiUrl: 'https://api.github.com', fetch }),
+    fetch,
+  };
+}
+
+it('intersects repository methods with applied branch rules and reads their requirements', async () => {
+  const { client, fetch } = withRules([
+    {
+      type: 'pull_request',
+      parameters: {
+        allowed_merge_methods: ['squash'],
+        required_approving_review_count: 3,
+        required_review_thread_resolution: true,
+      },
+    },
+  ]);
+  const detail = await fetchPullRequestDetail(
+    client,
+    'PR_1',
+    buildPullRequest({ baseRefName: 'release/v2' }),
+  );
+  expect(detail.allowedMergeMethods).toEqual(['squash']);
+  expect(detail.requiredApprovals).toBe(3);
+  expect(detail.requiresConversationResolution).toBe(true);
+  expect(fetch.mock.calls.filter(([, init]) => init.method === 'GET')).toHaveLength(1);
+  expect(fetch.mock.calls[1]?.[0]).toContain('/rules/branches/release%2Fv2');
+});
+
+it('excludes merge commits for required linear history', async () => {
+  const { client } = withRules([{ type: 'required_linear_history', parameters: null }]);
+  const detail = await fetchPullRequestDetail(
+    client,
+    'PR_1',
+    buildPullRequest({ allowedMergeMethods: ['merge', 'squash', 'rebase'] }),
+  );
+  expect(detail.allowedMergeMethods).toEqual(['squash', 'rebase']);
+});
+
+it.each([403, 404])(
+  'marks unavailable branch rules as unknown (%s), retaining loaded details',
+  async (status) => {
+    const { client } = withRules({ message: 'Not accessible' }, status);
+    const detail = await fetchPullRequestDetail(client, 'PR_1', buildPullRequest());
+    expect(detail.allowedMergeMethods).toBeUndefined();
+    expect(detail.warnings?.join(' ')).toContain('Branch rules could not be verified');
+  },
+);
+
+it.each([401, 429])('keeps global rule-read failures global (%s)', async (status) => {
+  const { client } = withRules({ message: 'Stop' }, status);
+  await expect(fetchPullRequestDetail(client, 'PR_1', buildPullRequest())).rejects.toHaveProperty(
+    'kind',
+    status === 401 ? 'unauthorized' : 'rate_limited',
+  );
+});
+
+it('does not call the rules verified when a full page may hide more of them', async () => {
+  const { client, fetch } = withRules([
+    ...Array.from({ length: 99 }, () => ({ type: 'creation' })),
+    { type: 'pull_request', parameters: { allowed_merge_methods: ['squash'] } },
+  ]);
+  const detail = await fetchPullRequestDetail(client, 'PR_1', buildPullRequest());
+  expect(fetch.mock.calls[1]?.[0]).toContain('?per_page=100');
+  expect(detail.allowedMergeMethods).toBeUndefined();
+  expect(detail.warnings?.join(' ')).toContain('Branch rules could not be verified');
+});
+
+it.each([{}, [null]])(
+  'does not turn malformed rules into an empty requirement list',
+  async (rules) => {
+    const { client } = withRules(rules);
+    const detail = await fetchPullRequestDetail(client, 'PR_1', buildPullRequest());
+    expect(detail.allowedMergeMethods).toBeUndefined();
+    expect(detail.warnings?.length).toBeGreaterThan(0);
+  },
+);
+
+it('preserves masked field context when detail fields are inaccessible', async () => {
+  const { client } = setup(() =>
+    jsonResponse({
+      data: detailResponse(detailNode({ baseRef: null })),
+      errors: [graphqlError('FORBIDDEN', 'test-token cannot read this rule', ['node', 'baseRef'])],
+    }),
+  );
+  const detail = await fetchPullRequestDetail(client, 'PR_1');
+  expect(detail.requiredApprovals).toBeNull();
+  expect(detail.warnings?.join(' ')).toContain('[redacted] cannot read this rule (node.baseRef)');
+});
+
+it('explains when the readable rules allow no supported repository method', async () => {
+  const { client } = withRules([
+    { type: 'pull_request', parameters: { allowed_merge_methods: ['future-method'] } },
+  ]);
+  const detail = await fetchPullRequestDetail(client, 'PR_1', buildPullRequest());
+  expect(detail.allowedMergeMethods).toEqual([]);
+  expect(detail.warnings?.join(' ')).toContain('No supported merge method');
 });
