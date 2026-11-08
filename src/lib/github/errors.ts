@@ -24,6 +24,11 @@ export class GitHubError extends Error {
   }
 }
 
+/** Account-wide failures that stop reads and consume the shared poll budget. */
+export function isPollBudgetFailure(kind: ErrorKind): boolean {
+  return kind === 'unauthorized' || kind === 'rate_limited';
+}
+
 const RATE_LIMIT_MESSAGE = /rate limit|abuse detection/i;
 
 /**
