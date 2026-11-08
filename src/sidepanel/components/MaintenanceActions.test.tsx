@@ -14,18 +14,18 @@ const show = (overrides: Partial<PullRequest> = {}) =>
   render(<MaintenanceActions pr={{ ...base, ...overrides }} />);
 const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
 
-beforeEach(() => {
-  auth.value = buildAuth('octocat');
-});
-
-afterEach(() => {
-  auth.value = undefined;
-  pendingActions.value = {};
-  toasts.value = [];
-  vi.unstubAllGlobals();
-});
-
 describe('MaintenanceActions', () => {
+  beforeEach(() => {
+    auth.value = buildAuth('octocat');
+  });
+
+  afterEach(() => {
+    auth.value = undefined;
+    pendingActions.value = {};
+    toasts.value = [];
+    vi.unstubAllGlobals();
+  });
+
   it('offers a re-run only for failed checks on an open PR the viewer can write to', () => {
     show({ checks: failing, viewerCanMerge: true });
     expect(screen.getByRole('button', { name: /^Re-run failed checks of / })).toBeTruthy();
