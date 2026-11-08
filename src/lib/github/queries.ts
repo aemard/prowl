@@ -55,8 +55,9 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         autoMergeRequest { mergeMethod enabledBy { login } }
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
-        latestReviews(first: 20) { nodes { id state submittedAt author { login } } }
+        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { login } } }
         reviewRequests(first: 20) {
+          totalCount pageInfo { hasNextPage }
           nodes {
             requestedReviewer {
               ... on User { login }
@@ -65,7 +66,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
             }
           }
         }
-        reviewThreads(first: 100) { nodes { isResolved } }
+        reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
         comments(last: 1) { nodes { createdAt author { login } } }
         commits(last: 1) {
           nodes {
@@ -131,8 +132,9 @@ export const DETAIL_QUERY = /* GraphQL */ `
 query ProwlPullRequestDetail($id: ID!, $after: String) {
   node(id: $id) {
     ... on PullRequest {
-      latestReviews(first: 20) { nodes { state author { login avatarUrl(size: 64) } } }
+      latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { state author { login avatarUrl(size: 64) } } }
       reviewRequests(first: 20) {
+        totalCount pageInfo { hasNextPage }
         nodes {
           requestedReviewer {
             ... on User { login avatarUrl(size: 64) }
@@ -166,6 +168,8 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
 
 /** A connection as selected here: only `nodes`, whose entries are null where a read failed. */
 export interface Nodes<T> {
+  totalCount?: number;
+  pageInfo?: { hasNextPage: boolean };
   nodes: (T | null)[] | null;
 }
 
@@ -287,7 +291,7 @@ export interface CheckRunNode {
   status: string;
   conclusion: string | null;
   detailsUrl: string | null;
-  isRequired: boolean;
+  isRequired: boolean | null;
 }
 
 export interface StatusContextNode {
@@ -295,7 +299,7 @@ export interface StatusContextNode {
   context: string;
   state: string;
   targetUrl: string | null;
-  isRequired: boolean;
+  isRequired: boolean | null;
 }
 
 export interface DetailPullRequestNode {

@@ -284,3 +284,14 @@ describe('mapPullRequest', () => {
     expect(pr).toMatchObject({ state: 'merged', closedBy: 'hubot' });
   });
 });
+
+it('reports nested connection limits instead of treating a bounded slice as complete', () => {
+  const pr = mapPullRequest(
+    prNode({
+      latestReviews: { nodes: [], totalCount: 21, pageInfo: { hasNextPage: true } },
+      reviewRequests: { nodes: [], totalCount: 22 },
+      reviewThreads: { nodes: [], totalCount: 101 },
+    }),
+  );
+  expect(pr.incomplete).toEqual(['reviews', 'review requests', 'conversations']);
+});

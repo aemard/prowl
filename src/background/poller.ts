@@ -161,6 +161,7 @@ function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchRe
     sectionErrors: fetched.sectionErrors,
     teamRequests: fetched.teamRequests,
     mergeStateAt: fetched.mergeStateAt,
+    mergeStateDue: fetched.mergeStateDue,
     ciOutcomes: carryCiOutcomes(previous, fetched.pullRequests),
     settledChecks: carrySettledChecks(previous, fetched.pullRequests),
   };
