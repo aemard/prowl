@@ -474,7 +474,7 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     `team_review_requested`, which takes the state of `review_requested`: before US-037 that
     section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
-  - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, `hideStaleAfterDays`
+  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `hideStaleAfterDays`
     in 0-365 (default 20, 0 never hides), `groupByRepo`, `hideDrafts` and `hideBots` are
     booleans (default off), quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
@@ -731,7 +731,7 @@ signal (`state/store.ts`).
     after the last change, so the list does not wait for the next alarm. An interval change
     sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`
     recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
-  - `NumberField` saves valid whole numbers as typed (interval 1-60, results 1-100, and in
+  - `NumberField` saves valid whole numbers as typed (interval 2-60, results 1-100, and in
     Appearance "Hide PRs with no commit for (days)" 0-365) and shows an error for the rest; blur
     shows the saved value again. The Refresh note shows the estimated
     cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
