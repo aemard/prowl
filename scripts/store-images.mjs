@@ -15,10 +15,11 @@ const outDir = resolve(root, 'docs/store');
 const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
 const logo = dataUrl('src/assets/logo.png', 'image/png');
-// The marquee's list-ready.png reference is refreshed separately from pnpm screenshots.
-const marqueeLogo = dataUrl('docs/brand/prowl-logo-transparent.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
-const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
+// The tokens are split across two stylesheets; a style string cannot follow @import.
+const tokens = ['tokens.base.css', 'tokens.css']
+  .map((file) => readFileSync(resolve(root, 'src/styles', file), 'utf8'))
+  .join('\n');
 
 const style = `
 ${tokens}
@@ -38,23 +39,6 @@ p { font-size: 24px; line-height: 1.4; color: var(--color-fg-muted); text-wrap: 
 .panel { flex: none; overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px;
   background: var(--gray-1); box-shadow: var(--shadow-lg); }
 .panel img { display: block; }
-.marquee { padding: 28px 87px; gap: 90px; }
-.marquee .copy { width: 610px; flex: none; gap: 0; }
-.marquee .brand { height: 88px; margin-left: -13px; }
-.marquee h1 { margin: 18px 0 14px; text-wrap: initial; }
-.marquee .trust { display: flex; align-items: center; gap: 18px; margin-top: 24px;
-  font-size: 14px; color: var(--color-fg-muted); white-space: nowrap; }
-.marquee .trust span + span::before { content: '·'; margin-right: 18px; }
-.marquee .trust .open { color: var(--color-accent-fg); font-weight: 600; }
-.marquee .hero-product { flex: 1; margin-top: 14px; }
-.marquee .hero-label { font-size: 12px; letter-spacing: 0.15em; color: var(--color-fg-muted);
-  margin: 0 0 27px 19px; }
-.marquee .hero-preview { width: 432px; padding: 15px; border: 1px solid var(--color-border);
-  border-radius: 30px; background: var(--color-bg); box-shadow: var(--shadow-lg); }
-.marquee .hero-crop { height: 290px; overflow: hidden; border-radius: 20px; }
-.marquee .hero-crop img { display: block; }
-.marquee .hero-caption { display: flex; justify-content: space-between; font-size: 12px;
-  color: var(--color-fg-muted); margin: 19px 7px 4px; }
 `;
 
 /** The panel cut to `height` from the top; list shots show it whole, section bar included. */
@@ -145,21 +129,15 @@ const IMAGES = [
     file: 'promo-marquee.png',
     size: [1400, 560],
     html: `
-      <div class="canvas marquee">
-        <div class="copy">
-          <div class="brand">
-            <img src="${marqueeLogo}" width="104" height="104" alt="">Prowl
+      <div class="canvas" data-tone="teal" style="gap:72px;padding:0 0 0 112px">
+        <div class="copy" style="flex:1">
+          <div class="brand" style="font-size:44px;gap:20px">
+            <img src="${logo}" width="88" height="88" alt="">Prowl
           </div>
-          <h1>Your pull requests.<br>A little calmer.</h1>
-          <p>CI, reviews and merge status.<br>Right in Chrome’s side panel.</p>
-          <div class="trust"><span class="open">● &nbsp;Open source</span><span>MIT licensed</span><span>No tracking</span></div>
+          <p style="font-size:30px">Your pull requests. A little calmer.</p><p style="font-size:20px">CI, reviews and merge status, right in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
         </div>
-        <div class="hero-product">
-          <div class="hero-label">YOUR GITHUB PRs, AT A GLANCE</div>
-          <div class="hero-preview">
-            <div class="hero-crop"><img src="${shot('list-ready')}" width="400" height="760" alt="Prowl showing a pull request ready to merge"></div>
-            <div class="hero-caption"><span>Light theme</span><span>Chrome side panel</span></div>
-          </div>
+        <div style="display:flex;gap:24px;align-self:flex-start;margin-top:72px">
+          ${panel('list-ready', 560)}
         </div>
       </div>`,
   },
