@@ -1,0 +1,19 @@
+html body {
+  max-width: 520px;
+  min-height: 100vh;
+  margin: 0 auto;
+}
+
+aside[aria-label="Preview mode"] {
+  padding: 10px 16px;
+  text-align: center;
+  font:
+    12px system-ui,
+    sans-serif;
+  border-bottom: 1px solid currentColor;
+}
+
+.ui-toast-region {
+  max-width: 496px;
+  margin-inline: auto;
+}
