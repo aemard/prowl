@@ -187,6 +187,33 @@ describe('Menu', () => {
     expect(created?.querySelector('svg')).toBeNull();
   });
 
+  it('renders independent toggles as menuitemcheckbox, not as a radio group', () => {
+    render(
+      <Menu
+        label="Options"
+        items={[
+          {
+            id: 'pin',
+            label: 'Pin',
+            checked: true,
+            checkRole: 'menuitemcheckbox',
+            onSelect: vi.fn(),
+          },
+        ]}
+        trigger={(p) => (
+          <button type="button" {...p}>
+            Options
+          </button>
+        )}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Pin' }).getAttribute('aria-checked')).toBe(
+      'true',
+    );
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+  });
+
   const rect = (x: number, y: number, w: number, h: number) =>
     ({ left: x, top: y, right: x + w, bottom: y + h, width: w, height: h }) as DOMRect;
 
@@ -240,19 +267,19 @@ describe('Menu', () => {
     expect(menu()).toBeNull();
   });
 
-  describe('with a bar fixed at the bottom of the panel', () => {
-    /** A 600 px viewport whose last 50 px are a bottom bar; `at` is where the trigger is. */
-    function withBar(at: { trigger: DOMRect }) {
-      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(360);
-      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600);
-      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
-        this: HTMLElement,
-      ) {
-        if (this.hasAttribute('data-bottom-bar')) return rect(0, 550, 360, 50);
-        return this.getAttribute('role') === 'menu' ? rect(0, 0, 200, 120) : at.trigger;
-      });
-    }
+  /** A 600 px viewport whose last 50 px are a bottom bar; `at` is where the trigger is. */
+  function withBar(at: { trigger: DOMRect }) {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(360);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.hasAttribute('data-bottom-bar')) return rect(0, 550, 360, 50);
+      return this.getAttribute('role') === 'menu' ? rect(0, 0, 200, 120) : at.trigger;
+    });
+  }
 
+  describe('with a bar fixed at the bottom of the panel', () => {
     it('opens above a trigger whose menu would cover the bar, and closes behind it', () => {
       const at = { trigger: rect(10, 400, 32, 32) };
       withBar(at);

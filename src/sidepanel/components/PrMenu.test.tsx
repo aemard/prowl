@@ -17,17 +17,6 @@ const open = (overrides: Partial<PullRequest> = {}) => {
 const item = (name: RegExp | string) => screen.getByRole('menuitem', { name });
 const labels = () => screen.getAllByRole('menuitem').map((el) => el.textContent ?? '');
 
-beforeEach(() => {
-  auth.value = buildAuth('octocat');
-  prLocal.value = { snoozed: {}, muted: {}, seen: {} };
-});
-
-afterEach(() => {
-  auth.value = undefined;
-  toasts.value = [];
-  vi.unstubAllGlobals();
-});
-
 describe('PrMenu', () => {
   it('offers a reversible always-show checkbox without making a GitHub request', async () => {
     const fetch = vi.fn();
@@ -46,6 +35,18 @@ describe('PrMenu', () => {
     await waitFor(async () => expect((await loadPrLocal()).alwaysShown).toEqual({}));
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  beforeEach(() => {
+    auth.value = buildAuth('octocat');
+    prLocal.value = { snoozed: {}, muted: {}, seen: {} };
+  });
+
+  afterEach(() => {
+    auth.value = undefined;
+    toasts.value = [];
+    vi.unstubAllGlobals();
+  });
+
   it('lists local actions, and the GitHub ones the viewer may run', () => {
     open({ checks: { ...base.checks, state: 'failure', failed: 1 } });
     expect(labels().map((l) => l.replace(/feature\/widgets$/, ''))).toEqual([

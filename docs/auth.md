@@ -57,10 +57,10 @@ you use a token).
 
 ## Sign in with a token
 
-Choose **Use a personal access token** on the sign-in screen, then paste your token. If browser
-sign-in is unavailable, the token field is already shown. **Help choosing a token** reveals the
-creation guides and links to GitHub's token pages with the
-form filled in.
+Choose **Use a personal access token** on the sign-in screen, then paste your token. The field is
+already shown when browser sign-in is unavailable, or after you decline the github.com access or
+GitHub turns the device flow down. **Help choosing a token** reveals the creation guides, with
+links to GitHub's token pages with the form filled in.
 
 ### Classic token (recommended)
 

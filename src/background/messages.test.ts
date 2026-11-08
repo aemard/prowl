@@ -87,18 +87,26 @@ describe('handleMessage', () => {
     expect((await getItem('prLocal'))?.seen).toEqual({ [id]: '2026-10-06T10:00:00Z' });
   });
 
-  it('does not mark changed facts seen when the message describes an older visible version', async () => {
+  it('marks a PR seen only at the version the panel showed', async () => {
     const snapshot = buildSnapshot();
     const pr = buildPullRequest();
     snapshot.pullRequests[pr.id] = pr;
     await setItems({ auth: buildAuth(), snapshot });
     await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: 'older version' } });
-    expect((await getItem('prLocal'))?.seen).not.toHaveProperty(pr.id);
+    expect((await getItem('prLocal'))?.seen).toEqual({});
     await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: activityKey(pr) } });
     expect((await getItem('prLocal'))?.seenFacts?.[pr.id]).toBe(activityKey(pr));
-    await chrome.storage.local.remove('auth');
+  });
+
+  it('marks nothing seen when signed out or when the snapshot belongs to another account', async () => {
+    const snapshot = buildSnapshot();
+    const pr = buildPullRequest();
+    snapshot.pullRequests[pr.id] = pr;
+    await setItems({ snapshot });
     await send({ type: 'markSeen', prIds: [pr.id] });
-    expect((await getItem('prLocal'))?.seenFacts?.[pr.id]).toBe(activityKey(pr));
+    await setItems({ auth: buildAuth('hubot') });
+    await send({ type: 'markSeen', prIds: [pr.id] });
+    expect(await getItem('prLocal')).toBeUndefined();
   });
 
   it('stops polling and clears the badge on sign-out', async () => {

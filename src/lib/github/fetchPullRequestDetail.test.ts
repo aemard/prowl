@@ -185,6 +185,17 @@ it.each([401, 429])('keeps global rule-read failures global (%s)', async (status
   );
 });
 
+it('does not call the rules verified when a full page may hide more of them', async () => {
+  const { client, fetch } = withRules([
+    ...Array.from({ length: 99 }, () => ({ type: 'creation' })),
+    { type: 'pull_request', parameters: { allowed_merge_methods: ['squash'] } },
+  ]);
+  const detail = await fetchPullRequestDetail(client, 'PR_1', buildPullRequest());
+  expect(fetch.mock.calls[1]?.[0]).toContain('?per_page=100');
+  expect(detail.allowedMergeMethods).toBeUndefined();
+  expect(detail.warnings?.join(' ')).toContain('Branch rules could not be verified');
+});
+
 it.each([{}, [null]])(
   'does not turn malformed rules into an empty requirement list',
   async (rules) => {

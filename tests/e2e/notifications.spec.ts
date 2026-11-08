@@ -161,68 +161,26 @@ test('every kind of change by someone else notifies with its own event', async (
   serviceWorker,
 }) => {
   // PR 1 walks through every in-place change; PRs 2 and 3 get merged and closed by others.
-  type Fields = Partial<Parameters<typeof prNode>[0]>;
   let one: Fields = { number: 1, commits: headCommit(CHECKS.failure) };
   const open = new Set([1, 2, 3]);
-  github.onGraphQL('ProwlSearch', (variables) =>
-    searchResponse(
-      [prNode(one), prNode({ number: 2 }), prNode({ number: 3 })].filter((pr) =>
-        open.has(pr.number),
-      ),
-      variables,
-    ),
-  );
-  github.onGraphQL('ProwlNodes', (variables) =>
-    nodesResponse(variables.ids, [
-      closedNode(prId(2), { state: 'MERGED', by: 'alice' }),
-      closedNode(prId(3), { state: 'CLOSED', by: 'bob' }),
-    ]),
-  );
-  await signIn();
-  await poll();
+  await serveNotifiableChanges(github, signIn, poll, () => one, open);
 
   /** Applies `change`, polls, and returns the event types notified by that poll. */
   const after = async (change: () => void) => {
-    await serviceWorker.evaluate(async () => {
-      for (const id of Object.keys(await chrome.notifications.getAll()))
-        await chrome.notifications.clear(id);
-    });
+    await clearNotifications(serviceWorker);
     change();
     await poll();
     return (await shown(serviceWorker)).map((id) => id.split(':')[1]).sort();
   };
-  const reviews = (...nodes: ReturnType<typeof reviewNode>[]) => ({ latestReviews: { nodes } });
 
   // CI passed after a failure, across a pending run in between.
   expect(await after(() => (one = { ...one, commits: headCommit(CHECKS.pending) }))).toEqual([]);
   expect(await after(() => (one = { ...one, commits: headCommit(CHECKS.success) }))).toEqual([
     'ci_passed',
   ]);
-  expect(
-    await after(() => (one = { ...one, ...reviews(reviewNode('alice', 'COMMENTED')) })),
-  ).toEqual(['review_new']);
-  expect(
-    await after(
-      () =>
-        (one = {
-          ...one,
-          ...reviews(reviewNode('alice', 'COMMENTED'), reviewNode('bob', 'APPROVED')),
-        }),
-    ),
-  ).toEqual(['approved']);
-  expect(
-    await after(
-      () =>
-        (one = {
-          ...one,
-          ...reviews(
-            reviewNode('alice', 'COMMENTED'),
-            reviewNode('bob', 'APPROVED'),
-            reviewNode('carol', 'CHANGES_REQUESTED'),
-          ),
-        }),
-    ),
-  ).toEqual(['changes_requested']);
+  await expectReviewNotifications(after, (fields) => {
+    one = { ...one, ...fields };
+  });
   expect(
     await after(
       () =>
@@ -247,3 +205,61 @@ test('every kind of change by someone else notifies with its own event', async (
   expect(await after(() => open.delete(2))).toEqual(['merged']);
   expect(await after(() => open.delete(3))).toEqual(['closed']);
 });
+
+type Fields = Partial<Parameters<typeof prNode>[0]>;
+async function serveNotifiableChanges(
+  github: Parameters<Parameters<typeof test>[2]>[0]['github'],
+  signIn: Parameters<Parameters<typeof test>[2]>[0]['signIn'],
+  poll: Parameters<Parameters<typeof test>[2]>[0]['poll'],
+  readOne: () => Fields,
+  open: Set<number>,
+) {
+  github.onGraphQL('ProwlSearch', (variables) =>
+    searchResponse(
+      [prNode(readOne()), prNode({ number: 2 }), prNode({ number: 3 })].filter((pr) =>
+        open.has(pr.number),
+      ),
+      variables,
+    ),
+  );
+  github.onGraphQL('ProwlNodes', (variables) =>
+    nodesResponse(variables.ids, [
+      closedNode(prId(2), { state: 'MERGED', by: 'alice' }),
+      closedNode(prId(3), { state: 'CLOSED', by: 'bob' }),
+    ]),
+  );
+  await signIn();
+  await poll();
+}
+async function clearNotifications(serviceWorker: Worker) {
+  await serviceWorker.evaluate(async () => {
+    for (const id of Object.keys(await chrome.notifications.getAll()))
+      await chrome.notifications.clear(id);
+  });
+}
+
+const reviews = (...nodes: ReturnType<typeof reviewNode>[]) => ({ latestReviews: { nodes } });
+async function expectReviewNotifications(
+  after: (change: () => void) => Promise<(string | undefined)[]>,
+  update: (fields: Fields) => void,
+) {
+  expect(await after(() => update(reviews(reviewNode('alice', 'COMMENTED'))))).toEqual([
+    'review_new',
+  ]);
+  expect(
+    await after(() =>
+      update(reviews(reviewNode('alice', 'COMMENTED'), reviewNode('bob', 'APPROVED'))),
+    ),
+  ).toEqual(['approved']);
+  expect(
+    await after(() =>
+      update(
+        reviews(
+          reviewNode('alice', 'COMMENTED'),
+          reviewNode('bob', 'APPROVED'),
+          reviewNode('carol', 'CHANGES_REQUESTED'),
+        ),
+      ),
+    ),
+  ).toEqual(['changes_requested']);
+}

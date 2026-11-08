@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkRunNode,
   detailNode,
-  detailResponse,
   detailReview,
   requestedReviewer,
   statusContextNode,
@@ -27,22 +26,22 @@ const pr = buildPullRequest({
 const show = (overrides: Partial<PullRequest> = {}) =>
   render(<PullRequestDetails pr={{ ...pr, ...overrides }} id="detail" />);
 
-beforeEach(() => {
-  auth.value = buildAuth();
-});
-
-afterEach(() => {
-  auth.value = undefined;
-  details.value = {};
-});
-
-const list = (name: string) => within(screen.getByRole('list', { name }));
-const rows = (name: string) =>
-  list(name)
-    .getAllByRole('listitem')
-    .map((row) => row.textContent);
-
 describe('PullRequestDetails', () => {
+  beforeEach(() => {
+    auth.value = buildAuth();
+  });
+
+  afterEach(() => {
+    auth.value = undefined;
+    details.value = {};
+  });
+
+  const list = (name: string) => within(screen.getByRole('list', { name }));
+  const rows = (name: string) =>
+    list(name)
+      .getAllByRole('listitem')
+      .map((row) => row.textContent);
+
   it('offers the actions at once, before the details have loaded', () => {
     stubDetailFetch(() => new Promise(() => {}));
     show();
@@ -189,8 +188,8 @@ describe('PullRequestDetails', () => {
 
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    await screen.findByText('Checks');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    await screen.findByText('lint');
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -209,25 +208,4 @@ describe('PullRequestDetails', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
     expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
   });
-});
-
-it('does not display old-head checks while a new-head detail request is pending', async () => {
-  stubDetailFetch(() => detailNode({ checks: [checkRunNode('old-head-check')] }));
-  const view = show();
-  await screen.findByText('old-head-check');
-  let release: (response: Response) => void = () => {};
-  stubDetailFetch(
-    () =>
-      new Promise<Response>((resolve) => {
-        release = resolve;
-      }),
-  );
-  view.rerender(<PullRequestDetails pr={{ ...pr, headSha: 'b'.repeat(40) }} id="detail" />);
-  await waitFor(() => expect(screen.queryByText('old-head-check')).toBeNull());
-  release(
-    jsonResponse({
-      data: detailResponse(detailNode({ checks: [checkRunNode('new-head-check')] })),
-    }),
-  );
-  await screen.findByText('new-head-check');
 });

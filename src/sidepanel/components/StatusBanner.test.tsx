@@ -7,29 +7,29 @@ import { StatusBanner } from './StatusBanner';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
-beforeEach(() => {
-  vi.useFakeTimers({ now: NOW, toFake: ['Date', 'setInterval', 'clearInterval'] });
-  auth.value = buildAuth();
-  snapshot.value = buildSnapshot('2026-10-06T11:46:00.000Z');
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  auth.value = undefined;
-  snapshot.value = undefined;
-  pollState.value = undefined;
-  location.hash = '';
-});
-
-const failWith = (kind: 'unauthorized' | 'network' | 'server', overrides = {}) => {
-  pollState.value = buildPollState({
-    lastError: { kind, message: 'Bad gateway' },
-    nextAllowedAt: new Date(NOW + 180_000).toISOString(),
-    ...overrides,
-  });
-};
-
 describe('StatusBanner', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW, toFake: ['Date', 'setInterval', 'clearInterval'] });
+    auth.value = buildAuth();
+    snapshot.value = buildSnapshot('2026-10-06T11:46:00.000Z');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    auth.value = undefined;
+    snapshot.value = undefined;
+    pollState.value = undefined;
+    location.hash = '';
+  });
+
+  const failWith = (kind: 'unauthorized' | 'network' | 'server', overrides = {}) => {
+    pollState.value = buildPollState({
+      lastError: { kind, message: 'Bad gateway' },
+      nextAllowedAt: new Date(NOW + 180_000).toISOString(),
+      ...overrides,
+    });
+  };
+
   it('warns politely that the token expires soon, and opens the sign-in screen', () => {
     snapshot.value = buildSnapshot('2026-10-06T11:59:00.000Z');
     pollState.value = buildPollState();

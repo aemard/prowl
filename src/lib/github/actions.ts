@@ -157,7 +157,6 @@ query ProwlFailedSuites($id: ID!, $after: String) {
         nodes {
           commit {
             checkSuites(first: 50, after: $after) {
-              totalCount
               pageInfo { hasNextPage endCursor }
               nodes { databaseId conclusion workflowRun { databaseId } }
             }
@@ -169,7 +168,6 @@ query ProwlFailedSuites($id: ID!, $after: String) {
 }`;
 
 interface FailedSuitesConnection {
-  totalCount?: number;
   pageInfo?: { hasNextPage: boolean; endCursor: string | null };
   nodes: Array<{
     databaseId: number;

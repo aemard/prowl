@@ -66,8 +66,13 @@ test.describe('onboarding', () => {
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
     await panel.getByRole('button', { name: 'Help choosing a token' }).click();
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toBeVisible();
+    const overflow = await panel.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
     await expectNoA11yViolations(panel);
   });
+
   test('explains both token types, accessible in light and dark', async ({
     openPanel,
     expectNoA11yViolations,

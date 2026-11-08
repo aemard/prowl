@@ -11,5 +11,5 @@ allowBuilds:
 # https://github.com/advisories/GHSA-3g3m-2fjr-6pw4
 # https://github.com/advisories/GHSA-g3hv-75wg-m249
 overrides:
-  '@sentry/bundler-plugins>glob': 14.0.2
-  'glob@14.0.2>minimatch': 11.0.1
+  'glob@>=9.0.0 <=14.0.1': ^14.0.2
+  'minimatch@<11.0.1': ^11.0.1

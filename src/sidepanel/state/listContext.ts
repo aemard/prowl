@@ -12,10 +12,12 @@ export const filterQuery = signal('');
 export const showHidden = signal(false);
 
 let account: string | undefined;
+let restored = false;
 effect(() => {
   const login = auth.value?.viewer.login.toLowerCase();
   if (account !== login) {
     account = login;
+    restored = false;
     batch(() => {
       activeSectionId.value = undefined;
       foldedGroups.value = [];
@@ -23,8 +25,11 @@ effect(() => {
       showHidden.value = false;
     });
   }
-  const saved = panelState.value;
-  if (!hydrated.value || !login) return;
+  // Once per account: later storage events are this panel's own writes coming back, and
+  // applying them would replay older choices over newer ones.
+  if (restored || !hydrated.value || !login) return;
+  restored = true;
+  const saved = panelState.peek();
   const matching = saved?.login === login ? saved : undefined;
   batch(() => {
     activeSectionId.value = matching?.activeSectionId;
@@ -50,13 +55,14 @@ export async function selectSection(id: string): Promise<void> {
 }
 
 export const foldKey = (sectionId: string, repo: string) => `${sectionId}\n${repo}`;
-const toggle = (folded: string[], key: string) =>
-  folded.includes(key) ? folded.filter((value) => value !== key) : [...folded, key];
 
+/** Stores the new state of the key, not a flip: another panel window may have flipped it first. */
 export async function toggleFolded(key: string): Promise<void> {
-  foldedGroups.value = toggle(foldedGroups.value, key);
-  await updateContext((current) => ({
-    ...current,
-    foldedGroups: toggle(current.foldedGroups, key),
-  }));
+  const fold = !foldedGroups.value.includes(key);
+  const apply = (folded: string[]) => {
+    const rest = folded.filter((value) => value !== key);
+    return fold ? [...rest, key] : rest;
+  };
+  foldedGroups.value = apply(foldedGroups.value);
+  await updateContext((current) => ({ ...current, foldedGroups: apply(current.foldedGroups) }));
 }

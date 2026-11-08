@@ -54,7 +54,7 @@ test('reopening restores the section and folded repositories, while clearing sea
     'false',
   );
   await expect(reopened.getByRole('searchbox')).toHaveValue('');
-  await expect(reopened.locator('.list__summary')).toContainText('3 loaded');
+  await expect(reopened.getByRole('note')).toContainText('3 loaded');
   await expectNoA11yViolations(reopened);
 });
 
@@ -80,22 +80,21 @@ test('an all-hidden list explains counts and lets a PR bypass automatic hiding',
   await expect(
     panel.getByRole('heading', { name: 'All loaded pull requests are set aside' }),
   ).toBeVisible();
-  await expect(panel.locator('.list__summary')).toContainText(
+  await expect(panel.getByRole('note')).toContainText(
     '1 loaded · 0 in list · 1 hidden · 0 snoozed',
   );
   await expectNoA11yViolations(panel);
   await panel.getByRole('button', { name: 'Show hidden and snoozed' }).click();
+  await expect(panel.getByRole('button', { name: 'Hide again' })).toBeFocused();
   await panel.getByRole('button', { name: 'More actions for Hidden draft' }).click();
   await expectNoA11yViolations(panel);
-  if (!(await panel.getByRole('menuitemcheckbox', { name: 'Always show this PR' }).isVisible()))
-    await panel.getByRole('button', { name: 'More actions for Hidden draft' }).click();
   await panel.getByRole('menuitemcheckbox', { name: 'Always show this PR' }).click();
   await expect(
     panel
       .getByRole('list', { name: 'Created by me pull requests' })
       .getByRole('link', { name: /^Hidden draft/ }),
   ).toBeVisible();
-  await expect(panel.locator('.list__summary')).toContainText(
+  await expect(panel.getByRole('note')).toContainText(
     '1 loaded · 1 in list · 0 hidden · 0 snoozed',
   );
   await expectNoA11yViolations(panel);

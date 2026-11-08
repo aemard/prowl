@@ -46,6 +46,11 @@ tests run in Playwright's Chromium (`pnpm exec playwright install chromium` once
 ## Conventions
 
 - TypeScript in strict mode, no `any`. Preact function components and signals.
+- Biome enforces 300 code lines per file and 50 per function body, excluding blank and
+  comment-only lines. Test and spec files have the file limit only, so `describe` blocks can
+  group scenarios; shared test helpers have both. Split long suites by behavior. Lint warnings
+  fail locally and in CI. Split by responsibility rather than compressing code or adding
+  suppressions.
 - Every new feature and every bug fix comes with tests: a fix with one that fails without it.
   Tests sit next to the code they cover; test behavior, not every function. CI enforces coverage
   (80% overall, 95% for `src/lib/github` and `src/lib/diff`).
@@ -72,8 +77,8 @@ squash merges, and the repository defaults the final commit title to the PR titl
 checks this convention and keeps that title when merging; it is not automatically enforced.
 Release Please reads this final commit: `feat` creates a minor release, `fix` a patch, and `!` a
 major. Documentation, CI and maintenance changes alone do not normally create a release.
-Keep a pull request to one change, say what it does and
-why, and add a screenshot for anything users see.
+Keep a pull request to one change, say what it does and why, and add a screenshot for anything
+users see.
 
 Sign off every commit (`git commit -s`). The `Signed-off-by` line certifies the
 [Developer Certificate of Origin](https://developercertificate.org/): you wrote the change, or
@@ -82,9 +87,9 @@ that is not signed off (bots excepted); `git rebase --signoff main` adds the lin
 already made. A change written with an AI assistant is signed off by the person who submits it,
 who answers for it.
 
-GitHub automatically adds this DCO sign-off for web commits in this repository. It is distinct
-from a cryptographic signature: `main` also requires verified commit signatures. For local
-commits, configure SSH or GPG signing and use `git commit -S -s` to include both.
+GitHub automatically adds this DCO sign-off for web commits in this repository. It is not a
+cryptographic signature: `main` requires verified signatures, and GitHub signs the squash commit
+it creates, so your own commits need no signature (`git commit -S -s` adds both).
 
 ## The website
 

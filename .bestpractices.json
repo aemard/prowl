@@ -144,7 +144,7 @@
   "access_continuity_status": "Unmet",
   "access_continuity_justification": "As confirmed by the maintainer on 2026-10-31, no successor or emergency access procedure is configured. Public source and release instructions permit a fork but do not ensure control of the existing repository and publishing accounts within one week. https://github.com/aemard/prowl/blob/main/GOVERNANCE.md#continuity",
   "bus_factor_status": "Unmet",
-  "bus_factor_justification": "One maintainer for now. https://github.com/aemard/prowl/blob/main/GOVERNANCE.md#continuity covers the loss of that person.",
+  "bus_factor_justification": "One maintainer for now, and no successor yet: https://github.com/aemard/prowl/blob/main/GOVERNANCE.md#continuity.",
   "documentation_roadmap_status": "Met",
   "documentation_roadmap_justification": "https://github.com/aemard/prowl/blob/main/docs/status.md#roadmap: what Prowl plans to do and not do from November 2026 to October 2027.",
   "documentation_architecture_status": "Met",

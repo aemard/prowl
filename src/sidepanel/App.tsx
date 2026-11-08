@@ -1,6 +1,6 @@
 import { useSignalEffect } from '@preact/signals';
 import type { ComponentType } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { Theme } from '../lib/model';
 import { Header } from './components/Header';
 import { lazy } from './components/lazy';
@@ -68,8 +68,9 @@ function Shell() {
   const View = VIEWS[current];
 
   // Move focus into the new view when the route changes (not on first load), so keyboard and
-  // screen reader users land on what they just opened.
-  useEffect(() => {
+  // screen reader users land on what they just opened. A layout effect, so it runs before the
+  // passive effects of a view that moves focus on mount (Settings, for "Change limit").
+  useLayoutEffect(() => {
     if (firstRender.current) firstRender.current = false;
     else mainRef.current?.focus();
   }, [current]);

@@ -168,7 +168,7 @@ describe('markSeen / isSeen', () => {
   });
 });
 
-it('keeps always-show and observed-fact choices until confirmed removal, while snooze expires', () => {
+it('keeps always-show and observed facts until the PR is confirmed gone, and repairs them', () => {
   const pr = buildPullRequest();
   const pinned = setAlwaysShown(
     markSeen(state(), pr.id, pr.updatedAt, activityKey(pr)),

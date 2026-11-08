@@ -90,8 +90,8 @@ declared content script, which Prowl does not have.
 **Settings sync is off unless you turn it on** (Settings > Privacy and permissions). When it is on,
 your settings, and only your settings, are copied to `chrome.storage.sync`, which Chrome keeps
 in your Google account and copies to Chrome on your other computers. Your token, the pull
-requests Prowl fetched, your teams, panel organization and local PR choices never go there. The choice is
-per device.
+requests Prowl fetched, your teams, panel organization and local PR choices never go there. The
+choice is per device.
 
 The manifest also declares one keyboard shortcut (`commands`: Ctrl+Shift+P, ⌘⇧P on Mac, opens the side panel;
 change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no

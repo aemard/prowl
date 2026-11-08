@@ -191,6 +191,18 @@ const CASES: Case[] = [
     undefined,
     ['Merge requirements have not been verified for this commit'],
   ],
+  [
+    'review requirement not read for this commit',
+    { reviewDecision: 'unknown' },
+    undefined,
+    ['Merge requirements have not been verified for this commit'],
+  ],
+  [
+    'a verdict that cannot merge without a reason to list',
+    { mergeStateStatus: 'dirty' },
+    undefined,
+    ['Merge requirements are not satisfied'],
+  ],
 ];
 
 describe('mergeReadiness', () => {
