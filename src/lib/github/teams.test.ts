@@ -159,15 +159,6 @@ describe('discoverTeams', () => {
   it.each([
     ['forbidden', forbidden, 'Resource not accessible'],
     ['server', () => jsonResponse({ message: 'Server Error' }, { status: 502 }), 'Server Error'],
-    [
-      'rate_limited',
-      () =>
-        jsonResponse(
-          { message: 'API rate limit exceeded' },
-          { status: 403, headers: rateLimitHeaders({ remaining: 0 }) },
-        ),
-      'API rate limit exceeded',
-    ],
   ] as const)('records any other refusal (%s) as is', async (kind, answer, message) => {
     const { client } = setup([], answer);
     const result = await discoverTeams(client, auth(), { ...previous, login: 'hubot' }, NOW);
@@ -181,6 +172,15 @@ describe('discoverTeams', () => {
 
   it.each([
     ['unauthorized', () => jsonResponse({ message: 'Bad credentials' }, { status: 401 })],
+    [
+      'rate_limited',
+      () =>
+        jsonResponse(
+          { message: 'API rate limit exceeded' },
+          { status: 403, headers: rateLimitHeaders({ remaining: 0 }) },
+        ),
+    ],
+
     ['network', () => new TypeError('Failed to fetch')],
   ] as const)('throws %s, which fails the whole poll', async (kind, answer) => {
     const { client } = setup([], answer);

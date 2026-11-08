@@ -2,6 +2,7 @@
 import { diffSnapshots } from '../lib/diff/diffSnapshots';
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
+import { GitHubError, isPollBudgetFailure } from '../lib/github/errors';
 import { mapMergeState } from '../lib/github/mapPullRequest';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
@@ -112,6 +113,8 @@ async function readMergeState(
           : state.nextAllowedAt,
     });
   } catch (error) {
+    // A card-level GitHub error stays on the card; account-wide and unexpected ones reach the poll.
+    if (error instanceof GitHubError && !isPollBudgetFailure(error.kind)) return;
     if (!(await stillSignedIn(auth))) return;
     await recordPollFailure(error, state, now, settings.pollIntervalMinutes);
   } finally {
