@@ -438,15 +438,8 @@ is logged and the published snapshot stands).
 2. `filterEvents` (`src/lib/notify/filterEvents.ts`, pure) drops everything when notifications are
    off or `isQuietNow` (`src/lib/time/quietHours.ts`: local time, `start` inclusive, `end`
    exclusive, a window may wrap past midnight, `start === end` is empty), then the events whose
-   type is switched off and those of a muted or snoozed PR. The notifier separately retains
-   events blocked **only** by quiet hours in `chrome.storage.local` under
-   `deferredNotifications` (newest 50, deduped by event id). Local storage preserves overnight
-   events across browser restarts; sign-out clears the queue alongside `notified`.
-   On the first notification pass outside quiet hours, including an empty diff, pending events
-   are rechecked against notification settings and local mute/snooze state. PRs missing from
-   the latest published snapshot or now closed/merged are dropped. Eligible pending and new
-   events share the delivery path below; successfully delivered pending events are removed.
-   Other filtered events are discarded without being marked as reported.
+   type is switched off and those of a muted or snoozed PR. Dropped events are not retried
+   later and not marked as reported.
 3. Up to 3 events become one `basic` notification each (`src/lib/notify/messages.ts`: title says what happened
    and who did it, message is the PR title, context is `owner/name#number`); more than 3 become
    one summary ("5 pull request updates", the first PRs listed). The notification id of a
