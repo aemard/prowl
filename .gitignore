@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-dev/
+dist-preview/
 dist-e2e/
 coverage/
 playwright-report/
