@@ -57,3 +57,13 @@ working knowledge. Keep it short and current: newest knowledge wins.
 
 - List context: use `selectSection` / `toggleFolded` in `state/listContext.ts` to persist account-local organization under the session lock; it is read from `panelState` once per account after hydration, never again (storage events are the panel's own writes coming back, and replaying them flashes older choices). Search and temporary reveals stay in memory. Seen changes compare `activityKey(pr)` as well as timestamps; UI messages include observed versions and workers reject obsolete versions. Use `jsonEqual` for storage comparisons, since Chrome reorders object keys.
 - Axe settling: Chromium never finishes finite transitions inside a closed native `<details>`, so `expectNoA11yViolations` waits only for animations whose target `checkVisibility()`, then runs the complete, unchanged axe scan. Never disable a rule or skip a visible element to get past a hang.
+
+### Install-local setup
+
+`storage/onboarding.ts` owns the local `onboarding` marker: only `onInstalled` with
+`reason: install` creates pending setup. Updates without a marker complete it for legacy
+installs; sign-out and settings sync leave it intact. The router gates signed-in pending
+installs behind `#/setup`; Settings → Account can open that route for a rerun.
+`useSetupWizard` saves choices on Continue, then persists the resumable step. Skip keeps
+already saved choices and discards the current draft. Reuse `saveSettings`' boolean result
+so a failed write cannot advance the wizard. Step headings receive keyboard focus.

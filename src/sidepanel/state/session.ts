@@ -10,7 +10,7 @@ import { navigate } from './router';
 
 /**
  * Stores the validated sign-in (PAT or device flow), asks the worker for the first poll and shows
- * the list. A `warning` (the token works but not fully) stays on screen as a toast.
+ * setup for a pending fresh install, otherwise the list. A `warning` stays as a toast.
  */
 export async function completeSignIn(
   auth: AuthState,
@@ -31,7 +31,8 @@ export async function completeSignIn(
     await setItem(STORAGE_KEYS.auth, auth);
   });
   void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
-  navigate('list');
+  const setup = await getItem(STORAGE_KEYS.onboarding);
+  navigate(setup?.status === 'pending' ? 'setup' : 'list');
   if (warning) {
     showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
   }

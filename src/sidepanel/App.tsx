@@ -18,7 +18,10 @@ import './App.css';
 /** Settings is rarely opened: its own chunk, loaded on first visit. */
 const SettingsView = lazy(() => import('./views/Settings').then((m) => m.SettingsView));
 
+const SetupWizard = lazy(() => import('./views/SetupWizard').then((m) => m.SetupWizard));
+
 const VIEWS: Record<Route, ComponentType> = {
+  setup: SetupWizard,
   list: ListView,
   settings: SettingsView,
   onboarding: OnboardingView,
@@ -26,6 +29,7 @@ const VIEWS: Record<Route, ComponentType> = {
 
 /** Accessible name of the main landmark, announced when focus moves there on navigation. */
 const LABELS: Record<Route, string> = {
+  setup: 'Set up Prowl',
   list: 'Pull requests',
   settings: 'Settings',
   onboarding: 'Sign in',
@@ -81,7 +85,7 @@ function Shell() {
     <>
       <Header />
       <main ref={mainRef} class="app-main" tabIndex={-1} aria-label={LABELS[current]}>
-        {current !== 'onboarding' && current !== 'list' && <StatusBanner />}
+        {current === 'settings' && <StatusBanner />}
         <View />
       </main>
       <ShortcutsDialog />
