@@ -150,10 +150,10 @@ describe('requestDeviceCode', () => {
   });
 });
 
-describe('pollForToken', () => {
-  const pending = () => jsonResponse({ error: 'authorization_pending' });
-  const approved = () => jsonResponse({ access_token: TOKEN, token_type: 'bearer', scope: 'repo' });
+const pending = () => jsonResponse({ error: 'authorization_pending' });
+const approved = () => jsonResponse({ access_token: TOKEN, token_type: 'bearer', scope: 'repo' });
 
+describe('pollForToken', () => {
   it('waits for the interval, polls until the user approves and returns the token', async () => {
     const fetch = answers(pending, pending, approved);
     const result = pollForToken(CODE, { ...OPTIONS, fetch });
