@@ -1,6 +1,6 @@
 import type { PullRequest, Snapshot } from '../../lib/model';
 
-export type ActivityKind = 'new' | 'merged' | 'closed';
+export type ActivityKind = 'new' | 'merged' | 'closed' | 'fade';
 export interface PullRequestActivity {
   kind: ActivityKind;
   pr: PullRequest;

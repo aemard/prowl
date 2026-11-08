@@ -5,7 +5,7 @@ import { isSeen } from '../../lib/storage/prLocal';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { useCardTransitions } from '../state/cardTransitions';
-import { auth, prLocal, settings, snapshot } from '../state/store';
+import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import {
   filterPullRequests,
   groupByRepo,
@@ -70,7 +70,16 @@ function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: str
 export function useListData() {
   const now = useNow(30_000);
   const current = settings.value;
-  const { snap, activity } = useCardTransitions(currentSnapshot());
+  const { snap, activityBySection } = useCardTransitions(
+    currentSnapshot(),
+    pollState.value,
+    JSON.stringify([
+      current.sections,
+      current.repoInclude,
+      current.repoExclude,
+      current.unfollowedTeams,
+    ]),
+  );
   const local = prLocal.value;
   const query = filterQuery.value;
   const enabled = current.sections.filter((section) => section.enabled);
@@ -88,7 +97,7 @@ export function useListData() {
   const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
   return {
     now,
-    activity,
+    activity: activityBySection[selected?.id ?? ''] ?? {},
     snap,
     local,
     query,

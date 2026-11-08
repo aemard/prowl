@@ -93,7 +93,7 @@ const ACTIVITY = {
 };
 
 function CardUpdate({ pr, now, activity }: Pick<CardHeadProps, 'pr' | 'now' | 'activity'>) {
-  if (activity) {
+  if (activity && activity !== 'fade') {
     const { Icon, label } = ACTIVITY[activity];
     return (
       <span class="pr-card__activity" role="status">

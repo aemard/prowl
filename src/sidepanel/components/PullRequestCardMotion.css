@@ -34,7 +34,8 @@
 }
 
 .pr-card[data-activity="merged"],
-.pr-card[data-activity="closed"] {
+.pr-card[data-activity="closed"],
+.pr-card[data-activity="fade"] {
   /* Fade first, then let the invisible row settle closed. Keep the retention timer in sync. */
   animation:
     card-depart var(--duration-normal) var(--ease-out) both,

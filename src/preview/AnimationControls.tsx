@@ -18,7 +18,7 @@ const EVENTS = [
 export function AnimationControls() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const trigger = async (kind: ActivityKind) => {
+  const trigger = async (kind: Exclude<ActivityKind, 'fade'>) => {
     setBusy(true);
     setError('');
     try {

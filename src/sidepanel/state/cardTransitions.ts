@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import type { Snapshot } from '../../lib/model';
+import type { PollState, Snapshot } from '../../lib/model';
 import { type ActivityKind, pullRequestActivity } from './prActivity';
 
 // Exit fade (180ms) followed by row collapse (200ms); see PullRequestCardMotion.css.
@@ -34,45 +34,139 @@ export function retainDepartingCards(
   return result;
 }
 
-/** Transitions belong to the visible list, so first mount and changing accounts stay quiet. */
-export function useCardTransitions(source: Snapshot | undefined) {
-  const [state, setState] = useState(() => ({
-    source,
-    visible: source,
-    activity: {} as CardActivities,
-  }));
-  if (state.source !== source) {
-    const sameViewer =
-      source && state.source?.viewer.login.toLowerCase() === source.viewer.login.toLowerCase();
-    const activity: CardActivities = sameViewer ? { ...state.activity } : {};
-    if (source && sameViewer) {
-      for (const change of pullRequestActivity(state.source, source))
-        activity[change.pr.id] = change.kind;
-      for (const [id, kind] of Object.entries(activity)) {
-        if (kind !== 'new' && source.pullRequests[id]?.state === 'open') delete activity[id];
+/** Unknown departures retain the open baseline across progressive publications. */
+export const DEPARTURE_TIMEOUT_MS = 10_000;
+interface Transition {
+  section: string;
+  id: string;
+  kind?: ActivityKind;
+  deadline: number;
+}
+interface TransitionState {
+  source: Snapshot | undefined;
+  visible: Snapshot | undefined;
+  scope: string;
+  poll: PollState | undefined;
+  transitions: Record<string, Transition>;
+}
+
+function renderTransitions(state: TransitionState): Snapshot | undefined {
+  if (!state.source || !state.visible) return state.source;
+  let visible = state.source;
+  for (const section of Object.keys(state.source.sections)) {
+    const retained: CardActivities = {};
+    for (const transition of Object.values(state.transitions)) {
+      if (transition.section === section) retained[transition.id] = transition.kind ?? 'fade';
+    }
+    visible = retainDepartingCards(
+      { ...state.visible, sections: { [section]: state.visible.sections[section] ?? [] } },
+      visible,
+      retained,
+    );
+  }
+  return visible;
+}
+
+function reconcile(
+  previous: Snapshot,
+  source: Snapshot,
+  poll: PollState | undefined,
+  transitions: Record<string, Transition>,
+) {
+  const now = Date.now();
+  const changes = pullRequestActivity(previous, source);
+  for (const [section, ids] of Object.entries(previous.sections)) {
+    if (!(section in source.sections)) continue;
+    for (const id of ids) {
+      const key = JSON.stringify([section, id]);
+      const before = previous.pullRequests[id];
+      const after = source.pullRequests[id];
+      const present = source.sections[section]?.includes(id);
+      const current = transitions[key];
+      if (after?.state === 'open' && present) {
+        if (current?.kind !== 'new') delete transitions[key];
+      } else if (before?.state === 'open' && !present && !current) {
+        transitions[key] = { section, id, deadline: now + DEPARTURE_TIMEOUT_MS };
+      }
+      const pending = transitions[key];
+      if (pending && !pending.kind) {
+        if (after?.state === 'merged' || after?.state === 'closed') {
+          transitions[key] = {
+            ...pending,
+            kind: after.state,
+            deadline: now + CARD_TRANSITION_MS,
+          };
+        } else if (poll?.inFlight === false) {
+          transitions[key] = { ...pending, kind: 'fade', deadline: now + CARD_TRANSITION_MS };
+        }
       }
     }
-    setState({
-      source,
-      activity,
-      visible:
-        source && sameViewer && state.visible
-          ? retainDepartingCards(state.visible, source, activity)
-          : source,
-    });
+    for (const change of changes) {
+      const id = change.pr.id;
+      if (!ids.includes(id) && !source.sections[section]?.includes(id)) continue;
+      const key = JSON.stringify([section, id]);
+      if (transitions[key]?.kind === change.kind) continue;
+      transitions[key] = { section, id, kind: change.kind, deadline: now + CARD_TRANSITION_MS };
+    }
+  }
+  for (const [key, transition] of Object.entries(transitions)) {
+    if (!(transition.section in source.sections)) delete transitions[key];
+  }
+}
+
+export function useCardTransitions(source: Snapshot | undefined, poll?: PollState, scope = '') {
+  const [state, setState] = useState<TransitionState>(() => ({
+    source,
+    scope,
+    poll,
+    visible: source,
+    transitions: {},
+  }));
+  if (state.source !== source || state.poll !== poll || state.scope !== scope) {
+    const sameViewer =
+      source &&
+      state.source &&
+      state.scope === scope &&
+      state.source.viewer.login.toLowerCase() === source.viewer.login.toLowerCase();
+    const transitions = sameViewer ? { ...state.transitions } : {};
+    if (source && sameViewer && state.visible && state.source) {
+      reconcile(state.visible, source, poll, transitions);
+    }
+    const next = { source, scope, poll, transitions, visible: sameViewer ? state.visible : source };
+    setState({ ...next, visible: renderTransitions(next) });
   }
   useEffect(() => {
-    if (Object.keys(state.activity).length === 0) return;
+    const times = Object.values(state.transitions).map((transition) => transition.deadline);
+    if (!times.length) return;
     const timer = setTimeout(
       () =>
-        setState((current) => ({
-          source: current.source,
-          visible: current.source,
-          activity: {},
-        })),
-      CARD_TRANSITION_MS,
+        setState((current) => {
+          const transitions = { ...current.transitions };
+          const now = Date.now();
+          for (const [key, transition] of Object.entries(transitions)) {
+            if (transition.deadline > now) continue;
+            if (transition.kind) delete transitions[key];
+            else
+              transitions[key] = {
+                ...transition,
+                kind: 'fade',
+                deadline: now + CARD_TRANSITION_MS,
+              };
+          }
+          const next = { ...current, transitions };
+          return { ...next, visible: renderTransitions(next) };
+        }),
+      Math.max(0, Math.min(...times) - Date.now()),
     );
     return () => clearTimeout(timer);
-  }, [state.source]);
-  return { snap: state.visible, activity: state.activity };
+  }, [state]);
+  const activity: CardActivities = {};
+  const activityBySection: Record<string, CardActivities> = {};
+  for (const { section, id, kind } of Object.values(state.transitions)) {
+    if (!kind) continue;
+    activity[id] = kind;
+    activityBySection[section] ??= {};
+    activityBySection[section][id] = kind;
+  }
+  return { snap: state.visible, activity, activityBySection };
 }

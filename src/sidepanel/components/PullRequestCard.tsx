@@ -99,7 +99,7 @@ export function PullRequestCard({
       class="pr-card"
       ref={card}
       data-activity={activity}
-      inert={activity === 'merged' || activity === 'closed'}
+      inert={activity !== undefined && activity !== 'new'}
     >
       <div class="pr-card__body">
         <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
