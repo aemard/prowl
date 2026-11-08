@@ -3,10 +3,10 @@
  * REST `GET /user/teams` lists them across organizations in one call; GraphQL has no such
  * field, and every `Team` field there needs `read:org` (see docs/decisions.md).
  */
-import type { AuthState, ErrorKind, Team, TeamsState } from '../model';
+import type { AuthState, Team, TeamsState } from '../model';
 import { TEAM_KEY } from '../storage/settings';
 import type { GitHubClient } from './client';
-import { GitHubError } from './errors';
+import { GitHubError, isPollBudgetFailure } from './errors';
 
 const PER_PAGE = 100;
 /** Two pages. Each followed team also costs a search per poll (see `MAX_TEAM_SEARCHES`). */
@@ -18,9 +18,6 @@ const HOUR_MS = 60 * 60 * 1000;
 /** A list is refreshed after a day; a failed discovery is retried after an hour. */
 const REFRESH_MS = 24 * HOUR_MS;
 const RETRY_MS = HOUR_MS;
-
-/** Failures every other request of the poll would hit too. */
-const POLL_FAILURES: readonly ErrorKind[] = ['unauthorized', 'network'];
 
 /** Scopes that include `read:org`. */
 const READ_ORG_SCOPES = ['read:org', 'write:org', 'admin:org'];
@@ -93,7 +90,7 @@ export function teamsDue(stored: TeamsState | undefined, login: string, now: num
 /**
  * Runs `fetchViewerTeams`. A failure is recorded in `error` (`missing_scope` when GitHub refuses
  * a token that lacks `read:org` or is fine-grained) and the previous list of the same account
- * is kept; only a rejected token or no connection, which fail the whole poll, are thrown.
+ * is kept; account-wide failures and no connection are thrown to stop the poll.
  */
 export async function discoverTeams(
   client: GitHubClient,
@@ -106,7 +103,12 @@ export async function discoverTeams(
   try {
     return { ...base, teams: await fetchViewerTeams(client), error: null };
   } catch (error) {
-    if (!(error instanceof GitHubError) || POLL_FAILURES.includes(error.kind)) throw error;
+    if (
+      !(error instanceof GitHubError) ||
+      isPollBudgetFailure(error.kind) ||
+      error.kind === 'network'
+    )
+      throw error;
     const refused = error.kind === 'forbidden' || error.kind === 'not_found';
     const missingScope = refused && (auth.tokenType === 'fine_grained' || !hasReadOrg(auth.scopes));
     return {

@@ -501,10 +501,11 @@ can be shown as is) or null. `src/lib/github/teams.ts`:
   organization permission Members: read, and lists that organization's teams only.
 - `teamsDue(stored, login, now)`: true for no list or another account's, a list older than 24 h,
   or a failed attempt older than 1 h (and for a time in the future or junk).
-- `discoverTeams(client, auth, previous, now)`: never throws for a refusal: a 403 or 404 for a
+- `discoverTeams(client, auth, previous, now)`: a non-rate-limit 403 or 404 for a
   token without `read:org` (or fine-grained) becomes `missing_scope` with the fix in its
-  message, any other failure keeps its kind; `unauthorized` and `network` are thrown, since
-  every other request of the poll would fail the same way.
+  message, other local failures keep their kind. `unauthorized`, `rate_limited` and `network`
+  stop the poll before section searches; rate limits use the shared wait until `resetAt`
+  (or `retry-after`).
 
 The poller discovers before `fetchPullRequests` when due or asked (`refreshTeams`) and stores
 the result with the snapshot (so a sign-out mid-poll leaves no list behind). Sign-in
@@ -835,7 +836,11 @@ prioritizes it in any remaining merge batch, then, if needed, reads only that PR
 same lock as polls. Known merge facts younger than one minute are shared across reopens and
 panels. This does not search teams or advance the list's `fetchedAt`; account/head checks drop
 stale answers and rate-limit/backoff waits are respected. Badge and notification updates use
-the same snapshot diff.
+the same snapshot diff. Only `unauthorized` and `rate_limited` card-read failures update
+`pollState.lastError`, the failure count and the shared retry time, using
+`isPollBudgetFailure` (`src/lib/github/errors.ts`), also used by team discovery. Other
+card-read failures leave global poll state and cached merge facts intact. The pending
+indicator clears on every outcome.
 
 The list reuses its IntersectionObserver to send `mergePriority` hints for cards on screen
 (including already seen cards), renewing them on new snapshots. Folded groups have no
