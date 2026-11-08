@@ -3,6 +3,7 @@
  * Nothing that matters lives in memory (the worker can stop at any time): the schedule is
  * the alarm, everything else is `pollState` and `snapshot` in storage.
  */
+import { carryCiOutcomes } from '../lib/diff/checkTransitions';
 import { carrySettledChecks, diffSnapshots } from '../lib/diff/diffSnapshots';
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
@@ -160,6 +161,7 @@ function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchRe
     sectionErrors: fetched.sectionErrors,
     teamRequests: fetched.teamRequests,
     mergeStateAt: fetched.mergeStateAt,
+    ciOutcomes: carryCiOutcomes(previous, fetched.pullRequests),
     settledChecks: carrySettledChecks(previous, fetched.pullRequests),
   };
 }

@@ -27,8 +27,10 @@ pnpm build
 ```
 
 Load the extension from `dist/`: open `chrome://extensions`, turn on Developer mode, choose Load
-unpacked and pick the `dist` folder. `pnpm dev` rebuilds on every change; reload the extension on
-`chrome://extensions` to pick it up.
+unpacked and pick the `dist` folder. For hot reload, run `pnpm dev` and load `dist-dev/`
+instead. Keep the localhost:5173 dev server running; UI edits update automatically and
+background edits reload the extension. `pnpm dev:watch` keeps the original `dist/` build
+watcher with manual extension reload.
 
 ## Check your work
 
