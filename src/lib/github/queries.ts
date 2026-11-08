@@ -24,6 +24,7 @@ const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
 export const SEARCH_QUERY = /* GraphQL */ `
 query ProwlSearch($query: String!, $first: Int!, $after: String) {
   search(query: $query, type: ISSUE, first: $first, after: $after) {
+    issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
@@ -256,6 +257,7 @@ export interface GraphQLRateLimit {
 
 export interface SearchData {
   search: {
+    issueCount?: number;
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     /** Null where a read failed (an org that requires SAML); `{}` for a non-PR result. */
     nodes: (PullRequestNode | Record<string, never> | null)[] | null;

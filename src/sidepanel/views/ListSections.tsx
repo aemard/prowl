@@ -19,8 +19,10 @@ import {
 import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
+import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { pollState } from '../state/store';
 import {
   filterQuery,
   foldKey,
@@ -186,7 +188,8 @@ function EmptySection({
   const { shown, hidden, snoozed, snap, selected, query } = data;
   if (
     shown.length + hidden.length + snoozed.length > 0 ||
-    snap.sectionErrors?.[selected.id] !== undefined
+    snap.sectionErrors?.[selected.id] !== undefined ||
+    searching(data)
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
@@ -197,7 +200,7 @@ function EmptySection({
       title={filteredOut ? 'No matches' : 'No pull requests'}
       description={
         filteredOut
-          ? `Nothing in “${selected.label}” matches “${query.trim()}”.`
+          ? `Nothing in “${selected.label}” matches “${query.trim()}”.${snap.sectionCoverage?.[selected.id]?.hasMore ? ' This search only covers the loaded PRs.' : ''}`
           : KINDS[selected.kind].empty
       }
       action={
@@ -224,20 +227,40 @@ export function SectionContent({
   filterInput: RefObject<HTMLElement>;
 }) {
   const error = data.snap.sectionErrors?.[data.selected.id];
+  const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
+      {searching(data) && (
+        <p class="list__notice" role="status">
+          Searching “{data.selected.label}”…
+        </p>
+      )}
       {error !== undefined && (
         <p class="list__notice">
           <AlertIcon size={16} />
           <span>
-            Could not load “{data.selected.label}”: {error}
+            {coverage?.partial ? 'Partial results for' : 'Could not load'} “{data.selected.label}”:{' '}
+            {error}
           </span>
         </p>
+      )}
+      {coverage && (
+        <SectionCoverageNotice
+          coverage={coverage}
+          count={pullRequestsOf(data.snap, data.selected.id).length}
+        />
       )}
       <ShownRequests data={data} />
       <SnoozedRequests data={data} />
       <HiddenRequests data={data} />
       <EmptySection data={data} filterInput={filterInput} />
     </>
+  );
+}
+
+function searching(data: LoadedListData) {
+  return (
+    pollState.value?.inFlight === true &&
+    (data.snap.sectionsPending?.includes(data.selected.id) ?? false)
   );
 }

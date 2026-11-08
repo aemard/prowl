@@ -175,7 +175,7 @@ describe('fetchPullRequests', () => {
       expect(queries()).toHaveLength(MAX_TEAM_SEARCHES);
       expect(result.sections).toEqual({ team_review_requested: [] });
       expect(result.sectionErrors.team_review_requested).toBe(
-        `Prowl searches ${MAX_TEAM_SEARCHES} teams at most, 2 more were skipped. Unfollow teams in Settings to choose which.`,
+        `Partial results: ${MAX_TEAM_SEARCHES} of 12 followed teams searched. Choose teams in Settings.`,
       );
     });
   });

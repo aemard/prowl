@@ -94,6 +94,8 @@ export async function readMergeState({
   read,
   onProgress,
   priorityIds,
+  partialErrors = () => [],
+  reportPartial,
 }: {
   result: FetchResult;
   settings: FetchSettings;
@@ -102,6 +104,8 @@ export async function readMergeState({
   read: ReadGitHub;
   onProgress?: (result: FetchResult, mergePending: string[]) => Promise<void>;
   priorityIds: () => readonly string[];
+  partialErrors?: () => string[];
+  reportPartial?: (id: string, messages: string[]) => void;
 }): Promise<void> {
   const stale = staleMergeStates(result, settings, previous, local);
   for (
@@ -128,13 +132,19 @@ export async function readMergeState({
     } catch (error) {
       if (!(error instanceof GitHubError) || error.kind !== 'server') throw error;
     }
+    const messages = partialErrors();
+    if (messages.length) {
+      for (const [id, ids] of Object.entries(result.sections)) {
+        if (batch.some((pr) => ids.includes(pr.id))) reportPartial?.(id, messages);
+      }
+    }
     const readAt = new Date().toISOString();
     batch.forEach((pr, index) => {
       const node = nodes?.[index];
       // A hole or a failed batch leaves the baseline above; facts computed for another head
       // are unknown for this one, and unread, so the next poll asks again.
       if (!isNode(node)) return;
-      const sameHead = node.headRefOid === pr.headSha;
+      const sameHead = node.headRefOid === pr.headSha && messages.length === 0;
       result.pullRequests[pr.id] = { ...pr, ...mapMergeState(sameHead ? node : {}) };
       if (sameHead) result.mergeStateAt[pr.id] = readAt;
     });

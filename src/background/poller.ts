@@ -125,6 +125,8 @@ function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchRe
     viewer: auth.viewer,
     pullRequests: fetched.pullRequests,
     sections: fetched.sections,
+    sectionCoverage: fetched.sectionCoverage,
+    sectionsPending: fetched.sectionsPending,
     sectionErrors: fetched.sectionErrors,
     teamRequests: fetched.teamRequests,
     mergeStateAt: fetched.mergeStateAt,
@@ -211,12 +213,26 @@ async function finishPoll(
       inFlight: false,
     },
   });
-  // A section that failed to load hides its PRs this time: keep their snoozes and mutes.
-  const known =
-    Object.keys(snapshot.sectionErrors ?? {}).length > 0
-      ? undefined
-      : Object.keys(snapshot.pullRequests);
-  await updatePrLocal((state) => pruneExpired(state, Date.now(), known));
+  // Absence from a bounded search is not closure. Only discard choices for confirmed closed
+  // PRs; snoozes expire by date even if a PR is outside the current search scope.
+  const closed = new Set(
+    Object.values(snapshot.pullRequests)
+      .filter((pr) => pr.state !== 'open')
+      .map((pr) => pr.id),
+  );
+  await updatePrLocal((state) =>
+    pruneExpired(
+      state,
+      Date.now(),
+      [
+        ...new Set([
+          ...Object.keys(state.muted),
+          ...Object.keys(state.snoozed),
+          ...Object.keys(state.seen),
+        ]),
+      ].filter((id) => !closed.has(id)),
+    ),
+  );
 }
 
 /** The poll's account is gone: start over for whoever signed in, or clean up after sign-out. */
