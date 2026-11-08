@@ -61,22 +61,19 @@ function PollingSettings() {
         hint="Loaded before snooze. PRs outside every loaded section are not monitored."
         onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
       />
-      <details class="settings-details">
-        <summary>Refresh options</summary>
-        <NumberField
-          label="Check every (minutes)"
-          value={pollIntervalMinutes}
-          min={MIN_POLL_INTERVAL_MINUTES}
-          max={MAX_POLL_INTERVAL_MINUTES}
-          onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
-        />
-        <p class="settings-note">
-          GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
-          check of every section spends some: more pull requests and shorter intervals cost more. A
-          baseline estimate is about {points.toLocaleString('en-US')} points an hour; extra pages,
-          merge reads and actions can cost more. Prowl waits for the limit to reset if you run low.
-        </p>
-      </details>
+      <NumberField
+        label="Check every (minutes)"
+        value={pollIntervalMinutes}
+        min={MIN_POLL_INTERVAL_MINUTES}
+        max={MAX_POLL_INTERVAL_MINUTES}
+        onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
+      />
+      <p class="settings-note">
+        GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
+        check of every section spends some: more pull requests and shorter intervals cost more. A
+        baseline estimate is about {points.toLocaleString('en-US')} points an hour; extra pages,
+        merge reads and actions can cost more. Prowl waits for the limit to reset if you run low.
+      </p>
     </SettingsGroup>
   );
 }

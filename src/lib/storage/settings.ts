@@ -76,7 +76,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   sections: BUILT_IN_SECTION_KINDS.map((kind) => builtInSection(kind)),
   repoInclude: [],
   repoExclude: [],
-  pollIntervalMinutes: 5,
+  pollIntervalMinutes: 2,
   maxPerSection: 50,
   notifications: {
     enabled: false,

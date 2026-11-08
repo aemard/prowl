@@ -78,7 +78,7 @@ describe('poll', () => {
       lastError: null,
       inFlight: false,
     });
-    expect(alarm()).toMatchObject({ periodInMinutes: 5, scheduledTime: NOW + 5 * MINUTE });
+    expect(alarm()).toMatchObject({ periodInMinutes: 2, scheduledTime: NOW + 2 * MINUTE });
   });
 
   it('publishes search changes before a slow merge read and does not repeat their events', async () => {

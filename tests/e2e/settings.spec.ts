@@ -161,11 +161,13 @@ test.describe('refresh', () => {
     openPanel,
     serviceWorker,
   }) => {
-    expect(await pollPeriod(serviceWorker)).toBe(5);
+    expect(await pollPeriod(serviceWorker)).toBe(2);
     const panel = await openPanel('#/settings');
-    await panel.getByText('Refresh options', { exact: true }).click();
     const interval = panel.getByLabel('Check every (minutes)');
-    await expect(interval).toHaveValue('5');
+    await expect(interval).toHaveValue('2');
+    await expect(interval).toBeVisible();
+    await expect(panel.getByText('Refresh options', { exact: true })).toHaveCount(0);
+    await expect(panel.getByText(/about 120 points an hour/)).toBeVisible();
     await expect(panel.getByText(/5,000 points an hour/)).toBeVisible();
 
     await interval.fill('7');
