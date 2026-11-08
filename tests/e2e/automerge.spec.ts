@@ -92,9 +92,9 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
 
   const panel = await openPanel();
   const card = await expand(panel, 'Waiting on a review, acme/widgets#2');
-  await card.getByRole('button', { name: 'Merge acme/widgets#2' }).click();
+  await card.getByRole('button', { name: 'Enable auto-merge acme/widgets#2' }).click();
   const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
-  await expect(dialog).toContainText('or let GitHub merge it once its checks and reviews pass');
+  await expect(dialog).toContainText('once its checks and reviews pass');
   await dialog.getByRole('combobox', { name: 'Merge method' }).selectOption('squash');
   await expectNoA11yViolations(panel);
   await dialog.getByRole('button', { name: 'Enable auto-merge' }).click();

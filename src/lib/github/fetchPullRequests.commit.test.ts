@@ -7,7 +7,11 @@ import { bySearch, mapped, settings, setup } from './fetchPullRequests.test-supp
 
 describe('merge facts across commits', () => {
   it('never publishes the previous head merge facts on a new commit, including a failed batch', async () => {
-    const old = prNode({ reviewDecision: 'APPROVED', mergeStateStatus: 'CLEAN' });
+    const old = prNode({
+      reviewDecision: 'APPROVED',
+      mergeStateStatus: 'CLEAN',
+      viewerCanMergeAsAdmin: true,
+    });
     const fresh = prNode({ headRefOid: 'b'.repeat(40) });
     const previous = { pullRequests: { [old.id]: mapped(old) } };
     const published: (PullRequest | undefined)[] = [];
@@ -31,6 +35,9 @@ describe('merge facts across commits', () => {
       expect(pr?.mergeStateStatus).toBe('unknown');
       expect(pr?.reviewDecision).toBe('unknown');
       expect(pr?.viewerCanUpdate).toBe(false);
+      expect(pr?.viewerCanMergeAsAdmin).toBe(false);
+      expect(pr?.viewerCanEnableAutoMerge).toBe(false);
+      expect(pr?.viewerCanDisableAutoMerge).toBe(false);
     }
   });
 
@@ -47,6 +54,9 @@ describe('merge facts across commits', () => {
       mergeStateStatus: 'unknown',
       reviewDecision: 'unknown',
       viewerCanUpdate: false,
+      viewerCanMergeAsAdmin: false,
+      viewerCanEnableAutoMerge: false,
+      viewerCanDisableAutoMerge: false,
     });
     expect(result.mergeStateAt[prId(21)]).toBeUndefined();
   });

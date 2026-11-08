@@ -25,12 +25,15 @@ const MERGE_STATE_PER_POLL = 20;
 const MERGE_STATE_MAX_AGE_MS = 15 * 60 * 1000;
 const HIDDEN_MERGE_STATE_MAX_AGE_MS = 60 * 60 * 1000;
 
-const mergeFacts = ({
-  reviewDecision,
-  mergeable,
-  mergeStateStatus,
-  viewerCanUpdate,
-}: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
+const mergeFacts = (pr: PullRequest): MergeFacts => ({
+  reviewDecision: pr.reviewDecision,
+  mergeable: pr.mergeable,
+  mergeStateStatus: pr.mergeStateStatus,
+  viewerCanUpdate: pr.viewerCanUpdate,
+  viewerCanMergeAsAdmin: pr.viewerCanMergeAsAdmin === true,
+  viewerCanEnableAutoMerge: pr.viewerCanEnableAutoMerge === true,
+  viewerCanDisableAutoMerge: pr.viewerCanDisableAutoMerge === true,
+});
 
 /** What the search says about a PR, for telling whether anything changed since the last poll. */
 const searchFacts = (pr: PullRequest) =>
@@ -40,6 +43,9 @@ const searchFacts = (pr: PullRequest) =>
     mergeable: null,
     mergeStateStatus: null,
     viewerCanUpdate: null,
+    viewerCanMergeAsAdmin: null,
+    viewerCanEnableAutoMerge: null,
+    viewerCanDisableAutoMerge: null,
   });
 
 function staleMergeStates(

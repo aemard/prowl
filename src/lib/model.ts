@@ -139,6 +139,9 @@ export interface PullRequest {
   /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */
   defaultMergeMethod: MergeMethod;
   viewerCanUpdate: boolean;
+  viewerCanMergeAsAdmin: boolean;
+  viewerCanEnableAutoMerge: boolean;
+  viewerCanDisableAutoMerge: boolean;
   /** The viewer has write access to the repository (GraphQL has no `viewerCanMerge`). */
   viewerCanMerge: boolean;
   /** The repository lets pull requests merge themselves once their requirements pass. */
