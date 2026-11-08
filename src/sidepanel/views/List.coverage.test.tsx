@@ -80,3 +80,15 @@ it('qualifies a local search with no matches when other GitHub results exist', (
   render(<ListView />);
   expect(screen.getByText(/This search only covers the loaded PRs/)).toBeTruthy();
 });
+
+it('says so for a section the running poll has not loaded yet, unless it failed', () => {
+  withSections(['authored']);
+  pollState.value = buildPollState({ inFlight: true });
+  snapshot.value = buildSnapshotOf({});
+  const { unmount } = render(<ListView />);
+  expect(screen.getByRole('status').textContent).toContain('Searching');
+  unmount();
+  snapshot.value = buildSnapshotOf({}, { sectionErrors: { authored: 'GitHub refused it.' } });
+  render(<ListView />);
+  expect(screen.queryByRole('status')).toBeNull();
+});

@@ -10,7 +10,10 @@ function isRequest(message: unknown): message is BackgroundRequest {
   if (!isRecord(message)) return false;
   switch (message.type) {
     case 'poll':
-      return message.force === undefined || typeof message.force === 'boolean';
+      return (
+        (message.force === undefined || typeof message.force === 'boolean') &&
+        (message.afterCurrent === undefined || typeof message.afterCurrent === 'boolean')
+      );
     case 'refreshMergeState':
       return (
         typeof message.prId === 'string' &&
@@ -32,7 +35,7 @@ function isRequest(message: unknown): message is BackgroundRequest {
 async function route(request: BackgroundRequest, document: string): Promise<void> {
   switch (request.type) {
     case 'poll':
-      await poll({ force: request.force === true });
+      await poll({ force: request.force === true, afterCurrent: request.afterCurrent === true });
       return;
     case 'refreshMergeState':
       await refreshMergeState(request.prId, request.headSha);

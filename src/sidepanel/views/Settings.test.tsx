@@ -53,9 +53,12 @@ describe('SettingsView', () => {
       const send = vi.spyOn(fakeChrome().runtime, 'sendMessage');
       fireEvent.click(toggle('Mentioned'));
       fireEvent.click(toggle('Assigned to me'));
-      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true }), {
-        timeout: 2000,
-      });
+      await waitFor(
+        () => expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true }),
+        {
+          timeout: 2000,
+        },
+      );
       expect(send).toHaveBeenCalledTimes(1);
     });
 

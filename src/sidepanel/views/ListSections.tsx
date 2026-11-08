@@ -261,6 +261,7 @@ export function SectionContent({
 function searching(data: LoadedListData) {
   return (
     pollState.value?.inFlight === true &&
-    (data.snap.sectionsPending?.includes(data.selected.id) ?? false)
+    (data.snap.sectionsPending?.includes(data.selected.id) ||
+      (!(data.selected.id in data.snap.sections) && !data.snap.sectionErrors?.[data.selected.id]))
   );
 }

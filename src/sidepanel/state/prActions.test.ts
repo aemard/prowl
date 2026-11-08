@@ -34,7 +34,7 @@ describe('runPrAction', () => {
     expect(toasts.value.map(({ message, tone }) => [tone, message])).toEqual([
       ['success', 'Merged acme/widgets#7'],
     ]);
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(pendingActions.value).toEqual({});
   });
 
