@@ -121,7 +121,10 @@ describe('PullRequestDetails', () => {
     expect(link.getAttribute('href')).toBe(
       'https://github.com/acme/widgets/actions/runs/1/job/build',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'View changes on GitHub' }).getAttribute('href')).toBe(
+      'https://github.com/acme/widgets/pull/1/files',
+    );
     expect(screen.getByText('ci/jenkins').getAttribute('href')).toBeNull();
     expect(screen.getByText('nolink').closest('a')).toBeNull();
 
