@@ -54,11 +54,11 @@ test('reopening restores the section and folded repositories, while clearing sea
     'false',
   );
   await expect(reopened.getByRole('searchbox')).toHaveValue('');
-  await expect(reopened.getByRole('note')).toContainText('3 loaded');
+  await expect(reopened.getByRole('note')).toHaveCount(0);
   await expectNoA11yViolations(reopened);
 });
 
-test('an all-hidden list explains counts and lets a PR bypass automatic hiding', async ({
+test('an all-snoozed list opens its single fold and can unsnooze a PR', async ({
   github,
   seedStorage,
   signIn,
@@ -68,35 +68,40 @@ test('an all-hidden list explains counts and lets a PR bypass automatic hiding',
 }) => {
   const pr = prNode({
     isDraft: true,
+    title: 'Snoozed draft',
     url: `${MOCK_ORIGIN}/acme/widgets/pull/1`,
-    title: 'Hidden draft',
     commits: headCommit({ FAILURE: 1 }),
   });
   github.onGraphQL('ProwlSearch', (variables) => searchResponse([pr], variables));
-  await seedStorage({ settings: { ...defaultSettings(), hideDrafts: true } });
   await signIn();
+  await seedStorage({
+    prLocal: {
+      snoozed: { [pr.id]: new Date(Date.now() + 3_600_000).toISOString() },
+      muted: {},
+      seen: {},
+    },
+  });
   await poll();
   const panel = await openPanel();
   await expect(
-    panel.getByRole('heading', { name: 'All loaded pull requests are set aside' }),
+    panel.getByRole('heading', { name: 'All loaded pull requests are snoozed' }),
   ).toBeVisible();
-  await expect(panel.getByRole('note')).toContainText(
-    '1 loaded · 0 in list · 1 hidden · 0 snoozed',
-  );
-  await expectNoA11yViolations(panel);
-  await panel.getByRole('button', { name: 'Show hidden and snoozed' }).click();
-  await expect(panel.getByRole('button', { name: 'Hide again' })).toBeFocused();
-  await panel.getByRole('button', { name: 'More actions for Hidden draft' }).click();
-  await expectNoA11yViolations(panel);
-  await panel.getByRole('menuitemcheckbox', { name: 'Always show this PR' }).click();
+  await expect(panel.getByText('They return here when the snooze ends.')).toBeVisible();
+  await expect(panel.getByRole('note')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Show snoozed', exact: true }).click();
+  const fold = panel.getByRole('button', { name: 'Snoozed (1)' });
+  await expect(fold).toBeFocused();
+  await expect(fold).toHaveAttribute('aria-expanded', 'true');
+  await expect(panel.getByTitle(/^Snoozed until /)).toBeVisible();
+  await panel.getByRole('button', { name: 'More actions for Snoozed draft' }).click();
+  await expect(panel.getByRole('menuitemcheckbox', { name: 'Always show this PR' })).toHaveCount(0);
+  await panel.getByRole('menuitem', { name: 'Unsnooze', exact: true }).click();
   await expect(
     panel
       .getByRole('list', { name: 'Created by me pull requests' })
-      .getByRole('link', { name: /^Hidden draft/ }),
+      .getByRole('link', { name: /^Snoozed draft/ }),
   ).toBeVisible();
-  await expect(panel.getByRole('note')).toContainText(
-    '1 loaded · 1 in list · 0 hidden · 0 snoozed',
-  );
+  await expect(fold).toHaveCount(0);
   await expectNoA11yViolations(panel);
 });
 

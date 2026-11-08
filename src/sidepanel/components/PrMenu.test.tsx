@@ -18,22 +18,9 @@ const item = (name: RegExp | string) => screen.getByRole('menuitem', { name });
 const labels = () => screen.getAllByRole('menuitem').map((el) => el.textContent ?? '');
 
 describe('PrMenu', () => {
-  it('offers a reversible always-show checkbox without making a GitHub request', async () => {
-    const fetch = vi.fn();
-    vi.stubGlobal('fetch', fetch);
+  it('does not offer Always show', () => {
     open();
-    const pin = screen.getByRole('menuitemcheckbox', { name: 'Always show this PR' });
-    expect(pin.getAttribute('aria-checked')).toBe('false');
-    fireEvent.click(pin);
-    await waitFor(async () =>
-      expect((await loadPrLocal()).alwaysShown).toEqual({ [base.id]: true }),
-    );
-    prLocal.value = await loadPrLocal();
-    fireEvent.click(screen.getByRole('button', { name: /^More actions for / }));
-    expect(screen.getByRole('menuitemcheckbox').getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(screen.getByRole('menuitemcheckbox'));
-    await waitFor(async () => expect((await loadPrLocal()).alwaysShown).toEqual({}));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Always show this PR' })).toBeNull();
   });
 
   beforeEach(() => {

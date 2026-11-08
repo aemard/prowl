@@ -51,9 +51,6 @@ export function normalizePrLocal(value: unknown): PrLocalState {
           ),
         }
       : {}),
-    ...(isRecord(raw.alwaysShown)
-      ? { alwaysShown: validEntries(raw.alwaysShown, (item): item is true => item === true) }
-      : {}),
   };
 }
 
@@ -113,21 +110,6 @@ export function baselineSeenFacts(
   return next;
 }
 
-export function isAlwaysShown(state: Pick<PrLocalState, 'alwaysShown'>, id: string): boolean {
-  return ownValue(state.alwaysShown ?? {}, id) === true;
-}
-
-export function setAlwaysShown(state: PrLocalState, id: string, shown: boolean): PrLocalState {
-  if (isAlwaysShown(state, id) === shown) return state;
-  const alwaysShown = state.alwaysShown ?? {};
-  return {
-    ...state,
-    alwaysShown: shown
-      ? { ...alwaysShown, [id]: true }
-      : filterRecord(alwaysShown, (key) => key !== id),
-  };
-}
-
 /** True while a snooze for the PR has not ended. */
 export function isSnoozed(state: PrLocalState, id: string, now: Date | number): boolean {
   const until = ownValue(state.snoozed, id);
@@ -175,13 +157,11 @@ export function pruneExpired(
   const muted = filterRecord(state.muted, tracked);
   const seen = filterRecord(state.seen, tracked);
   const seenFacts = state.seenFacts && filterRecord(state.seenFacts, tracked);
-  const alwaysShown = state.alwaysShown && filterRecord(state.alwaysShown, tracked);
   if (
     snoozed === state.snoozed &&
     muted === state.muted &&
     seen === state.seen &&
-    seenFacts === state.seenFacts &&
-    alwaysShown === state.alwaysShown
+    seenFacts === state.seenFacts
   )
     return state;
   return {
@@ -190,7 +170,6 @@ export function pruneExpired(
     muted,
     seen,
     ...(seenFacts ? { seenFacts } : {}),
-    ...(alwaysShown ? { alwaysShown } : {}),
   };
 }
 

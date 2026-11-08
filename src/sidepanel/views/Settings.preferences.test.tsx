@@ -22,37 +22,9 @@ describe('SettingsView', () => {
       );
     });
 
-    it('hides pull requests after the number of days without a commit, 0 for never', async () => {
+    it('has no automatic hiding controls', async () => {
       await open();
-      const field = group('Appearance').getByLabelText('Hide PRs with no commit for (days)');
-      expect((field as HTMLInputElement).value).toBe('20');
-      expect(group('Appearance').getByText(/still notify you\. 0 never hides\./)).toBeTruthy();
-
-      fireEvent.input(field, { target: { value: '366' } });
-      expect(screen.getByText('Enter a whole number from 0 to 365.')).toBeTruthy();
-      expect((await saved()).hideStaleAfterDays).toBe(20);
-      fireEvent.input(field, { target: { value: '0' } });
-      await waitFor(async () => expect((await saved()).hideStaleAfterDays).toBe(0));
-    });
-
-    it('hides drafts and bot PRs with one switch each, off by default', async () => {
-      await open();
-      const appearance = group('Appearance');
-      const drafts = toggle('Hide draft PRs', appearance);
-      const bots = toggle('Hide PRs opened by bots', appearance);
-      expect(drafts.getAttribute('aria-checked')).toBe('false');
-      expect(bots.getAttribute('aria-checked')).toBe('false');
-      expect(bots.getAttribute('aria-describedby')).toBeTruthy();
-      expect(appearance.getByText(/Dependabot, Renovate and other apps/)).toBeTruthy();
-
-      fireEvent.click(drafts);
-      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: true }));
-      expect((await saved()).hideBots).toBe(false);
-      fireEvent.click(bots);
-      await waitFor(async () => expect(await saved()).toMatchObject({ hideBots: true }));
-      expect(drafts.getAttribute('aria-checked')).toBe('true');
-      fireEvent.click(drafts);
-      await waitFor(async () => expect(await saved()).toMatchObject({ hideDrafts: false }));
+      expect(group('Appearance').queryByLabelText(/Hide/)).toBeNull();
     });
 
     it('groups by repository with its own switch, apart from the sort order', async () => {

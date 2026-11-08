@@ -356,8 +356,6 @@ export interface PrLocalState {
   seen: Record<string, string>;
   /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
   seenFacts?: Record<string, string>;
-  /** Per-PR exceptions to automatic hiding. Snooze still takes precedence. */
-  alwaysShown?: Record<string, true>;
 }
 
 /** Local panel organization for one account; search text is deliberately session-only. */
@@ -404,14 +402,11 @@ export interface Settings {
   sort: SortOrder;
   /** The list groups each section's PRs under their repository (independent of `sort`). */
   groupByRepo: boolean;
-  /**
-   * PRs whose last commit is older than this many days are left out of the list, the section
-   * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.
-   */
+  /** Legacy sync compatibility key, always normalized to 0. */
   hideStaleAfterDays: number;
-  /** Draft PRs are left out of the list, the counts and the badge too (they still notify). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideDrafts: boolean;
-  /** So are PRs opened by a bot (`Actor.isBot`). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideBots: boolean;
   /**
    * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered

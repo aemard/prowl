@@ -278,7 +278,6 @@ async function finishPoll(
           ...Object.keys(state.snoozed),
           ...Object.keys(state.seen),
           ...Object.keys(state.seenFacts ?? {}),
-          ...Object.keys(state.alwaysShown ?? {}),
         ]),
       ].filter((id) => !closed.has(id)),
     ),

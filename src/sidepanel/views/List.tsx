@@ -25,7 +25,6 @@ export {
   filterQuery,
   foldedGroups,
   LIST_RENDERED_MARK,
-  showHidden,
 } from './ListState';
 
 function ListSkeleton() {
@@ -152,7 +151,7 @@ function LoadedList({
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
-        <SectionContent data={data} filterInput={filterInput} />
+        <SectionContent key={data.selected.id} data={data} filterInput={filterInput} />
       </div>
     </div>
   );

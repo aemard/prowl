@@ -1,10 +1,8 @@
 import type { PullRequest } from '../../lib/model';
 import {
-  isAlwaysShown,
   isMuted,
   isSnoozed,
   mute,
-  setAlwaysShown,
   snooze,
   unmute,
   unsnooze,
@@ -19,7 +17,6 @@ import {
   BellSlashIcon,
   ClockIcon,
   CopyIcon,
-  EyeIcon,
   GitPullRequestDraftIcon,
   GitPullRequestIcon,
   KebabHorizontalIcon,
@@ -74,7 +71,6 @@ async function copyBranch(pr: PullRequest) {
 function localEntries(pr: PullRequest, now: number): MenuEntry[] {
   const local = prLocal.value;
   const muted = isMuted(local, pr.id);
-  const alwaysShown = isAlwaysShown(local, pr.id);
   return [
     {
       id: 'open',
@@ -90,23 +86,6 @@ function localEntries(pr: PullRequest, now: number): MenuEntry[] {
       onSelect: () => void copyBranch(pr),
     },
     'separator',
-    {
-      id: 'always-show',
-      label: 'Always show this PR',
-      checked: alwaysShown,
-      checkRole: 'menuitemcheckbox',
-      icon: <EyeIcon />,
-      onSelect: () => {
-        void updatePrLocal((state) => setAlwaysShown(state, pr.id, !alwaysShown)).then(() =>
-          showToast({
-            message: alwaysShown
-              ? 'Automatic hiding applies to this PR again.'
-              : 'Always shown in the list and badge. Snooze still applies.',
-            tone: 'info',
-          }),
-        );
-      },
-    },
     ...(isSnoozed(local, pr.id, now)
       ? [
           {

@@ -1,8 +1,7 @@
-import { isAlwaysShown } from '../../lib/storage/prLocal';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { toggleExpanded } from '../state/prDetail';
-import { auth, prLocal } from '../state/store';
+import { auth } from '../state/store';
 import {
   AlertIcon,
   BellSlashIcon,
@@ -13,7 +12,6 @@ import {
   CommentDiscussionIcon,
   CommentIcon,
   DotFillIcon,
-  EyeClosedIcon,
   EyeIcon,
   FileDiffIcon,
   GitMergeIcon,
@@ -73,7 +71,7 @@ export function CardHead({
       >
         {formatRelativeTime(pr.updatedAt, now)}
       </time>
-      <CardFlags pr={pr} muted={muted} snoozedUntil={snoozedUntil} now={now} />
+      <CardFlags muted={muted} snoozedUntil={snoozedUntil} now={now} />
       <PrMenu pr={pr} now={now} />
       <IconButton
         class="pr-card__toggle"
@@ -91,11 +89,10 @@ export function CardHead({
 }
 
 function CardFlags({
-  pr,
   muted,
   snoozedUntil,
   now,
-}: Pick<PullRequestCardProps, 'pr' | 'muted' | 'snoozedUntil' | 'now'>) {
+}: Pick<PullRequestCardProps, 'muted' | 'snoozedUntil' | 'now'>) {
   return (
     <>
       {muted && (
@@ -104,19 +101,13 @@ function CardFlags({
           <span class="sr-only">Notifications muted</span>
         </span>
       )}
-      {isAlwaysShown(prLocal.value, pr.id) && (
-        <span class="pr-card__flag" title="Always shown despite automatic hiding">
-          <EyeIcon size={12} />
-          <span class="sr-only">Always shown</span>
-        </span>
-      )}
       {snoozedUntil && (
         <span
           class="pr-card__flag"
           title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
         >
           <ClockIcon size={12} />
-          {formatSnoozeEnd(snoozedUntil, now)}
+          Snoozed until {formatSnoozeEnd(snoozedUntil, now)}
         </span>
       )}
     </>
@@ -126,17 +117,15 @@ function CardFlags({
 export function CardChips({
   statuses,
   refreshingMerge,
-  hiddenBecause,
   teams,
   teamRequest,
 }: {
   statuses: Statuses;
   refreshingMerge: boolean;
-  hiddenBecause?: string;
   teams?: readonly string[];
   teamRequest: string | false | undefined;
 }) {
-  if (!refreshingMerge && !hiddenBecause && !teamRequest && statuses.length === 0) return null;
+  if (!refreshingMerge && !teamRequest && statuses.length === 0) return null;
   return (
     <span class="pr-card__chips">
       {refreshingMerge && (
@@ -146,15 +135,6 @@ export function CardChips({
           title="Checking the latest merge status on GitHub"
         >
           Updating merge status
-        </Badge>
-      )}
-      {hiddenBecause && (
-        <Badge
-          variant="plain"
-          icon={<EyeClosedIcon size={12} />}
-          title="Why it is hidden from the list"
-        >
-          {hiddenBecause}
         </Badge>
       )}
       {teamRequest && (

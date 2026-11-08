@@ -9,13 +9,6 @@
   list-style: none;
 }
 
-.list__summary {
-  margin: var(--space-2) var(--space-4);
-  color: var(--color-fg-muted);
-  font-size: var(--text-xs);
-  line-height: var(--leading-sm);
-}
-
 .list__notice {
   display: flex;
   align-items: flex-start;
@@ -53,7 +46,7 @@
   gap: var(--space-1);
 }
 
-/* "Snoozed (N)" and "Show N hidden" at the end of the list: a button, then the cards it reveals,
+/* "Snoozed (N)" at the end of the list: a button, then the cards it reveals,
    as wide as the others. */
 /* The button's own padding puts its icon in line with the cards' avatars. */
 .list__aside-toggle {

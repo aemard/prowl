@@ -41,7 +41,6 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/hidden.ts` | `hiddenReasons(pr, hide, now, local)` → why the list, the counts and the badge leave a PR out (a draft with `hideDrafts`, a bot's with `hideBots`, no commit for `hideStaleAfterDays`; none for a PR in `prLocal.alwaysShown`), and `describeHiddenReasons` for the revealed card. Pure. | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
@@ -76,9 +75,9 @@ in-memory updates that the next snapshot replaces.
    out of the search: GitHub evaluates branch rules for each on every read, about half a second
    per PR on busy repositories. `query ProwlMergeState` reads them, 10 PRs at a time, only for
    PRs that are new, changed in the search, unknown, or read more than 15 minutes ago
-   (`snapshot.mergeStateAt`); unchanged hidden or snoozed PRs use a one-hour interval.
+   (`snapshot.mergeStateAt`); unchanged snoozed PRs use a one-hour interval.
    Each poll reads at most 20 merge states. Consulted cards come first, followed by cards
-   currently on screen, other unhidden PRs, and hidden/snoozed PRs; otherwise oldest reads win.
+   currently on screen, other unsnoozed PRs, and snoozed PRs; otherwise oldest reads win.
    Deferred PRs keep their previous facts and the date they were read, and are listed in
    `snapshot.mergeStateDue`; new PRs have unknown merge facts until read. Search updates
    continue for all PRs. Facts and their date never cross a change of the PR's search data (a new
@@ -243,7 +242,7 @@ Mapping (`mapPullRequest`):
 | `author` | `{ login, avatarUrl, isBot }`, null for a deleted account. `isBot`: `author.__typename` is `Bot` (GraphQL gives a bot's login without a suffix), or the login ends with `[bot]` (REST's spelling), so a `Mannequin` or a person called "bot" is not one. Cost: none (`__typename` is free). |
 | `lastComment` | Latest issue comment. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
 | `closedBy` | `mergedBy` in search results; `ProwlNodes` adds the `ClosedEvent` actor. |
-| `lastCommitAt` | Head commit (`commits(last: 1)`) `committedDate`: the committer date, which a rebase, an amend or "Update branch" renews and comments do not. `updatedAt` when the commit did not load (a hole in a partial read), so such a PR is never hidden for it. |
+| `lastCommitAt` | Head commit (`commits(last: 1)`) `committedDate`: the committer date, which a rebase, an amend or "Update branch" renews and comments do not. `updatedAt` when the commit did not load (a hole in a partial read). |
 | `allowedMergeMethods` | Repository `mergeCommitAllowed`, `squashMergeAllowed`, `rebaseMergeAllowed`. |
 | `defaultMergeMethod` | Repository `viewerDefaultMergeMethod`: the method the viewer used last there, else the repository's own. `merge` for a value the model does not know. |
 | `viewerCanMerge` | Repository `viewerPermission` is `WRITE`, `MAINTAIN` or `ADMIN` (GraphQL has no `viewerCanMerge`; `viewerCanUpdate` is also true for an author without write access). False for `TRIAGE`, `READ`, unknown levels and a GitHub App (null). |
@@ -422,8 +421,7 @@ settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/back
   with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
   never seen counts; state does not matter);
   `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count,
-  nor PRs the list hides (`hiddenReasons` with `settings`, the same rule as the list); muted ones
-  do (mute only silences notifications). Merged and closed PRs outside every section never
+  while muted ones do (mute only silences notifications). Merged and closed PRs outside every section never
   count.
 - Text is the count, empty for 0 and `99+` above 99. The color is `--color-danger-solid`
   (`#c2272d`) when a counted PR has failing CI or requested changes, else `--color-accent-solid`
@@ -486,9 +484,7 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     `team_review_requested`, which takes the state of `review_requested`: before US-037 that
     section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
-  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `hideStaleAfterDays`
-    in 0-365 (default 20, 0 never hides), `groupByRepo`, `hideDrafts` and `hideBots` are
-    booleans (default off), quiet hours are `HH:MM`, repo filters are `owner` or
+  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `groupByRepo` is a boolean (default off); the legacy hiding keys are always normalized off, quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
     (`org/slug`, lowercased, deduplicated; default empty = follow every team, new ones
     included). A field added later needs no migration: a
@@ -496,8 +492,8 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   - Migrations: `SETTINGS_MIGRATIONS[n]` upgrades raw settings from version `n` to `n + 1`.
     Unversioned data counts as version 1; data from a newer version is normalized best-effort.
 - `prLocal.ts`: pure reducers over `PrLocalState` (`snooze`, `unsnooze`, `mute`, `unmute`,
-  `markSeen`, `setAlwaysShown`, `baselineSeenFacts`, `pruneExpired`), which return the same object
-  when nothing changes, and predicates (`isSnoozed`, `isMuted`, `isSeen`, `isAlwaysShown`);
+  `markSeen`, `baselineSeenFacts`, `pruneExpired`), which return the same object
+  when nothing changes, and predicates (`isSnoozed`, `isMuted`, `isSeen`);
   `updatePrLocal(fn)` applies reducers in one locked write. `markSeen` never moves backwards.
   The poller preserves local ids except confirmed closed PRs, including choices outside loaded searches.
   `forgetSeenFacts` drops observed facts only.
@@ -631,11 +627,10 @@ signal (`state/store.ts`).
   quick filter; `KINDS` in `views/ListSections.tsx` maps each `SectionKind` to its bar icon, short name and empty-list hint.
   PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
-  split by `splitSection` into cards (what the bar counts), hidden PRs (`hiddenReasons`, for every
-  kind of section alike) and snoozed PRs, which win over hidden. The selected tab, the filter,
-  whether hidden PRs are revealed and the folded repository groups use `state/listContext.ts`.
+  split by `splitSection` into cards (what the bar counts) and snoozed PRs. The selected tab,
+  filter and folded repository groups use `state/listContext.ts`.
   The section and folds are stored locally in account-scoped `panelState`, restored only after
-  hydration and cleared on sign-out; filter/reveal remain panel-session state. States:
+  hydration and cleared on sign-out; the filter remains panel-session state. States:
   skeleton until the first snapshot (or "Could not load pull requests" when the first poll failed;
   the banner has the reason and the retry), no sections enabled, no PRs, no matches (Clear filter), and a notice plus a warning on the tab
   for a section in `snapshot.sectionErrors`.
@@ -649,7 +644,7 @@ signal (`state/store.ts`).
   also steps from a header to the nearest card after or before it) and the seen observer skip
   them: a folded card is not on screen and is not marked seen. Folds are `foldedGroups`, keyed
   by section and repository. Counts (bar, headers) are the cards the quick filter matches.
-  Only `shown` is grouped: "Snoozed (N)" and "Show N hidden" keep their own flat lists.
+  Only `shown` is grouped: "Snoozed (N)" keeps its own flat list.
 - Status banner (`components/StatusBanner.tsx`, in `<main>` above every view except onboarding):
   `describeStatus(pollState, snapshot.fetchedAt, interval, now)` (`StatusBannerModel.ts`, pure,
   table-tested) picks at most one banner from what the worker stored, and the list below it is
@@ -841,16 +836,8 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
 - **Snoozed PRs** leave the cards, the section counts and the badge until the snooze ends; the list
   keeps them behind a "Snoozed (n)" disclosure at the end of the section. Muted PRs show a
   bell-off flag and produce no notifications. Both are `prLocal` only.
-- **Hidden PRs** (drafts with `settings.hideDrafts`, PRs opened by a bot with `settings.hideBots`,
-  both off by default; no commit for `settings.hideStaleAfterDays` days, default 20, 0 never
-  hides) leave the cards, the section counts and the badge, but are still fetched, diffed and notified.
-  "Show N hidden" at the end of the section (after "Snoozed") reveals them for the rest of the
-  panel's life, in every section, as full cards under the button with the reason as their first
-  chip ("Bot, No commit for 34 d", also in the card's description; a draft says nothing more
-  than the card's own "Draft" chip); they are marked seen like any card, and "Hide again" folds
-  them. The setting applies at once (the list and the badge follow
-  the settings in storage; nothing is fetched again). `HiddenReason` is a union (`draft`, `bot`,
-  `stale`), so one more reason joins the same button and count.
+- **Visibility**: every loaded PR appears unless snoozed. There is no automatic hiding,
+  Always show, hidden reveal or counts summary.
 
 ### Merge state when a card is consulted
 
@@ -954,17 +941,20 @@ Section scans also stop after 20 requests per query, independently of the examin
 
 ## List visibility and local organization
 
-A compact per-section summary separates loaded, matching, main-list, hidden and snoozed PRs.
-An all-set-aside state explains the result and offers a temporary reveal. Tab counts include
-folded main-list matches; temporary reveal and text filtering do not change the badge.
-`alwaysShown` is a per-PR local exception passed through the shared hiding rule for list, badge
-and merge-read priority. It includes that PR in the badge when relevant; explicit snooze wins.
-No global hiding preference is changed. Confirmed-closure pruning covers these choices too.
+Every loaded PR in scope appears except snoozed PRs. One collapsed "Snoozed (N)" fold
+ends each section; cards show "Snoozed until <date>" and offer Unsnooze. An all-snoozed
+section says "All loaded pull requests are snoozed", "They return here when the snooze ends."
+and "Show snoozed" opens that fold. Snoozed PRs do not count in tabs or the badge; mute only
+silences notifications. Repository filters and custom queries control fetching, not hiding.
+Settings version stays 1; legacy hideStaleAfterDays / hideDrafts / hideBots keys are kept but
+forced to 0 / false / false on read, save and sync ingress. normalizePrLocal drops alwaysShown
+and retains snooze, mute, seen and seen facts. Notifications still diff every loaded PR, so
+removing hiding causes no notification burst. Only snoozed merge facts get lower enrichment
+priority and the one-hour cache; the 20-PR merge-state cap remains.
 
 `panelState` stores only login, selected section and folded group keys locally, never in Chrome
 sync. Hydration precedes restoration; writes hold the session lock and update only that key.
-Sign-out removes repository context and a different account cannot restore it. Search text and
-temporary reveals remain session-only. Network errors retain cached data and retry controls,
+Sign-out removes repository context and a different account cannot restore it. Search text remains session-only. Network errors retain cached data and retry controls,
 but their wording does not claim the browser is necessarily offline.
 
 Observed `seenFacts` may include PR metadata: sign-in, sign-out and signed-out worker cleanup

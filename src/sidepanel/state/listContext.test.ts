@@ -9,7 +9,6 @@ import {
   foldedGroups,
   foldKey,
   selectSection,
-  showHidden,
   toggleFolded,
 } from './listContext';
 import { signOut } from './session';
@@ -31,7 +30,6 @@ it('restores the saved section and folds, stores new ones and drops them with th
   expect(activeSectionId.value).toBe('review_requested');
   expect(foldedGroups.value).toEqual([key]);
   filterQuery.value = 'temporary';
-  showHidden.value = true;
   await selectSection('authored');
   await toggleFolded(key);
   expect(await getItem('panelState')).toEqual({
@@ -44,7 +42,6 @@ it('restores the saved section and folds, stores new ones and drops them with th
   expect(activeSectionId.value).toBeUndefined();
   expect(foldedGroups.value).toEqual([]);
   expect(filterQuery.value).toBe('');
-  expect(showHidden.value).toBe(false);
   await signOut();
   expect(await getItem('panelState')).toBeUndefined();
   await selectSection('authored');

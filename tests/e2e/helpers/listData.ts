@@ -2,8 +2,7 @@
  * A realistic set of pull requests for the list E2E: several repositories, a draft, conflicts,
  * failing / pending / passing / no CI, approvals, requested changes, label colors from near
  * white to near black, titles and names that are too long for the panel, and one authored PR
- * with no commit for 34 days, which the default settings hide, and two Dependabot PRs (one of
- * them hidden for the same reason). Dates are relative to now.
+ * with no commit for 34 days and two Dependabot PRs, all visible. Dates are relative to now.
  */
 import { headCommit, prNode as node, reviewNode } from '../../fixtures/github';
 import { MOCK_ORIGIN } from '../mock-github/server';
@@ -224,8 +223,7 @@ export const assigned = [
     mergeStateStatus: 'CLEAN',
     labels: labels(['dependencies', '0366d6']),
   }),
-  // Opened by Dependabot (a bot: the default settings still show it). The second has had no
-  // commit for 41 days, so it is hidden by default and says both "Bot" and "No commit".
+  // Both Dependabot PRs remain visible, including one with no commit for 41 days.
   prNode({
     repository: 'acme/web',
     number: 2493,

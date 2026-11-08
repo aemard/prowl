@@ -158,7 +158,7 @@ describe('grouped by repository', () => {
     expect(header('acme/docs').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('keeps hidden and snoozed PRs in lists of their own, flat, with the repository on each card', () => {
+  it('keeps snoozed PRs in a list of their own, flat, with the repository on each card', () => {
     const old = inRepo(6, 'acme/web', '2026-09-01T00:00:00.000Z', {
       lastCommitAt: '2026-09-01T00:00:00.000Z',
     });
@@ -170,23 +170,15 @@ describe('grouped by repository', () => {
       seen: {},
     };
     render(<ListView />);
-    expect(headers()).toEqual(['acme/api1 pull request', 'acme/web1 pull request']);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show 1 hidden' }));
-    const revealed = screen.getByRole('list', { name: 'Hidden Created by me pull requests' });
-    expect(within(revealed).queryAllByRole('heading')).toEqual([]);
-    expect(within(revealed).getByText('acme/web')).toBeTruthy();
-    expect(within(revealed).getByTitle('Why it is hidden from the list').textContent).toBe(
-      'No commit for 35 d',
-    );
+    expect(headers()).toEqual(['acme/api1 pull request', 'acme/web2 pull requests']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Snoozed (1)' }));
     const snoozedList = screen.getByRole('list', { name: 'Snoozed Created by me pull requests' });
     expect(within(snoozedList).queryAllByRole('heading')).toEqual([]);
     expect(within(snoozedList).getByText('acme/api')).toBeTruthy();
-    // Neither is in a group or in the counts.
-    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Mine2');
-    expect(headers()).toEqual(['acme/api1 pull request', 'acme/web1 pull request']);
+    // Snoozed PRs are outside groups and counts.
+    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Mine3');
+    expect(headers()).toEqual(['acme/api1 pull request', 'acme/web2 pull requests']);
   });
 
   it('observes only the cards of open groups for the seen mark, and the others once unfolded', () => {
@@ -210,14 +202,19 @@ describe('grouped by repository', () => {
     expect(observed()).toEqual([api2.id, api4.id, web1.id, web3.id, docs5.id]);
   });
 
-  it('shows no empty group for a section whose PRs are all hidden or snoozed', () => {
+  it('shows no empty group for a section whose PRs are all snoozed', () => {
     const only = inRepo(1, 'acme/web', '2026-10-05T00:00:00.000Z', {
       lastCommitAt: '2026-08-01T00:00:00.000Z',
     });
     snapshot.value = buildSnapshotOf({ authored: [only] });
+    prLocal.value = {
+      snoozed: { [only.id]: new Date(NOW + 3_600_000).toISOString() },
+      muted: {},
+      seen: {},
+    };
     render(<ListView />);
     expect(headers()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Show 1 hidden' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Snoozed (1)' })).toBeTruthy();
   });
 
   it('switches with the setting, while the list is open', () => {

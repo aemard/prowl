@@ -7,9 +7,8 @@ import { auth, hydrated, panelState } from './store';
 
 export const activeSectionId = signal<string | undefined>(undefined);
 export const foldedGroups = signal<string[]>([]);
-/** Filters and temporary reveals never survive closing the panel or changing account. */
+/** Search text never survives closing the panel or changing account. */
 export const filterQuery = signal('');
-export const showHidden = signal(false);
 
 let account: string | undefined;
 let restored = false;
@@ -22,7 +21,6 @@ effect(() => {
       activeSectionId.value = undefined;
       foldedGroups.value = [];
       filterQuery.value = '';
-      showHidden.value = false;
     });
   }
   // Once per account: later storage events are this panel's own writes coming back, and

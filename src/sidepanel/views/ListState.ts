@@ -17,20 +17,13 @@ export {
   filterQuery,
   foldedGroups,
   foldKey,
-  showHidden,
   toggleFolded,
 } from '../state/listContext';
 
 import { activityKey } from '../../lib/activity';
-import {
-  activeSectionId,
-  filterQuery,
-  foldedGroups,
-  foldKey,
-  showHidden,
-} from '../state/listContext';
+import { activeSectionId, filterQuery, foldedGroups, foldKey } from '../state/listContext';
 
-const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
+const NOTHING: SectionParts = { shown: [], snoozed: [] };
 export const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
   (snap.sections[sectionId] ?? []).flatMap((id) => snap.pullRequests[id] ?? []);
 
@@ -42,8 +35,8 @@ function currentSnapshot() {
 }
 
 /**
- * Per section, the PRs that pass the filter in the chosen order: cards (counted), hidden ones
- * and snoozed ones, each set aside behind a button at the end.
+ * Per section, the PRs that pass the filter in the chosen order: cards (counted)
+ * and snoozed ones set aside behind one fold at the end.
  */
 function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: string) {
   const current = settings.value;
@@ -76,16 +69,15 @@ export function useListData() {
   const enabled = current.sections.filter((section) => section.enabled);
   const selected = enabled.find((section) => section.id === activeSectionId.value) ?? enabled[0];
   const parts = sectionParts(enabled, snap, query);
-  const { shown, hidden, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
+  const { shown, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
   // Grouped, only the cards of open groups are rendered: a folded group is not on screen, so its
-  // cards are not marked seen. Hidden and snoozed PRs stay flat, with their repository on the card.
+  // cards are not marked seen. Snoozed PRs stay flat, with their repository on the card.
   const grouped = current.groupByRepo;
   const groups = grouped ? groupByRepo(shown) : [];
   const isFolded = (repo: string) => foldedGroups.value.includes(foldKey(selected?.id ?? '', repo));
   const rendered = grouped
     ? groups.filter(({ repo }) => !isFolded(repo)).flatMap((g) => g.prs)
     : shown;
-  const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
   return {
     now,
     snap,
@@ -95,12 +87,11 @@ export function useListData() {
     selected,
     parts,
     shown,
-    hidden,
     snoozed,
     grouped,
     groups,
     isFolded,
-    seeable: [...rendered, ...revealed],
+    seeable: rendered,
   };
 }
 

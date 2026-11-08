@@ -1,9 +1,8 @@
 import type { RefObject } from 'preact';
 import { useState } from 'preact/hooks';
 import { activityKey } from '../../lib/activity';
-import { describeHiddenReasons } from '../../lib/hidden';
 import type { PullRequest, SectionKind } from '../../lib/model';
-import { isMuted, isSeen } from '../../lib/storage/prLocal';
+import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
   ClockIcon,
@@ -29,7 +28,6 @@ import {
   foldKey,
   type LoadedListData,
   pullRequestsOf,
-  showHidden,
   toggleFolded,
 } from './ListState';
 
@@ -71,13 +69,11 @@ function ListCard({
   data,
   grouped = false,
   snoozed = false,
-  hiddenBecause,
 }: {
   pr: PullRequest;
   data: LoadedListData;
   grouped?: boolean;
   snoozed?: boolean;
-  hiddenBecause?: string;
 }) {
   return (
     <PullRequestCard
@@ -88,7 +84,6 @@ function ListCard({
       teams={data.snap.teamRequests?.[pr.id]}
       grouped={grouped}
       snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
-      hiddenBecause={hiddenBecause}
     />
   );
 }
@@ -152,40 +147,6 @@ function SnoozedRequests({
   );
 }
 
-function HiddenRequests({ data }: { data: LoadedListData }) {
-  const { hidden, selected } = data;
-  return (
-    hidden.length > 0 && (
-      <div class="list__aside">
-        <Button
-          class="list__aside-toggle"
-          size="sm"
-          variant="ghost"
-          icon={showHidden.value ? <EyeClosedIcon size={12} /> : <EyeIcon size={12} />}
-          aria-expanded={showHidden.value}
-          onClick={() => {
-            showHidden.value = !showHidden.value;
-          }}
-        >
-          {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
-        </Button>
-        {showHidden.value && (
-          <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
-            {hidden.map(({ pr, reasons }) => (
-              <ListCard
-                key={pr.id}
-                pr={pr}
-                data={data}
-                hiddenBecause={describeHiddenReasons(reasons)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-    )
-  );
-}
-
 function EmptySection({
   data,
   filterInput,
@@ -193,9 +154,9 @@ function EmptySection({
   data: LoadedListData;
   filterInput: RefObject<HTMLElement>;
 }) {
-  const { shown, hidden, snoozed, snap, selected, query } = data;
+  const { shown, snoozed, snap, selected, query } = data;
   if (
-    shown.length + hidden.length + snoozed.length > 0 ||
+    shown.length + snoozed.length > 0 ||
     snap.sectionErrors?.[selected.id] !== undefined ||
     searching(data)
   )
@@ -235,31 +196,18 @@ export function SectionContent({
   filterInput: RefObject<HTMLElement>;
 }) {
   const [snoozedOpen, setSnoozedOpen] = useState(false);
-  const loaded = pullRequestsOf(data.snap, data.selected.id).length;
-  const matches = data.shown.length + data.hidden.length + data.snoozed.length;
+  const matches = data.shown.length + data.snoozed.length;
   const setAside =
     data.shown.length === 0 &&
     matches > 0 &&
-    !(showHidden.value && data.hidden.length > 0) &&
-    !(snoozedOpen && data.snoozed.length > 0);
+    !snoozedOpen &&
+    pullRequestsOf(data.snap, data.selected.id).every((pr) =>
+      isSnoozed(data.local, pr.id, data.now),
+    );
   const error = data.snap.sectionErrors?.[data.selected.id];
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
-      {loaded > 0 && (
-        <p
-          class="list__summary"
-          role="note"
-          title="Tab counts show main-list PRs after filtering, including folded groups. Temporary reveals do not affect the badge."
-        >
-          {loaded} loaded · {data.query.trim() && `${matches} matching · `}
-          {data.shown.length} in list · {data.hidden.length} hidden · {data.snoozed.length} snoozed
-          <span class="sr-only">
-            . Tab counts include folded groups. The badge ignores this text filter, counts unique
-            PRs across sections and excludes hidden and snoozed PRs.
-          </span>
-        </p>
-      )}
       {searching(data) && (
         <p class="list__notice" role="status">
           Searching “{data.selected.label}”…
@@ -283,33 +231,26 @@ export function SectionContent({
       {setAside && !searching(data) && (
         <EmptyState
           icon={<EyeClosedIcon size={24} />}
-          title={
-            data.query.trim()
-              ? 'Matches are hidden or snoozed'
-              : 'All loaded pull requests are set aside'
-          }
-          description="Automatic hiding and snooze keep these PRs out of the main list. You can reveal them below or choose Always show in a PR’s menu."
+          title="All loaded pull requests are snoozed"
+          description="They return here when the snooze ends."
           action={
             <Button
               onClick={() => {
-                showHidden.value = true;
                 setSnoozedOpen(true);
-                // This notice goes away with the click: the toggle below stays and now reads
-                // "Hide again", so keyboard focus does not fall back to the page.
+                // Keep keyboard focus on the fold after the empty-state button disappears.
                 filterInput.current
                   ?.closest('.list')
                   ?.querySelector<HTMLElement>('.list__aside-toggle')
                   ?.focus();
               }}
             >
-              Show hidden and snoozed
+              Show snoozed
             </Button>
           }
         />
       )}
       <ShownRequests data={data} />
       <SnoozedRequests data={data} open={snoozedOpen} setOpen={setSnoozedOpen} />
-      <HiddenRequests data={data} />
       <EmptySection data={data} filterInput={filterInput} />
     </>
   );

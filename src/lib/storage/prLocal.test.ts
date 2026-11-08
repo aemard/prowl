@@ -6,7 +6,6 @@ import type { PrLocalState } from '../model';
 import {
   baselineSeenFacts,
   emptyPrLocal,
-  isAlwaysShown,
   isMuted,
   isSeen,
   isSnoozed,
@@ -15,7 +14,6 @@ import {
   mute,
   normalizePrLocal,
   pruneExpired,
-  setAlwaysShown,
   snooze,
   subscribePrLocal,
   unmute,
@@ -168,26 +166,16 @@ describe('markSeen / isSeen', () => {
   });
 });
 
-it('keeps always-show and observed facts until the PR is confirmed gone, and repairs them', () => {
+it('drops legacy alwaysShown while retaining local choices and seen facts', () => {
   const pr = buildPullRequest();
-  const pinned = setAlwaysShown(
-    markSeen(state(), pr.id, pr.updatedAt, activityKey(pr)),
+  const local = markSeen(
+    mute(snooze(state(), pr.id, NOW + HOUR), pr.id),
     pr.id,
-    true,
+    pr.updatedAt,
+    activityKey(pr),
   );
-  expect(isAlwaysShown(pinned, pr.id)).toBe(true);
-  expect(isAlwaysShown(pinned, 'toString')).toBe(false);
-  expect(setAlwaysShown(pinned, pr.id, true)).toBe(pinned);
-  expect(isAlwaysShown(setAlwaysShown(pinned, pr.id, false), pr.id)).toBe(false);
-  expect(pruneExpired(pinned, NOW)).toBe(pinned);
-  expect(pruneExpired(pinned, NOW, [])).toMatchObject({ seenFacts: {}, alwaysShown: {}, seen: {} });
-  expect(
-    normalizePrLocal({
-      ...pinned,
-      alwaysShown: { [pr.id]: true, bad: false },
-      seenFacts: { [pr.id]: activityKey(pr), bad: 'x'.repeat(16_385) },
-    }),
-  ).toEqual(pinned);
+  expect(normalizePrLocal({ ...local, alwaysShown: { [pr.id]: true } })).toEqual(local);
+  expect(pruneExpired(local, NOW, [])).toMatchObject({ seenFacts: {}, seen: {} });
 });
 
 describe('pruneExpired', () => {
