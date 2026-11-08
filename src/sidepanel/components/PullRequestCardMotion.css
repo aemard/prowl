@@ -1,10 +1,7 @@
-@property --card-wash {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 0%;
-}
-
 .pr-card {
+  --card-enter-duration: 240ms;
+  --card-collapse-duration: 200ms;
+
   display: grid;
   /* Long repository names must shrink inside the card, including during row animation. */
   grid-template-columns: minmax(0, 1fr);
@@ -20,38 +17,28 @@
   overflow: clip;
 }
 
-.pr-card[data-activity] {
+.pr-card[data-activity="new"] {
   --card-tint: var(--color-brand-surface);
   --card-accent: var(--color-success-fg);
-  background:
-    linear-gradient(
-      100deg,
-      color-mix(in srgb, var(--card-accent) var(--card-wash), transparent),
-      transparent 85%
-    ),
-    var(--glass-card);
-}
-
-.pr-card[data-activity="new"] {
-  animation:
-    card-arrive 700ms var(--ease-out) both,
-    card-arrive-wash 1100ms linear both;
+  animation: card-arrive var(--card-enter-duration) var(--ease-out) both;
 }
 
 .pr-card[data-activity="merged"] {
   --card-tint: var(--color-done-bg);
   --card-accent: var(--color-done-fg);
-  animation:
-    card-merge-away 1100ms var(--ease-standard) both,
-    card-wash 1100ms ease-out both;
 }
 
 .pr-card[data-activity="closed"] {
   --card-tint: var(--color-bg-hover);
   --card-accent: var(--color-fg-muted);
+}
+
+.pr-card[data-activity="merged"],
+.pr-card[data-activity="closed"] {
+  /* Fade first, then let the invisible row settle closed. Keep the retention timer in sync. */
   animation:
-    card-close-away 1100ms var(--ease-standard) both,
-    card-wash 1100ms ease-out both;
+    card-depart var(--duration-normal) var(--ease-out) both,
+    card-collapse var(--card-collapse-duration) var(--ease-out) var(--duration-normal) both;
 }
 
 .pr-card__activity {
@@ -65,102 +52,36 @@
   background: var(--card-tint);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  animation: card-label 1100ms var(--ease-out) both;
-}
-
-.pr-card__activity svg {
-  animation: card-mark 500ms var(--ease-out) both;
 }
 
 @keyframes card-arrive {
-  0% {
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  65% {
-    grid-template-rows: 1fr;
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    grid-template-rows: 1fr;
-    opacity: 1;
-  }
-}
-
-@keyframes card-merge-away {
-  0%,
-  55% {
-    grid-template-rows: 1fr;
-    opacity: 1;
-  }
-  80% {
-    opacity: 0;
-  }
-  100% {
-    grid-template-rows: 0fr;
-    opacity: 0;
-  }
-}
-
-@keyframes card-close-away {
-  0%,
-  45% {
-    grid-template-rows: 1fr;
-    opacity: 1;
-  }
-  80% {
-    opacity: 0;
-  }
-  100% {
-    grid-template-rows: 0fr;
-    opacity: 0;
-  }
-}
-
-/* Tint is painted on the same rounded surface as the card border. */
-@keyframes card-wash {
-  0%,
-  100% {
-    --card-wash: 0%;
-  }
-  20%,
-  50% {
-    --card-wash: 9%;
-  }
-}
-
-@keyframes card-arrive-wash {
-  0%,
-  64% {
-    --card-wash: 9%;
-  }
-  100% {
-    --card-wash: 0%;
-  }
-}
-
-@keyframes card-label {
-  0% {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  20%,
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes card-mark {
   from {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes card-depart {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes card-collapse {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
   }
 }
 
@@ -169,8 +90,5 @@
   .pr-card__activity,
   .pr-card__activity svg {
     animation: none;
-  }
-  .pr-card[data-activity] {
-    --card-wash: 4%;
   }
 }

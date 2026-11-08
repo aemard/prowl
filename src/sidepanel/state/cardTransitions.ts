@@ -2,7 +2,8 @@ import { useEffect, useState } from 'preact/hooks';
 import type { Snapshot } from '../../lib/model';
 import { type ActivityKind, pullRequestActivity } from './prActivity';
 
-export const CARD_TRANSITION_MS = 1100;
+// Exit fade (180ms) followed by row collapse (200ms); see PullRequestCardMotion.css.
+export const CARD_TRANSITION_MS = 380;
 export type CardActivities = Record<string, ActivityKind>;
 
 /** Keep departing cards in their original sections until their exit animation finishes. */
