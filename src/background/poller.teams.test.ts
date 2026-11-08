@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { prNode, searchResponse, teamJson } from '../../tests/fixtures/github';
-import { jsonResponse } from '../../tests/fixtures/http';
+import { jsonResponse, rateLimitHeaders } from '../../tests/fixtures/http';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, setItem } from '../lib/storage/storage';
 import { poll } from './poller';
@@ -97,6 +97,33 @@ describe('poll', () => {
       expect(requests).toEqual([]);
       expect(await pollState()).toMatchObject({ lastError: { kind: 'network' } });
       expect(await getItem('teams')).toBeUndefined();
+    });
+
+    it('stops before searches and waits for a team-discovery rate limit to reset', async () => {
+      const reset = NOW + 20 * MINUTE;
+      const requests = github(undefined, () =>
+        jsonResponse(
+          { message: 'API rate limit exceeded' },
+          {
+            status: 403,
+            headers: rateLimitHeaders({ remaining: 0, reset: reset / 1000 }),
+          },
+        ),
+      );
+      await signIn();
+      await poll();
+      expect(requests).toEqual([]);
+      expect(await getItem('teams')).toBeUndefined();
+      expect(await pollState()).toMatchObject({
+        lastError: { kind: 'rate_limited' },
+        consecutiveFailures: 1,
+        nextAllowedAt: at(reset),
+      });
+      await poll({ force: true });
+      expect(teamCalls).toBe(1);
+      later(20 * MINUTE);
+      await poll();
+      expect(teamCalls).toBe(2);
     });
 
     it('discovers them again on request, in a poll of its own after the one in flight', async () => {
