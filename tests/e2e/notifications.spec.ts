@@ -41,7 +41,7 @@ test.beforeEach(async ({ seedStorage }) => {
   await seedStorage({ settings: { notifications: { enabled: true } } });
 });
 
-test('CI going from pending to failed notifies once per commit', async ({
+test('CI going from pending to failed notifies once per observed failure', async ({
   github,
   signIn,
   poll,
@@ -54,16 +54,18 @@ test('CI going from pending to failed notifies once per commit', async ({
 
   state.checks = 'failure';
   await poll();
-  const id = `${prId(1)}:ci_failed:${SHA}`;
+  const id = `${prId(1)}:ci_failed:${SHA}:1`;
   expect(await shown(serviceWorker)).toEqual([id]);
 
-  // The same change again (a re-run that fails on the same commit) is not news.
+  // An unchanged failure is not news; a re-run that fails again on the same commit is.
   await serviceWorker.evaluate((notification) => chrome.notifications.clear(notification), id);
+  await poll();
+  expect(await shown(serviceWorker)).toEqual([]);
   for (const checks of ['pending', 'failure'] as const) {
     state.checks = checks;
     await poll();
   }
-  expect(await shown(serviceWorker)).toEqual([]);
+  expect(await shown(serviceWorker)).toEqual([`${prId(1)}:ci_failed:${SHA}:2`]);
 });
 
 test('a muted pull request produces no notification', async ({
@@ -79,7 +81,7 @@ test('a muted pull request produces no notification', async ({
   await poll();
   state.checks = 'failure';
   await poll();
-  expect(await shown(serviceWorker)).toEqual([`${prId(2)}:ci_failed:${SHA}`]);
+  expect(await shown(serviceWorker)).toEqual([`${prId(2)}:ci_failed:${SHA}:1`]);
 });
 
 test('switched-off events and quiet hours produce no notification', async ({

@@ -65,6 +65,7 @@ describe('poll', () => {
       sections: { authored: [PR] },
       sectionErrors: {},
       settledChecks: {},
+      ciOutcomes: {},
     });
     expect(Object.keys(snapshot?.pullRequests ?? {})).toEqual([PR]);
     expect(result).toEqual({ snapshot, events: [] });
