@@ -17,7 +17,8 @@ const quiet = (number: number, overrides: Node = {}) =>
 const failing = (number: number) => quiet(number, { commits: headCommit({ FAILURE: 1 }) });
 const changes = (number: number) => quiet(number, { reviewDecision: 'CHANGES_REQUESTED' });
 const conflicting = (number: number) => quiet(number, { mergeable: 'CONFLICTING' });
-const ready = (number: number) => quiet(number, { mergeStateStatus: 'CLEAN' });
+const ready = (number: number) =>
+  quiet(number, { mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 
 function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) => id) }): Snapshot {
   return {

@@ -8,7 +8,7 @@ import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildSnapshotOf } from '../test/panel';
 import { refreshMergeState, setMergePriority } from './poller';
 
-const node = prNode({ mergeStateStatus: 'CLEAN' });
+const node = prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 const pr = { ...mapPullRequest(node), mergeStateStatus: 'blocked' as const };
 
 beforeEach(async () => {
@@ -68,6 +68,21 @@ it('updates the badge and reports a readiness change only once', async () => {
   expect(fakeChrome().__state.notifications.size).toBe(1);
   expect([...fakeChrome().__state.notifications.keys()][0]).toContain(':ready_to_merge:');
 });
+
+it.each(['b'.repeat(40), undefined])(
+  'rejects facts returned for an unverified head (%s)',
+  async (headRefOid) => {
+    serve(() => {
+      const response = mergeStateResponse([pr.id], [node]);
+      return jsonResponse({
+        data: { ...response, nodes: response.nodes?.map((item) => ({ ...item, headRefOid })) },
+      });
+    });
+    await refreshMergeState(pr.id, pr.headSha);
+    expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+    expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
+  },
+);
 
 it('honors rate-limit waits and rejects stale heads and absent PRs without fetching', async () => {
   const fetch = serve();

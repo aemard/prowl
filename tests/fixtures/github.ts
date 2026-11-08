@@ -170,6 +170,7 @@ export function mergeStateResponse(
       return node
         ? {
             id: node.id,
+            headRefOid: node.headRefOid,
             reviewDecision: node.reviewDecision,
             mergeable: node.mergeable,
             mergeStateStatus: node.mergeStateStatus,

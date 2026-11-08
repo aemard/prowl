@@ -91,6 +91,7 @@ query ProwlMergeState($ids: [ID!]!) {
   nodes(ids: $ids) {
     ... on PullRequest {
       id
+      headRefOid
       reviewDecision
       mergeable
       mergeStateStatus
@@ -233,6 +234,7 @@ export interface PullRequestNode {
 
 export interface MergeStateNode {
   id: string;
+  headRefOid: string;
   reviewDecision: string | null;
   mergeable: string;
   mergeStateStatus: string;

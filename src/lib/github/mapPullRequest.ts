@@ -135,7 +135,10 @@ export type MergeFacts = Pick<
 /** Merge facts of a node; what it does not carry is unknown (none, unknown, false). */
 export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
   return {
-    reviewDecision: pick(REVIEW_DECISIONS, node.reviewDecision ?? null, 'none'),
+    reviewDecision:
+      node.reviewDecision === null
+        ? 'none'
+        : pick(REVIEW_DECISIONS, node.reviewDecision ?? null, 'unknown'),
     mergeable: pick(MERGEABLE, node.mergeable ?? null, 'unknown'),
     mergeStateStatus: pick(MERGE_STATE_STATUSES, node.mergeStateStatus ?? null, 'unknown'),
     viewerCanUpdate: node.viewerCanUpdate === true,

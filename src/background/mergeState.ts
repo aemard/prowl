@@ -144,7 +144,7 @@ async function publishMergeState(
     latestPr.headSha !== headSha
   )
     return false;
-  if (node && node.id === id) {
+  if (node && node.id === id && node.headRefOid === headSha) {
     const next: Snapshot = {
       ...latest,
       pullRequests: { ...latest.pullRequests, [id]: { ...latestPr, ...mapMergeState(node) } },

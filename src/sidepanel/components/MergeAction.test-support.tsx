@@ -7,7 +7,11 @@ import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
 import { toasts } from './ui/Toast';
 
-export const pr = buildPullRequest({ title: 'Improve the widgets', baseRefName: 'release' });
+export const pr = buildPullRequest({
+  title: 'Improve the widgets',
+  baseRefName: 'release',
+  mergeStateStatus: 'clean',
+});
 export const merged = { mergePullRequest: { pullRequest: { merged: true } } };
 
 interface Sent {

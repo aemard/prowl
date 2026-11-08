@@ -28,6 +28,14 @@ beforeEach(setupMergeTest);
 afterEach(resetMergeTest);
 
 describe('when the button shows', () => {
+  it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
+    show({ reviewDecision: 'approved', mergeStateStatus: 'blocked', autoMergeAllowed: true });
+    expect(opener().getAttribute('data-variant')).toBe('secondary');
+    fireEvent.click(opener());
+    expect(within(dialog()).getByText(/Not ready: blocked by the base branch/)).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
+  });
+
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
