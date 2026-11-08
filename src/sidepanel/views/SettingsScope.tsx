@@ -13,6 +13,7 @@ import { saveSettings } from '../state/settings';
 import { settings } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
 import { PRESET_DESCRIPTIONS } from './SettingsModel';
+import { ChooseTeams } from './SettingsTeams';
 
 const FORM_ID = 'custom-section-form';
 
@@ -221,6 +222,7 @@ function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => vo
           )
         }
       />
+      {section.kind === 'team_review_requested' && <ChooseTeams />}
       {section.kind === 'custom' && <CustomActions section={section} onEdit={onEdit} />}
     </li>
   );
@@ -233,7 +235,7 @@ export function ScopeSettings() {
   const [editing, setEditing] = useState<Section | null>();
 
   return (
-    <SettingsGroup title="Pull requests" description="Choose which pull requests Prowl follows.">
+    <SettingsGroup title="Sections" description="Choose which pull requests Prowl follows.">
       <h4 class="settings-subtitle">Sections</h4>
       <ul class="settings-list">
         {sections.map((section) => (
@@ -253,7 +255,7 @@ export function ScopeSettings() {
       />
       <RepoFilter
         name="Exclude"
-        hint="Hide pull requests in these, even when they match an include."
+        hint="Exclude pull requests in these, even when they match an include."
         patterns={repoExclude}
         onChange={(update) => changeRepos('repoExclude', update)}
       />

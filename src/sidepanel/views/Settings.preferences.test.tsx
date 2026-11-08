@@ -8,7 +8,7 @@ describe('SettingsView', () => {
   describe('appearance', () => {
     it('saves theme, sort order and badge mode', async () => {
       await open();
-      const appearance = group('Appearance');
+      const appearance = group('List');
       fireEvent.change(appearance.getByLabelText('Theme'), { target: { value: 'dark' } });
       fireEvent.change(appearance.getByLabelText('Sort pull requests by'), {
         target: { value: 'repo' },
@@ -24,12 +24,12 @@ describe('SettingsView', () => {
 
     it('has no automatic hiding controls', async () => {
       await open();
-      expect(group('Appearance').queryByLabelText(/Hide/)).toBeNull();
+      expect(group('List').queryByLabelText(/Hide/)).toBeNull();
     });
 
     it('groups by repository with its own switch, apart from the sort order', async () => {
       await open({ groupByRepo: false });
-      const appearance = group('Appearance');
+      const appearance = group('List');
       const grouping = toggle('Group pull requests by repository', appearance);
       expect(grouping.getAttribute('aria-checked')).toBe('false');
       expect(grouping.getAttribute('aria-describedby')).toBeTruthy();
@@ -49,9 +49,7 @@ describe('SettingsView', () => {
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>
-        [...(group('Appearance').getByLabelText(label) as HTMLSelectElement).options].map(
-          (o) => o.value,
-        );
+        [...(group('List').getByLabelText(label) as HTMLSelectElement).options].map((o) => o.value);
       expect(options('Theme')).toEqual(['system', 'light', 'dark']);
       expect(options('Sort pull requests by')).toEqual(['updated', 'created', 'repo']);
       expect(options('Toolbar badge')).toEqual(['attention', 'unseen', 'off']);
@@ -64,21 +62,19 @@ describe('SettingsView', () => {
       const nav = within(screen.getByRole('navigation', { name: 'Settings sections' }));
       const links = nav.getAllByRole('link');
       expect(links.map((link) => link.textContent)).toEqual([
-        'Pull requests',
-        'Teams',
+        'Sections',
         'Refresh',
         'Notifications',
-        'Appearance',
+        'List',
         'Account',
-        'Privacy',
-        'About',
+        'Privacy and permissions',
       ]);
       // Every link has its group.
       for (const link of links) {
         expect(document.querySelector(link.getAttribute('href') ?? '-')).toBeTruthy();
       }
       const hash = location.hash;
-      fireEvent.click(nav.getByRole('link', { name: 'Privacy' }));
+      fireEvent.click(nav.getByRole('link', { name: 'Privacy and permissions' }));
       expect(document.activeElement).toBe(
         screen.getByRole('heading', { level: 3, name: 'Privacy and permissions' }),
       );
@@ -221,13 +217,13 @@ describe('SettingsView', () => {
       fakeChrome().__state.commands[0] = { name: 'open-panel', shortcut: '' };
       await open();
       await waitFor(() =>
-        expect(group('About').getByText(/No keyboard shortcut opens Prowl yet/)).toBeTruthy(),
+        expect(group('Account').getByText(/No keyboard shortcut opens Prowl yet/)).toBeTruthy(),
       );
     });
 
     it('shows the version and opens the documentation, privacy and source on GitHub', async () => {
       await open();
-      const about = group('About');
+      const about = group('Account');
       expect(about.getByText('Version 0.0.0-test')).toBeTruthy();
       await waitFor(() => expect(about.getByText('Ctrl+Shift+P')).toBeTruthy());
 

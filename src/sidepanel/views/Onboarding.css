@@ -86,3 +86,8 @@
   padding: var(--space-4) 0 0;
   border-top: var(--border-width) solid var(--color-border-subtle);
 }
+
+/* Author display rules must respect the token-help disclosure. */
+.onboarding__tokens[hidden] {
+  display: none;
+}

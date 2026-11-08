@@ -96,7 +96,7 @@ test.describe('account and about', () => {
   }) => {
     const panel = await openPanel('#/settings');
     const version = await serviceWorker.evaluate(() => chrome.runtime.getManifest().version);
-    await expect(group(panel, 'About')).toContainText(`Version ${version}`);
+    await expect(group(panel, 'Account')).toContainText(`Version ${version}`);
     // Chrome knows the open-panel command. Whether it binds the suggested key depends on how the
     // extension was installed (an unpacked test load gets none), so About says either way.
     const commands = await serviceWorker.evaluate(() => chrome.commands.getAll());
@@ -104,7 +104,9 @@ test.describe('account and about', () => {
       name: 'open-panel',
       description: 'Open Prowl',
     });
-    await expect(group(panel, 'About')).toContainText('Change it at chrome://extensions/shortcuts');
+    await expect(group(panel, 'Account')).toContainText(
+      'Change it at chrome://extensions/shortcuts',
+    );
 
     for (const [name, path] of [
       ['Documentation', '/aemard/prowl#readme'],
@@ -112,7 +114,7 @@ test.describe('account and about', () => {
       ['Source code', '/aemard/prowl'],
     ] as const) {
       const opened = context.waitForEvent('page');
-      await group(panel, 'About').getByRole('link', { name }).click();
+      await group(panel, 'Account').getByRole('link', { name }).click();
       const page = await opened;
       expect(page.url()).toBe(`${MOCK_ORIGIN}${path}`);
       await page.close();
