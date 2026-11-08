@@ -79,6 +79,7 @@ function ListCard({
   return (
     <PullRequestCard
       pr={pr}
+      activity={data.activity[pr.id]}
       now={data.now}
       unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt)}
       muted={isMuted(data.local, pr.id)}
