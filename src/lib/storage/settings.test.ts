@@ -17,7 +17,7 @@ describe('DEFAULT_SETTINGS', () => {
       sections: presets(),
       repoInclude: [],
       repoExclude: [],
-      pollIntervalMinutes: 5,
+      pollIntervalMinutes: 2,
       maxPerSection: 50,
       notifications: {
         enabled: false,
@@ -157,10 +157,10 @@ describe('normalizeSettings', () => {
     [45, 45],
     [61, 60],
     [1e9, 60],
-    [Number.NaN, 5],
-    [Number.POSITIVE_INFINITY, 5],
-    ['3', 5],
-    [null, 5],
+    [Number.NaN, 2],
+    [Number.POSITIVE_INFINITY, 2],
+    ['3', 2],
+    [null, 2],
   ])('repairs pollIntervalMinutes %j to %j', (value, expected) => {
     expect(normalizeSettings({ pollIntervalMinutes: value }).pollIntervalMinutes).toBe(expected);
   });

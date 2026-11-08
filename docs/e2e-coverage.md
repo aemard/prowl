@@ -49,7 +49,7 @@ Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/9
 `auth.spec.ts` covers GitHub-first sign-in, token/help disclosure and 320px layout;
 `device-flow.spec.ts` covers denied web permission and device flow recovery. Fixtures wait
 only for visible finite animations before axe (closed disclosures cannot block scans).
-`settings.spec.ts` covers Refresh options, the always-visible loaded limit and notification
+`settings.spec.ts` covers the always-visible refresh interval, cost estimate, loaded limit and notification
 choices surviving the master switch. `coverage.spec.ts` checks Change limit focuses that field.
 `settings.preferences.spec.ts` finds version/shortcut/documentation under Account.
 `teams.spec.ts` reaches the same Team reviews dialog from the section header and Settings →

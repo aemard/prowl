@@ -54,7 +54,7 @@ in-memory updates that the next snapshot replaces.
 
 ## Data flow of a poll
 
-1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 5). The
+1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 2). The
    worker also polls on `runtime.onInstalled` / `onStartup`, and a forced poll on the panel's
    `{ type: 'poll', force: true }`.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
@@ -257,7 +257,7 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 
 Team reviews run one `ProwlSearch` per followed team (at most 10), so each team costs what a
 section does; `GET /user/teams` is REST (the core budget, not GraphQL points), once a day.
-The default settings (one section, 50 PRs, every 5 minutes) cost about 48 points an hour of
+The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour (2.4%) of
 the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
 about a point per 10 changed PRs.
 
@@ -746,7 +746,7 @@ signal (`state/store.ts`).
   - `NumberField` saves valid whole numbers as typed (interval 2–60, loaded PRs 1–100).
     The maximum loaded PRs stays visible. “Change limit” records a one-shot focus request
     consumed after lazy Settings mount; the shell preserves that focus on later visits too.
-    “Refresh options” discloses the interval and a baseline API-cost estimate qualified for
+    Refresh also shows the interval and a baseline API-cost estimate directly, qualified for
     extra pages, merge reads and actions. List contains theme, sort, repository grouping and badge.
   - Notifications: master switch (reveals the event switches, quiet hours and the test button only while on; saved choices survive switching off),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross

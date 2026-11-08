@@ -105,9 +105,11 @@ describe('SettingsView', () => {
 
   describe('refresh', () => {
     it('saves a new interval and explains what polling costs', async () => {
-      await open();
+      await open({ pollIntervalMinutes: 5 });
       const refresh = group('Refresh');
       expect(refresh.getByText(/about 48 points an hour/)).toBeTruthy();
+      expect(refresh.getByLabelText('Check every (minutes)').closest('details')).toBeNull();
+      expect(refresh.queryByText('Refresh options')).toBeNull();
       expect(refresh.getByText(/5,000 points an hour/)).toBeTruthy();
 
       fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '2' } });
@@ -120,7 +122,7 @@ describe('SettingsView', () => {
       const field = group('Refresh').getByLabelText('Check every (minutes)');
       fireEvent.input(field, { target: { value: '1' } });
       expect(screen.getByText('Enter a whole number from 2 to 60.')).toBeTruthy();
-      expect((await saved()).pollIntervalMinutes).toBe(5);
+      expect((await saved()).pollIntervalMinutes).toBe(2);
     });
 
     it('saves how many pull requests to fetch per section', async () => {
