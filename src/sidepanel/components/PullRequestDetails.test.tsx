@@ -26,22 +26,22 @@ const pr = buildPullRequest({
 const show = (overrides: Partial<PullRequest> = {}) =>
   render(<PullRequestDetails pr={{ ...pr, ...overrides }} id="detail" />);
 
-beforeEach(() => {
-  auth.value = buildAuth();
-});
-
-afterEach(() => {
-  auth.value = undefined;
-  details.value = {};
-});
-
-const list = (name: string) => within(screen.getByRole('list', { name }));
-const rows = (name: string) =>
-  list(name)
-    .getAllByRole('listitem')
-    .map((row) => row.textContent);
-
 describe('PullRequestDetails', () => {
+  beforeEach(() => {
+    auth.value = buildAuth();
+  });
+
+  afterEach(() => {
+    auth.value = undefined;
+    details.value = {};
+  });
+
+  const list = (name: string) => within(screen.getByRole('list', { name }));
+  const rows = (name: string) =>
+    list(name)
+      .getAllByRole('listitem')
+      .map((row) => row.textContent);
+
   it('offers the actions at once, before the details have loaded', () => {
     stubDetailFetch(() => new Promise(() => {}));
     show();

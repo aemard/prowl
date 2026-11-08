@@ -1,3 +1,4 @@
+import type { Ref } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
@@ -47,14 +48,7 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
   const viewer = auth.value?.viewer.login;
   if (!viewer) return null;
 
-  const ref = prRef(pr);
   const pending = pendingActions.value[pr.id];
-  const state = (name: string) => ({
-    loading: pending === name,
-    disabled: pending !== undefined && pending !== name,
-  });
-  const canReview = pr.state === 'open' && pr.author?.login.toLowerCase() !== viewer.toLowerCase();
-  const written = writing && WRITTEN[writing];
 
   // An error that arrives after the click is only read out when its field has focus.
   const fail = (message: string) => {
@@ -78,6 +72,46 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
     }
   };
 
+  return (
+    <>
+      <ReviewButtons pr={pr} viewer={viewer} pending={pending} open={open} />
+      {writing && (
+        <WrittenDialog
+          pr={pr}
+          writing={writing}
+          pending={pending}
+          draft={drafts?.[writing] ?? ''}
+          inputRef={field}
+          error={error}
+          close={close}
+          onSend={() => void send(writing)}
+          onValueChange={(text) => {
+            setError('');
+            setReviewDraft(pr.id, writing, text);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function ReviewButtons({
+  pr,
+  viewer,
+  pending,
+  open,
+}: {
+  pr: PullRequest;
+  viewer: string;
+  pending: string | undefined;
+  open: (kind: Written) => void;
+}) {
+  const ref = prRef(pr);
+  const canReview = pr.state === 'open' && pr.author?.login.toLowerCase() !== viewer.toLowerCase();
+  const state = (name: string) => ({
+    loading: pending === name,
+    disabled: pending !== undefined && pending !== name,
+  });
   return (
     <>
       {canReview && (
@@ -115,44 +149,62 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
       >
         {WRITTEN.comment.name}
       </Button>
-      {writing && written && (
-        <Dialog
-          open
-          onClose={close}
-          title={written.name}
-          description={written.description(ref)}
-          footer={
-            <>
-              <Button disabled={pending !== undefined} onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                loading={pending !== undefined}
-                onClick={() => void send(writing)}
-              >
-                {written.name}
-              </Button>
-            </>
-          }
-        >
-          <TextField
-            label="Message"
-            multiline
-            rows={4}
-            required
-            maxLength={MAX_BODY_LENGTH}
-            value={drafts?.[writing] ?? ''}
-            error={error}
-            inputRef={field}
-            readOnly={pending !== undefined}
-            onValueChange={(text) => {
-              setError('');
-              setReviewDraft(pr.id, writing, text);
-            }}
-          />
-        </Dialog>
-      )}
     </>
+  );
+}
+
+function WrittenDialog({
+  pr,
+  writing,
+  pending,
+  draft,
+  inputRef,
+  error,
+  close,
+  onSend,
+  onValueChange,
+}: {
+  pr: PullRequest;
+  writing: Written;
+  pending: string | undefined;
+  draft: string;
+  inputRef: Ref<HTMLElement>;
+  error: string;
+  close: () => void;
+  onSend: () => void;
+  onValueChange: (text: string) => void;
+}) {
+  const written = WRITTEN[writing];
+  const ref = prRef(pr);
+  return (
+    <Dialog
+      open
+      onClose={close}
+      title={written.name}
+      description={written.description(ref)}
+      footer={
+        <>
+          <Button disabled={pending !== undefined} onClick={close}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={pending !== undefined} onClick={onSend}>
+            {written.name}
+          </Button>
+        </>
+      }
+    >
+      <TextField
+        label="Message"
+        multiline
+        rows={4}
+        required
+        maxLength={MAX_BODY_LENGTH}
+        value={draft}
+        inputRef={inputRef}
+        error={error}
+        readOnly={pending !== undefined}
+        onValueChange={onValueChange}
+      />
+    </Dialog>
   );
 }

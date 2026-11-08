@@ -53,7 +53,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Biome
-        run: pnpm exec biome ci .
+        run: pnpm exec biome ci --error-on-warnings .
 
       - name: Types
         run: pnpm typecheck
