@@ -2,7 +2,12 @@ import { act, render } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PollState, Snapshot } from '../../lib/model';
 import { buildPollState, buildPullRequest, buildSnapshotOf } from '../../test/panel';
-import { CARD_TRANSITION_MS, DEPARTURE_TIMEOUT_MS, useCardTransitions } from './cardTransitions';
+import {
+  CARD_ENTER_MS,
+  CARD_TRANSITION_MS,
+  DEPARTURE_TIMEOUT_MS,
+  useCardTransitions,
+} from './cardTransitions';
 
 function setup(source?: Snapshot, poll?: PollState, scope = '') {
   let result: ReturnType<typeof useCardTransitions>;
@@ -38,6 +43,24 @@ describe('card transition lifecycle', () => {
     expect(probe.read()).toEqual({ snap, activity: {} });
     probe.unmount();
     expect(setup(snap).read()).toEqual({ snap, activity: {} });
+  });
+
+  it('keeps new activity through entry and the highlight fade', () => {
+    vi.useFakeTimers();
+    const pr = buildPullRequest({ createdAt: '2026-01-02T00:00:00Z' });
+    const probe = setup(buildSnapshotOf({ authored: [] }, { fetchedAt: '2026-01-01T00:00:00Z' }));
+    const after = buildSnapshotOf({ authored: [pr] });
+    probe.update(after);
+    expect(probe.read().activity).toEqual({ [pr.id]: 'new' });
+    act(() => {
+      vi.advanceTimersByTime(CARD_ENTER_MS - 1);
+    });
+    expect(probe.read().activity).toEqual({ [pr.id]: 'new' });
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(probe.read()).toEqual({ snap: after, activity: {} });
+    probe.unmount();
   });
 
   it('retains a closure until the timer expires and cancels it on unmount', () => {

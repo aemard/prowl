@@ -2,8 +2,10 @@ import { useEffect, useState } from 'preact/hooks';
 import type { PollState, Snapshot } from '../../lib/model';
 import { type ActivityKind, pullRequestActivity } from './prActivity';
 
-// Exit fade (180ms) followed by row collapse (200ms); see PullRequestCardMotion.css.
-export const CARD_TRANSITION_MS = 380;
+// Exit fade (240ms) followed by row collapse (240ms); see PullRequestCardMotion.css.
+export const CARD_TRANSITION_MS = 480;
+// Entry (320ms) followed by the accent highlight fading out (1200ms).
+export const CARD_ENTER_MS = 1520;
 export type CardActivities = Record<string, ActivityKind>;
 
 /** Keep departing cards in their original sections until their exit animation finishes. */
@@ -106,7 +108,12 @@ function reconcile(
       if (!ids.includes(id) && !source.sections[section]?.includes(id)) continue;
       const key = JSON.stringify([section, id]);
       if (transitions[key]?.kind === change.kind) continue;
-      transitions[key] = { section, id, kind: change.kind, deadline: now + CARD_TRANSITION_MS };
+      transitions[key] = {
+        section,
+        id,
+        kind: change.kind,
+        deadline: now + (change.kind === 'new' ? CARD_ENTER_MS : CARD_TRANSITION_MS),
+      };
     }
   }
   for (const [key, transition] of Object.entries(transitions)) {

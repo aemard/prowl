@@ -1,6 +1,7 @@
 .pr-card {
-  --card-enter-duration: 240ms;
-  --card-collapse-duration: 200ms;
+  --card-enter-duration: 320ms;
+  --card-exit-duration: 240ms;
+  --card-collapse-duration: 240ms;
 
   display: grid;
   /* Long repository names must shrink inside the card, including during row animation. */
@@ -38,8 +39,41 @@
 .pr-card[data-activity="fade"] {
   /* Fade first, then let the invisible row settle closed. Keep the retention timer in sync. */
   animation:
-    card-depart var(--duration-normal) var(--ease-out) both,
-    card-collapse var(--card-collapse-duration) var(--ease-out) var(--duration-normal) both;
+    card-depart var(--card-exit-duration) var(--ease-out) both,
+    card-collapse var(--card-collapse-duration) var(--ease-out) var(--card-exit-duration) both;
+}
+
+/* A translucent overlay preserves the card surface and never affects layout or hit targets. */
+.pr-card[data-activity="new"] .pr-card__body::after,
+.pr-card[data-activity="merged"] .pr-card__body::after,
+.pr-card[data-activity="closed"] .pr-card__body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.pr-card[data-activity="new"] .pr-card__body::after {
+  background: var(--color-accent-bg);
+  animation: card-highlight 1200ms var(--ease-out) var(--card-enter-duration) both;
+}
+
+.pr-card[data-activity="merged"] .pr-card__body::after {
+  background: color-mix(in srgb, var(--color-done-fg) 8%, transparent);
+}
+
+.pr-card[data-activity="closed"] .pr-card__body::after {
+  background: color-mix(in srgb, var(--color-danger-fg) 8%, transparent);
+}
+
+@keyframes card-highlight {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .pr-card__activity {
@@ -58,7 +92,7 @@
 @keyframes card-arrive {
   from {
     opacity: 0;
-    transform: scale(0.98);
+    transform: translateY(6px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -73,7 +107,7 @@
   }
   to {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
 }
 
@@ -88,8 +122,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pr-card[data-activity],
+  .pr-card__body::after,
   .pr-card__activity,
   .pr-card__activity svg {
     animation: none;
+  }
+
+  .pr-card__body::after {
+    content: none;
   }
 }
