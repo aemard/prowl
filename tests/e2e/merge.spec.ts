@@ -53,11 +53,10 @@ async function expand(panel: Page, title: RegExp): Promise<Locator> {
   await expect(target.getByRole('status')).toHaveCount(0);
   return target;
 }
+/** Ids of the pull requests GitHub has merged: gone from the search, final in `ProwlNodes`. */
+let gone: Set<string>;
 
 test.describe('merge', () => {
-  /** Ids of the pull requests GitHub has merged: gone from the search, final in `ProwlNodes`. */
-  let gone: Set<string>;
-
   test.beforeEach(async ({ context, github, seedStorage, signIn, poll }) => {
     gone = new Set();
     github.onGraphQL(SEARCH, (variables) =>

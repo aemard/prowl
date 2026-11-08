@@ -1,3 +1,4 @@
+import type { Worker } from '@playwright/test';
 import { mapPullRequest } from '../../src/lib/github/mapPullRequest';
 import type { PollState, Snapshot } from '../../src/lib/model';
 import { buildSnapshotOf } from '../../src/test/panel';
@@ -62,19 +63,7 @@ test('shows the new list while merge enrichment is still blocked', async ({
     release();
     await loading;
   }
-  await expect
-    .poll(() =>
-      serviceWorker.evaluate(async () => {
-        const stored = await chrome.storage.local.get<{ snapshot: Snapshot; pollState: PollState }>(
-          ['snapshot', 'pollState'],
-        );
-        return {
-          inFlight: stored.pollState.inFlight,
-          reads: Object.keys(stored.snapshot.mergeStateAt ?? {}).length,
-        };
-      }),
-    )
-    .toEqual({ inFlight: false, reads: 1 });
+  await expectMergeRefreshFinished(serviceWorker);
   await expect(panel.getByTitle('Checking the latest merge status on GitHub')).toHaveCount(0);
 });
 
@@ -173,3 +162,19 @@ test('clears card progress and keeps the global loader stopped after enrichment 
   );
   await expect(panel.getByText('Your GitHub token was revoked or expired')).toBeVisible();
 });
+
+async function expectMergeRefreshFinished(serviceWorker: Worker) {
+  await expect
+    .poll(() =>
+      serviceWorker.evaluate(async () => {
+        const stored = await chrome.storage.local.get<{ snapshot: Snapshot; pollState: PollState }>(
+          ['snapshot', 'pollState'],
+        );
+        return {
+          inFlight: stored.pollState.inFlight,
+          reads: Object.keys(stored.snapshot.mergeStateAt ?? {}).length,
+        };
+      }),
+    )
+    .toEqual({ inFlight: false, reads: 1 });
+}

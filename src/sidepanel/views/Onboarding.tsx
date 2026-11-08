@@ -36,13 +36,8 @@ function GitHubLink({ href, children }: { href: string; children: ComponentChild
   );
 }
 
-/** Shown while signed out: sign in from the browser, or paste a token and learn how to make one. */
-export function OnboardingView() {
-  const deviceFlow = env.clientId !== '';
-  const [patOpen, setPatOpen] = useState(!deviceFlow);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const patId = useId();
-  const helpId = useId();
+/** Keep token validation and error focus together across disclosure changes. */
+function useTokenForm() {
   const [token, setToken] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -63,6 +58,18 @@ export function OnboardingView() {
       input.current?.focus();
     }
   }
+
+  return { token, setToken, error, busy, input, submit };
+}
+
+/** Shown while signed out: sign in from the browser, or paste a token and learn how to make one. */
+export function OnboardingView() {
+  const deviceFlow = env.clientId !== '';
+  const [patOpen, setPatOpen] = useState(!deviceFlow);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const patId = useId();
+  const helpId = useId();
+  const { token, setToken, error, busy, input, submit } = useTokenForm();
 
   return (
     <div class="onboarding">
