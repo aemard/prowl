@@ -24,7 +24,7 @@ describe('SettingsView', () => {
       await open();
       const scope = group('Sections');
       expect(toggle('Created by me', scope).getAttribute('aria-checked')).toBe('true');
-      expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('false');
+      expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('true');
       expect(
         scope.getByText(
           'Pull requests that ask you for a review (your teams have their own section)',
@@ -35,11 +35,11 @@ describe('SettingsView', () => {
 
       fireEvent.click(toggle('Review requested', scope));
       await waitFor(() =>
-        expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('true'),
+        expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('false'),
       );
       expect((await saved()).sections.map((s) => [s.id, s.enabled])).toEqual([
         ['authored', true],
-        ['review_requested', true],
+        ['review_requested', false],
         ['team_review_requested', false],
         ['mentioned', false],
         ['assigned', false],
@@ -107,12 +107,12 @@ describe('SettingsView', () => {
     it('saves a new interval and explains what polling costs', async () => {
       await open();
       const refresh = group('Refresh');
-      expect(refresh.getByText(/about 48 points an hour/)).toBeTruthy();
+      expect(refresh.getByText(/about 96 points an hour/)).toBeTruthy();
       expect(refresh.getByText(/5,000 points an hour/)).toBeTruthy();
 
       fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '2' } });
       await waitFor(async () => expect((await saved()).pollIntervalMinutes).toBe(2));
-      expect(refresh.getByText(/about 120 points an hour/)).toBeTruthy();
+      expect(refresh.getByText(/about 240 points an hour/)).toBeTruthy();
     });
 
     it('does not accept less than two minutes', async () => {

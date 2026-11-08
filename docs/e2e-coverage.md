@@ -55,5 +55,6 @@ choices surviving the master switch. `coverage.spec.ts` checks Change limit focu
 `teams.spec.ts` reaches the same Team reviews dialog from the section header and Settings →
 Sections, checks organization switches, refresh, missing-scope recovery and focus restoration.
 The cap is information, with no section error (unit coverage in `fetchPullRequests.teams.test.ts`
-and `Settings.teams.test.tsx`). No glass spec is included. The base has no setup wizard;
-that flow remains outside this PR. E2E updated here but not run in this environment.
+and `Settings.teams.test.tsx`). No glass spec is included. setup-wizard.spec.ts covers two-step completion, resume, skipping, Account reruns and inline
+team choices, with focus and accessibility checks. Fixtures mark other scenarios complete.
+E2E updated here but not run in this environment.

@@ -65,12 +65,14 @@ beforeEach(() => {
   });
   vi.stubGlobal('IntersectionObserver', FakeObserver);
   settings.value = defaultSettings();
+  withSections(['authored']);
 });
 
 afterEach(() => {
   vi.useRealTimers();
   FakeObserver.all = [];
   settings.value = defaultSettings();
+  withSections(['authored']);
   snapshot.value = undefined;
   pollState.value = undefined;
   prLocal.value = { snoozed: {}, muted: {}, seen: {} };

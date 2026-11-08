@@ -67,3 +67,11 @@ working knowledge. Keep it short and current: newest knowledge wins.
   from Team reviews and its Settings → Sections row; never add a Settings → Teams group.
   The cap is informational in `TeamReviewsHeader`, not a `sectionErrors` entry. Keep the
   existing design system and base CSS; only token-based spacing for new markup is needed.
+
+### Install-local setup
+
+Only onInstalled reason install creates pending onboarding; updates without a marker complete
+it for legacy installs. Sign-out and settings sync retain the local marker. The two-step wizard
+saves choices on Continue and completion; Skip discards the current draft. TeamPicker accepts
+draft selections for the wizard and saves immediately in Settings. Step headings receive focus.
+Pending nextStep 2 from the old three-step wizard is treated as completed.

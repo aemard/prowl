@@ -967,5 +967,7 @@ Continue with GitHub is primary. “Use a personal access token” opens the tok
 “Help choosing a token” separately opens its help. The form opens automatically without an
 OAuth client id, after refusing github.com permission, when device flow is unsupported, or
 when authorization is denied on GitHub. Token help stays on request. The base visual style
-is unchanged; no glass styles or reflection code are included. This base has no setup wizard;
-its future two-step flow and “Run setup again” entry remain for the wizard PR.
+is unchanged; no glass styles or reflection code are included. Fresh installs use an install-local onboarding marker to enter a two-step wizard after sign-in.
+Section choices reuse the inline TeamPicker; notifications have one master switch. Account
+offers “Run setup again”. Upgrades without a marker skip setup; old pending step 2 is complete.
+The preview hash #onboarding starts signed out with pending setup.

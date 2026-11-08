@@ -10,7 +10,7 @@ import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { saveSettings } from '../state/settings';
-import { settings, teams } from '../state/store';
+import { auth, settings, teams } from '../state/store';
 import './Settings.css';
 
 /** Teams by organization, organizations in the order the worker sorted them (by key). */
@@ -52,7 +52,20 @@ function TeamNotice({ state }: { state: TeamsState | undefined }) {
   );
 }
 
-function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: Set<string> }) {
+type TeamSelection = {
+  unfollowedTeams?: string[];
+  onFollowTeam?: (key: string, on: boolean) => void;
+};
+
+function TeamGroups({
+  list,
+  unfollowed,
+  onFollowTeam,
+}: {
+  list: readonly Team[];
+  unfollowed: Set<string>;
+  onFollowTeam: (key: string, on: boolean) => void;
+}) {
   return (
     <>
       {byOrg(list).map(([org, list]) => (
@@ -66,7 +79,7 @@ function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: S
                 label={team.name}
                 description={`@${team.org}/${team.slug}`}
                 checked={!unfollowed.has(key)}
-                onChange={(on) => followTeam(key, on)}
+                onChange={(on) => onFollowTeam(key, on)}
               />
             );
           })}
@@ -80,11 +93,14 @@ function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: S
  * The teams the worker discovered for "Team reviews", each followed unless unfollowed here, with
  * a refresh and the way out when the token cannot list them (no read:org).
  */
-export function TeamPicker() {
+export function TeamPicker({
+  unfollowedTeams = settings.value.unfollowedTeams,
+  onFollowTeam = followTeam,
+}: TeamSelection = {}) {
   useNow(60_000);
   const [refreshing, setRefreshing] = useState(false);
-  const state = teams.value;
-  const { unfollowedTeams } = settings.value;
+  const state =
+    !auth.value || teams.value?.login === auth.value.viewer.login ? teams.value : undefined;
   const unfollowed = new Set(unfollowedTeams);
   const followed = (state?.teams ?? []).filter((team) => !unfollowed.has(teamKey(team))).length;
   const refresh = async () => {
@@ -95,7 +111,8 @@ export function TeamPicker() {
   return (
     <div class="team-picker">
       <TeamNotice state={state} />
-      <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} />
+      {!state && <p class="settings-note">Teams are not loaded yet. Refresh to try again.</p>}
+      <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} onFollowTeam={onFollowTeam} />
       {followed > MAX_TEAM_SEARCHES && (
         <p class="settings-note">
           You follow {followed} teams; Prowl searches the first {MAX_TEAM_SEARCHES} to stay within
@@ -142,7 +159,8 @@ export function ChooseTeams() {
 }
 
 export function TeamReviewsHeader() {
-  const state = teams.value;
+  const state =
+    !auth.value || teams.value?.login === auth.value.viewer.login ? teams.value : undefined;
   const followed = (state?.teams ?? []).filter(
     (team) => !settings.value.unfollowedTeams.includes(teamKey(team)),
   ).length;
