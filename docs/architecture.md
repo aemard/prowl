@@ -83,7 +83,7 @@ in-memory updates that the next snapshot replaces.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt` and `settledChecks` to build the new `Snapshot`, and
+   `auth`), `sectionErrors`, `teamRequests`, `mergeStateAt`, `ciOutcomes` and `settledChecks` to build the new `Snapshot`, and
    publishes it before merge reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
    first poll suppresses events across all phases. `inFlight` remains true until enrichment
@@ -327,23 +327,29 @@ case-insensitively.
 
 | Event | prev -> next | `actor` | `at` | Id key |
 |---|---|---|---|---|
-| `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA |
-| `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA |
+| `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
+| `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
-worker restart yields the same ids for the notifier to dedupe; the price is one event of each
-kind per head commit (a re-run that fails again on the same commit reuses the id).
+worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
+observed outcome ordinal persisted in `snapshot.ciOutcomes` (missing legacy values start at
+zero). Each observed failure or recovery increments it; unchanged polls do not. The poller
+builds it with `carryCiOutcomes`, using the same transition rules as the diff engine. Ordinals
+survive scope changes and worker restarts, distinguishing repeated outcomes on the same SHA
+without relying on poll times or unavailable check completion timestamps. Progressive merge
+enrichment recomputes from the original poll baseline, so it cannot advance the ordinal twice.
 `comment_new` needs a newer latest issue comment because `commentCount` also counts review
 comments, which the review events already report. `isReadyToMerge` is exported for the badge.
 
 CI usually goes failure -> pending (a fix pushed, a re-run) -> success, so `ci_passed` compares
 with the state CI last concluded rather than the previous poll: `snapshot.settledChecks` holds,
 for each PR whose checks are pending, the last non-pending state, and the poller builds it with
-`carrySettledChecks(prev, next.pullRequests)` (exported next to `diffSnapshots`).
+`carrySettledChecks(prev, next.pullRequests)` (implemented in `checkTransitions.ts` and
+re-exported next to `diffSnapshots`).
 failure -> pending -> success gives one `ci_passed`, success -> pending -> success none.
 `ci_failed` still compares consecutive polls (a failure after pending is news either way).
 
@@ -440,8 +446,7 @@ is logged and the published snapshot stands).
    single event is its event id; a summary's is `summary:<time>`.
 4. Every reported event id is stored in `chrome.storage.session` under `notified` (event id ->
    PR URL, newest 300, cleared with the browser session and on sign-out), and a summary's id with
-   `<webUrl>/pulls`. That is the dedupe (ids repeat for a re-run that fails again on the same
-   commit) and how a click finds where to go.
+   `<webUrl>/pulls`. That is the dedupe for replayed events and how a click finds where to go.
 
 A click (`notifications.onClicked`, registered in `register.ts`) clears the notification and
 opens the stored URL in a tab when it is on the `env.webUrl` origin: the PR, or for a summary the

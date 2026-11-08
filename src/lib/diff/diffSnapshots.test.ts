@@ -172,7 +172,7 @@ describe('diffSnapshots', () => {
     const after = pr({ title: 'Renamed', ...ci('failure') });
     expect(diffSnapshots(snapshot([pr()]), snapshot([after]), VIEWER)).toEqual([
       {
-        id: `${base.id}:ci_failed:${SHA}`,
+        id: `${base.id}:ci_failed:${SHA}:1`,
         type: 'ci_failed',
         prId: base.id,
         repo: 'acme/widgets',
