@@ -9,6 +9,7 @@
 
 import { env } from '../lib/env';
 import type { NotificationSettings, PrEvent, PrLocalState } from '../lib/model';
+import { filterEvents } from '../lib/notify/filterEvents';
 import {
   type NotificationContent,
   notificationContent,
@@ -16,8 +17,6 @@ import {
 } from '../lib/notify/messages';
 import { snooze, updatePrLocal } from '../lib/storage/prLocal';
 import { isGitHubUrl } from '../lib/url';
-
-import { forgetDeferred, notificationBatch, saveDeferred } from './deferredNotifications';
 
 const NOTIFIED = 'notified';
 /** Ids remembered; older ones are forgotten first. */
@@ -37,8 +36,8 @@ async function readNotified(): Promise<Notified> {
 }
 
 /** Forgets what was reported (sign-out). */
-export async function forgetNotified(): Promise<void> {
-  await Promise.all([chrome.storage.session.remove(NOTIFIED), forgetDeferred()]);
+export function forgetNotified(): Promise<void> {
+  return chrome.storage.session.remove(NOTIFIED);
 }
 
 function show(id: string, content: NotificationContent, buttons?: typeof BUTTONS) {
@@ -60,8 +59,10 @@ export async function notifyEvents(
   local: PrLocalState,
 ): Promise<void> {
   try {
+    if (events.length === 0) return;
     const notified = await readNotified();
-    const shown = await notificationBatch(events, settings, local, notified);
+    const fresh = events.filter((event) => !Object.hasOwn(notified, event.id));
+    const shown = filterEvents(fresh, settings, local);
     if (shown.length === 0) return;
     const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
     if (shown.length <= MAX_SEPARATE) {
@@ -72,7 +73,6 @@ export async function notifyEvents(
       kept.push([id, `${env.webUrl}/pulls`]);
     }
     await chrome.storage.session.set({ [NOTIFIED]: Object.fromEntries(kept.slice(-MAX_NOTIFIED)) });
-    await saveDeferred([]);
   } catch (error) {
     console.error('Prowl: notifying failed', error);
   }
