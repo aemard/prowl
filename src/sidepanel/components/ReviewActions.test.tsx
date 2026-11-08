@@ -149,12 +149,12 @@ describe('approve', () => {
   });
 });
 
-describe('request changes', () => {
-  const dialog = () => screen.getByRole('dialog', { name: 'Request changes' });
-  const message = () => within(dialog()).getByRole('textbox', { name: /Message/ });
-  const submit = () => within(dialog()).getByRole('button', { name: 'Request changes' });
-  const type = (text: string) => fireEvent.input(message(), { target: { value: text } });
+const dialog = () => screen.getByRole('dialog', { name: 'Request changes' });
+const message = () => within(dialog()).getByRole('textbox', { name: /Message/ });
+const submit = () => within(dialog()).getByRole('button', { name: 'Request changes' });
+const type = (text: string) => fireEvent.input(message(), { target: { value: text } });
 
+describe('request changes', () => {
   it('needs a message: asks again inline and sends nothing without one', () => {
     const sent = stubGitHub(() => jsonResponse({ data: approved }));
     show();

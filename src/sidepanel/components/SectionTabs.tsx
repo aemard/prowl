@@ -45,91 +45,139 @@ export function SectionTabs({ tabs, selectedId, onSelect, idPrefix }: SectionTab
   // The tab stop: the selected tab, or the first one while the selection is under "More".
   const stopId = inMore ? shown[0]?.id : selectedId;
 
-  function onKeyDown(event: TargetedKeyboardEvent<HTMLDivElement>) {
-    const at = shown.findIndex((tab) => tabId(idPrefix, tab.id) === (event.target as Element).id);
-    const target = {
-      ArrowRight: (at + 1) % shown.length,
-      ArrowLeft: (at - 1 + shown.length) % shown.length,
-      Home: 0,
-      End: shown.length - 1,
-    }[event.key];
-    const next = target === undefined ? undefined : shown[target];
-    if (!next) return;
-    event.preventDefault();
-    onSelect(next.id);
-    document.getElementById(tabId(idPrefix, next.id))?.focus();
-  }
-
   return (
     <div class="section-tabs" data-bottom-bar="">
-      <div class="section-tabs__list" role="tablist" aria-label="Sections" onKeyDown={onKeyDown}>
-        {shown.map((tab) => {
-          const selected = tab.id === selectedId;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              class="section-tabs__item"
-              id={tabId(idPrefix, tab.id)}
-              aria-selected={selected}
-              aria-controls={panelId(idPrefix)}
-              tabIndex={tab.id === stopId ? 0 : -1}
-              title={tab.fullLabel}
-              onClick={() => onSelect(tab.id)}
-            >
-              {/* First in the DOM so the name reads "Mine 7"; the column is reversed on screen. */}
-              <span class="section-tabs__label">{tab.label}</span>
-              <span class="section-tabs__top">
-                {tab.icon}
-                {tab.failed ? (
-                  <span class="section-tabs__failed" title="Could not load this section">
-                    <AlertIcon size={12} />
-                    <span class="sr-only">Could not load</span>
-                  </span>
-                ) : (
-                  <Badge size="sm" tone={selected ? 'accent' : 'neutral'}>
-                    {tab.count}
-                  </Badge>
-                )}
-              </span>
-            </button>
-          );
-        })}
+      <div
+        class="section-tabs__list"
+        role="tablist"
+        aria-label="Sections"
+        onKeyDown={(event) => onTabKeyDown(event, shown, idPrefix, onSelect)}
+      >
+        {shown.map((tab) => (
+          <SectionTabButton
+            key={tab.id}
+            tab={tab}
+            selected={tab.id === selectedId}
+            stop={tab.id === stopId}
+            idPrefix={idPrefix}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
       {overflow.length > 0 && (
-        <Menu
-          align="end"
-          label="More sections"
-          items={overflow.map((tab) => ({
-            id: tab.id,
-            label: tab.fullLabel,
-            icon: tab.icon,
-            hint: tab.failed ? 'Could not load' : String(tab.count),
-            checked: tab.id === selectedId,
-            onSelect: () => onSelect(tab.id),
-          }))}
-          trigger={(props) => (
-            <button
-              {...props}
-              type="button"
-              class="section-tabs__item section-tabs__more"
-              data-selected={inMore !== undefined}
-            >
-              <span class="section-tabs__label">
-                More
-                <span class="sr-only">
-                  {' sections'}
-                  {inMore && `, ${inMore.fullLabel} selected`}
-                </span>
-              </span>
-              <span class="section-tabs__top">
-                <KebabHorizontalIcon />
-              </span>
-            </button>
-          )}
-        />
+        <MoreSections tabs={overflow} selectedId={selectedId} inMore={inMore} onSelect={onSelect} />
       )}
     </div>
+  );
+}
+
+function onTabKeyDown(
+  event: TargetedKeyboardEvent<HTMLDivElement>,
+  shown: SectionTab[],
+  idPrefix: string,
+  onSelect: (id: string) => void,
+) {
+  const at = shown.findIndex((tab) => tabId(idPrefix, tab.id) === (event.target as Element).id);
+  const target = {
+    ArrowRight: (at + 1) % shown.length,
+    ArrowLeft: (at - 1 + shown.length) % shown.length,
+    Home: 0,
+    End: shown.length - 1,
+  }[event.key];
+  const next = target === undefined ? undefined : shown[target];
+  if (!next) return;
+  event.preventDefault();
+  onSelect(next.id);
+  document.getElementById(tabId(idPrefix, next.id))?.focus();
+}
+
+function SectionTabButton({
+  tab,
+  selected,
+  stop,
+  idPrefix,
+  onSelect,
+}: {
+  tab: SectionTab;
+  selected: boolean;
+  stop: boolean;
+  idPrefix: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <button
+      key={tab.id}
+      type="button"
+      role="tab"
+      class="section-tabs__item"
+      id={tabId(idPrefix, tab.id)}
+      aria-selected={selected}
+      aria-controls={panelId(idPrefix)}
+      tabIndex={stop ? 0 : -1}
+      title={tab.fullLabel}
+      onClick={() => onSelect(tab.id)}
+    >
+      {/* First in the DOM so the name reads "Mine 7"; the column is reversed on screen. */}
+      <span class="section-tabs__label">{tab.label}</span>
+      <span class="section-tabs__top">
+        {tab.icon}
+        {tab.failed ? (
+          <span class="section-tabs__failed" title="Could not load this section">
+            <AlertIcon size={12} />
+            <span class="sr-only">Could not load</span>
+          </span>
+        ) : (
+          <Badge size="sm" tone={selected ? 'accent' : 'neutral'}>
+            {tab.count}
+          </Badge>
+        )}
+      </span>
+    </button>
+  );
+}
+
+function MoreSections({
+  tabs,
+  selectedId,
+  inMore,
+  onSelect,
+}: {
+  tabs: SectionTab[];
+  selectedId: string;
+  inMore: SectionTab | undefined;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <Menu
+      align="end"
+      label="More sections"
+      items={tabs.map((tab) => ({
+        id: tab.id,
+        label: tab.fullLabel,
+        icon: tab.icon,
+        hint: tab.failed ? 'Could not load' : String(tab.count),
+        checked: tab.id === selectedId,
+        onSelect: () => onSelect(tab.id),
+      }))}
+      trigger={(props) => (
+        <button
+          {...props}
+          type="button"
+          class="section-tabs__item section-tabs__more"
+          data-selected={inMore !== undefined}
+        >
+          <span class="section-tabs__label">
+            More
+            <span class="sr-only">
+              {' sections'}
+              {inMore && `, ${inMore.fullLabel} selected`}
+            </span>
+          </span>
+          <span class="section-tabs__top">
+            <KebabHorizontalIcon />
+          </span>
+        </button>
+      )}
+    />
   );
 }

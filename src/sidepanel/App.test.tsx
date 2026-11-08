@@ -7,24 +7,24 @@ import { hydrated, hydrateStore } from './state/store';
 
 let stop: (() => void) | undefined;
 
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  location.hash = '';
-  delete document.documentElement.dataset.theme;
-});
-
-async function open(stored: Record<string, unknown> = {}) {
-  await chrome.storage.local.set(stored);
-  await act(async () => {
-    stop = await hydrateStore();
-  });
-  return render(<App />);
-}
-
-const theme = () => document.documentElement.dataset.theme;
-
 describe('App', () => {
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    location.hash = '';
+    delete document.documentElement.dataset.theme;
+  });
+
+  async function open(stored: Record<string, unknown> = {}) {
+    await chrome.storage.local.set(stored);
+    await act(async () => {
+      stop = await hydrateStore();
+    });
+    return render(<App />);
+  }
+
+  const theme = () => document.documentElement.dataset.theme;
+
   it('shows a labelled skeleton until the store is hydrated', async () => {
     const pending = hydrateStore();
     render(<App />);

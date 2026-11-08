@@ -235,9 +235,9 @@ describe('PullRequestCard', () => {
   });
 });
 
-describe('expanding', () => {
-  const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
+const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
 
+describe('expanding', () => {
   it('opens the details with the button, which then points at them', async () => {
     renderCard();
     expect(screen.queryByRole('list', { name: 'Merge' })).toBeNull();
