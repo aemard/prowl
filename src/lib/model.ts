@@ -256,6 +256,11 @@ export interface Snapshot {
    */
   settledChecks?: Record<string, SettledCheckState>;
   /**
+   * PR node id -> observed CI outcome count, ordered by last increment (oldest first).
+   * Includes all current PRs and at most 200 absent PRs. Missing counters start at zero.
+   */
+  ciOutcomes?: Record<string, number>;
+  /**
    * PR id -> when its merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`,
    * `viewerCanUpdate`) were read; they are carried from poll to poll while the PR is unchanged.
    * Absent means never: they are read again.

@@ -87,7 +87,7 @@ in-memory updates that the next snapshot replaces.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue` and `settledChecks`
+   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue`, `ciOutcomes` and `settledChecks`
    to build the new `Snapshot`, and publishes it after each completed section, before merge
    reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
@@ -336,23 +336,29 @@ case-insensitively.
 
 | Event | prev -> next | `actor` | `at` | Id key |
 |---|---|---|---|---|
-| `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA |
-| `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA |
+| `ci_failed` | checks become `failure`, or are `failure` on a new head commit | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
+| `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
-worker restart yields the same ids for the notifier to dedupe; the price is one event of each
-kind per head commit (a re-run that fails again on the same commit reuses the id).
+worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
+observed outcome ordinal persisted in `snapshot.ciOutcomes` (missing legacy values start at
+zero). Each observed failure or recovery increments it; unchanged polls do not. The poller
+builds it with `carryCiOutcomes`, using the same transition rules as the diff engine. Ordinals
+survive scope changes and worker restarts, distinguishing repeated outcomes on the same SHA
+without relying on poll times or unavailable check completion timestamps. Progressive merge
+enrichment recomputes from the original poll baseline, so it cannot advance the ordinal twice.
 `comment_new` needs a newer latest issue comment because `commentCount` also counts review
 comments, which the review events already report. `isReadyToMerge` is exported for the badge.
 
 CI usually goes failure -> pending (a fix pushed, a re-run) -> success, so `ci_passed` compares
 with the state CI last concluded rather than the previous poll: `snapshot.settledChecks` holds,
 for each PR whose checks are pending, the last non-pending state, and the poller builds it with
-`carrySettledChecks(prev, next.pullRequests)` (exported next to `diffSnapshots`).
+`carrySettledChecks(prev, next.pullRequests)` (implemented in `checkTransitions.ts` and
+re-exported next to `diffSnapshots`).
 failure -> pending -> success gives one `ci_passed`, success -> pending -> success none.
 `ci_failed` still compares consecutive polls (a failure after pending is news either way).
 
@@ -450,8 +456,7 @@ is logged and the published snapshot stands).
    single event is its event id; a summary's is `summary:<time>`.
 4. Every reported event id is stored in `chrome.storage.session` under `notified` (event id ->
    PR URL, newest 300, cleared with the browser session and on sign-out), and a summary's id with
-   `<webUrl>/pulls`. That is the dedupe (ids repeat for a re-run that fails again on the same
-   commit) and how a click finds where to go.
+   `<webUrl>/pulls`. That is the dedupe for replayed events and how a click finds where to go.
 
 A click (`notifications.onClicked`, registered in `register.ts`) clears the notification and
 opens the stored URL in a tab when it is on the `env.webUrl` origin: the PR, or for a summary the
@@ -479,7 +484,7 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     `team_review_requested`, which takes the state of `review_requested`: before US-037 that
     section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
-  - `pollIntervalMinutes` is an integer in 1-60, `maxPerSection` in 1-100, `hideStaleAfterDays`
+  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `hideStaleAfterDays`
     in 0-365 (default 20, 0 never hides), `groupByRepo`, `hideDrafts` and `hideBots` are
     booleans (default off), quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
@@ -512,10 +517,11 @@ can be shown as is) or null. `src/lib/github/teams.ts`:
   organization permission Members: read, and lists that organization's teams only.
 - `teamsDue(stored, login, now)`: true for no list or another account's, a list older than 24 h,
   or a failed attempt older than 1 h (and for a time in the future or junk).
-- `discoverTeams(client, auth, previous, now)`: never throws for a refusal: a 403 or 404 for a
+- `discoverTeams(client, auth, previous, now)`: a non-rate-limit 403 or 404 for a
   token without `read:org` (or fine-grained) becomes `missing_scope` with the fix in its
-  message, any other failure keeps its kind; `unauthorized` and `network` are thrown, since
-  every other request of the poll would fail the same way.
+  message, other local failures keep their kind. `unauthorized`, `rate_limited` and `network`
+  stop the poll before section searches; rate limits use the shared wait until `resetAt`
+  (or `retry-after`).
 
 The poller discovers before `fetchPullRequests` when due or asked (`refreshTeams`) and stores
 the result with the snapshot (so a sign-out mid-poll leaves no list behind). Sign-in
@@ -737,7 +743,7 @@ signal (`state/store.ts`).
     after the last change, so the list does not wait for the next alarm. An interval change
     sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`
     recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
-  - `NumberField` saves valid whole numbers as typed (interval 1-60, results 1-100, and in
+  - `NumberField` saves valid whole numbers as typed (interval 2-60, results 1-100, and in
     Appearance "Hide PRs with no commit for (days)" 0-365) and shows an error for the rest; blur
     shows the saved value again. The Refresh note shows the estimated
     cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
@@ -847,7 +853,11 @@ prioritizes it in any remaining merge batch, then, if needed, reads only that PR
 same lock as polls. Known merge facts younger than one minute are shared across reopens and
 panels. This does not search teams or advance the list's `fetchedAt`; account/head checks drop
 stale answers and rate-limit/backoff waits are respected. Badge and notification updates use
-the same snapshot diff.
+the same snapshot diff. Only `unauthorized` and `rate_limited` card-read failures update
+`pollState.lastError`, the failure count and the shared retry time, using
+`isPollBudgetFailure` (`src/lib/github/errors.ts`), also used by team discovery. Other
+card-read failures leave global poll state and cached merge facts intact. The pending
+indicator clears on every outcome.
 
 The list reuses its IntersectionObserver to send `mergePriority` hints for cards on screen
 (including already seen cards), renewing them on new snapshots. Folded groups have no
