@@ -152,3 +152,8 @@
   border-radius: 0 0 21px 21px;
   background: var(--glass-solid);
 }
+.pr-detail__freshness {
+  margin: var(--space-2) 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}

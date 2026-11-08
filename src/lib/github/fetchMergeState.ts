@@ -1,6 +1,7 @@
 /** Merge-fact caching, bounded refreshes and progressive publication during a poll. */
 import { hiddenReasons } from '../hidden';
 import type { PrLocalState, PullRequest, Snapshot } from '../model';
+import { jsonEqual } from '../storage/guards';
 import { isSnoozed } from '../storage/prLocal';
 import { GitHubError } from './errors';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
@@ -33,14 +34,16 @@ const mergeFacts = ({
 }: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
 
 /** What the search says about a PR, for telling whether anything changed since the last poll. */
-const searchFacts = (pr: PullRequest) =>
-  JSON.stringify({
-    ...pr,
-    reviewDecision: null,
-    mergeable: null,
-    mergeStateStatus: null,
-    viewerCanUpdate: null,
-  });
+const searchFacts = (pr: PullRequest) => ({
+  ...pr,
+  reviewDecision: null,
+  mergeable: null,
+  mergeStateStatus: null,
+  viewerCanUpdate: null,
+});
+// Chrome storage may reorder keys, including nested ones. Serialization order is not activity.
+export const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
+  jsonEqual(searchFacts(a), searchFacts(b));
 
 function staleMergeStates(
   result: FetchResult,
@@ -58,21 +61,23 @@ function staleMergeStates(
     const readAt = previous?.mergeStateAt?.[pr.id];
     const valid =
       before !== undefined &&
+      sameSearchFacts(before, pr) &&
       readAt !== undefined &&
       now - Date.parse(readAt) <
         (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
       before.mergeable !== 'unknown' &&
       before.mergeStateStatus !== 'unknown' &&
-      searchFacts(before) === searchFacts(pr);
+      before.reviewDecision !== 'unknown';
     // Preserve the baseline even when this poll has no budget left for its refresh.
-    if (before?.headSha === pr.headSha) {
+    if (before && sameSearchFacts(before, pr)) {
       result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
     } else if (before) {
       result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
     }
-    if (valid) {
-      result.mergeStateAt[pr.id] = readAt;
-    } else {
+    if (before && sameSearchFacts(before, pr) && readAt) result.mergeStateAt[pr.id] = readAt;
+    if (!valid) {
+      result.mergeStateDue ??= [];
+      result.mergeStateDue.push(pr.id);
       stale.push(pr);
     }
   }
@@ -80,6 +85,38 @@ function staleMergeStates(
   const age = (pr: PullRequest) => Date.parse(previous?.mergeStateAt?.[pr.id] ?? '') || 0;
   stale.sort((a, b) => Number(hidden(a)) - Number(hidden(b)) || age(a) - age(b));
   return stale;
+}
+
+function takeMergeBatch(
+  stale: PullRequest[],
+  count: number,
+  priorityIds: readonly string[],
+  previous: Pick<Snapshot, 'mergeStateAt'> | null,
+): PullRequest[] {
+  const priority = new Map(priorityIds.map((id, index) => [id, index]));
+  stale.sort(
+    (a, b) =>
+      (priority.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+      (priority.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+  );
+  // Reserve the last two slots for the oldest reads, even under continuous visible hints.
+  const fair =
+    count + MERGE_STATE_BATCH >= MERGE_STATE_PER_POLL
+      ? [...stale]
+          .sort(
+            (a, b) =>
+              (Date.parse(previous?.mergeStateAt?.[a.id] ?? '') || 0) -
+              (Date.parse(previous?.mergeStateAt?.[b.id] ?? '') || 0),
+          )
+          .slice(0, 2)
+      : [];
+  const chosen = new Set(
+    fair.concat(stale.filter((pr) => !fair.includes(pr)).slice(0, MERGE_STATE_BATCH - fair.length)),
+  );
+  const batch = stale.filter((pr) => chosen.has(pr));
+  for (const pr of batch) stale.splice(stale.indexOf(pr), 1);
+
+  return batch;
 }
 
 /**
@@ -113,13 +150,8 @@ export async function readMergeState({
     stale.length > 0 && count < MERGE_STATE_PER_POLL;
     count += MERGE_STATE_BATCH
   ) {
-    const priority = new Map(priorityIds().map((id, index) => [id, index]));
-    stale.sort(
-      (a, b) =>
-        (priority.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
-        (priority.get(b.id) ?? Number.MAX_SAFE_INTEGER),
-    );
-    const batch = stale.splice(0, MERGE_STATE_BATCH);
+    const batch = takeMergeBatch(stale, count, priorityIds(), previous);
+
     await onProgress?.(
       result,
       batch.map(({ id }) => id),
@@ -146,8 +178,14 @@ export async function readMergeState({
       if (!isNode(node)) return;
       const sameHead = node.headRefOid === pr.headSha && messages.length === 0;
       result.pullRequests[pr.id] = { ...pr, ...mapMergeState(sameHead ? node : {}) };
-      if (sameHead) result.mergeStateAt[pr.id] = readAt;
+      if (sameHead) {
+        result.mergeStateAt[pr.id] = readAt;
+        result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
+      } else {
+        delete result.mergeStateAt[pr.id];
+      }
     });
   }
+  if (result.mergeStateDue?.length === 0) delete result.mergeStateDue;
   await onProgress?.(result, []);
 }

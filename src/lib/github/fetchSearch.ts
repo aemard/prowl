@@ -9,7 +9,7 @@ import type {
 } from '../model';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
-import { isNode } from './fetchMergeState';
+import { isNode, sameSearchFacts } from './fetchMergeState';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
 import { type MergeFacts, mapMergeState, mapPullRequest } from './mapPullRequest';
 import { SEARCH_QUERY, type SearchData } from './queries';
@@ -83,10 +83,11 @@ export class SearchContext {
     let cut = false;
     let total: number | undefined;
     let examined = 0;
-    // Local repo intersections may reject whole pages. Bound scanned work independently of
-    // retained results: at most 500 nodes per query and never more than 5x the requested cap.
+    let pages = 0;
+    // Bound both examined nodes and requests when repository filters reject whole pages.
     const scanBudget = Math.min(500, Math.max(100, this.settings.maxPerSection * 5));
     do {
+      pages++;
       const first = Math.min(
         PAGE_SIZE,
         this.settings.maxPerSection - found.size,
@@ -98,12 +99,7 @@ export class SearchContext {
         this.searched = true;
         examined += first;
         total = page.issueCount;
-        for (const pr of filterByRepo(
-          (page.nodes ?? []).filter(isNode).map(mapPullRequest),
-          this.settings,
-        )) {
-          found.set(pr.id, pr);
-        }
+        for (const pr of this.pagePrs(page)) found.set(pr.id, pr);
         hasMore = page.pageInfo.hasNextPage;
         if (this.partialMessages.length) problems.push(...this.partialMessages);
         const cursor: string | null = page.pageInfo.endCursor;
@@ -121,7 +117,12 @@ export class SearchContext {
         cut = true;
         break;
       }
-    } while (hasMore && found.size < this.settings.maxPerSection && examined < scanBudget);
+    } while (
+      hasMore &&
+      found.size < this.settings.maxPerSection &&
+      examined < scanBudget &&
+      pages < 20
+    );
     return {
       prs: [...found.values()],
       coverage: {
@@ -134,6 +135,10 @@ export class SearchContext {
     };
   }
 
+  private pagePrs(page: SearchData['search']): PullRequest[] {
+    return filterByRepo((page.nodes ?? []).filter(isNode).map(mapPullRequest), this.settings);
+  }
+
   coverageFor = (id: string, coverage: SectionCoverage) => {
     if (coverage.hasMore || coverage.partial || coverage.stale) {
       this.result.sectionCoverage ??= {};
@@ -143,7 +148,7 @@ export class SearchContext {
   put = (pr: PullRequest) => {
     const before = this.previous?.pullRequests[pr.id];
     this.result.pullRequests[pr.id] = before
-      ? { ...pr, ...(before.headSha === pr.headSha ? mergeFacts(before) : mapMergeState({})) }
+      ? { ...pr, ...(sameSearchFacts(before, pr) ? mergeFacts(before) : mapMergeState({})) }
       : pr;
   };
   /**
