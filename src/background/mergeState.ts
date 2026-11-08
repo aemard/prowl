@@ -79,7 +79,8 @@ async function refreshCard(id: string, headSha: string, requestedAuth: AuthState
     readAt &&
     now - Date.parse(readAt) < 60_000 &&
     pr.mergeable !== 'unknown' &&
-    pr.mergeStateStatus !== 'unknown'
+    pr.mergeStateStatus !== 'unknown' &&
+    pr.reviewDecision !== 'unknown'
   )
     return;
   await readMergeState(auth, id, headSha, state, normalizeSettings(stored.settings), now);
@@ -154,6 +155,7 @@ async function publishMergeState(
       ...latest,
       pullRequests: { ...latest.pullRequests, [id]: { ...latestPr, ...mapMergeState(node) } },
       mergeStateAt: { ...latest.mergeStateAt, [id]: new Date().toISOString() },
+      mergeStateDue: latest.mergeStateDue?.filter((other) => other !== id),
     };
     await setItem('snapshot', next);
     await updateBadge();

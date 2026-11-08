@@ -181,24 +181,24 @@ describe('PullRequestDetails', () => {
 
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    await screen.findByText('Checks');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    await screen.findByText('lint');
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('loads again when the PR changes, keeping what it shows meanwhile', async () => {
+  it('loads details and branch rules again only when the PR changes', async () => {
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     const { rerender } = show();
     await waitFor(() => expect(details.value[pr.id]?.detail).toBeDefined());
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(<PullRequestDetails pr={{ ...pr, fetchedLater: true } as PullRequest} id="detail" />);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(
       <PullRequestDetails pr={{ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' }} id="detail" />,
     );
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
     expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
   });
 });

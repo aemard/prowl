@@ -11,7 +11,10 @@ import { mapClosedState } from './mapPullRequest';
 import { NODES_QUERY, type NodesData } from './queries';
 import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
 export interface FetchResult
-  extends Pick<Snapshot, 'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending'> {
+  extends Pick<
+    Snapshot,
+    'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending' | 'mergeStateDue'
+  > {
   /** PR id -> when its merge facts were read (see `Snapshot.mergeStateAt`). */
   mergeStateAt: Record<string, string>;
   /** Sections that were skipped or loaded in part, section id -> readable reason. */

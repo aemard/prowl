@@ -72,7 +72,11 @@ describe('merge facts across commits', () => {
           return { ...response, nodes: response.nodes?.map((item) => ({ ...item, headRefOid })) };
         },
       });
-      const result = await fetchPullRequests(client, settings());
+      const result = await fetchPullRequests(client, settings(), {
+        pullRequests: { [node.id]: mapped(node) },
+        mergeStateAt: { [node.id]: new Date(Date.now() - 20 * 60_000).toISOString() },
+      });
+      expect(result.mergeStateDue).toContain(node.id);
       expect(result.pullRequests[node.id]?.mergeStateStatus).toBe('unknown');
       expect(result.mergeStateAt[node.id]).toBeUndefined();
     },

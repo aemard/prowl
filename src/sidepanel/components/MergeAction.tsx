@@ -4,7 +4,7 @@ import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
-import { details } from '../state/prDetail';
+import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
 import { AlertIcon, GitMergeIcon } from './icons';
 import { mergeReadiness } from './mergeReadiness';
@@ -64,7 +64,18 @@ function useMergeControls(pr: PullRequest) {
 type MergeControls = ReturnType<typeof useMergeControls>;
 type MergeDialogProps = { pr: PullRequest; method: MergeMethod; controls: MergeControls };
 
-/** Offers immediate merging only with verified readiness or permission to bypass rules. */
+function currentDetail(pr: PullRequest) {
+  const entry = details.value[pr.id];
+  return entry?.key === detailKey(pr) && !entry.loading && !entry.error ? entry.detail : undefined;
+}
+
+/**
+ * What the merge control may offer, so it never contradicts the blockers listed above it: Merge
+ * when GitHub's verdict is ready; "Merge without waiting" when it is not but the viewer can bypass
+ * the rules (`viewerCanMergeAsAdmin`); otherwise auto-merge when the repository and the viewer
+ * allow it, or nothing. Unverified merge facts offer nothing until a refresh fills them in.
+ * GitHub still has the last word; a refusal shows its reason in a toast and requests a refresh.
+ */
 function mergeOptions(pr: PullRequest) {
   const ready = isReadyToMerge(pr);
   const known =
@@ -85,9 +96,9 @@ function mergeOptions(pr: PullRequest) {
 
 export function MergeAction({ pr }: { pr: PullRequest }) {
   const controls = useMergeControls(pr);
+  const methods = currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods;
   const method =
-    [controls.picked, pr.defaultMergeMethod].find((m) => m && pr.allowedMergeMethods.includes(m)) ??
-    pr.allowedMergeMethods[0];
+    [controls.picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
   if (!method || !auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft)
     return null;
   return (
@@ -146,7 +157,7 @@ function MergeDialog({ pr, method, controls }: MergeDialogProps) {
   // The modal hides the blockers listed above the button: the dialog repeats them.
   const blockers = ready
     ? []
-    : mergeReadiness(pr, details.value[pr.id]?.detail)
+    : mergeReadiness(pr, currentDetail(pr))
         .filter(({ tone }) => tone !== 'neutral' && tone !== 'success')
         .map(({ text }) => text.replace(/^Blocked: /, ''))
         .map((text) => text.charAt(0).toLowerCase() + text.slice(1));
@@ -230,7 +241,8 @@ function MergeFields({
   blockers,
 }: MergeDialogProps & { blockers: string[] }) {
   const { pending, title, setPicked, setTitle } = controls;
-  const methods = pr.allowedMergeMethods;
+  const detail = currentDetail(pr);
+  const methods = detail?.allowedMergeMethods ?? pr.allowedMergeMethods;
   return (
     <>
       <p class="merge-dialog__pr">{pr.title}</p>
@@ -247,8 +259,10 @@ function MergeFields({
         disabled={pending !== undefined}
         hint={
           method === 'rebase'
-            ? 'Commits are kept as they are, so there is no commit title.'
-            : undefined
+            ? 'Commits are kept as they are, so there is no commit title. GitHub checks all applicable branch rules.'
+            : detail?.allowedMergeMethods
+              ? 'Methods allowed by the repository and readable branch rules. GitHub checks remaining requirements.'
+              : 'Methods follow repository settings. GitHub may apply additional branch restrictions.'
         }
         onValueChange={setPicked}
       />
