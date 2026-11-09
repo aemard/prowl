@@ -1,5 +1,4 @@
 import type { ComponentChildren, TargetedKeyboardEvent, TargetedMouseEvent } from 'preact';
-import { createPortal } from 'preact/compat';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { CheckIcon } from '../icons';
 import { cx } from './cx';
@@ -107,6 +106,8 @@ function useMenuPlacement(state: ReturnType<typeof useMenuState>, align: 'start'
   useLayoutEffect(() => {
     const menu = menuRef.current;
     if (!open || !menu) return;
+    // The effect reruns as the active item moves; show the popover only once.
+    if (!menu.matches(':popover-open')) menu.showPopover();
     if (triggerRef.current) place(menu, triggerRef.current, align);
     menu.querySelector<HTMLElement>(`[data-index="${active}"]`)?.focus();
   }, [open, active, align]);
@@ -234,24 +235,21 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
   return (
     <>
       {trigger(menuTriggerProps(state, id))}
-      {state.open &&
-        createPortal(
-          <div
-            ref={state.menuRef}
-            id={`${id}-menu`}
-            role="menu"
-            class="ui-menu"
-            aria-labelledby={label ? undefined : `${id}-trigger`}
-            aria-label={label}
-            tabIndex={-1}
-            onKeyDown={(event) => onMenuKeyDown(event, items, state)}
-          >
-            {items.map((item, index) => menuEntry(item, index, state))}
-          </div>,
-          // Keep modal menus in the dialog's top layer and focus trap. All other menus
-          // escape sticky chrome and card stacking contexts.
-          state.triggerRef.current?.closest('dialog') ?? document.body,
-        )}
+      {state.open && (
+        <div
+          ref={state.menuRef}
+          id={`${id}-menu`}
+          role="menu"
+          popover="manual"
+          class="ui-menu"
+          aria-labelledby={label ? undefined : `${id}-trigger`}
+          aria-label={label}
+          tabIndex={-1}
+          onKeyDown={(event) => onMenuKeyDown(event, items, state)}
+        >
+          {items.map((item, index) => menuEntry(item, index, state))}
+        </div>
+      )}
     </>
   );
 }
