@@ -130,6 +130,22 @@ function bottomBarHeight() {
   return bar ? bar.offsetHeight + (Number.parseFloat(getComputedStyle(bar).bottom) || 0) : 0;
 }
 
+const VISIBILITY_STEPS = Array.from({ length: 11 }, (_, step) => step / 10);
+
+/** On screen: 60 % of the card, or 60 % of the viewport for a card taller than it. */
+function isVisible(entry: IntersectionObserverEntry) {
+  const { isIntersecting, intersectionRatio, intersectionRect, rootBounds, boundingClientRect } =
+    entry;
+  return (
+    isIntersecting &&
+    (intersectionRatio >= 0.6 ||
+      (rootBounds !== null &&
+        rootBounds.height > 0 &&
+        boundingClientRect.height > rootBounds.height &&
+        intersectionRect.height >= rootBounds.height * 0.6))
+  );
+}
+
 /**
  * Sends `markSeen` for the unseen cards that have been on screen for `SEEN_DELAY_MS` while the
  * panel is visible. A scroll or a new snapshot restarts the wait, so only cards the user rested
@@ -140,24 +156,29 @@ function useMarkSeen(
   list: { current: HTMLElement | null },
   renderedKey: string,
   unseenKey: string,
-  versions: Record<string, string>,
+  versions: Record<string, { updatedAt: string; facts: string }>,
 ) {
   const [onScreen, setOnScreen] = useState<string[]>([]);
   const panelVisible = usePanelVisible();
   const versionKey = JSON.stringify(versions);
   useEffect(() => {
     const visible = new Set<string>();
+    const cards = [...(list.current?.querySelectorAll('[data-pr-id]') ?? [])];
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const { target, isIntersecting } of entries) {
-          const id = (target as HTMLElement).dataset.prId;
-          if (id) visible[isIntersecting ? 'add' : 'delete'](id);
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.prId;
+          if (id) visible[isVisible(entry) ? 'add' : 'delete'](id);
         }
         setOnScreen([...visible]);
       },
-      { threshold: 0.6, rootMargin: `0px 0px ${-bottomBarHeight()}px 0px` },
+      {
+        // Every tenth, so isVisible re-checks cards of any height, including ones expanded later.
+        threshold: VISIBILITY_STEPS,
+        rootMargin: `0px 0px ${-bottomBarHeight()}px 0px`,
+      },
     );
-    for (const card of list.current?.querySelectorAll('[data-pr-id]') ?? []) observer.observe(card);
+    for (const card of cards) observer.observe(card);
     return () => {
       observer.disconnect();
       setOnScreen([]);
@@ -197,12 +218,15 @@ export function useListVisibility(panel: { current: HTMLElement | null }, data: 
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
-  const versions = Object.fromEntries(data.seeable.map((pr) => [pr.id, activityKey(pr)]));
+  const versions = Object.fromEntries(
+    data.seeable.map((pr) => [pr.id, { updatedAt: pr.updatedAt, facts: activityKey(pr) }]),
+  );
   useMarkSeen(
     panel,
-    [data.enabled.length > 1, ...data.seeable.map((pr) => `${pr.id}:${versions[pr.id]}`)].join(
-      '\n',
-    ),
+    [
+      data.enabled.length > 1,
+      ...data.seeable.map((pr) => `${pr.id}:${JSON.stringify(versions[pr.id])}`),
+    ].join('\n'),
     data.seeable
       .filter((pr) => !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr)))
       .map((pr) => pr.id)

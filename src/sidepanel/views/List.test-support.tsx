@@ -25,9 +25,13 @@ class FakeObserver {
   disconnect() {
     FakeObserver.all = FakeObserver.all.filter((observer) => observer !== this);
   }
-  show(ids: string[]) {
+  show(ids: string[], ratio = 1, cardHeight = 100, rootHeight = 800) {
     const entries = this.targets.map((target) => ({
       target,
+      intersectionRatio: ids.includes((target as HTMLElement).dataset.prId ?? '') ? ratio : 0,
+      intersectionRect: { height: cardHeight * ratio },
+      boundingClientRect: { height: cardHeight },
+      rootBounds: { height: rootHeight },
       isIntersecting: ids.includes((target as HTMLElement).dataset.prId ?? ''),
     }));
     act(() => this.callback(entries as IntersectionObserverEntry[], this as never));

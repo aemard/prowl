@@ -195,7 +195,11 @@ describe('grouped by repository', () => {
       .map(([message]) => message as { type: string; prIds?: string[] })
       .filter((message) => message.type === 'markSeen');
     expect(marked).toEqual([
-      { type: 'markSeen', prIds: [web1.id], versions: { [web1.id]: activityKey(web1) } },
+      {
+        type: 'markSeen',
+        prIds: [web1.id],
+        versions: { [web1.id]: { updatedAt: web1.updatedAt, facts: activityKey(web1) } },
+      },
     ]);
 
     fireEvent.click(header('acme/api'));

@@ -450,7 +450,11 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
-  | { type: 'markSeen'; prIds: string[]; versions?: Record<string, string> }
+  | {
+      type: 'markSeen';
+      prIds: string[];
+      versions: Record<string, { updatedAt: string; facts: string }>;
+    }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }
   /** Hints from visible cards; changes priority only, never starts a GitHub request. */

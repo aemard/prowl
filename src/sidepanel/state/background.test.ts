@@ -12,6 +12,8 @@ describe('sendToBackground', () => {
     vi.spyOn(chrome.runtime, 'sendMessage').mockRejectedValue(
       new Error('Could not establish connection. Receiving end does not exist.'),
     );
-    await expect(sendToBackground({ type: 'markSeen', prIds: ['PR_1'] })).resolves.toBeUndefined();
+    await expect(
+      sendToBackground({ type: 'markSeen', prIds: ['PR_1'], versions: {} }),
+    ).resolves.toBeUndefined();
   });
 });

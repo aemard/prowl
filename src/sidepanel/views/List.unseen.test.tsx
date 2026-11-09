@@ -38,7 +38,10 @@ describe('unseen changes', () => {
   it('does not count a card behind the section bar as on screen', () => {
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(49);
     render(<ListView />);
-    expect(observer().options).toEqual({ threshold: 0.6, rootMargin: '0px 0px 0px 0px' });
+    expect(observer().options).toEqual({
+      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+      rootMargin: '0px 0px 0px 0px',
+    });
 
     // Turning a second section on brings the bar, and a new observer that leaves it out.
     act(() => withSections(['authored', 'mentioned']));
@@ -55,11 +58,71 @@ describe('unseen changes', () => {
     expect(markSeen(send)).toEqual([]);
     act(() => void vi.advanceTimersByTime(1));
     expect(markSeen(send)).toEqual([
-      { type: 'markSeen', prIds: [a.id], versions: { [a.id]: activityKey(a) } },
+      {
+        type: 'markSeen',
+        prIds: [a.id],
+        versions: { [a.id]: { updatedAt: a.updatedAt, facts: activityKey(a) } },
+      },
     ]);
 
     act(() => void vi.advanceTimersByTime(10_000));
     expect(markSeen(send)).toHaveLength(1);
+  });
+
+  it('requires 60% visibility and cancels the wait below that ratio', () => {
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    render(<ListView />);
+    observer().show([a.id], 0.1);
+    act(() => void vi.advanceTimersByTime(1500));
+    expect(markSeen(send)).toEqual([]);
+    observer().show([a.id], 0.6);
+    act(() => void vi.advanceTimersByTime(1000));
+    observer().show([a.id], 0.59);
+    act(() => void vi.advanceTimersByTime(1500));
+    expect(markSeen(send)).toEqual([]);
+    observer().show([a.id], 0.6);
+    act(() => void vi.advanceTimersByTime(1500));
+    expect(markSeen(send)).toHaveLength(1);
+  });
+
+  it('counts a tall card covering 60% of the viewport', () => {
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      height: 2000,
+    } as DOMRect);
+    render(<ListView />);
+    observer().show([a.id], 0.2, 2000, 800);
+    act(() => void vi.advanceTimersByTime(1500));
+    expect(markSeen(send)).toEqual([]);
+    observer().show([a.id], 0.24, 2000, 800);
+    act(() => void vi.advanceTimersByTime(1500));
+    expect(markSeen(send)).toHaveLength(1);
+  });
+
+  it.each([
+    { ...a, updatedAt: '2026-10-06T11:00:00.000Z' },
+    { ...a, commentCount: a.commentCount + 1 },
+  ])('restarts the viewing interval when visible activity changes: %j', (changed) => {
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    render(<ListView />);
+    observer().show([a.id]);
+    act(() => void vi.advanceTimersByTime(1000));
+    act(() => {
+      snapshot.value = buildSnapshotOf({ authored: [changed, b, c] });
+    });
+    observer().show([a.id]);
+    act(() => void vi.advanceTimersByTime(1499));
+    expect(markSeen(send)).toEqual([]);
+    act(() => void vi.advanceTimersByTime(1));
+    expect(markSeen(send)).toEqual([
+      {
+        type: 'markSeen',
+        prIds: [a.id],
+        versions: {
+          [a.id]: { updatedAt: changed.updatedAt, facts: activityKey(changed) },
+        },
+      },
+    ]);
   });
 
   it('reports cards on screen as priority without forcing a poll, then clears it when hidden', async () => {
@@ -88,7 +151,11 @@ describe('unseen changes', () => {
     observer().show([c.id]);
     act(() => void vi.advanceTimersByTime(1500));
     expect(markSeen(send)).toEqual([
-      { type: 'markSeen', prIds: [c.id], versions: { [c.id]: activityKey(c) } },
+      {
+        type: 'markSeen',
+        prIds: [c.id],
+        versions: { [c.id]: { updatedAt: c.updatedAt, facts: activityKey(c) } },
+      },
     ]);
   });
 
@@ -104,7 +171,11 @@ describe('unseen changes', () => {
     act(() => void document.dispatchEvent(new Event('visibilitychange')));
     act(() => void vi.advanceTimersByTime(1500));
     expect(markSeen(send)).toEqual([
-      { type: 'markSeen', prIds: [a.id], versions: { [a.id]: activityKey(a) } },
+      {
+        type: 'markSeen',
+        prIds: [a.id],
+        versions: { [a.id]: { updatedAt: a.updatedAt, facts: activityKey(a) } },
+      },
     ]);
   });
 
