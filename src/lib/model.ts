@@ -354,6 +354,15 @@ export interface PrLocalState {
   muted: Record<string, true>;
   /** PR id -> `updatedAt` value the user has seen. */
   seen: Record<string, string>;
+  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
+  seenFacts?: Record<string, string>;
+}
+
+/** Local panel organization for one account; search text is deliberately session-only. */
+export interface PanelState {
+  login: string;
+  activeSectionId?: string;
+  foldedGroups: string[];
 }
 
 export interface QuietHours {
@@ -383,7 +392,7 @@ export interface Settings {
   repoInclude: string[];
   /** `owner/name` or `owner`. Applied after include. */
   repoExclude: string[];
-  /** Integer minutes, minimum 1, default 2. */
+  /** Integer minutes, minimum 2, default 2. */
   pollIntervalMinutes: number;
   /** Results fetched per section, 1-100, default 50. */
   maxPerSection: number;
@@ -393,20 +402,22 @@ export interface Settings {
   sort: SortOrder;
   /** The list groups each section's PRs under their repository (independent of `sort`). */
   groupByRepo: boolean;
-  /**
-   * PRs whose last commit is older than this many days are left out of the list, the section
-   * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.
-   */
+  /** Legacy sync compatibility key, always normalized to 0. */
   hideStaleAfterDays: number;
-  /** Draft PRs are left out of the list, the counts and the badge too (they still notify). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideDrafts: boolean;
-  /** So are PRs opened by a bot (`Actor.isBot`). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideBots: boolean;
   /**
    * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
    * team is followed, and so is any team discovered later.
    */
   unfollowedTeams: string[];
+}
+
+/** Install-local first-run notice status, retained on sign-out and never synced. */
+export interface OnboardingState {
+  status: 'pending' | 'completed' | 'skipped';
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
@@ -431,6 +442,8 @@ export const STORAGE_KEYS = {
   pollState: 'pollState',
   prLocal: 'prLocal',
   teams: 'teams',
+  panelState: 'panelState',
+  onboarding: 'onboarding',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -438,7 +451,7 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
   | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
-  | { type: 'markSeen'; prIds: string[] }
+  | { type: 'markSeen'; prIds: string[]; versions?: Record<string, string> }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }
   /** Hints from visible cards; changes priority only, never starts a GitHub request. */

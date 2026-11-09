@@ -1,8 +1,8 @@
 import type { RefObject } from 'preact';
 import { useState } from 'preact/hooks';
-import { describeHiddenReasons } from '../../lib/hidden';
+import { activityKey } from '../../lib/activity';
 import type { PullRequest, SectionKind } from '../../lib/model';
-import { isMuted, isSeen } from '../../lib/storage/prLocal';
+import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
   ClockIcon,
@@ -22,15 +22,15 @@ import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
-import { pollState } from '../state/store';
+import { pollState, teams } from '../state/store';
 import {
   filterQuery,
   foldKey,
   type LoadedListData,
   pullRequestsOf,
-  showHidden,
   toggleFolded,
 } from './ListState';
+import { TeamReviewsHeader } from './SettingsTeams';
 
 /**
  * Per section kind: its icon and short name in the section bar (a custom section shows its own
@@ -70,25 +70,22 @@ function ListCard({
   data,
   grouped = false,
   snoozed = false,
-  hiddenBecause,
 }: {
   pr: PullRequest;
   data: LoadedListData;
   grouped?: boolean;
   snoozed?: boolean;
-  hiddenBecause?: string;
 }) {
   return (
     <PullRequestCard
       pr={pr}
       activity={data.activity[pr.id]}
       now={data.now}
-      unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt)}
+      unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr))}
       muted={isMuted(data.local, pr.id)}
       teams={data.snap.teamRequests?.[pr.id]}
       grouped={grouped}
       snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
-      hiddenBecause={hiddenBecause}
     />
   );
 }
@@ -117,8 +114,15 @@ function ShownRequests({ data }: { data: LoadedListData }) {
   );
 }
 
-function SnoozedRequests({ data }: { data: LoadedListData }) {
-  const [open, setOpen] = useState(false);
+function SnoozedRequests({
+  data,
+  open,
+  setOpen,
+}: {
+  data: LoadedListData;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
   const { snoozed, selected } = data;
   return (
     snoozed.length > 0 && (
@@ -145,40 +149,6 @@ function SnoozedRequests({ data }: { data: LoadedListData }) {
   );
 }
 
-function HiddenRequests({ data }: { data: LoadedListData }) {
-  const { hidden, selected } = data;
-  return (
-    hidden.length > 0 && (
-      <div class="list__aside">
-        <Button
-          class="list__aside-toggle"
-          size="sm"
-          variant="ghost"
-          icon={showHidden.value ? <EyeClosedIcon size={12} /> : <EyeIcon size={12} />}
-          aria-expanded={showHidden.value}
-          onClick={() => {
-            showHidden.value = !showHidden.value;
-          }}
-        >
-          {showHidden.value ? 'Hide again' : `Show ${hidden.length} hidden`}
-        </Button>
-        {showHidden.value && (
-          <ul class="pr-list" aria-label={`Hidden ${selected.label} pull requests`}>
-            {hidden.map(({ pr, reasons }) => (
-              <ListCard
-                key={pr.id}
-                pr={pr}
-                data={data}
-                hiddenBecause={describeHiddenReasons(reasons)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-    )
-  );
-}
-
 function EmptySection({
   data,
   filterInput,
@@ -186,11 +156,13 @@ function EmptySection({
   data: LoadedListData;
   filterInput: RefObject<HTMLElement>;
 }) {
-  const { shown, hidden, snoozed, snap, selected, query } = data;
+  const { shown, snoozed, snap, selected, query } = data;
   if (
-    shown.length + hidden.length + snoozed.length > 0 ||
+    shown.length + snoozed.length > 0 ||
     snap.sectionErrors?.[selected.id] !== undefined ||
-    searching(data)
+    searching(data) ||
+    (selected.kind === 'team_review_requested' &&
+      (!teams.value || teams.value.error || teams.value.teams.length === 0))
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
@@ -227,10 +199,23 @@ export function SectionContent({
   data: LoadedListData;
   filterInput: RefObject<HTMLElement>;
 }) {
-  const error = data.snap.sectionErrors?.[data.selected.id];
+  const [snoozedOpen, setSnoozedOpen] = useState(false);
+  const matches = data.shown.length + data.snoozed.length;
+  const setAside =
+    data.shown.length === 0 &&
+    matches > 0 &&
+    !snoozedOpen &&
+    pullRequestsOf(data.snap, data.selected.id).every((pr) =>
+      isSnoozed(data.local, pr.id, data.now),
+    );
+  const error =
+    data.selected.kind === 'team_review_requested' && teams.value?.error
+      ? undefined
+      : data.snap.sectionErrors?.[data.selected.id];
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
+      {data.selected.kind === 'team_review_requested' && <TeamReviewsHeader />}
       {searching(data) && (
         <p class="list__notice" role="status">
           Searching “{data.selected.label}”…
@@ -251,9 +236,29 @@ export function SectionContent({
           count={pullRequestsOf(data.snap, data.selected.id).length}
         />
       )}
+      {setAside && !searching(data) && (
+        <EmptyState
+          icon={<EyeClosedIcon size={24} />}
+          title="All loaded pull requests are snoozed"
+          description="They return here when the snooze ends."
+          action={
+            <Button
+              onClick={() => {
+                setSnoozedOpen(true);
+                // Keep keyboard focus on the fold after the empty-state button disappears.
+                filterInput.current
+                  ?.closest('.list')
+                  ?.querySelector<HTMLElement>('.list__aside-toggle')
+                  ?.focus();
+              }}
+            >
+              Show snoozed
+            </Button>
+          }
+        />
+      )}
       <ShownRequests data={data} />
-      <SnoozedRequests data={data} />
-      <HiddenRequests data={data} />
+      <SnoozedRequests data={data} open={snoozedOpen} setOpen={setSnoozedOpen} />
       <EmptySection data={data} filterInput={filterInput} />
     </>
   );

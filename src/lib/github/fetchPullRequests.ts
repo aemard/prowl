@@ -27,14 +27,7 @@ export interface FetchResult
 
 export type FetchSettings = Pick<
   Settings,
-  | 'sections'
-  | 'repoInclude'
-  | 'repoExclude'
-  | 'maxPerSection'
-  | 'unfollowedTeams'
-  | 'hideDrafts'
-  | 'hideBots'
-  | 'hideStaleAfterDays'
+  'sections' | 'repoInclude' | 'repoExclude' | 'maxPerSection' | 'unfollowedTeams'
 >;
 
 const HAS_SORT = /(?:^|[\s(])sort:/i;
@@ -47,7 +40,7 @@ const IDS_PER_QUERY = 100;
  * so does a `server` error when no search succeeded. Merge facts are read again only for PRs that
  * changed since `previous`, whose facts are unknown or older than `MERGE_STATE_MAX_AGE_MS`; the
  * others keep theirs. At most 20 merge states are fetched per poll, visible PRs first,
- * oldest reads first within each priority. Hidden/snoozed facts last one hour when unchanged;
+ * oldest reads first within each priority. Snoozed facts last one hour when unchanged;
  * deferred facts keep their values but are marked due for the next poll. Open PRs of `previous` that are no longer in any section are looked up by
  * id: merged or closed ones are kept (in no section) so the diff can tell who merged or closed
  * them; still-open ones are dropped. `onProgress` publishes completed sections during search, then the list before merge reads,

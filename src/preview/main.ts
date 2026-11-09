@@ -1,5 +1,5 @@
 import type { AuthState } from '../lib/model';
-import { defaultSettings } from '../lib/storage/settings';
+import { PENDING_NOTICE } from '../lib/storage/onboarding';
 import { installFakeChrome } from '../test/chrome';
 import { installMockApi } from './mockApi';
 import './preview.css';
@@ -27,11 +27,9 @@ async function start() {
     viewer: { login: 'octocat', name: 'Demo User', avatarUrl: '' },
     createdAt: new Date().toISOString(),
   };
-  const settings = defaultSettings();
-  for (const section of settings.sections) {
-    if (section.kind === 'review_requested') section.enabled = true;
-  }
-  await fake.storage.local.set({ auth, settings });
+  await fake.storage.local.set(
+    location.hash === '#onboarding' ? { onboarding: PENDING_NOTICE } : { auth },
+  );
   const { registerBackground } = await import('../background/register');
   const { poll } = await import('../background/poller');
   registerBackground();

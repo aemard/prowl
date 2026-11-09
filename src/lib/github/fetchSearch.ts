@@ -17,10 +17,6 @@ import { parseRateLimit } from './rateLimit';
 import { buildSearchQuery, filterByRepo } from './search';
 import { MAX_TEAM_SEARCHES, teamKey } from './teams';
 
-const NO_TEAM =
-  'GitHub lists no team for your account. An organization that requires single sign-on, or ' +
-  'restricts OAuth apps, lists its teams only once it has approved your token or Prowl.';
-const NO_FOLLOWED_TEAM = 'You follow none of your teams. Follow one in Settings.';
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
 const SSO_REQUIRED =
   'An organization requires single sign-on (SAML) that this token is not authorized for, so ' +
@@ -187,8 +183,8 @@ export class SearchContext {
     const all = this.teams?.teams ?? [];
     const followed = all.filter((team) => !this.settings.unfollowedTeams.includes(teamKey(team)));
     if (followed.length === 0) {
-      this.result.sectionErrors[section.id] =
-        all.length > 0 ? NO_FOLLOWED_TEAM : (this.teams?.error?.message ?? NO_TEAM);
+      if (this.teams?.error) this.result.sectionErrors[section.id] = this.teams.error.message;
+      else this.result.sections[section.id] = [];
       return;
     }
     const problems: string[] = [];
@@ -215,11 +211,6 @@ export class SearchContext {
         problems.push(`GitHub refused the search for ${key}: ${error.message}`);
         stale = true;
       }
-    }
-    if (followed.length > MAX_TEAM_SEARCHES) {
-      problems.push(
-        `Partial results: ${MAX_TEAM_SEARCHES} of ${followed.length} followed teams searched. Choose teams in Settings.`,
-      );
     }
     hasMore ||= found.size > this.settings.maxPerSection;
     const kept = [...found.values()]

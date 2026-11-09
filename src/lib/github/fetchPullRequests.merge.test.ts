@@ -98,14 +98,14 @@ describe('fetchPullRequests', () => {
       expect(first.mergeStateDue).toEqual([prId(21)]);
     });
 
-    it('prioritizes visible PRs and reuses hidden and snoozed facts for an hour', async () => {
+    it('prioritizes unsnoozed PRs and reuses only snoozed facts for an hour', async () => {
       const nodes = Array.from({ length: 25 }, (_, i) =>
         prNode({ number: i + 1, isDraft: i < 10, mergeStateStatus: 'CLEAN' }),
       );
       const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
-      const prefs = settings({ hideDrafts: true });
+      const prefs = settings();
       const first = await fetchPullRequests(client, prefs);
-      expect(merge(calls).flat().slice(0, 15)).toEqual(nodes.slice(10).map(({ id }) => id));
+      expect(merge(calls).flat().slice(0, 15)).toEqual(nodes.slice(0, 15).map(({ id }) => id));
       const readAt = new Date(Date.now() - 30 * MINUTE).toISOString();
       const previous = {
         pullRequests: Object.fromEntries(nodes.map((node) => [node.id, mapped(node)])),
@@ -118,8 +118,13 @@ describe('fetchPullRequests', () => {
         seen: {},
       };
       const next = await fetchPullRequests(client, prefs, previous, null, local);
-      expect(merge(calls).flat()).toEqual(nodes.slice(11).map(({ id }) => id));
-      expect(next.mergeStateAt[prId(1)]).toBe(readAt);
+      expect(merge(calls).flat()).toEqual(
+        nodes
+          .filter((_, i) => i !== 10)
+          .slice(0, 20)
+          .map(({ id }) => id),
+      );
+      expect(next.mergeStateAt[prId(1)]).not.toBe(readAt);
       expect(next.mergeStateAt[prId(11)]).toBe(readAt);
       expect(Object.keys(first.pullRequests)).toHaveLength(25);
     });

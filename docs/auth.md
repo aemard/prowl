@@ -5,6 +5,12 @@ only ever sent to GitHub. There are two ways to get one: approve Prowl on GitHub
 personal access token (PAT). Both end the same way: Prowl checks the token, shows who you are
 and starts following your pull requests.
 
+The sign-in screen says “See your pull requests here” and explains that approving on GitHub
+keeps the token in this browser. “Use a personal access token” opens the form; “Help choosing
+a token” reveals the classic and fine-grained explanations. About is in Settings → Account.
+After sign-in the full list opens immediately. Fresh installs show a dismissible note above
+it, with notification and Settings actions and a Team reviews action when teams are found.
+
 ## Which way should I sign in?
 
 | Way to sign in | Access | CI status |

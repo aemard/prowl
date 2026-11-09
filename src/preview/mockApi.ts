@@ -80,6 +80,8 @@ export function simulatePullRequest(kind: 'new' | 'merged' | 'closed'): boolean 
 }
 
 function operation(name: string, variables: Record<string, unknown>): object {
+  if (name === 'ProwlViewer')
+    return { viewer: { login: 'octocat', name: 'Demo User', avatarUrl: '' } };
   if (name === 'ProwlSearch')
     return searchResponse(
       nodes.filter((node) => node.state === 'OPEN'),

@@ -1,6 +1,5 @@
 /** Pure logic of the pull request list: quick filter, sort order, repositories, PRs set aside. */
-import { type HiddenReason, type HideSettings, hiddenReasons } from '../../lib/hidden';
-import type { PrLocalState, PullRequest, SortOrder } from '../../lib/model';
+import type { PrLocalState, PullRequest, Settings, SortOrder } from '../../lib/model';
 import { isSnoozed } from '../../lib/storage/prLocal';
 
 /**
@@ -64,23 +63,19 @@ export function groupByRepo(prs: PullRequest[]): RepoGroup[] {
 export interface SectionParts {
   /** Cards, and the section's count. */
   shown: PullRequest[];
-  /** Behind "Show N hidden", with why each one is hidden. */
-  hidden: { pr: PullRequest; reasons: HiddenReason[] }[];
-  /** Behind "Snoozed (N)". A snoozed PR is there even when it would also be hidden. */
+  /** Behind "Snoozed (N)". */
   snoozed: PullRequest[];
 }
 
 export function splitSection(
   prs: PullRequest[],
   local: PrLocalState,
-  hide: HideSettings,
+  _settings: Settings,
   now: number,
 ): SectionParts {
-  const parts: SectionParts = { shown: [], hidden: [], snoozed: [] };
+  const parts: SectionParts = { shown: [], snoozed: [] };
   for (const pr of prs) {
-    const reasons = hiddenReasons(pr, hide, now);
     if (isSnoozed(local, pr.id, now)) parts.snoozed.push(pr);
-    else if (reasons.length > 0) parts.hidden.push({ pr, reasons });
     else parts.shown.push(pr);
   }
   return parts;

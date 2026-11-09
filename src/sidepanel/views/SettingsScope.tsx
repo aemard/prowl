@@ -13,6 +13,7 @@ import { saveSettings } from '../state/settings';
 import { settings } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
 import { PRESET_DESCRIPTIONS } from './SettingsModel';
+import { EditTeams } from './SettingsTeams';
 
 const FORM_ID = 'custom-section-form';
 
@@ -205,22 +206,27 @@ function changeRepos(
 }
 
 function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => void }) {
+  const [teamsOpened, setTeamsOpened] = useState(false);
   return (
     <li class="settings-row">
       <Switch
         label={section.label}
         description={section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]}
         checked={section.enabled}
-        onChange={(enabled) =>
+        onChange={(enabled) => {
+          setTeamsOpened(enabled);
           void saveSettings(
             (current) => ({
               ...current,
               sections: current.sections.map((s) => (s.id === section.id ? { ...s, enabled } : s)),
             }),
             { refresh: true },
-          )
-        }
+          );
+        }}
       />
+      {section.kind === 'team_review_requested' && section.enabled && (
+        <EditTeams initiallyOpen={teamsOpened} />
+      )}
       {section.kind === 'custom' && <CustomActions section={section} onEdit={onEdit} />}
     </li>
   );
@@ -233,7 +239,7 @@ export function ScopeSettings() {
   const [editing, setEditing] = useState<Section | null>();
 
   return (
-    <SettingsGroup title="Pull requests" description="Choose which pull requests Prowl follows.">
+    <SettingsGroup title="Sections" description="Choose which pull requests Prowl follows.">
       <h4 class="settings-subtitle">Sections</h4>
       <ul class="settings-list">
         {sections.map((section) => (
@@ -253,7 +259,7 @@ export function ScopeSettings() {
       />
       <RepoFilter
         name="Exclude"
-        hint="Hide pull requests in these, even when they match an include."
+        hint="Exclude pull requests in these, even when they match an include."
         patterns={repoExclude}
         onChange={(update) => changeRepos('repoExclude', update)}
       />

@@ -12,7 +12,6 @@ import {
   CommentDiscussionIcon,
   CommentIcon,
   DotFillIcon,
-  EyeClosedIcon,
   EyeIcon,
   FileDiffIcon,
   GitMergeIcon,
@@ -132,7 +131,7 @@ function CardFlags({
           title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
         >
           <ClockIcon size={12} />
-          {formatSnoozeEnd(snoozedUntil, now)}
+          Snoozed until {formatSnoozeEnd(snoozedUntil, now)}
         </span>
       )}
     </>
@@ -142,17 +141,15 @@ function CardFlags({
 export function CardChips({
   statuses,
   refreshingMerge,
-  hiddenBecause,
   teams,
   teamRequest,
 }: {
   statuses: Statuses;
   refreshingMerge: boolean;
-  hiddenBecause?: string;
   teams?: readonly string[];
   teamRequest: string | false | undefined;
 }) {
-  if (!refreshingMerge && !hiddenBecause && !teamRequest && statuses.length === 0) return null;
+  if (!refreshingMerge && !teamRequest && statuses.length === 0) return null;
   return (
     <span class="pr-card__chips">
       {refreshingMerge && (
@@ -162,15 +159,6 @@ export function CardChips({
           title="Checking the latest merge status on GitHub"
         >
           Updating merge status
-        </Badge>
-      )}
-      {hiddenBecause && (
-        <Badge
-          variant="plain"
-          icon={<EyeClosedIcon size={12} />}
-          title="Why it is hidden from the list"
-        >
-          {hiddenBecause}
         </Badge>
       )}
       {teamRequest && (

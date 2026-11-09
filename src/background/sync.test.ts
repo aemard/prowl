@@ -91,3 +91,24 @@ describe('settings sync', () => {
     await vi.waitFor(() => expect(error).toHaveBeenCalled());
   });
 });
+
+it('forces legacy hiding keys off when an old device syncs a partial payload', async () => {
+  watchSettingsSync();
+  await setItem(STORAGE_KEYS.sync, { enabled: true, error: null });
+  await settle();
+  await chrome.storage.sync.set({ [SYNCED_KEY]: { hideStaleAfterDays: 20 } });
+  await vi.waitFor(async () =>
+    expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
+      version: 1,
+      hideStaleAfterDays: 0,
+      hideDrafts: false,
+      hideBots: false,
+    }),
+  );
+  await updateSettings({ hideStaleAfterDays: 20, hideDrafts: true, hideBots: true });
+  expect(await loadSettings()).toMatchObject({
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
+  });
+});

@@ -148,7 +148,7 @@ describe('poll', () => {
     expect(notifications.size).toBe(0);
   });
 
-  it('still notifies about a PR the list hides for its old last commit, kept off the badge', async () => {
+  it('notifies and counts a PR with an old last commit', async () => {
     let checks: CheckState = 'pending';
     const lastCommit = new Date(NOW - 35 * 24 * 60 * MINUTE).toISOString();
     github(() => searchResponse([prNode({ commits: headCommit(CHECKS[checks], {}, lastCommit) })]));
@@ -164,10 +164,10 @@ describe('poll', () => {
     await poll();
     const { notifications, badge } = fakeChrome().__state;
     expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:1`]);
-    expect(badge.text).toBe('');
+    expect(badge.text).toBe('1');
   });
 
-  it('still notifies about a draft opened by a bot when the list hides both', async () => {
+  it('notifies and counts a draft opened by a bot despite legacy preferences', async () => {
     await setItem('settings', { ...defaultSettings(), hideDrafts: true, hideBots: true });
     let checks: CheckState = 'pending';
     const dependabot = { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' };
@@ -188,7 +188,7 @@ describe('poll', () => {
     await poll();
     const { notifications, badge } = fakeChrome().__state;
     expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:1`]);
-    expect(badge.text).toBe('');
+    expect(badge.text).toBe('1');
   });
 
   it('keeps the poll result when notifying fails', async () => {

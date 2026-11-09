@@ -5,7 +5,7 @@ import type { PullRequest } from '../model';
 import { fetchPullRequests } from './fetchPullRequests';
 import { bySearch, mapped, section, settings, setup } from './fetchPullRequests.test-support';
 
-it('reserves merge reads for old hidden PRs despite continuous visible priority hints', async () => {
+it('reserves merge reads for old PRs despite continuous visible priority hints', async () => {
   const now = Date.now();
   const nodes = Array.from({ length: 25 }, (_, index) =>
     prNode({ number: index + 1, isDraft: index >= 20 }),
@@ -22,7 +22,7 @@ it('reserves merge reads for old hidden PRs despite continuous visible priority 
   const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
   const result = await fetchPullRequests(
     client,
-    settings({ hideDrafts: true }),
+    settings(),
     previous,
     null,
     undefined,
