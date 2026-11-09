@@ -3,7 +3,6 @@
 :root {
   /* Document layers; modal dialogs use the native top layer above all of these. */
   --z-sticky: 10;
-  --z-header: 20;
   --z-menu: 40;
   --z-toast: 50;
 }
@@ -41,7 +40,6 @@
     --color-fg-on-solid: #ffffff;
     --color-fg-on-accent: var(--gray-1);
     --color-focus: #89ddcf;
-    --color-focus-ring-soft: color-mix(in srgb, var(--color-focus) 22%, transparent);
     --color-backdrop: rgb(0 0 0 / 0.56);
     --color-skeleton: var(--gray-3);
     --color-skeleton-shine: var(--gray-5);
@@ -132,7 +130,6 @@
   --color-fg-on-solid: #ffffff;
   --color-fg-on-accent: var(--gray-1);
   --color-focus: #89ddcf;
-  --color-focus-ring-soft: color-mix(in srgb, var(--color-focus) 22%, transparent);
   --color-backdrop: rgb(0 0 0 / 0.56);
   --color-skeleton: var(--gray-3);
   --color-skeleton-shine: var(--gray-5);

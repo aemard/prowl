@@ -115,7 +115,6 @@
   --color-fg-on-solid: #ffffff;
   --color-fg-on-accent: #ffffff;
   --color-focus: #007a6d;
-  --color-focus-ring-soft: color-mix(in srgb, var(--color-focus) 22%, transparent);
   --color-backdrop: rgb(18 18 21 / 0.32);
   --color-skeleton: var(--gray-4);
   --color-skeleton-shine: var(--gray-2);
