@@ -77,14 +77,17 @@ const put = (id: string, entry: DetailEntry) => {
 /**
  * Fetches the detail of `pr` unless the entry already holds it (or is loading it) for its
  * current `detailKey`; a failed one is tried again. Retains the previous entry in memory while a
- * newer one loads (the view only uses matching completed entries), and drops an answer that a newer request has overtaken.
+ * newer one loads (the view only uses matching completed entries). Publishes only while the
+ * loading entry and auth session still belong to this request.
  */
 export async function loadDetail(pr: PullRequest): Promise<void> {
-  const token = signedInAs.value;
+  const session = auth.value;
+  const token = session?.token;
   const key = detailKey(pr);
   const current = details.value[pr.id];
   if (!token || (current?.key === key && (current.loading || !current.error))) return;
-  put(pr.id, { key, detail: current?.detail, loading: true });
+  const request: DetailEntry = { key, detail: current?.detail, loading: true };
+  put(pr.id, request);
   const outcome: Partial<DetailEntry> = await fetchPullRequestDetail(
     createGitHubClient({ token, apiUrl: env.apiUrl }),
     pr.id,
@@ -95,7 +98,7 @@ export async function loadDetail(pr: PullRequest): Promise<void> {
       error: error instanceof GitHubError ? error.message : 'Could not load the details.',
     }),
   );
-  if (details.value[pr.id]?.key === key) {
+  if (auth.value === session && details.value[pr.id] === request) {
     put(pr.id, { key, detail: current?.detail, ...outcome, loading: false });
   }
 }

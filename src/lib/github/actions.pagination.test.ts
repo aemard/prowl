@@ -9,8 +9,12 @@ it('reads every check-suite page before restarting failed runs', async () => {
   const client = createGitHubClient({
     token: 'test',
     apiUrl: 'https://api.github.com',
-    fetch: async (url) => {
+    fetch: async (url, init) => {
       if (new URL(url).pathname === '/graphql') {
+        expect(JSON.parse(String(init.body)).variables).toEqual({
+          id: 'PR_1',
+          after: reads === 0 ? null : 'next',
+        });
         reads++;
         operations.push('read');
         return jsonResponse({
@@ -23,13 +27,11 @@ it('reads every check-suite page before restarting failed runs', async () => {
                   {
                     commit: {
                       checkSuites: {
-                        nodes: [
-                          {
-                            databaseId: reads,
-                            conclusion: 'FAILURE',
-                            workflowRun: { databaseId: reads },
-                          },
-                        ],
+                        nodes: Array.from({ length: reads === 1 ? 50 : 1 }, (_, index) => ({
+                          databaseId: reads === 1 ? index + 1 : 51,
+                          conclusion: reads === 1 ? 'SUCCESS' : 'FAILURE',
+                          workflowRun: null,
+                        })),
                         pageInfo: {
                           hasNextPage: reads === 1,
                           endCursor: reads === 1 ? 'next' : null,
@@ -47,8 +49,8 @@ it('reads every check-suite page before restarting failed runs', async () => {
       return new Response(null, { status: 201 });
     },
   });
-  await expect(rerunFailedChecks(client, 'PR_1')).resolves.toBe(2);
-  expect(operations).toEqual(['read', 'read', 'restart', 'restart']);
+  await expect(rerunFailedChecks(client, 'PR_1')).resolves.toBe(1);
+  expect(operations).toEqual(['read', 'read', 'restart']);
 });
 
 it.each(['repeated', 'missing', 'cap', 'head'])(
