@@ -46,7 +46,10 @@ for (const locale of ['ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es', 'it']) {
 
       const onboarding = await openPanel();
       await expect(
-        onboarding.getByRole('heading', { name: messages.signInWithGithub?.message, exact: true }),
+        onboarding.getByRole('heading', {
+          name: messages.seeYourPullRequestsHere?.message,
+          exact: true,
+        }),
       ).toBeVisible();
       expect(await onboarding.locator('html').getAttribute('lang')).toBe(
         messages.languageTag?.message,
@@ -58,7 +61,7 @@ for (const locale of ['ja', 'zh-CN', 'zh-TW', 'fr', 'de', 'es', 'it']) {
       ).toBeVisible();
       await settings.locator('.settings__nav a').first().click();
       await expect(
-        settings.getByRole('heading', { name: messages.pullRequests?.message, exact: true }),
+        settings.getByRole('heading', { level: 3, name: messages.sections?.message, exact: true }),
       ).toBeFocused();
       for (const theme of ['light', 'dark'] as const) {
         await settings.emulateMedia({ colorScheme: theme });
