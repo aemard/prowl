@@ -9,14 +9,58 @@ import { sendToBackground } from './background';
 export type Shortcut = 'next' | 'previous' | 'open' | 'refresh' | 'filter' | 'help';
 
 export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
-  { keys: ['j', '↓'], action: t('nextPullRequest') },
-  { keys: ['k', '↑'], action: t('previousPullRequest') },
-  { keys: [t('keyEnter'), t('keySpace')], action: t('expandOrCollapseTheFocusedPullRequest') },
-  { keys: ['o'], action: t('openTheFocusedPullRequestOnGithub') },
-  { keys: ['r'], action: t('refreshNow') },
-  { keys: ['/'], action: t('filterPullRequests') },
-  { keys: ['?'], action: t('showKeyboardShortcuts') },
-  { keys: [t('keyEscape')], action: t('closeADialogOrMenuCollapseAPullRequest') },
+  {
+    keys: ['j', '↓'],
+    get action() {
+      return t('nextPullRequest');
+    },
+  },
+  {
+    keys: ['k', '↑'],
+    get action() {
+      return t('previousPullRequest');
+    },
+  },
+  {
+    get keys() {
+      return [t('keyEnter'), t('keySpace')];
+    },
+    get action() {
+      return t('expandOrCollapseTheFocusedPullRequest');
+    },
+  },
+  {
+    keys: ['o'],
+    get action() {
+      return t('openTheFocusedPullRequestOnGithub');
+    },
+  },
+  {
+    keys: ['r'],
+    get action() {
+      return t('refreshNow');
+    },
+  },
+  {
+    keys: ['/'],
+    get action() {
+      return t('filterPullRequests');
+    },
+  },
+  {
+    keys: ['?'],
+    get action() {
+      return t('showKeyboardShortcuts');
+    },
+  },
+  {
+    get keys() {
+      return [t('keyEscape')];
+    },
+    get action() {
+      return t('closeADialogOrMenuCollapseAPullRequest');
+    },
+  },
 ];
 
 interface KeyLike {

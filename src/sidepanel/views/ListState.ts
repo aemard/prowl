@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import type { Section, Snapshot } from '../../lib/model';
 import { isSeen } from '../../lib/storage/prLocal';
 import { useNow } from '../components/useNow';
@@ -117,9 +117,10 @@ const SEEN_DELAY_MS = 1500;
 
 function usePanelVisible() {
   const [visible, setVisible] = useState(() => document.visibilityState === 'visible');
-  useEffect(() => {
+  useLayoutEffect(() => {
     const update = () => setVisible(document.visibilityState === 'visible');
     document.addEventListener('visibilitychange', update);
+    update();
     return () => document.removeEventListener('visibilitychange', update);
   }, []);
   return visible;
@@ -197,17 +198,15 @@ function useMarkSeen(
     const unseen = new Set(unseenKey.split('\n'));
     const prIds = onScreen.filter((id) => unseen.has(id));
     if (!panelVisible || prIds.length === 0) return;
-    const timer = setTimeout(
-      () =>
-        void sendToBackground({
-          type: 'markSeen',
-          prIds,
-          versions: Object.fromEntries(
-            Object.entries(versions).filter(([id]) => prIds.includes(id)),
-          ),
-        }),
-      SEEN_DELAY_MS,
-    );
+    const timer = setTimeout(() => {
+      // A visibility event can precede the next effect cleanup. Read the live state at send time.
+      if (document.visibilityState !== 'visible') return;
+      void sendToBackground({
+        type: 'markSeen',
+        prIds,
+        versions: Object.fromEntries(Object.entries(versions).filter(([id]) => prIds.includes(id))),
+      });
+    }, SEEN_DELAY_MS);
     return () => clearTimeout(timer);
   }, [panelVisible, onScreen, unseenKey, versionKey]);
 }

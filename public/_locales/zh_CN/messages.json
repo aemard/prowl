@@ -2017,7 +2017,7 @@
     "message": "在 GitHub 上查看更改",
     "description": "Extension text: View changes on GitHub"
   },
-  "couldNotReachGitHub": {
+  "offlineRetryTitle": {
     "message": "无法连接 GitHub：$P1$",
     "description": "Extension text: Could not reach GitHub — $P1$",
     "placeholders": {

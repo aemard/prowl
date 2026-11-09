@@ -7,8 +7,6 @@ import { GitPullRequestIcon, SyncIcon } from './icons';
 import { Button } from './ui/Button';
 import { Menu } from './ui/Menu';
 
-export const RERUN = t('reRunFailedChecks');
-
 /** Whether the viewer may re-run checks: GitHub requires write access to the repository. */
 export const canRerun = (pr: PullRequest) =>
   pr.state === 'open' && pr.checks.failed > 0 && pr.viewerCanMerge;
@@ -18,14 +16,12 @@ export const canToggleDraft = (pr: PullRequest, viewer: string) =>
   pr.state === 'open' &&
   (pr.viewerCanMerge || pr.author?.login.toLowerCase() === viewer.toLowerCase());
 
-export const UPDATE_BRANCH = t('updateBranch');
-
 /** The base branch moved on: whoever may push to the PR can bring it in (GitHub's "behind"). */
 export const canUpdateBranch = (pr: PullRequest) =>
   pr.state === 'open' && pr.mergeStateStatus === 'behind' && pr.viewerCanUpdate;
 
 export const updateBranchWith = (pr: PullRequest, method: 'merge' | 'rebase') =>
-  runPrAction(pr, UPDATE_BRANCH, t('updatedTheBranchOf'), (client) =>
+  runPrAction(pr, t('updateBranch'), t('updatedTheBranchOf'), (client) =>
     updateBranch(client, pr.id, pr.headSha, method),
   );
 
@@ -33,7 +29,7 @@ export const draftActionName = (pr: PullRequest) =>
   pr.isDraft ? t('readyForReview') : t('convertToDraft');
 
 export const rerun = (pr: PullRequest) =>
-  runPrAction(pr, RERUN, t('reRunningFailedChecksOf'), (client) =>
+  runPrAction(pr, t('reRunFailedChecks'), t('reRunningFailedChecksOf'), (client) =>
     rerunFailedChecks(client, pr.id).then(() => undefined),
   );
 
@@ -58,9 +54,9 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
         <Button
           size="sm"
           icon={<SyncIcon size={12} />}
-          aria-label={t('of', RERUN, ref)}
-          loading={pending === RERUN}
-          disabled={pending !== undefined && pending !== RERUN}
+          aria-label={t('of', t('reRunFailedChecks'), ref)}
+          loading={pending === t('reRunFailedChecks')}
+          disabled={pending !== undefined && pending !== t('reRunFailedChecks')}
           onClick={() => void rerun(pr)}
         >
           {t('rerunFailed')}
@@ -68,7 +64,7 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
       )}
       {canUpdateBranch(pr) && (
         <Menu
-          label={t('of', UPDATE_BRANCH, ref)}
+          label={t('of', t('updateBranch'), ref)}
           items={[
             {
               id: 'merge',
@@ -86,11 +82,11 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
               {...props}
               size="sm"
               icon={<SyncIcon size={12} />}
-              aria-label={t('of', UPDATE_BRANCH, ref)}
-              loading={pending === UPDATE_BRANCH}
-              disabled={pending !== undefined && pending !== UPDATE_BRANCH}
+              aria-label={t('of', t('updateBranch'), ref)}
+              loading={pending === t('updateBranch')}
+              disabled={pending !== undefined && pending !== t('updateBranch')}
             >
-              {UPDATE_BRANCH}
+              {t('updateBranch')}
             </Button>
           )}
         />

@@ -18,8 +18,6 @@ import { openGitHubUrl } from '../openUrl';
 import { completeSignIn, releaseGitHubWebAccess } from '../state/session';
 import './DeviceFlow.css';
 
-const PERMISSION_DENIED = t('prowlNeedsAccessToGithubComToSignYou');
-
 /** "Code expires in 14:52"; a timer role is not announced on every tick. */
 function Countdown({ expiresAt }: { expiresAt: number }) {
   const seconds = Math.max(0, Math.ceil((expiresAt - useNow(1000)) / 1000));
@@ -70,7 +68,7 @@ function useDeviceFlow(onTokenFallback?: () => void) {
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) return reset(PERMISSION_DENIED, true);
+      if (!(await permission)) return reset(t('prowlNeedsAccessToGithubComToSignYou'), true);
       await completeDeviceFlow(controller, setCode);
     } catch (failure) {
       if (controller.signal.aborted) return;

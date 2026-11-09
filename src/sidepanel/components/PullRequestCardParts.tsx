@@ -88,9 +88,24 @@ export function CardHead({
 }
 
 const ACTIVITY = {
-  new: { Icon: GitPullRequestIcon, label: t('justOpened') },
-  merged: { Icon: GitMergeIcon, label: t('merged') },
-  closed: { Icon: GitPullRequestClosedIcon, label: t('closed') },
+  new: {
+    Icon: GitPullRequestIcon,
+    get label() {
+      return t('justOpened');
+    },
+  },
+  merged: {
+    Icon: GitMergeIcon,
+    get label() {
+      return t('merged');
+    },
+  },
+  closed: {
+    Icon: GitPullRequestClosedIcon,
+    get label() {
+      return t('closed');
+    },
+  },
 };
 
 function CardUpdate({ pr, now, activity }: Pick<CardHeadProps, 'pr' | 'now' | 'activity'>) {

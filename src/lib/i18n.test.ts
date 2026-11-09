@@ -16,6 +16,8 @@ describe('shipped message catalogs', () => {
     const messages: Record<string, Message> = JSON.parse(
       readFileSync(resolve(root, locale, 'messages.json'), 'utf8'),
     );
+    const names = Object.keys(messages).map((key) => key.toLowerCase());
+    expect(new Set(names).size).toBe(names.length);
     expect(Object.keys(messages).sort()).toEqual(Object.keys(english).sort());
     for (const [key, entry] of Object.entries(messages)) {
       expect(entry.message.trim(), `${locale}.${key}`).not.toBe('');
@@ -36,6 +38,16 @@ describe('shipped message catalogs', () => {
 });
 
 describe('Chrome internationalization', () => {
+  it('keeps the offline title countdown distinct from its network error detail', () => {
+    expect(t('offlineRetryTitle', t('retryingInMin', 3))).toBe(
+      'Could not reach GitHub — retrying in 3 min',
+    );
+    expect(t('couldNotReachGithub')).toBe('Could not reach GitHub.');
+    expect(chrome.i18n.getMessage('OFFLINERETRYTITLE', ['retrying soon'])).toBe(
+      'Could not reach GitHub — retrying soon',
+    );
+  });
+
   it.each([
     ['ja', '設定', '3 分前'],
     ['zh-CN', '设置', '3 分钟前'],

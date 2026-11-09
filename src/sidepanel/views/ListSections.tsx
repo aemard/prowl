@@ -40,30 +40,55 @@ import {
 export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
   authored: {
     icon: GitPullRequestIcon,
-    short: t('mine'),
-    empty: t('pullRequestsYouOpenWillShowUpHere'),
+    get short() {
+      return t('mine');
+    },
+    get empty() {
+      return t('pullRequestsYouOpenWillShowUpHere');
+    },
   },
   review_requested: {
     icon: EyeIcon,
-    short: t('review'),
-    empty: t('whenSomeoneAsksYouForAReviewItWill'),
+    get short() {
+      return t('review');
+    },
+    get empty() {
+      return t('whenSomeoneAsksYouForAReviewItWill');
+    },
   },
   team_review_requested: {
     icon: PeopleIcon,
-    short: t('teams'),
-    empty: t('noReviewRequestsForYourTeams'),
+    get short() {
+      return t('teams');
+    },
+    get empty() {
+      return t('noReviewRequestsForYourTeams');
+    },
   },
   mentioned: {
     icon: MentionIcon,
-    short: t('mentions'),
-    empty: t('pullRequestsThatMentionYouWillShowUpHere'),
+    get short() {
+      return t('mentions');
+    },
+    get empty() {
+      return t('pullRequestsThatMentionYouWillShowUpHere');
+    },
   },
   assigned: {
     icon: PersonIcon,
-    short: t('assigned'),
-    empty: t('pullRequestsAssignedToYouWillShowUpHere'),
+    get short() {
+      return t('assigned');
+    },
+    get empty() {
+      return t('pullRequestsAssignedToYouWillShowUpHere');
+    },
   },
-  custom: { icon: FilterIcon, empty: t('noOpenPullRequestsMatchThisSearch') },
+  custom: {
+    icon: FilterIcon,
+    get empty() {
+      return t('noOpenPullRequestsMatchThisSearch');
+    },
+  },
 };
 
 function ListCard({

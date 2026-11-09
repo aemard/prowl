@@ -17,14 +17,16 @@ import { TextField } from './ui/TextField';
 import './MergeAction.css';
 
 const METHODS: Record<MergeMethod, string> = {
-  merge: t('createAMergeCommit'),
-  squash: t('squashAndMerge'),
-  rebase: t('rebaseAndMerge'),
+  get merge() {
+    return t('createAMergeCommit');
+  },
+  get squash() {
+    return t('squashAndMerge');
+  },
+  get rebase() {
+    return t('rebaseAndMerge');
+  },
 };
-
-const MERGE = t('merge');
-const ENABLE_AUTO_MERGE = t('enableAutoMerge');
-const DISABLE_AUTO_MERGE = t('turnOffAutoMerge');
 
 function useMergeControls(pr: PullRequest) {
   const [confirming, setConfirming] = useState(false);
@@ -34,7 +36,7 @@ function useMergeControls(pr: PullRequest) {
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async (method: MergeMethod) => {
-    const merged = await runPrAction(pr, MERGE, t('merged'), (client) =>
+    const merged = await runPrAction(pr, t('merge'), t('merged'), (client) =>
       mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title }),
     );
     setConfirming(false);
@@ -42,7 +44,7 @@ function useMergeControls(pr: PullRequest) {
     else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
-    const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, t('autoMergeIsOnFor'), (client) =>
+    const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>
       setAutoMerge(client, pr.id, method, pr.headSha, title),
     );
     setConfirming(false);
@@ -136,7 +138,7 @@ function MergeButtons({
   const { pending, setConfirming } = controls;
   const ref = prRef(pr);
   const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  const label = canMerge ? (ready ? MERGE : t('mergeWithoutWaiting')) : ENABLE_AUTO_MERGE;
+  const label = canMerge ? (ready ? t('merge') : t('mergeWithoutWaiting')) : t('enableAutoMerge');
   return (
     <>
       {(canMerge || offerAutoMerge) && (
@@ -145,8 +147,10 @@ function MergeButtons({
           variant={ready ? 'primary' : 'secondary'}
           icon={<GitMergeIcon size={12} />}
           aria-label={t('message2', label, ref)}
-          loading={pending === (canMerge ? MERGE : ENABLE_AUTO_MERGE)}
-          disabled={pending !== undefined && pending !== (canMerge ? MERGE : ENABLE_AUTO_MERGE)}
+          loading={pending === (canMerge ? t('merge') : t('enableAutoMerge'))}
+          disabled={
+            pending !== undefined && pending !== (canMerge ? t('merge') : t('enableAutoMerge'))
+          }
           onClick={() => setConfirming(true)}
         >
           {label}
@@ -155,16 +159,16 @@ function MergeButtons({
       {placement !== 'merge' && pr.autoMerge && pr.viewerCanDisableAutoMerge === true && (
         <Button
           size="sm"
-          aria-label={t('of', DISABLE_AUTO_MERGE, ref)}
-          loading={pending === DISABLE_AUTO_MERGE}
-          disabled={pending !== undefined && pending !== DISABLE_AUTO_MERGE}
+          aria-label={t('of', t('turnOffAutoMerge'), ref)}
+          loading={pending === t('turnOffAutoMerge')}
+          disabled={pending !== undefined && pending !== t('turnOffAutoMerge')}
           onClick={() =>
-            void runPrAction(pr, DISABLE_AUTO_MERGE, t('autoMergeIsOffFor'), (client) =>
+            void runPrAction(pr, t('turnOffAutoMerge'), t('autoMergeIsOffFor'), (client) =>
               setAutoMerge(client, pr.id, null, pr.headSha),
             )
           }
         >
-          {DISABLE_AUTO_MERGE}
+          {t('turnOffAutoMerge')}
         </Button>
       )}
     </>
@@ -199,7 +203,7 @@ function MergeDialog({ pr, method, controls, placement = 'all' }: MergeDialogPro
           methodLabel={
             (currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods).length === 1
               ? METHODS[method]
-              : MERGE
+              : t('merge')
           }
           pending={pending}
           offerAutoMerge={offerAutoMerge}
@@ -241,18 +245,18 @@ function MergeFooter({
       {offerAutoMerge && (
         <Button
           variant="primary"
-          loading={pending === ENABLE_AUTO_MERGE}
-          disabled={pending !== undefined && pending !== ENABLE_AUTO_MERGE}
+          loading={pending === t('enableAutoMerge')}
+          disabled={pending !== undefined && pending !== t('enableAutoMerge')}
           onClick={() => void enableAutoMerge()}
         >
-          {ENABLE_AUTO_MERGE}
+          {t('enableAutoMerge')}
         </Button>
       )}
       {canMerge && (
         <Button
           variant={offerAutoMerge ? 'secondary' : 'primary'}
-          loading={pending === MERGE}
-          disabled={pending !== undefined && pending !== MERGE}
+          loading={pending === t('merge')}
+          disabled={pending !== undefined && pending !== t('merge')}
           onClick={() => void merge()}
         >
           {methodLabel}

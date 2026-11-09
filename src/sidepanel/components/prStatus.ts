@@ -23,9 +23,15 @@ export interface Status {
 
 /** How GitHub names each merge method in its merge box. */
 export const MERGE_METHOD_NAMES: Record<MergeMethod, string> = {
-  merge: t('mergeCommit'),
-  squash: t('squashMethod'),
-  rebase: t('rebaseMethod'),
+  get merge() {
+    return t('mergeCommit');
+  },
+  get squash() {
+    return t('squashMethod');
+  },
+  get rebase() {
+    return t('rebaseMethod');
+  },
 };
 
 /** CI rollup chip, or null when the commit has no checks. */

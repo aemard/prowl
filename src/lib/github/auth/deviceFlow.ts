@@ -28,11 +28,21 @@ const SLOW_DOWN_SECONDS = 5;
 export type DeviceFlowFailure = 'expired' | 'denied' | 'unsupported' | 'network' | 'server';
 
 const MESSAGES: Record<DeviceFlowFailure, string> = {
-  expired: t('theCodeExpiredBeforeItWasUsedStartAgain'),
-  denied: t('accessWasDeniedOnGithubStartAgainToAuthorize'),
-  unsupported: t('signingInFromTheBrowserIsNotAvailableFor'),
-  network: t('couldNotReachGithubCheckYourConnectionAndTry'),
-  server: t('githubIsHavingTroubleRightNowTryAgainIn'),
+  get expired() {
+    return t('theCodeExpiredBeforeItWasUsedStartAgain');
+  },
+  get denied() {
+    return t('accessWasDeniedOnGithubStartAgainToAuthorize');
+  },
+  get unsupported() {
+    return t('signingInFromTheBrowserIsNotAvailableFor');
+  },
+  get network() {
+    return t('couldNotReachGithubCheckYourConnectionAndTry');
+  },
+  get server() {
+    return t('githubIsHavingTroubleRightNowTryAgainIn');
+  },
 };
 
 export class DeviceFlowError extends Error {

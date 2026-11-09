@@ -17,21 +17,27 @@ type Written = ReviewDraftKind;
 /** The two actions that need words: what the dialog says and what is sent with them. */
 const WRITTEN = {
   request_changes: {
-    name: t('requestChanges'),
-    done: t('requestedChangesOn'),
+    get name() {
+      return t('requestChanges');
+    },
+    get done() {
+      return t('requestedChangesOn');
+    },
     description: (ref: string) => t('requestChangesDescription', ref),
     send: (client: GitHubClient, pr: PullRequest, text: string) =>
       requestChanges(client, pr.id, text, pr.headSha),
   },
   comment: {
-    name: t('comment'),
-    done: t('commentedOn'),
+    get name() {
+      return t('comment');
+    },
+    get done() {
+      return t('commentedOn');
+    },
     description: (ref: string) => t('addACommentToTheConversationOf', ref),
     send: (client: GitHubClient, pr: PullRequest, text: string) => comment(client, pr.id, text),
   },
 } as const;
-
-const APPROVE = t('approve');
 
 /**
  * Approve, request changes and comment, as buttons for the row of an expanded card's Actions.
@@ -119,15 +125,15 @@ function ReviewButtons({
         <Button
           size="sm"
           icon={<CheckIcon size={12} />}
-          aria-label={t('message2', APPROVE, ref)}
-          {...state(APPROVE)}
+          aria-label={t('message2', t('approve'), ref)}
+          {...state(t('approve'))}
           onClick={() =>
-            void runPrAction(pr, APPROVE, t('approved2'), (client) =>
+            void runPrAction(pr, t('approve'), t('approved2'), (client) =>
               approve(client, pr.id, undefined, pr.headSha),
             )
           }
         >
-          {APPROVE}
+          {t('approve')}
         </Button>
       )}
       {canReview && (

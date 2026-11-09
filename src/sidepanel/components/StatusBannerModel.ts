@@ -39,7 +39,12 @@ const STALE_MIN_MS = 10 * MINUTE;
 const clock = (ms: number) =>
   new Date(ms).toLocaleTimeString(uiLocale(), { hour: 'numeric', minute: '2-digit' });
 
-const RETRY = { type: 'retry', label: t('retry') } as const;
+const RETRY = {
+  type: 'retry',
+  get label() {
+    return t('retry');
+  },
+} as const;
 
 /**
  * The banner for the stored poll state, or null when all is well. `fetchedAt` is the snapshot's:
@@ -130,7 +135,7 @@ function describePollError(
       return {
         kind: 'offline',
         tone: 'warning',
-        title: t('couldNotReachGitHub', retrying),
+        title: t('offlineRetryTitle', retrying),
         detail: error.message,
         age,
         action: RETRY,

@@ -9,7 +9,11 @@ const catalogs = import.meta.glob<Catalog>('../../public/_locales/*/messages.jso
 function catalogMessage(locale: string, key: string, values: string[]): string {
   const normalized = locale.replaceAll('-', '_');
   for (const code of [normalized, normalized.split('_')[0], 'en']) {
-    const entry = catalogs[`../../public/_locales/${code}/messages.json`]?.[key];
+    const catalog = catalogs[`../../public/_locales/${code}/messages.json`];
+    const name = Object.keys(catalog ?? {}).find(
+      (name) => name.toLowerCase() === key.toLowerCase(),
+    );
+    const entry = name ? catalog?.[name] : undefined;
     if (entry) return substituteMessage(entry.message, values);
   }
   return '';

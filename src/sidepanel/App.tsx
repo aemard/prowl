@@ -27,9 +27,15 @@ const VIEWS: Record<Route, ComponentType> = {
 
 /** Accessible name of the main landmark, announced when focus moves there on navigation. */
 const LABELS: Record<Route, string> = {
-  list: t('pullRequests'),
-  settings: t('settings'),
-  onboarding: t('signIn'),
+  get list() {
+    return t('pullRequests');
+  },
+  get settings() {
+    return t('settings');
+  },
+  get onboarding() {
+    return t('signIn');
+  },
 };
 
 /** `system` removes the override so tokens.css follows `prefers-color-scheme`. */
