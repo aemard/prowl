@@ -165,7 +165,7 @@ function StartDeviceFlow({ starting, start }: { starting: boolean; start: () => 
   );
 }
 
-/** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
+/** Continue with GitHub's device flow; only rendered when the build has an OAuth client id. */
 export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }) {
   const { code, starting, error, start, cancel } = useDeviceFlow(onTokenFallback);
   const root = useRef<HTMLDivElement>(null);

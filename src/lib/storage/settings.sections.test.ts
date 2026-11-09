@@ -55,9 +55,11 @@ describe('normalizeSettings sections', () => {
       (section) => section.kind !== 'team_review_requested',
     );
     expect(sectionsOf(before)).toEqual([...before, { ...presets()[2], enabled: true } as Section]);
-    expect(sectionsOf(presets().filter((s) => s.kind !== 'team_review_requested'))).toContainEqual(
-      presets()[2],
-    );
+    expect(
+      sectionsOf(
+        presets({ review_requested: false }).filter((s) => s.kind !== 'team_review_requested'),
+      ),
+    ).toContainEqual(presets()[2]);
     // Once stored, the section keeps its own state.
     expect(sectionsOf(presets({ review_requested: true }))).toEqual(
       presets({ review_requested: true }),

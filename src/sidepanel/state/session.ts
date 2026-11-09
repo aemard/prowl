@@ -10,7 +10,7 @@ import { navigate } from './router';
 
 /**
  * Stores the validated sign-in (PAT or device flow), asks the worker for the first poll and shows
- * the list. A `warning` (the token works but not fully) stays on screen as a toast.
+ * the list with its full header. A `warning` stays as a toast.
  */
 export async function completeSignIn(
   auth: AuthState,

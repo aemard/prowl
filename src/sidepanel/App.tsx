@@ -81,7 +81,7 @@ function Shell() {
     <>
       <Header />
       <main ref={mainRef} class="app-main" tabIndex={-1} aria-label={LABELS[current]}>
-        {current !== 'onboarding' && current !== 'list' && <StatusBanner />}
+        {current === 'settings' && <StatusBanner />}
         <View />
       </main>
       <ShortcutsDialog />

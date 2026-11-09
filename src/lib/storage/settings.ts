@@ -28,7 +28,7 @@ export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 /** Preset sections in default order. A preset's id is its kind and its label is fixed. */
 const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: boolean }> = {
   authored: { label: 'Created by me', enabled: true },
-  review_requested: { label: 'Review requested', enabled: false },
+  review_requested: { label: 'Review requested', enabled: true },
   team_review_requested: { label: 'Team reviews', enabled: false },
   mentioned: { label: 'Mentioned', enabled: false },
   assigned: { label: 'Assigned to me', enabled: false },
@@ -253,7 +253,7 @@ function normalizeSections(value: unknown): Section[] {
     // "Review requested" used to include team requests: whoever followed it keeps seeing them.
     const inherited =
       kind === 'team_review_requested'
-        ? sections.find((section) => section.id === 'review_requested')?.enabled
+        ? parsed.find((section) => section.id === 'review_requested')?.enabled
         : undefined;
     sections.push(builtInSection(kind, inherited));
   }

@@ -78,7 +78,7 @@ test.describe('onboarding', () => {
     expectNoA11yViolations,
   }) => {
     const panel = await openTokenPanel(openPanel);
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await expect(tokenField(panel)).toHaveAttribute('type', 'password');
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
     await panel.getByRole('button', { name: 'Help choosing a token' }).click();
@@ -272,7 +272,7 @@ test.describe('sign out', () => {
     await panel.getByRole('menuitem', { name: 'Sign out' }).click();
     await panel.getByRole('dialog').getByRole('button', { name: 'Sign out' }).click();
 
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await expect(panel.getByRole('dialog')).toHaveCount(0);
     const left = await stored(serviceWorker);
     expect(left).not.toHaveProperty('auth');

@@ -85,7 +85,7 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   await serviceWorker.evaluate(() => chrome.storage.local.set({ settings: { maxPerSection: 30 } }));
   failWith(null);
   await panel.getByRole('button', { name: 'Re-authenticate' }).click();
-  await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Use a personal access token' }).click();
   await panel.getByLabel('Personal access token').fill(TOKEN);

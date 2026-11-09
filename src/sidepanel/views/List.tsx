@@ -10,6 +10,7 @@ import { TextField } from '../components/ui/TextField';
 import { selectSection } from '../state/listContext';
 import { navigate } from '../state/router';
 import { pollState } from '../state/store';
+import { FirstRunNote } from './FirstRunNote';
 import { KINDS, SectionContent } from './ListSections';
 import {
   filterQuery,
@@ -51,6 +52,7 @@ function NoSections() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       <EmptyState
         icon={<InboxIcon size={24} />}
         title="No sections turned on"
@@ -67,6 +69,7 @@ function LoadingList() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       {failure?.lastError && !failure.inFlight ? (
         <EmptyState
           icon={<AlertIcon size={24} />}
@@ -151,6 +154,7 @@ function LoadedList({
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
+        <FirstRunNote />
         <SectionContent key={data.selected.id} data={data} filterInput={filterInput} />
       </div>
     </div>
@@ -158,7 +162,7 @@ function LoadedList({
 }
 
 /** The pull request list: a quick filter, one card per PR and the section bar at the bottom. */
-export function ListView() {
+function ListBody() {
   const data = useListData();
   const idPrefix = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -174,4 +178,8 @@ export function ListView() {
       idPrefix={idPrefix}
     />
   );
+}
+
+export function ListView() {
+  return <ListBody />;
 }

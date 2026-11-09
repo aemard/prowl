@@ -1,17 +1,17 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useId, useState } from 'preact/hooks';
 import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
 import type { Team, TeamsState } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { SyncIcon } from '../components/icons';
 import { Button } from '../components/ui/Button';
-import { Dialog } from '../components/ui/Dialog';
 import { Switch } from '../components/ui/Switch';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { saveSettings } from '../state/settings';
-import { settings, teams } from '../state/store';
+import { auth, pollState, settings, teams } from '../state/store';
 import './Settings.css';
+import './SettingsTeams.css';
 
 /** Teams by organization, organizations in the order the worker sorted them (by key). */
 function byOrg(list: readonly Team[]): [string, Team[]][] {
@@ -52,7 +52,19 @@ function TeamNotice({ state }: { state: TeamsState | undefined }) {
   );
 }
 
-function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: Set<string> }) {
+function TeamGroups({
+  list,
+  unfollowed,
+  onFollowTeam,
+}: {
+  list: readonly Team[];
+  unfollowed: Set<string>;
+  onFollowTeam: (key: string, on: boolean) => void;
+}) {
+  const checked = list
+    .filter((team) => !unfollowed.has(teamKey(team)))
+    .slice(0, MAX_TEAM_SEARCHES)
+    .map(teamKey);
   return (
     <>
       {byOrg(list).map(([org, list]) => (
@@ -64,9 +76,9 @@ function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: S
               <Switch
                 key={key}
                 label={team.name}
-                description={`@${team.org}/${team.slug}`}
+                description={`@${team.org}/${team.slug}${!unfollowed.has(key) && !checked.includes(key) ? ' · Not checked. Unfollow another team to include this one.' : ''}`}
                 checked={!unfollowed.has(key)}
-                onChange={(on) => followTeam(key, on)}
+                onChange={(on) => onFollowTeam(key, on)}
               />
             );
           })}
@@ -80,13 +92,13 @@ function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: S
  * The teams the worker discovered for "Team reviews", each followed unless unfollowed here, with
  * a refresh and the way out when the token cannot list them (no read:org).
  */
-export function TeamPicker() {
+export function TeamPicker({ showNotice = true }: { showNotice?: boolean } = {}) {
   useNow(60_000);
   const [refreshing, setRefreshing] = useState(false);
-  const state = teams.value;
-  const { unfollowedTeams } = settings.value;
-  const unfollowed = new Set(unfollowedTeams);
-  const followed = (state?.teams ?? []).filter((team) => !unfollowed.has(teamKey(team))).length;
+  const state =
+    !auth.value || teams.value?.login === auth.value.viewer.login ? teams.value : undefined;
+  const unfollowed = new Set(settings.value.unfollowedTeams);
+  useTeamDiscovery();
   const refresh = async () => {
     setRefreshing(true);
     await sendToBackground({ type: 'refreshTeams' });
@@ -94,14 +106,10 @@ export function TeamPicker() {
   };
   return (
     <div class="team-picker">
-      <TeamNotice state={state} />
-      <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} />
-      {followed > MAX_TEAM_SEARCHES && (
-        <p class="settings-note">
-          You follow {followed} teams; Prowl searches the first {MAX_TEAM_SEARCHES} to stay within
-          GitHub’s rate limit. Unfollow the ones you do not need.
-        </p>
-      )}
+      {showNotice && <TeamNotice state={state} />}
+      {!state && showNotice && <p class="settings-note">Loading your teams…</p>}
+      <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} onFollowTeam={followTeam} />
+      <p class="settings-note">Prowl checks at most 10 teams each refresh, the first 10 by name.</p>
       <div class="settings-teams__refresh">
         <Button
           size="sm"
@@ -120,29 +128,58 @@ export function TeamPicker() {
   );
 }
 
-/** Shared entry point: Dialog supplies focus trapping and restoration. */
-export function ChooseTeams() {
-  const [open, setOpen] = useState(false);
+/** Discovery is shared by the collapsed section and either inline picker. */
+let discovering = false;
+function useTeamDiscovery() {
+  const account = auth.value;
+  const state = teams.value;
+  const polling = pollState.value?.inFlight;
+  useEffect(() => {
+    if (!account || state?.login === account.viewer.login || discovering || polling) return;
+    discovering = true;
+    void sendToBackground({ type: 'refreshTeams' }).finally(() => {
+      discovering = false;
+    });
+  }, [account, state, polling]);
+}
+
+export function EditTeams({
+  initiallyOpen = false,
+  section = false,
+}: {
+  initiallyOpen?: boolean;
+  section?: boolean;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  const id = useId();
+  useTeamDiscovery();
   return (
     <>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-        Choose teams
-      </Button>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Team reviews"
-        description="These teams' review requests appear in this section. Prowl checks at most 10 teams each refresh."
-        footer={<Button onClick={() => setOpen(false)}>Done</Button>}
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(!open)}
       >
-        <TeamPicker />
-      </Dialog>
+        Edit teams
+      </Button>
+      <div
+        id={id}
+        class="team-picker-disclosure"
+        data-open={open}
+        aria-hidden={!open}
+        inert={!open}
+      >
+        <TeamPicker showNotice={!section} />
+      </div>
     </>
   );
 }
 
 export function TeamReviewsHeader() {
-  const state = teams.value;
+  useTeamDiscovery();
+  const state = teams.value?.login === auth.value?.viewer.login ? teams.value : undefined;
   const followed = (state?.teams ?? []).filter(
     (team) => !settings.value.unfollowedTeams.includes(teamKey(team)),
   ).length;
@@ -150,11 +187,12 @@ export function TeamReviewsHeader() {
     <div>
       <div class="settings-note">
         {followed > MAX_TEAM_SEARCHES
-          ? `Checking 10 of ${followed} teams`
-          : `Following ${followed} teams`}{' '}
-        · <ChooseTeams />
+          ? `Checking the first 10 of ${followed} teams, by name`
+          : `Following ${followed} ${followed === 1 ? 'team' : 'teams'}`}
       </div>
+      {!state && <p class="settings-note">Loading your teams…</p>}
       <TeamNotice state={state} />
+      <EditTeams section />
     </div>
   );
 }

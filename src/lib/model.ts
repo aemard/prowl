@@ -415,6 +415,11 @@ export interface Settings {
   unfollowedTeams: string[];
 }
 
+/** Install-local first-run notice status, retained on sign-out and never synced. */
+export interface OnboardingState {
+  status: 'pending' | 'completed' | 'skipped';
+}
+
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 /**
  * Whether this device mirrors its settings through Chrome sync, and why the last write there
@@ -438,6 +443,7 @@ export const STORAGE_KEYS = {
   prLocal: 'prLocal',
   teams: 'teams',
   panelState: 'panelState',
+  onboarding: 'onboarding',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

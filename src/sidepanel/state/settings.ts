@@ -1,7 +1,7 @@
 /** Writing settings from the panel: saved at once, and the list refreshed when the scope changed. */
 
 import { signal } from '@preact/signals';
-import { updateSettings } from '../../lib/storage/settings';
+import { normalizeSettings, updateSettings } from '../../lib/storage/settings';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
 import { navigate } from './router';
@@ -39,12 +39,20 @@ function refreshSoon(): void {
 export async function saveSettings(
   patch: Parameters<typeof updateSettings>[0],
   { refresh = false }: { refresh?: boolean } = {},
-): Promise<void> {
+): Promise<boolean> {
+  let changed = false;
   try {
-    await updateSettings(patch);
+    await updateSettings((current) => {
+      const next = normalizeSettings(
+        typeof patch === 'function' ? patch(current) : { ...current, ...patch },
+      );
+      changed = JSON.stringify(current) !== JSON.stringify(next);
+      return next;
+    });
   } catch {
     showToast({ message: 'Could not save the setting. Try again.', tone: 'danger' });
-    return;
+    return false;
   }
-  if (refresh) refreshSoon();
+  if (refresh && changed) refreshSoon();
+  return true;
 }

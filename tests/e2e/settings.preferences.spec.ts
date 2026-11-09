@@ -81,7 +81,7 @@ test.describe('account and about', () => {
 
     await account.getByRole('button', { name: 'Sign out' }).click();
     await panel.getByRole('dialog').getByRole('button', { name: 'Sign out' }).click();
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await expect
       .poll(() =>
         serviceWorker.evaluate(async () => Object.keys(await chrome.storage.local.get(null))),

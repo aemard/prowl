@@ -119,11 +119,3 @@ function AboutContent() {
     </>
   );
 }
-
-export function AboutSettings() {
-  return (
-    <SettingsGroup title="About">
-      <AboutContent />
-    </SettingsGroup>
-  );
-}

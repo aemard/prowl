@@ -74,6 +74,7 @@ describe('handleMessage', () => {
     expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual([
       '/user/teams',
       '/graphql',
+      '/graphql',
     ]);
     expect((await getItem('teams'))?.teams).toEqual([{ org: 'acme', slug: 'core', name: 'Core' }]);
   });

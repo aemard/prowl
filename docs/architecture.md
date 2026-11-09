@@ -761,14 +761,15 @@ signal (`state/store.ts`).
     (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
     no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
     a link to the permission table in `docs/privacy.md`.
-  - Team choice lives in Team reviews: “Following N teams · Choose teams”, or
-    “Checking 10 of 12 teams · Choose teams” above the cap (information, never a section error).
-    `SettingsTeams.tsx` exports the reusable `TeamPicker`, `ChooseTeams` dialog and
-    `TeamReviewsHeader`. Settings → Sections has the same dialog entry beside Team reviews;
-    there is no Settings → Teams group. Switches are grouped by organization, write
-    `unfollowedTeams`, and refresh searches; Refresh teams requests rediscovery and shows
-    “Checked <time> ago”. No teams is information; missing read:org offers Sign in again
-    in the section and picker. Dialog uses the design system's focus trap and restoration.
+  - Team choice lives above Team reviews cards: “Following N teams” (singular for one), or
+    “Checking the first 10 of 12 teams, by name” above the cap (information, never an error).
+    `SettingsTeams.tsx` shares `TeamPicker` and the `EditTeams` inline disclosure between
+    the section and Settings → Sections. Settings shows it only while Team reviews is on;
+    enabling the section opens it. Switches grouped by organization save immediately and
+    refresh searches. Teams beyond the first ten followed keys carry a “Not checked” label.
+    Missing teams trigger discovery with “Loading your teams…”. No teams replaces the
+    generic empty state; missing read:org offers Sign in again once on the section, outside
+    the disclosure. Refresh teams requests rediscovery and shows “Checked <relative time>”.
     The Refresh cost counts one search per followed team, capped at 10.
   - Cards get `teams` (`snapshot.teamRequests[pr.id]`): a people chip "@org/slug, ..." whose title
     and the card's description say "Review requested from @org/slug".
@@ -967,5 +968,17 @@ Continue with GitHub is primary. “Use a personal access token” opens the tok
 “Help choosing a token” separately opens its help. The form opens automatically without an
 OAuth client id, after refusing github.com permission, when device flow is unsupported, or
 when authorization is denied on GitHub. Token help stays on request. The base visual style
-is unchanged; no glass styles or reflection code are included. This base has no setup wizard;
-its future two-step flow and “Run setup again” entry remain for the wizard PR.
+is unchanged; no glass styles or reflection code are included.
+
+### First run (2026-11-09)
+
+Sign-in always opens the list with its full header; there is no setup route or Account rerun.
+The skeleton remains visible during loading. Only a fresh install creates a pending local
+`onboarding` marker; updates without a marker are completed. All legacy pending steps show
+`FirstRunNote` above the list, without gating it. Old progress fields are ignored on read.
+The notice explains the authored/review defaults and offers notifications, Settings and Got it.
+Disabling the notice is install-local and survives sign-out. Turn on notifications saves the
+master switch and dismisses the notice; discovered teams add a pluralized count and Show Team
+reviews. Existing preferences are unchanged; unchanged saves do not request another poll.
+The preview hash `#onboarding` starts signed out with the fresh-install marker and mocks
+ProwlViewer so a pasted token can sign in. The extension has no rerun entry point.
