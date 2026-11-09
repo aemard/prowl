@@ -86,7 +86,7 @@ test('language picker overrides Chrome in every language, follows open panels an
         page.getByRole('combobox', { name: catalog.theme?.message, exact: true }),
       ).toContainText(catalog.matchSystem?.message ?? '');
       await expect(page.locator('.settings__nav a').first()).toHaveText(
-        catalog.pullRequests?.message ?? '',
+        catalog.sections?.message ?? '',
       );
       expect(new URL(page.url()).hash).toBe('#/settings');
     }

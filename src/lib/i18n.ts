@@ -1,4 +1,4 @@
-import english from '../../public/_locales/en/messages.json';
+import english from '../../public/_locales/en/messages.json' with { type: 'json' };
 import type { Language } from './model';
 import { isRecord } from './storage/guards';
 
