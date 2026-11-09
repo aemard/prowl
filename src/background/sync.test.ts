@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Settings, STORAGE_KEYS, type SyncState } from '../lib/model';
-import { defaultSettings, loadSettings, updateSettings } from '../lib/storage/settings';
+import {
+  defaultSettings,
+  loadSettings,
+  SETTINGS_VERSION,
+  updateSettings,
+} from '../lib/storage/settings';
 import { setItem } from '../lib/storage/storage';
 import { pullSettings, pushSettings, SYNCED_KEY, watchSettingsSync } from './sync';
 
@@ -99,7 +104,7 @@ it('forces legacy hiding keys off when an old device syncs a partial payload', a
   await chrome.storage.sync.set({ [SYNCED_KEY]: { hideStaleAfterDays: 20 } });
   await vi.waitFor(async () =>
     expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
-      version: 1,
+      version: SETTINGS_VERSION,
       hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,

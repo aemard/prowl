@@ -5,6 +5,7 @@
  * each poll.
  */
 import { type BadgeView, computeBadge, NO_BADGE } from '../lib/badge/computeBadge';
+import { setLanguage } from '../lib/i18n';
 import { normalizePrLocal } from '../lib/storage/prLocal';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItems, subscribe, withLock } from '../lib/storage/storage';
@@ -40,6 +41,7 @@ export function updateBadge(): Promise<void> {
   return paint(async () => {
     const stored = await getItems(['snapshot', 'settings', 'prLocal']);
     const settings = normalizeSettings(stored.settings);
+    await setLanguage(settings.language);
     return computeBadge(
       stored.snapshot,
       normalizePrLocal(stored.prLocal),

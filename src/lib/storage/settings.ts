@@ -4,6 +4,7 @@
  */
 import {
   type BadgeMode,
+  type Language,
   type NotificationSettings,
   type PrEventType,
   type Section,
@@ -16,7 +17,7 @@ import {
 import { isRecord } from './guards';
 import { getItem, subscribe, type Unsubscribe, updateItem } from './storage';
 
-export const SETTINGS_VERSION: Settings['version'] = 1;
+export const SETTINGS_VERSION: Settings['version'] = 2;
 export const MIN_POLL_INTERVAL_MINUTES = 2;
 export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
@@ -48,6 +49,16 @@ const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
 
 const BADGE_MODES: Record<BadgeMode, true> = { attention: true, unseen: true, off: true };
 const THEMES: Record<Theme, true> = { system: true, light: true, dark: true };
+const LANGUAGES: Record<Language, true> = {
+  system: true,
+  en: true,
+  ja: true,
+  'zh-CN': true,
+  'zh-TW': true,
+  fr: true,
+  de: true,
+  es: true,
+};
 const SORT_ORDERS: Record<SortOrder, true> = { updated: true, created: true, repo: true };
 
 function keysOf<K extends string>(record: Record<K, unknown>): K[] {
@@ -85,6 +96,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   },
   badge: 'attention',
   theme: 'system',
+  language: 'system',
   sort: 'updated',
   groupByRepo: true,
   hideStaleAfterDays: 0,
@@ -107,7 +119,9 @@ export type SettingsMigration = (raw: Record<string, unknown>) => Record<string,
  * Migrations keyed by the version they upgrade from. To change the shape of `Settings`: bump
  * `version` in model.ts and `SETTINGS_VERSION`, add `SETTINGS_MIGRATIONS[previous]`, test it.
  */
-export const SETTINGS_MIGRATIONS: Readonly<Record<number, SettingsMigration>> = Object.freeze({});
+export const SETTINGS_MIGRATIONS: Readonly<Record<number, SettingsMigration>> = Object.freeze({
+  1: (raw) => ({ ...raw, language: raw.language ?? 'system' }),
+});
 
 function storedVersion(value: unknown): number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : 1;
@@ -305,6 +319,7 @@ export function normalizeSettings(value: unknown): Settings {
     notifications: normalizeNotifications(raw.notifications),
     badge: oneOf(raw.badge, BADGE_MODES, DEFAULT_SETTINGS.badge),
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
+    language: oneOf(raw.language, LANGUAGES, DEFAULT_SETTINGS.language),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
     // Keep explicit off values for older synced installs (missing stale keys default to 20).

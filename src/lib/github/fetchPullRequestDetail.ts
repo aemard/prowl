@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * The read behind an expanded card: `ProwlPullRequestDetail` for one PR, mapped to the model.
  */
@@ -33,7 +34,7 @@ export async function fetchPullRequestDetail(
       { partial: true, onPartialErrors: (messages) => problems.push(...messages) },
     );
     if (!isPullRequest(node))
-      throw new GitHubError('not_found', 'This pull request is not available.');
+      throw new GitHubError('not_found', t('thisPullRequestIsNotAvailable'));
     return node;
   };
   const contextsOf = (node: DetailPullRequestNode) =>
@@ -51,7 +52,7 @@ export async function fetchPullRequestDetail(
   if (problems.length) {
     detail.warnings = [
       ...(detail.warnings ?? []),
-      `Some details could not be read: ${[...new Set(problems)].slice(0, 5).join(' ')}`,
+      t('detailsUnreadable', [...new Set(problems)].slice(0, 5).join(' ')),
     ];
   }
   if (pr) detail = await applyBranchRules(client, pr, detail);

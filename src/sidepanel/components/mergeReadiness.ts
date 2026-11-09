@@ -5,6 +5,7 @@
  * alone and sharpens (which checks are required, how many approvals) once the detail is loaded.
  */
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
+import { countMessage, t } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 
@@ -14,14 +15,15 @@ export interface MergeLine {
   link?: string;
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
 function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): MergeLine | null {
   if (pr.reviewDecision === 'changes_requested') {
     const by = pr.reviews.filter(({ state }) => state === 'changes_requested');
     return {
       tone: 'danger',
-      text: `Changes requested${by.length > 0 ? ` by ${by.map((r) => r.author).join(', ')}` : ''}`,
+      text:
+        by.length > 0
+          ? t('changesRequestedBy', by.map((r) => r.author).join(', '))
+          : t('changesRequested2'),
     };
   }
   if (pr.reviewDecision !== 'review_required') return null;
@@ -29,15 +31,17 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   const missing =
     detail?.requiredApprovals &&
     !pr.incomplete?.includes('reviews') &&
-    !detail.warnings?.some((warning) => warning.includes('reviews'))
+    !detail.warnings?.some(
+      (warning) => warning.includes('reviews') || warning === t('reviewsNotLoaded'),
+    )
       ? Math.max(detail.requiredApprovals - approvals, 1)
       : 0;
   return {
     tone: 'attention',
     text:
       missing > 0
-        ? `${missing} ${missing === 1 ? 'approval' : 'approvals'} needed`
-        : 'Review required',
+        ? countMessage(missing, 'approvalNeeded', 'approvalsNeeded')
+        : t('reviewRequired'),
   };
 }
 
@@ -59,9 +63,14 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
       required > 0 && (listed || pr.mergeStateStatus !== 'unstable')
         ? {
             tone: 'danger',
-            text: `${plural(required, listed ? 'required check' : 'check')} failed`,
+            text: listed
+              ? countMessage(required, 'requiredCheckFailed', 'requiredChecksFailed')
+              : countMessage(required, 'checkFailed', 'checksFailed'),
           }
-        : { tone: 'neutral', text: `${plural(failed, 'optional check')} failed` },
+        : {
+            tone: 'neutral',
+            text: countMessage(failed, 'optionalCheckFailed', 'optionalChecksFailed'),
+          },
     );
   }
   const waiting = listed
@@ -72,7 +81,9 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   if (waiting > 0) {
     lines.push({
       tone: 'attention',
-      text: `${plural(waiting, listed ? 'required check' : 'check')} running`,
+      text: listed
+        ? countMessage(waiting, 'requiredCheckRunning', 'requiredChecksRunning')
+        : countMessage(waiting, 'checkRunning', 'checksRunning2'),
     });
   }
   return lines;
@@ -85,30 +96,30 @@ export function mergeReadiness(
   refreshed = false,
 ): MergeLine[] {
   if (pr.state === 'merged') {
-    return [{ tone: 'done', text: pr.closedBy ? `Merged by ${pr.closedBy}` : 'Merged' }];
+    return [{ tone: 'done', text: pr.closedBy ? t('mergedBy', pr.closedBy) : t('merged') }];
   }
   if (pr.state === 'closed') {
-    return [{ tone: 'neutral', text: 'Closed without merging' }];
+    return [{ tone: 'neutral', text: t('closedWithoutMerging') }];
   }
   const lines: MergeLine[] = [];
-  if (pr.isDraft) lines.push({ tone: 'attention', text: 'Draft' });
+  if (pr.isDraft) lines.push({ tone: 'attention', text: t('draft') });
   const review = reviewLine(pr, detail);
   if (review) lines.push(review);
   if (pr.mergeable === 'conflicting') {
     lines.push({
       tone: 'warning',
-      text: `Conflicts with ${pr.baseRefName}`,
-      link: 'Resolve on GitHub',
+      text: t('conflictsWith', pr.baseRefName),
+      link: t('resolveOnGitHub'),
     });
   }
   if (pr.mergeStateStatus === 'behind') {
-    lines.push({ tone: 'warning', text: `Behind ${pr.baseRefName}` });
+    lines.push({ tone: 'warning', text: t('behind', pr.baseRefName) });
   }
   lines.push(...checkLines(pr, detail));
   if (detail?.requiresConversationResolution && pr.unresolvedThreads > 0) {
     lines.push({
       tone: 'attention',
-      text: `${plural(pr.unresolvedThreads, 'conversation')} to resolve`,
+      text: countMessage(pr.unresolvedThreads, 'conversationToResolve', 'conversationsToResolve'),
     });
   }
   const unknown =
@@ -118,14 +129,14 @@ export function mergeReadiness(
   if (unknown) {
     lines.push({
       tone: 'attention',
-      text: refreshed ? 'Merge status unknown' : 'Checking merge status…',
-      ...(refreshed ? { link: 'Open on GitHub' } : {}),
+      text: refreshed ? t('mergeStatusUnknown') : t('checkingMergeStatus'),
+      ...(refreshed ? { link: t('openOnGitHub') } : {}),
     });
   } else if (isReadyToMerge(pr) && lines.every(({ tone }) => tone === 'neutral')) {
-    lines.unshift({ tone: 'success', text: 'Ready to merge' });
+    lines.unshift({ tone: 'success', text: t('readyToMerge2') });
   } else if (lines.every(({ tone }) => tone === 'neutral')) {
-    lines.push({ tone: 'attention', text: 'Blocked by branch rules', link: 'Details on GitHub' });
+    lines.push({ tone: 'attention', text: t('blockedByBranchRules'), link: t('detailsOnGitHub') });
   }
-  if (pr.autoMerge) lines.unshift({ tone: 'neutral', text: 'Auto-merge on, merges when ready' });
+  if (pr.autoMerge) lines.unshift({ tone: 'neutral', text: t('autoMergeOnMergesWhenReady') });
   return lines;
 }

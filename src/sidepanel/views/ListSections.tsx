@@ -1,7 +1,9 @@
 import type { RefObject } from 'preact';
 import { useState } from 'preact/hooks';
 import { activityKey } from '../../lib/activity';
+import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
+import { sectionLabel } from '../../lib/sectionLabel';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
@@ -38,30 +40,55 @@ import {
 export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
   authored: {
     icon: GitPullRequestIcon,
-    short: 'Mine',
-    empty: 'Pull requests you open will show up here.',
+    get short() {
+      return t('mine');
+    },
+    get empty() {
+      return t('pullRequestsYouOpenWillShowUpHere');
+    },
   },
   review_requested: {
     icon: EyeIcon,
-    short: 'Review',
-    empty: 'When someone asks you for a review, it will show up here.',
+    get short() {
+      return t('review');
+    },
+    get empty() {
+      return t('whenSomeoneAsksYouForAReviewItWill');
+    },
   },
   team_review_requested: {
     icon: PeopleIcon,
-    short: 'Teams',
-    empty: 'No review requests for your teams.',
+    get short() {
+      return t('teams');
+    },
+    get empty() {
+      return t('noReviewRequestsForYourTeams');
+    },
   },
   mentioned: {
     icon: MentionIcon,
-    short: 'Mentions',
-    empty: 'Pull requests that mention you will show up here.',
+    get short() {
+      return t('mentions');
+    },
+    get empty() {
+      return t('pullRequestsThatMentionYouWillShowUpHere');
+    },
   },
   assigned: {
     icon: PersonIcon,
-    short: 'Assigned',
-    empty: 'Pull requests assigned to you will show up here.',
+    get short() {
+      return t('assigned');
+    },
+    get empty() {
+      return t('pullRequestsAssignedToYouWillShowUpHere');
+    },
   },
-  custom: { icon: FilterIcon, empty: 'No open pull requests match this search.' },
+  custom: {
+    icon: FilterIcon,
+    get empty() {
+      return t('noOpenPullRequestsMatchThisSearch');
+    },
+  },
 };
 
 function ListCard({
@@ -94,7 +121,7 @@ function ShownRequests({ data }: { data: LoadedListData }) {
   const card = (pr: PullRequest) => <ListCard key={pr.id} pr={pr} data={data} grouped={grouped} />;
   return (
     shown.length > 0 && (
-      <ul class="pr-list" aria-label={`${selected.label} pull requests`}>
+      <ul class="pr-list" aria-label={t('pullRequests2', sectionLabel(selected))}>
         {grouped
           ? groups.map(({ repo, prs }) => (
               <RepoGroup
@@ -134,10 +161,10 @@ function SnoozedRequests({
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
-          Snoozed ({snoozed.length})
+          {t('snoozedCount', snoozed.length)}
         </Button>
         {open && (
-          <ul class="pr-list" aria-label={`Snoozed ${selected.label} pull requests`}>
+          <ul class="pr-list" aria-label={t('snoozedPullRequests', sectionLabel(selected))}>
             {snoozed.map((pr) => (
               <ListCard key={pr.id} pr={pr} data={data} snoozed />
             ))}
@@ -167,10 +194,16 @@ function EmptySection({
   return (
     <EmptyState
       icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
-      title={filteredOut ? 'No matches' : 'No pull requests'}
+      title={filteredOut ? t('noMatches') : t('noPullRequests')}
       description={
         filteredOut
-          ? `Nothing in “${selected.label}” matches “${query.trim()}”.${snap.sectionCoverage?.[selected.id]?.hasMore ? ' This search only covers the loaded PRs.' : ''}`
+          ? t(
+              snap.sectionCoverage?.[selected.id]?.hasMore
+                ? 'nothingInLoadedMatches'
+                : 'nothingInMatches',
+              sectionLabel(selected),
+              query.trim(),
+            )
           : KINDS[selected.kind].empty
       }
       action={
@@ -181,7 +214,7 @@ function EmptySection({
               filterInput.current?.focus();
             }}
           >
-            Clear filter
+            {t('clearFilter')}
           </Button>
         ) : undefined
       }
@@ -211,15 +244,18 @@ export function SectionContent({
     <>
       {searching(data) && (
         <p class="list__notice" role="status">
-          Searching “{data.selected.label}”…
+          {t('searchingSection', sectionLabel(data.selected))}
         </p>
       )}
       {error !== undefined && (
         <p class="list__notice">
           <AlertIcon size={16} />
           <span>
-            {coverage?.partial ? 'Partial results for' : 'Could not load'} “{data.selected.label}”:{' '}
-            {error}
+            {t(
+              coverage?.partial ? 'sectionPartialResults' : 'sectionLoadError',
+              sectionLabel(data.selected),
+              error,
+            )}
           </span>
         </p>
       )}
@@ -232,8 +268,8 @@ export function SectionContent({
       {setAside && !searching(data) && (
         <EmptyState
           icon={<EyeClosedIcon size={24} />}
-          title="All loaded pull requests are snoozed"
-          description="They return here when the snooze ends."
+          title={t('allLoadedPullRequestsAreSnoozed')}
+          description={t('theyReturnHereWhenTheSnoozeEnds')}
           action={
             <Button
               onClick={() => {
@@ -245,7 +281,7 @@ export function SectionContent({
                   ?.focus();
               }}
             >
-              Show snoozed
+              {t('showSnoozed')}
             </Button>
           }
         />

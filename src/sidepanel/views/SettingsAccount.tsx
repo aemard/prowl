@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { env } from '../../lib/env';
+import { t } from '../../lib/i18n';
 import { OPEN_PANEL_COMMAND } from '../../lib/model';
 import { GitHubLink } from '../components/GitHubLink';
 import { LinkExternalIcon, SignOutIcon } from '../components/icons';
+import { Message } from '../components/Message';
 import { SignOutDialog } from '../components/SignOutDialog';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
@@ -17,9 +19,9 @@ const REPO_URL = `${env.webUrl}/aemard/prowl`;
 export const PRIVACY_URL = `${REPO_URL}/blob/main/docs/privacy.md`;
 const ABOUT_LINKS = [
   // The README is the user's guide; docs/ is written for contributors.
-  { label: 'Documentation', href: `${REPO_URL}#readme` },
-  { label: 'Privacy', href: PRIVACY_URL },
-  { label: 'Source code', href: REPO_URL },
+  { label: t('documentation'), href: `${REPO_URL}#readme` },
+  { label: t('privacy'), href: PRIVACY_URL },
+  { label: t('sourceCode'), href: REPO_URL },
 ];
 
 /** Who is signed in, with what kind of token, and the way out. */
@@ -31,7 +33,7 @@ export function AccountSettings() {
   const expiry = tokenExpiry(account.expiresAt, Date.now());
 
   return (
-    <SettingsGroup title="Account">
+    <SettingsGroup title={t('account2')}>
       <div class="settings-account">
         <Avatar src={viewer.avatarUrl} />
         <p class="settings-account__names">
@@ -41,11 +43,11 @@ export function AccountSettings() {
       </div>
       <dl class="settings-facts">
         <div>
-          <dt>Token</dt>
+          <dt>{t('token')}</dt>
           <dd>{TOKEN_TYPES[tokenType]}</dd>
         </div>
         <div>
-          <dt>Scopes</dt>
+          <dt>{t('scopes')}</dt>
           <dd>
             {scopes.length > 0 ? (
               <span class="settings-scopes">
@@ -56,21 +58,21 @@ export function AccountSettings() {
                 ))}
               </span>
             ) : tokenType === 'fine_grained' ? (
-              'None: fine-grained tokens use per-repository permissions.'
+              t('noneFineGrainedTokensUsePerRepositoryPermissions')
             ) : (
-              'None'
+              t('none')
             )}
           </dd>
         </div>
         {expiry && (
           <div>
-            <dt>Expires</dt>
+            <dt>{t('expires')}</dt>
             <dd>{expiry}</dd>
           </div>
         )}
       </dl>
       <Button class="settings-add" icon={<SignOutIcon />} onClick={() => setConfirming(true)}>
-        Sign out
+        {t('signOut')}
       </Button>
       <AboutContent />
       <SignOutDialog open={confirming} onClose={() => setConfirming(false)} />
@@ -93,17 +95,15 @@ function AboutContent() {
   const shortcut = useOpenShortcut();
   return (
     <>
-      <p>Version {chrome.runtime.getManifest().version}</p>
+      <p>{t('versionNumber', chrome.runtime.getManifest().version)}</p>
       {shortcut !== undefined && (
         <p class="settings-note">
           {shortcut ? (
-            <>
-              Open Prowl from the keyboard with <kbd>{shortcut}</kbd>.
-            </>
+            <Message id="openWithShortcut" values={[<kbd>{shortcut}</kbd>]} />
           ) : (
-            'No keyboard shortcut opens Prowl yet.'
+            t('noKeyboardShortcutOpensProwlYet')
           )}{' '}
-          Change it at chrome://extensions/shortcuts.
+          {t('changeItAtChromeExtensionsShortcuts')}
         </p>
       )}
       <ul class="settings-links">

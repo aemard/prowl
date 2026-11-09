@@ -3,6 +3,7 @@
 import { activityKey } from '../lib/activity';
 import type { BackgroundRequest } from '../lib/model';
 import { isDateString, isRecord } from '../lib/storage/guards';
+import { loadLanguage } from '../lib/storage/language';
 import { markSeen, updatePrLocal } from '../lib/storage/prLocal';
 import { withSignedIn } from '../lib/storage/session';
 import { getItem } from '../lib/storage/storage';
@@ -48,6 +49,7 @@ function isRequest(message: unknown): message is BackgroundRequest {
 }
 
 async function route(request: BackgroundRequest, document: string): Promise<void> {
+  await loadLanguage();
   switch (request.type) {
     case 'poll':
       await poll({ force: request.force === true, afterCurrent: request.afterCurrent === true });

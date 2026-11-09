@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { teamKey } from '../../lib/github/teams';
+import { t } from '../../lib/i18n';
 import type { Team, TeamsState } from '../../lib/model';
 import { SyncIcon } from '../components/icons';
 import { Button } from '../components/ui/Button';
@@ -43,24 +44,22 @@ function TeamNotice({ state }: { state: TeamsState | undefined }) {
           <p class="settings-note">
             {state.error.kind === 'missing_scope'
               ? fineGrained
-                ? 'Use a fine-grained token owned by the organization with the Members: read permission.'
-                : "Prowl can't see your teams."
-              : "Couldn't load your teams."}
+                ? t('useAFineGrainedTokenOwnedByTheOrganizationWith')
+                : t('prowlCanTSeeYourTeams')
+              : t('couldnTLoadYourTeams')}
           </p>
           {state.error.kind === 'missing_scope' && !fineGrained && (
             <Button size="sm" variant="secondary" onClick={() => navigate('onboarding')}>
-              Sign in again
+              {t('signInAgain')}
             </Button>
           )}
         </div>
       )}
       {settings.value.unfollowedTeams.length > 0 && (!state || state.error || unidentified) && (
-        <p class="settings-note">
-          This token can't tell which team asked, so switched-off teams still show.
-        </p>
+        <p class="settings-note">{t('thisTokenCanTTellWhichTeamAskedSoSwitched')}</p>
       )}
       {state && !state.error && state.teams.length === 0 && (
-        <p class="settings-note">GitHub lists no team for your account.</p>
+        <p class="settings-note">{t('githubListsNoTeamForYourAccount')}</p>
       )}
     </>
   );
@@ -117,12 +116,12 @@ export function TeamPicker() {
       <TeamNotice state={state} />
       {!state && (
         <p class="settings-note" role="status">
-          Loading your teams…
+          {t('loadingYourTeams')}
         </p>
       )}
       <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} onFollowTeam={followTeam} />
       <div class="settings-teams__refresh">
-        <span class="settings-note">Missing a team?</span>
+        <span class="settings-note">{t('missingATeam')}</span>
         <Button
           size="sm"
           variant="secondary"
@@ -130,7 +129,7 @@ export function TeamPicker() {
           loading={refreshing}
           onClick={() => void refresh()}
         >
-          {state?.error && state.error.kind !== 'missing_scope' ? 'Try again' : 'Refresh'}
+          {state?.error && state.error.kind !== 'missing_scope' ? t('tryAgain') : t('refresh')}
         </Button>
       </div>
     </div>

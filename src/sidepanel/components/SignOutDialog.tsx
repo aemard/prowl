@@ -1,3 +1,4 @@
+import { t } from '../../lib/i18n';
 import { signOut } from '../state/session';
 import { Button } from './ui/Button';
 import { Dialog } from './ui/Dialog';
@@ -9,7 +10,7 @@ export function SignOutDialog({ open, onClose }: { open: boolean; onClose: () =>
     try {
       await signOut();
     } catch {
-      showToast({ message: 'Could not sign out. Try again.', tone: 'danger' });
+      showToast({ message: t('couldNotSignOutTryAgain'), tone: 'danger' });
     }
     onClose();
   }
@@ -18,13 +19,13 @@ export function SignOutDialog({ open, onClose }: { open: boolean; onClose: () =>
     <Dialog
       open={open}
       onClose={onClose}
-      title="Sign out?"
-      description="Prowl forgets your token and the pull requests it saved in this browser. The token itself stays valid on GitHub until you revoke it there."
+      title={t('signOut2')}
+      description={t('prowlForgetsYourTokenAndThePullRequestsIt')}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('cancel')}</Button>
           <Button variant="danger" onClick={() => void confirm()}>
-            Sign out
+            {t('signOut')}
           </Button>
         </>
       }

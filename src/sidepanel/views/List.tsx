@@ -1,5 +1,7 @@
 import type { RefObject } from 'preact';
 import { useId, useRef } from 'preact/hooks';
+import { t } from '../../lib/i18n';
+import { sectionLabel } from '../../lib/sectionLabel';
 import { AlertIcon, InboxIcon, SearchIcon } from '../components/icons';
 import { panelId, SectionTabs } from '../components/SectionTabs';
 import { StatusBanner } from '../components/StatusBanner';
@@ -29,7 +31,12 @@ export {
 
 function ListSkeleton() {
   return (
-    <div class="list__skeleton" aria-busy="true" aria-label="Loading pull requests" role="status">
+    <div
+      class="list__skeleton"
+      aria-busy="true"
+      aria-label={t('loadingPullRequests')}
+      role="status"
+    >
       {[0, 1, 2, 3].map((row) => (
         <div class="list__skeleton-row" key={row}>
           <div class="list__skeleton-head">
@@ -53,9 +60,9 @@ function NoSections() {
       <StatusBanner />
       <EmptyState
         icon={<InboxIcon size={24} />}
-        title="No sections turned on"
-        description="Choose which pull requests Prowl follows in Settings."
-        action={<Button onClick={() => navigate('settings')}>Open settings</Button>}
+        title={t('noSectionsTurnedOn')}
+        description={t('chooseWhichPullRequestsProwlFollowsInSettings')}
+        action={<Button onClick={() => navigate('settings')}>{t('openSettings')}</Button>}
       />
     </>
   );
@@ -70,8 +77,8 @@ function LoadingList() {
       {failure?.lastError && !failure.inFlight ? (
         <EmptyState
           icon={<AlertIcon size={24} />}
-          title="Could not load pull requests"
-          description="Nothing has been fetched yet. The notice above says why."
+          title={t('couldNotLoadPullRequests')}
+          description={t('nothingHasBeenFetchedYetTheNoticeAboveSays')}
         />
       ) : (
         <ListSkeleton />
@@ -84,11 +91,11 @@ function QuickFilter({ input }: { input: RefObject<HTMLElement> }) {
   return (
     <div class="list__filter">
       <TextField
-        label="Filter pull requests"
+        label={t('filterPullRequests')}
         hideLabel
         type="search"
         icon={<SearchIcon />}
-        placeholder="Filter by title, repo, author or label"
+        placeholder={t('filterByTitleRepoAuthorOrLabel')}
         value={filterQuery.value}
         onValueChange={(value) => {
           filterQuery.value = value;
@@ -106,8 +113,8 @@ function sectionTabs(data: LoadedListData) {
     const { icon: Icon, short } = KINDS[section.kind];
     return {
       id: section.id,
-      label: short ?? section.label,
-      fullLabel: section.label,
+      label: short ?? sectionLabel(section),
+      fullLabel: sectionLabel(section),
       icon: <Icon />,
       count: data.parts.get(section.id)?.shown.length ?? 0,
       failed: data.snap.sectionErrors?.[section.id] !== undefined,
@@ -133,7 +140,7 @@ function LoadedList({
   // A lone section has no tabs. The panel is named by the section's full name rather than by its
   // tab, which is not there when the section is under "More".
   const panelProps =
-    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': data.selected.label } : {};
+    tabs.length > 1 ? { role: 'tabpanel' as const, 'aria-label': sectionLabel(data.selected) } : {};
   return (
     <div class="list">
       {anyPullRequests && <QuickFilter input={filterInput} />}

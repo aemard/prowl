@@ -388,10 +388,12 @@ export type BadgeMode = 'attention' | 'unseen' | 'off';
 
 export type Theme = 'system' | 'light' | 'dark';
 
+export type Language = 'system' | 'en' | 'ja' | 'zh-CN' | 'zh-TW' | 'fr' | 'de' | 'es';
+
 export type SortOrder = 'updated' | 'created' | 'repo';
 
 export interface Settings {
-  version: 1;
+  version: 2;
   sections: Section[];
   /** `owner/name` or `owner`. Empty = all repositories. */
   repoInclude: string[];
@@ -404,6 +406,8 @@ export interface Settings {
   notifications: NotificationSettings;
   badge: BadgeMode;
   theme: Theme;
+  /** `system` follows Chrome's interface language; an explicit choice overrides it. */
+  language: Language;
   sort: SortOrder;
   /** The list groups each section's PRs under their repository (independent of `sort`). */
   groupByRepo: boolean;

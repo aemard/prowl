@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { uiLocale } from '../../lib/i18n';
 import type { ErrorKind, PollState } from '../../lib/model';
 import { buildPollState } from '../../test/panel';
 import { describeStatus, describeTokenExpiry } from './StatusBannerModel';
@@ -7,7 +8,7 @@ const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 const minutes = (n: number) => n * 60_000;
 const at = (offsetMs: number) => new Date(NOW + offsetMs).toISOString();
 const clock = (offsetMs: number) =>
-  new Date(NOW + offsetMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  new Date(NOW + offsetMs).toLocaleTimeString(uiLocale(), { hour: 'numeric', minute: '2-digit' });
 
 const failed = (kind: ErrorKind, message: string, overrides: Partial<PollState> = {}) =>
   buildPollState({ lastError: { kind, message }, consecutiveFailures: 1, ...overrides });

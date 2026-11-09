@@ -1,3 +1,4 @@
+import { t } from '../../lib/i18n';
 /** Writing settings from the panel: saved at once, and the list refreshed when the scope changed. */
 
 import { signal } from '@preact/signals';
@@ -50,7 +51,7 @@ export async function saveSettings(
       return next;
     });
   } catch {
-    showToast({ message: 'Could not save the setting. Try again.', tone: 'danger' });
+    showToast({ message: t('couldNotSaveTheSettingTryAgain'), tone: 'danger' });
     return false;
   }
   if (refresh && changed) refreshSoon();

@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
+import { t } from '../lib/i18n';
+import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildPullRequest, buildSnapshotOf } from '../test/panel';
 import { App } from './App';
 import { navigate } from './state/router';
@@ -113,6 +115,31 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(await screen.findByRole('main', { name: 'Sign in' })).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('renders localized list labels and colored GitHub labels after an eager app import', async () => {
+    // App and its tables were imported before startup chose the browser catalog.
+    fakeChrome().__state.locale = 'ja';
+    const prs = Array.from({ length: 4 }, (_, index) =>
+      buildPullRequest({
+        id: `PR_${index}`,
+        number: index + 1,
+        labels: [
+          { name: 'bug', color: 'd73a4a' },
+          { name: 'design', color: 'fbca04' },
+          { name: 'ui', color: '0b1f3a' },
+        ],
+      }),
+    );
+    await open({ auth: buildAuth(), snapshot: buildSnapshotOf({ authored: prs }) });
+    act(() => navigate('list'));
+    expect(screen.getByRole('main', { name: t('pullRequests') })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: new RegExp(t('mine')) })).toBeTruthy();
+    const labels = [...document.querySelectorAll<HTMLElement>('.pr-label:not(.pr-label--more)')];
+    expect(labels).toHaveLength(12);
+    expect(labels.map((label) => label.style.getPropertyValue('--label-color'))).toEqual(
+      Array.from({ length: 4 }, () => ['#d73a4a', '#fbca04', '#0b1f3a']).flat(),
+    );
   });
 
   it('mounts the toast region once', async () => {

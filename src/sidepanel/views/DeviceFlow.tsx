@@ -8,6 +8,7 @@ import {
   validateDeviceToken,
 } from '../../lib/github/auth/deviceFlow';
 import { signInErrorMessage } from '../../lib/github/auth/pat';
+import { t } from '../../lib/i18n';
 import { AlertFillIcon, CopyIcon, LinkExternalIcon, MarkGithubIcon } from '../components/icons';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
@@ -17,16 +18,13 @@ import { openGitHubUrl } from '../openUrl';
 import { completeSignIn, releaseGitHubWebAccess } from '../state/session';
 import './DeviceFlow.css';
 
-const PERMISSION_DENIED =
-  'Prowl needs access to github.com to sign you in from the browser: that is where it asks GitHub for the code and for your approval. Allow it and try again, or paste a token below, which needs no extra access.';
-
 /** "Code expires in 14:52"; a timer role is not announced on every tick. */
 function Countdown({ expiresAt }: { expiresAt: number }) {
   const seconds = Math.max(0, Math.ceil((expiresAt - useNow(1000)) / 1000));
   const rest = String(seconds % 60).padStart(2, '0');
   return (
     <p class="device-flow__expiry" role="timer">
-      Code expires in {Math.floor(seconds / 60)}:{rest}
+      {t('codeCountdown', `${Math.floor(seconds / 60)}:${rest}`)}
     </p>
   );
 }
@@ -70,7 +68,7 @@ function useDeviceFlow(onTokenFallback?: () => void) {
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) return reset(PERMISSION_DENIED, true);
+      if (!(await permission)) return reset(t('prowlNeedsAccessToGithubComToSignYou'), true);
       await completeDeviceFlow(controller, setCode);
     } catch (failure) {
       if (controller.signal.aborted) return;
@@ -95,10 +93,10 @@ function useDeviceFlow(onTokenFallback?: () => void) {
 async function copyCode(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    showToast({ message: 'Code copied', tone: 'success', durationMs: 2000 });
+    showToast({ message: t('codeCopied'), tone: 'success', durationMs: 2000 });
   } catch {
     showToast({
-      message: 'Could not copy. Select the code and copy it by hand.',
+      message: t('couldNotCopySelectTheCodeAndCopyIt'),
       tone: 'danger',
     });
   }
@@ -111,20 +109,20 @@ function DeviceCodePanel({ code, cancel }: { code: DeviceCode; cancel: () => voi
   return (
     <section
       class="device-flow__code-panel"
-      aria-label="Authorize Prowl on GitHub"
+      aria-label={t('authorizeProwlOnGithub')}
       tabIndex={-1}
       ref={waiting}
     >
-      <p>Enter this code on GitHub to finish signing in.</p>
+      <p>{t('enterThisCodeOnGithubToFinishSigningIn')}</p>
       <div class="device-flow__code-row">
         <code class="device-flow__code">{code.userCode}</code>
         <Button
           size="sm"
           icon={<CopyIcon size={12} />}
           onClick={() => void copyCode(code.userCode)}
-          aria-label={`Copy code ${code.userCode}`}
+          aria-label={t('copyCode', code.userCode)}
         >
-          Copy
+          {t('copy')}
         </Button>
       </div>
       <Button
@@ -132,15 +130,15 @@ function DeviceCodePanel({ code, cancel }: { code: DeviceCode; cancel: () => voi
         icon={<LinkExternalIcon size={12} />}
         onClick={() => void openGitHubUrl(code.verificationUri)}
       >
-        Open GitHub
+        {t('openGithub')}
       </Button>
       <Countdown expiresAt={code.expiresAt} />
       <p class="device-flow__status" role="status">
         <Spinner size={12} />
-        Waiting for you to approve Prowl on GitHub…
+        {t('waitingForYouToApproveProwlOnGithub')}
       </p>
       <Button variant="ghost" onClick={cancel}>
-        Cancel
+        {t('cancel')}
       </Button>
     </section>
   );
@@ -155,12 +153,9 @@ function StartDeviceFlow({ starting, start }: { starting: boolean; start: () => 
         icon={<MarkGithubIcon size={16} />}
         onClick={() => void start()}
       >
-        Continue with GitHub
+        {t('continueWithGithub')}
       </Button>
-      <p class="device-flow__hint">
-        Approve Prowl on github.com with a one-time code. Chrome first asks to let Prowl talk to
-        github.com for that.
-      </p>
+      <p class="device-flow__hint">{t('approveProwlOnGithubComWithAOneTime')}</p>
     </>
   );
 }

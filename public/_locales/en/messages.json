@@ -1,0 +1,2848 @@
+{
+  "open": {
+    "message": "Open",
+    "description": "Extension text: Open"
+  },
+  "snooze1H": {
+    "message": "Snooze 1 h",
+    "description": "Extension text: Snooze 1 h"
+  },
+  "somethingWentWrongWhileRefreshing": {
+    "message": "Something went wrong while refreshing.",
+    "description": "Extension text: Something went wrong while refreshing."
+  },
+  "yourSettingsTakeKbMoreThanThe8Kb": {
+    "message": "Your settings take $P1$ KB, more than the 8 KB Chrome sync keeps: remove some repositories or sections. They stay on this device.",
+    "description": "Extension text: Your settings take $1 KB, more than the 8 KB Chrome sync keeps: remove some repositories or sections. They stay on this device.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeSyncDidNotTakeYourSettingsTheyStay": {
+    "message": "Chrome sync did not take your settings. They stay on this device.",
+    "description": "Extension text: Chrome sync did not take your settings. They stay on this device."
+  },
+  "ciFailing": {
+    "message": "CI failing",
+    "description": "Extension text: CI failing"
+  },
+  "changesRequested": {
+    "message": "changes requested",
+    "description": "Extension text: changes requested"
+  },
+  "readyToMerge": {
+    "message": "ready to merge",
+    "description": "Extension text: ready to merge"
+  },
+  "withUnseenChanges": {
+    "message": "$P1$: $P2$ with unseen changes",
+    "description": "Extension text: $1: $2 with unseen changes",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "needingAttention": {
+    "message": "$P1$: $P2$ needing attention ($P3$)",
+    "description": "Extension text: $1: $2 needing attention ($3)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "writeAMessageFirst": {
+    "message": "Write a message first.",
+    "description": "Extension text: Write a message first."
+  },
+  "theMessageIsLongerThanCharacters": {
+    "message": "The message is longer than $P1$ characters.",
+    "description": "Extension text: The message is longer than $1 characters.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheReview": {
+    "message": "GitHub did not confirm the review.",
+    "description": "Extension text: GitHub did not confirm the review."
+  },
+  "githubDidNotConfirmTheComment": {
+    "message": "GitHub did not confirm the comment.",
+    "description": "Extension text: GitHub did not confirm the comment."
+  },
+  "githubDidNotConfirmTheMerge": {
+    "message": "GitHub did not confirm the merge.",
+    "description": "Extension text: GitHub did not confirm the merge."
+  },
+  "somethingWentWrong": {
+    "message": "Something went wrong.",
+    "description": "Extension text: Something went wrong."
+  },
+  "reRanOf": {
+    "message": "Re-ran $P1$ of $P2$. $P3$",
+    "description": "Extension text: Re-ran $1 of $2. $3",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "theCodeExpiredBeforeItWasUsedStartAgain": {
+    "message": "The code expired before it was used. Start again to get a new one.",
+    "description": "Extension text: The code expired before it was used. Start again to get a new one."
+  },
+  "accessWasDeniedOnGithubStartAgainToAuthorize": {
+    "message": "Access was denied on GitHub. Start again to authorize Prowl, or paste a token instead.",
+    "description": "Extension text: Access was denied on GitHub. Start again to authorize Prowl, or paste a token instead."
+  },
+  "signingInFromTheBrowserIsNotAvailableFor": {
+    "message": "Signing in from the browser is not available for this build of Prowl. Paste a token instead.",
+    "description": "Extension text: Signing in from the browser is not available for this build of Prowl. Paste a token instead."
+  },
+  "couldNotReachGithubCheckYourConnectionAndTry": {
+    "message": "Could not reach GitHub. Check your connection and try again.",
+    "description": "Extension text: Could not reach GitHub. Check your connection and try again."
+  },
+  "githubIsHavingTroubleRightNowTryAgainIn": {
+    "message": "GitHub is having trouble right now. Try again in a moment.",
+    "description": "Extension text: GitHub is having trouble right now. Try again in a moment."
+  },
+  "withoutTheReadOrgScopeTeamReviewsMayNot": {
+    "message": "Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.",
+    "description": "Extension text: Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review."
+  },
+  "githubDoesNotOfferTheChecksPermissionToFine": {
+    "message": "GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing. A classic token with the repo scope shows it in full.",
+    "description": "Extension text: GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing. A classic token with the repo scope shows it in full."
+  },
+  "githubReturnedAnUnexpectedResponse": {
+    "message": "GitHub returned an unexpected response.",
+    "description": "Extension text: GitHub returned an unexpected response."
+  },
+  "pasteATokenToSignIn": {
+    "message": "Paste a token to sign in.",
+    "description": "Extension text: Paste a token to sign in."
+  },
+  "thatDoesNotLookLikeAGithubTokenCopy": {
+    "message": "That does not look like a GitHub token. Copy it again, without spaces or quotes.",
+    "description": "Extension text: That does not look like a GitHub token. Copy it again, without spaces or quotes."
+  },
+  "couldNotSignInTryAgain": {
+    "message": "Could not sign in. Try again.",
+    "description": "Extension text: Could not sign in. Try again."
+  },
+  "githubRejectedThisTokenCheckThatYouCopiedAll": {
+    "message": "GitHub rejected this token. Check that you copied all of it and that it has not expired or been revoked.",
+    "description": "Extension text: GitHub rejected this token. Check that you copied all of it and that it has not expired or been revoked."
+  },
+  "githubRefusedThisToken": {
+    "message": "GitHub refused this token: $P1$",
+    "description": "Extension text: GitHub refused this token: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitReachedTryAgainInAMinute": {
+    "message": "GitHub rate limit reached. Try again in a minute.",
+    "description": "Extension text: GitHub rate limit reached. Try again in a minute."
+  },
+  "githubRespondedWithHttp": {
+    "message": "GitHub responded with HTTP $P1$.",
+    "description": "Extension text: GitHub responded with HTTP $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotRespondWithinSeconds": {
+    "message": "GitHub did not respond within $P1$ seconds.",
+    "description": "Extension text: GitHub did not respond within $1 seconds.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotReachGithub": {
+    "message": "Could not reach GitHub.",
+    "description": "Extension text: Could not reach GitHub."
+  },
+  "githubReturnedAnError": {
+    "message": "GitHub returned an error.",
+    "description": "Extension text: GitHub returned an error."
+  },
+  "githubReturnedNoData": {
+    "message": "GitHub returned no data.",
+    "description": "Extension text: GitHub returned no data."
+  },
+  "thisPullRequestIsNotAvailable": {
+    "message": "This pull request is not available.",
+    "description": "Extension text: This pull request is not available."
+  },
+  "enterAGithubSearchQueryForExampleAuthorMe": {
+    "message": "Enter a GitHub search query, for example: author:@me label:bug",
+    "description": "Extension text: Enter a GitHub search query, for example: author:@me label:bug"
+  },
+  "prowlFollowsPullRequestsOnlyRemoveIsIssueOr": {
+    "message": "Prowl follows pull requests only: remove is:issue (or type:issue, -is:pr).",
+    "description": "Extension text: Prowl follows pull requests only: remove is:issue (or type:issue, -is:pr)."
+  },
+  "githubAllowsAtMostAndOrNotOperatorsIn": {
+    "message": "GitHub allows at most $P1$ AND / OR / NOT operators in a search (found $P2$).",
+    "description": "Extension text: GitHub allows at most $1 AND / OR / NOT operators in a search (found $2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotListYourTeams": {
+    "message": "Could not list your teams: $P1$",
+    "description": "Extension text: Could not list your teams: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "bot": {
+    "message": "Bot",
+    "description": "Extension text: Bot"
+  },
+  "someone": {
+    "message": "Someone",
+    "description": "Extension text: Someone"
+  },
+  "ciFailed": {
+    "message": "CI failed",
+    "description": "Extension text: CI failed"
+  },
+  "ciPassed": {
+    "message": "CI passed",
+    "description": "Extension text: CI passed"
+  },
+  "reviewed": {
+    "message": "$P1$ reviewed",
+    "description": "Extension text: $1 reviewed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approved": {
+    "message": "$P1$ approved",
+    "description": "Extension text: $1 approved",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestedChanges": {
+    "message": "$P1$ requested changes",
+    "description": "Extension text: $1 requested changes",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commented": {
+    "message": "$P1$ commented",
+    "description": "Extension text: $1 commented",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyToMerge2": {
+    "message": "Ready to merge",
+    "description": "Extension text: Ready to merge"
+  },
+  "merged": {
+    "message": "Merged",
+    "description": "Extension text: Merged"
+  },
+  "closed": {
+    "message": "Closed",
+    "description": "Extension text: Closed"
+  },
+  "justNow": {
+    "message": "just now",
+    "description": "Extension text: just now"
+  },
+  "minAgo": {
+    "message": "$P1$ min ago",
+    "description": "Extension text: $1 min ago",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hAgo": {
+    "message": "$P1$ h ago",
+    "description": "Extension text: $1 h ago",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dAgo": {
+    "message": "$P1$ d ago",
+    "description": "Extension text: $1 d ago",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "for1Hour": {
+    "message": "for 1 hour",
+    "description": "Extension text: for 1 hour"
+  },
+  "for4Hours": {
+    "message": "for 4 hours",
+    "description": "Extension text: for 4 hours"
+  },
+  "untilTomorrow": {
+    "message": "until tomorrow",
+    "description": "Extension text: until tomorrow"
+  },
+  "untilMonday": {
+    "message": "until Monday",
+    "description": "Extension text: until Monday"
+  },
+  "pullRequests": {
+    "message": "Pull requests",
+    "description": "Extension text: Pull requests"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Extension text: Settings"
+  },
+  "signIn": {
+    "message": "Sign in",
+    "description": "Extension text: Sign in"
+  },
+  "loading": {
+    "message": "Loading",
+    "description": "Extension text: Loading"
+  },
+  "updating": {
+    "message": "Updating…",
+    "description": "Extension text: Updating…"
+  },
+  "notUpdatedYet": {
+    "message": "Not updated yet",
+    "description": "Extension text: Not updated yet"
+  },
+  "updated": {
+    "message": "Updated",
+    "description": "Extension text: Updated"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Extension text: Refresh"
+  },
+  "backToPullRequests": {
+    "message": "Back to pull requests",
+    "description": "Extension text: Back to pull requests"
+  },
+  "viewGithubProfile": {
+    "message": "View GitHub profile",
+    "description": "Extension text: View GitHub profile"
+  },
+  "keyboardShortcuts": {
+    "message": "Keyboard shortcuts",
+    "description": "Extension text: Keyboard shortcuts"
+  },
+  "signOut": {
+    "message": "Sign out",
+    "description": "Extension text: Sign out"
+  },
+  "account": {
+    "message": "Account: $P1$",
+    "description": "Extension text: Account: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reRunFailedChecks": {
+    "message": "Re-run failed checks",
+    "description": "Extension text: Re-run failed checks"
+  },
+  "updateBranch": {
+    "message": "Update branch",
+    "description": "Extension text: Update branch"
+  },
+  "updatedTheBranchOf": {
+    "message": "Updated the branch of",
+    "description": "Extension text: Updated the branch of"
+  },
+  "readyForReview": {
+    "message": "Ready for review",
+    "description": "Extension text: Ready for review"
+  },
+  "convertToDraft": {
+    "message": "Convert to draft",
+    "description": "Extension text: Convert to draft"
+  },
+  "reRunningFailedChecksOf": {
+    "message": "Re-running failed checks of",
+    "description": "Extension text: Re-running failed checks of"
+  },
+  "markedReadyForReview": {
+    "message": "Marked ready for review:",
+    "description": "Extension text: Marked ready for review:"
+  },
+  "convertedToDraft": {
+    "message": "Converted to draft:",
+    "description": "Extension text: Converted to draft:"
+  },
+  "of": {
+    "message": "$P1$ of $P2$",
+    "description": "Extension text: $1 of $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "updateWithARebase": {
+    "message": "Update with a rebase",
+    "description": "Extension text: Update with a rebase"
+  },
+  "createAMergeCommit": {
+    "message": "Create a merge commit",
+    "description": "Extension text: Create a merge commit"
+  },
+  "squashAndMerge": {
+    "message": "Squash and merge",
+    "description": "Extension text: Squash and merge"
+  },
+  "rebaseAndMerge": {
+    "message": "Rebase and merge",
+    "description": "Extension text: Rebase and merge"
+  },
+  "merge": {
+    "message": "Merge",
+    "description": "Extension text: Merge"
+  },
+  "enableAutoMerge": {
+    "message": "Enable auto-merge",
+    "description": "Extension text: Enable auto-merge"
+  },
+  "autoMergeIsOnFor": {
+    "message": "Auto-merge is on for",
+    "description": "Extension text: Auto-merge is on for"
+  },
+  "message2": {
+    "message": "$P1$ $P2$",
+    "description": "Extension text: $1 $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeIsOffFor": {
+    "message": "Auto-merge is off for",
+    "description": "Extension text: Auto-merge is off for"
+  },
+  "mergePullRequest": {
+    "message": "Merge pull request",
+    "description": "Extension text: Merge pull request"
+  },
+  "mergeIntoNowOrLetGithubMergeItOnce": {
+    "message": "Merge $P1$ into $P2$ now, or let GitHub merge it once its checks and reviews pass.",
+    "description": "Extension text: Merge $1 into $2 now, or let GitHub merge it once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "mergeInto": {
+    "message": "Merge $P1$ into $P2$.",
+    "description": "Extension text: Merge $1 into $2.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "commitTitleOptional": {
+    "message": "Commit title (optional)",
+    "description": "Extension text: Commit title (optional)"
+  },
+  "emptyUsesGithubSDefault": {
+    "message": "Empty uses GitHub's default.",
+    "description": "Extension text: Empty uses GitHub's default."
+  },
+  "enterAWholeNumberFromTo": {
+    "message": "Enter a whole number from $P1$ to $P2$.",
+    "description": "Extension text: Enter a whole number from $1 to $2.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openInGithub": {
+    "message": "Open in GitHub",
+    "description": "Extension text: Open in GitHub"
+  },
+  "copyBranchName": {
+    "message": "Copy branch name",
+    "description": "Extension text: Copy branch name"
+  },
+  "couldNotCopyTheBranchName": {
+    "message": "Could not copy the branch name.",
+    "description": "Extension text: Could not copy the branch name."
+  },
+  "copiedButThisBranchNameContainsShellCharactersQuote": {
+    "message": "Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal.",
+    "description": "Extension text: Copied, but this branch name contains shell characters. Quote it before pasting it into a terminal."
+  },
+  "copied": {
+    "message": "Copied $P1$",
+    "description": "Extension text: Copied $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unsnooze": {
+    "message": "Unsnooze",
+    "description": "Extension text: Unsnooze"
+  },
+  "snooze": {
+    "message": "Snooze $P1$",
+    "description": "Extension text: Snooze $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "snoozed": {
+    "message": "Snoozed $P1$",
+    "description": "Extension text: Snoozed $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unmuteNotifications": {
+    "message": "Unmute notifications",
+    "description": "Extension text: Unmute notifications"
+  },
+  "muteNotifications": {
+    "message": "Mute notifications",
+    "description": "Extension text: Mute notifications"
+  },
+  "actionsFor": {
+    "message": "Actions for $P1$",
+    "description": "Extension text: Actions for $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreActionsFor": {
+    "message": "More actions for $P1$",
+    "description": "Extension text: More actions for $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequestedFrom": {
+    "message": "Review requested from $P1$",
+    "description": "Extension text: Review requested from $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unseenChanges": {
+    "message": "Unseen changes",
+    "description": "Extension text: Unseen changes"
+  },
+  "lastActivity": {
+    "message": "Last activity $P1$",
+    "description": "Extension text: Last activity $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationsMuted": {
+    "message": "Notifications muted",
+    "description": "Extension text: Notifications muted"
+  },
+  "snoozedUntil": {
+    "message": "Snoozed until $P1$",
+    "description": "Extension text: Snoozed until $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkingTheLatestMergeStatusOnGithub": {
+    "message": "Checking the latest merge status on GitHub",
+    "description": "Extension text: Checking the latest merge status on GitHub"
+  },
+  "updatingMergeStatus": {
+    "message": "Updating merge status",
+    "description": "Extension text: Updating merge status"
+  },
+  "openedBy": {
+    "message": "Opened by $P1$",
+    "description": "Extension text: Opened by $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opened": {
+    "message": "Opened $P1$",
+    "description": "Extension text: Opened $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "by2": {
+    "message": " by $P1$",
+    "description": "Extension text:  by $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failed": {
+    "message": "Failed",
+    "description": "Extension text: Failed"
+  },
+  "pending": {
+    "message": "Pending",
+    "description": "Extension text: Pending"
+  },
+  "passed": {
+    "message": "Passed",
+    "description": "Extension text: Passed"
+  },
+  "skipped": {
+    "message": "Skipped",
+    "description": "Extension text: Skipped"
+  },
+  "approved2": {
+    "message": "Approved",
+    "description": "Extension text: Approved"
+  },
+  "changesRequested2": {
+    "message": "Changes requested",
+    "description": "Extension text: Changes requested"
+  },
+  "reviewRequested": {
+    "message": "Review requested",
+    "description": "Extension text: Review requested"
+  },
+  "commented2": {
+    "message": "Commented",
+    "description": "Extension text: Commented"
+  },
+  "dismissed": {
+    "message": "Dismissed",
+    "description": "Extension text: Dismissed"
+  },
+  "theBaseBranchRequiresThisCheckToPass": {
+    "message": "The base branch requires this check to pass",
+    "description": "Extension text: The base branch requires this check to pass"
+  },
+  "required": {
+    "message": "Required",
+    "description": "Extension text: Required"
+  },
+  "passed2": {
+    "message": "$P1$ passed",
+    "description": "Extension text: $1 passed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2": {
+    "message": "$P1$ skipped",
+    "description": "Extension text: $1 skipped",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noChecksOnTheLatestCommit": {
+    "message": "No checks on the latest commit.",
+    "description": "Extension text: No checks on the latest commit."
+  },
+  "noReviewsYet": {
+    "message": "No reviews yet.",
+    "description": "Extension text: No reviews yet."
+  },
+  "actions": {
+    "message": "Actions",
+    "description": "Extension text: Actions"
+  },
+  "tryAgain": {
+    "message": "Try again",
+    "description": "Extension text: Try again"
+  },
+  "loadingChecksAndReviewers": {
+    "message": "Loading checks and reviewers",
+    "description": "Extension text: Loading checks and reviewers"
+  },
+  "checks": {
+    "message": "Checks",
+    "description": "Extension text: Checks"
+  },
+  "reviewers": {
+    "message": "Reviewers",
+    "description": "Extension text: Reviewers"
+  },
+  "enterAnOwnerOrOwnerNameForExampleAcme": {
+    "message": "Enter an owner or owner/name, for example acme or acme/widgets.",
+    "description": "Extension text: Enter an owner or owner/name, for example acme or acme/widgets."
+  },
+  "isAlreadyInTheList": {
+    "message": "$P1$ is already in the $P2$ list.",
+    "description": "Extension text: $1 is already in the $2 list.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToTheList": {
+    "message": "Added $P1$ to the $P2$ list.",
+    "description": "Extension text: Added $1 to the $2 list.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "removedFromTheList": {
+    "message": "Removed $P1$ from the $P2$ list.",
+    "description": "Extension text: Removed $1 from the $2 list.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "remove": {
+    "message": "Remove $P1$",
+    "description": "Extension text: Remove $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repository": {
+    "message": "$P1$ repository",
+    "description": "Extension text: $1 repository",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ownerOrOwnerName": {
+    "message": "owner or owner/name",
+    "description": "Extension text: owner or owner/name"
+  },
+  "addToList": {
+    "message": "Add to $P1$ list",
+    "description": "Extension text: Add to $1 list",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "add": {
+    "message": "Add",
+    "description": "Extension text: Add"
+  },
+  "pullRequests2": {
+    "message": "$P1$ pull requests",
+    "description": "Extension text: $1 pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestChanges": {
+    "message": "Request changes",
+    "description": "Extension text: Request changes"
+  },
+  "requestedChangesOn": {
+    "message": "Requested changes on",
+    "description": "Extension text: Requested changes on"
+  },
+  "comment": {
+    "message": "Comment",
+    "description": "Extension text: Comment"
+  },
+  "commentedOn": {
+    "message": "Commented on",
+    "description": "Extension text: Commented on"
+  },
+  "addACommentToTheConversationOf": {
+    "message": "Add a comment to the conversation of $P1$.",
+    "description": "Extension text: Add a comment to the conversation of $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approve": {
+    "message": "Approve",
+    "description": "Extension text: Approve"
+  },
+  "on": {
+    "message": "$P1$ on $P2$",
+    "description": "Extension text: $1 on $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Extension text: Cancel"
+  },
+  "message3": {
+    "message": "Message",
+    "description": "Extension text: Message"
+  },
+  "sections": {
+    "message": "Sections",
+    "description": "Extension text: Sections"
+  },
+  "couldNotLoadThisSection": {
+    "message": "Could not load this section",
+    "description": "Extension text: Could not load this section"
+  },
+  "couldNotLoad": {
+    "message": "Could not load",
+    "description": "Extension text: Could not load"
+  },
+  "moreSections": {
+    "message": "More sections",
+    "description": "Extension text: More sections"
+  },
+  "more": {
+    "message": "More",
+    "description": "Extension text: More"
+  },
+  "refreshFailed": {
+    "message": "Refresh failed: $P1$",
+    "description": "Extension text: Refresh failed: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotSignOutTryAgain": {
+    "message": "Could not sign out. Try again.",
+    "description": "Extension text: Could not sign out. Try again."
+  },
+  "signOut2": {
+    "message": "Sign out?",
+    "description": "Extension text: Sign out?"
+  },
+  "prowlForgetsYourTokenAndThePullRequestsIt": {
+    "message": "Prowl forgets your token and the pull requests it saved in this browser. The token itself stays valid on GitHub until you revoke it there.",
+    "description": "Extension text: Prowl forgets your token and the pull requests it saved in this browser. The token itself stays valid on GitHub until you revoke it there."
+  },
+  "retry": {
+    "message": "Retry",
+    "description": "Extension text: Retry"
+  },
+  "lastUpdated": {
+    "message": "Last updated $P1$.",
+    "description": "Extension text: Last updated $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingInMin": {
+    "message": "retrying in $P1$ min",
+    "description": "Extension text: retrying in $1 min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingSoon": {
+    "message": "retrying soon",
+    "description": "Extension text: retrying soon"
+  },
+  "githubRateLimitAlmostUsedUp": {
+    "message": "GitHub rate limit almost used up",
+    "description": "Extension text: GitHub rate limit almost used up"
+  },
+  "refreshingResumesAt": {
+    "message": "Refreshing resumes at $P1$.",
+    "description": "Extension text: Refreshing resumes at $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullRequestsMayBeOutOfDate": {
+    "message": "Pull requests may be out of date",
+    "description": "Extension text: Pull requests may be out of date"
+  },
+  "refreshNow": {
+    "message": "Refresh now",
+    "description": "Extension text: Refresh now"
+  },
+  "yourGithubTokenWasRevokedOrExpired": {
+    "message": "Your GitHub token was revoked or expired",
+    "description": "Extension text: Your GitHub token was revoked or expired"
+  },
+  "prowlStoppedRefreshingSignInAgainToContinue": {
+    "message": "Prowl stopped refreshing. Sign in again to continue.",
+    "description": "Extension text: Prowl stopped refreshing. Sign in again to continue."
+  },
+  "rateLimitedUntil": {
+    "message": "Rate limited until $P1$",
+    "description": "Extension text: Rate limited until $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitHasReset": {
+    "message": "GitHub rate limit has reset",
+    "description": "Extension text: GitHub rate limit has reset"
+  },
+  "githubIsLimitingProwlSRequestsSoRefreshingIs": {
+    "message": "GitHub is limiting Prowl’s requests, so refreshing is paused.",
+    "description": "Extension text: GitHub is limiting Prowl’s requests, so refreshing is paused."
+  },
+  "prowlRefreshesAgainShortly": {
+    "message": "Prowl refreshes again shortly.",
+    "description": "Extension text: Prowl refreshes again shortly."
+  },
+  "offline": {
+    "message": "Offline — $P1$",
+    "description": "Extension text: Offline — $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubError": {
+    "message": "GitHub error — $P1$",
+    "description": "Extension text: GitHub error — $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inLessThanADay": {
+    "message": "in less than a day",
+    "description": "Extension text: in less than a day"
+  },
+  "yourGithubTokenExpires": {
+    "message": "Your GitHub token expires $P1$",
+    "description": "Extension text: Your GitHub token expires $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "createANewOneAndSignInWithIt": {
+    "message": "Create a new one and sign in with it to keep Prowl refreshing.",
+    "description": "Extension text: Create a new one and sign in with it to keep Prowl refreshing."
+  },
+  "renewToken": {
+    "message": "Renew token",
+    "description": "Extension text: Renew token"
+  },
+  "mergedBy": {
+    "message": "Merged by $P1$",
+    "description": "Extension text: Merged by $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedWithoutMerging": {
+    "message": "Closed without merging",
+    "description": "Extension text: Closed without merging"
+  },
+  "conflictsWith": {
+    "message": "Conflicts with $P1$",
+    "description": "Extension text: Conflicts with $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergeCommit": {
+    "message": "merge commit",
+    "description": "Extension text: merge commit"
+  },
+  "failed2": {
+    "message": "$P1$ failed",
+    "description": "Extension text: $1 failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2": {
+    "message": "$P1$ pending",
+    "description": "Extension text: $1 pending",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failing": {
+    "message": "$P1$ failing",
+    "description": "Extension text: $1 failing",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailing": {
+    "message": "Checks failing: $P1$",
+    "description": "Extension text: Checks failing: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning": {
+    "message": "Checks running: $P1$",
+    "description": "Extension text: Checks running: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksPassed": {
+    "message": "Checks passed: $P1$",
+    "description": "Extension text: Checks passed: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequired": {
+    "message": "Review required",
+    "description": "Extension text: Review required"
+  },
+  "draft": {
+    "message": "Draft",
+    "description": "Extension text: Draft"
+  },
+  "conflicts": {
+    "message": "Conflicts",
+    "description": "Extension text: Conflicts"
+  },
+  "hasMergeConflicts": {
+    "message": "Has merge conflicts",
+    "description": "Extension text: Has merge conflicts"
+  },
+  "autoMerge": {
+    "message": "Auto-merge",
+    "description": "Extension text: Auto-merge"
+  },
+  "labels": {
+    "message": "Labels: $P1$",
+    "description": "Extension text: Labels: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updated2": {
+    "message": "Updated $P1$",
+    "description": "Extension text: Updated $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "Close",
+    "description": "Extension text: Close"
+  },
+  "messages": {
+    "message": "Messages",
+    "description": "Extension text: Messages"
+  },
+  "dismiss": {
+    "message": "Dismiss",
+    "description": "Extension text: Dismiss"
+  },
+  "failed3": {
+    "message": "$P1$ failed: $P2$",
+    "description": "Extension text: $1 failed: $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotLoadTheDetails": {
+    "message": "Could not load the details.",
+    "description": "Extension text: Could not load the details."
+  },
+  "signedInAs": {
+    "message": "Signed in as $P1$. $P2$",
+    "description": "Extension text: Signed in as $1. $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotSaveTheSettingTryAgain": {
+    "message": "Could not save the setting. Try again.",
+    "description": "Extension text: Could not save the setting. Try again."
+  },
+  "nextPullRequest": {
+    "message": "Next pull request",
+    "description": "Extension text: Next pull request"
+  },
+  "previousPullRequest": {
+    "message": "Previous pull request",
+    "description": "Extension text: Previous pull request"
+  },
+  "expandOrCollapseTheFocusedPullRequest": {
+    "message": "Expand or collapse the focused pull request",
+    "description": "Extension text: Expand or collapse the focused pull request"
+  },
+  "openTheFocusedPullRequestOnGithub": {
+    "message": "Open the focused pull request on GitHub",
+    "description": "Extension text: Open the focused pull request on GitHub"
+  },
+  "filterPullRequests": {
+    "message": "Filter pull requests",
+    "description": "Extension text: Filter pull requests"
+  },
+  "showKeyboardShortcuts": {
+    "message": "Show keyboard shortcuts",
+    "description": "Extension text: Show keyboard shortcuts"
+  },
+  "closeADialogOrMenuCollapseAPullRequest": {
+    "message": "Close a dialog or menu, collapse a pull request",
+    "description": "Extension text: Close a dialog or menu, collapse a pull request"
+  },
+  "prowlNeedsAccessToGithubComToSignYou": {
+    "message": "Prowl needs access to github.com to sign you in from the browser: that is where it asks GitHub for the code and for your approval. Allow it and try again, or paste a token below, which needs no extra access.",
+    "description": "Extension text: Prowl needs access to github.com to sign you in from the browser: that is where it asks GitHub for the code and for your approval. Allow it and try again, or paste a token below, which needs no extra access."
+  },
+  "codeCopied": {
+    "message": "Code copied",
+    "description": "Extension text: Code copied"
+  },
+  "couldNotCopySelectTheCodeAndCopyIt": {
+    "message": "Could not copy. Select the code and copy it by hand.",
+    "description": "Extension text: Could not copy. Select the code and copy it by hand."
+  },
+  "authorizeProwlOnGithub": {
+    "message": "Authorize Prowl on GitHub",
+    "description": "Extension text: Authorize Prowl on GitHub"
+  },
+  "enterThisCodeOnGithubToFinishSigningIn": {
+    "message": "Enter this code on GitHub to finish signing in.",
+    "description": "Extension text: Enter this code on GitHub to finish signing in."
+  },
+  "copyCode": {
+    "message": "Copy code $P1$",
+    "description": "Extension text: Copy code $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openGithub": {
+    "message": "Open GitHub",
+    "description": "Extension text: Open GitHub"
+  },
+  "waitingForYouToApproveProwlOnGithub": {
+    "message": "Waiting for you to approve Prowl on GitHub…",
+    "description": "Extension text: Waiting for you to approve Prowl on GitHub…"
+  },
+  "continueWithGithub": {
+    "message": "Continue with GitHub",
+    "description": "Extension text: Continue with GitHub"
+  },
+  "approveProwlOnGithubComWithAOneTime": {
+    "message": "Approve Prowl on github.com with a one-time code. Chrome first asks to let Prowl talk to github.com for that.",
+    "description": "Extension text: Approve Prowl on github.com with a one-time code. Chrome first asks to let Prowl talk to github.com for that."
+  },
+  "mine": {
+    "message": "Mine",
+    "description": "Extension text: Mine"
+  },
+  "pullRequestsYouOpenWillShowUpHere": {
+    "message": "Pull requests you open will show up here.",
+    "description": "Extension text: Pull requests you open will show up here."
+  },
+  "review": {
+    "message": "Review",
+    "description": "Extension text: Review"
+  },
+  "whenSomeoneAsksYouForAReviewItWill": {
+    "message": "When someone asks you for a review, it will show up here.",
+    "description": "Extension text: When someone asks you for a review, it will show up here."
+  },
+  "teams": {
+    "message": "Teams",
+    "description": "Extension text: Teams"
+  },
+  "mentions": {
+    "message": "Mentions",
+    "description": "Extension text: Mentions"
+  },
+  "pullRequestsThatMentionYouWillShowUpHere": {
+    "message": "Pull requests that mention you will show up here.",
+    "description": "Extension text: Pull requests that mention you will show up here."
+  },
+  "assigned": {
+    "message": "Assigned",
+    "description": "Extension text: Assigned"
+  },
+  "pullRequestsAssignedToYouWillShowUpHere": {
+    "message": "Pull requests assigned to you will show up here.",
+    "description": "Extension text: Pull requests assigned to you will show up here."
+  },
+  "noOpenPullRequestsMatchThisSearch": {
+    "message": "No open pull requests match this search.",
+    "description": "Extension text: No open pull requests match this search."
+  },
+  "loadingPullRequests": {
+    "message": "Loading pull requests",
+    "description": "Extension text: Loading pull requests"
+  },
+  "noSectionsTurnedOn": {
+    "message": "No sections turned on",
+    "description": "Extension text: No sections turned on"
+  },
+  "chooseWhichPullRequestsProwlFollowsInSettings": {
+    "message": "Choose which pull requests Prowl follows in Settings.",
+    "description": "Extension text: Choose which pull requests Prowl follows in Settings."
+  },
+  "openSettings": {
+    "message": "Open settings",
+    "description": "Extension text: Open settings"
+  },
+  "couldNotLoadPullRequests": {
+    "message": "Could not load pull requests",
+    "description": "Extension text: Could not load pull requests"
+  },
+  "nothingHasBeenFetchedYetTheNoticeAboveSays": {
+    "message": "Nothing has been fetched yet. The notice above says why.",
+    "description": "Extension text: Nothing has been fetched yet. The notice above says why."
+  },
+  "filterByTitleRepoAuthorOrLabel": {
+    "message": "Filter by title, repo, author or label",
+    "description": "Extension text: Filter by title, repo, author or label"
+  },
+  "snoozedPullRequests": {
+    "message": "Snoozed $P1$ pull requests",
+    "description": "Extension text: Snoozed $1 pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatches": {
+    "message": "No matches",
+    "description": "Extension text: No matches"
+  },
+  "noPullRequests": {
+    "message": "No pull requests",
+    "description": "Extension text: No pull requests"
+  },
+  "nothingInMatches": {
+    "message": "Nothing in “$P1$” matches “$P2$”.",
+    "description": "Extension text: Nothing in “$1” matches “$2”.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "clearFilter": {
+    "message": "Clear filter",
+    "description": "Extension text: Clear filter"
+  },
+  "signingInFromTheBrowserIsNotAvailableIn": {
+    "message": "Signing in from the browser is not available in this build.",
+    "description": "Extension text: Signing in from the browser is not available in this build."
+  },
+  "howToSignInWithAToken": {
+    "message": "How to sign in with a token",
+    "description": "Extension text: How to sign in with a token"
+  },
+  "personalAccessToken": {
+    "message": "Personal access token",
+    "description": "Extension text: Personal access token"
+  },
+  "createAToken": {
+    "message": "Create a token",
+    "description": "Extension text: Create a token"
+  },
+  "classicToken": {
+    "message": "Classic token",
+    "description": "Extension text: Classic token"
+  },
+  "recommended": {
+    "message": "Recommended",
+    "description": "Extension text: Recommended"
+  },
+  "createAClassicToken": {
+    "message": "Create a classic token",
+    "description": "Extension text: Create a classic token"
+  },
+  "fineGrainedToken": {
+    "message": "Fine-grained token",
+    "description": "Extension text: Fine-grained token"
+  },
+  "limited": {
+    "message": "Limited",
+    "description": "Extension text: Limited"
+  },
+  "coversOneAccountOrOrganizationAndTheRepositoriesYou": {
+    "message": "Covers one account or organization and the repositories you pick. Grant Pull requests, Contents and Actions (read and write, to approve, merge and re-run checks) and Commit statuses (read), plus Members (read) on an organization to find its teams. GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing.",
+    "description": "Extension text: Covers one account or organization and the repositories you pick. Grant Pull requests, Contents and Actions (read and write, to approve, merge and re-run checks) and Commit statuses (read), plus Members (read) on an organization to find its teams. GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing."
+  },
+  "createAFineGrainedToken": {
+    "message": "Create a fine-grained token",
+    "description": "Extension text: Create a fine-grained token"
+  },
+  "matchSystem": {
+    "message": "Match system",
+    "description": "Extension text: Match system"
+  },
+  "light": {
+    "message": "Light",
+    "description": "Extension text: Light"
+  },
+  "dark": {
+    "message": "Dark",
+    "description": "Extension text: Dark"
+  },
+  "recentlyUpdated": {
+    "message": "Recently updated",
+    "description": "Extension text: Recently updated"
+  },
+  "newestFirst": {
+    "message": "Newest first",
+    "description": "Extension text: Newest first"
+  },
+  "repository2": {
+    "message": "Repository",
+    "description": "Extension text: Repository"
+  },
+  "needsAttention": {
+    "message": "Needs attention",
+    "description": "Extension text: Needs attention"
+  },
+  "off": {
+    "message": "Off",
+    "description": "Extension text: Off"
+  },
+  "pullRequestsPerSection": {
+    "message": "Pull requests per section",
+    "description": "Extension text: Pull requests per section"
+  },
+  "appearance": {
+    "message": "Appearance",
+    "description": "Extension text: Appearance"
+  },
+  "theme": {
+    "message": "Theme",
+    "description": "Extension text: Theme"
+  },
+  "sortPullRequestsBy": {
+    "message": "Sort pull requests by",
+    "description": "Extension text: Sort pull requests by"
+  },
+  "groupPullRequestsByRepository": {
+    "message": "Group pull requests by repository",
+    "description": "Extension text: Group pull requests by repository"
+  },
+  "listsEachRepositorySPullRequestsUnderAHeader": {
+    "message": "Lists each repository’s pull requests under a header you can fold, in the order chosen above.",
+    "description": "Extension text: Lists each repository’s pull requests under a header you can fold, in the order chosen above."
+  },
+  "toolbarBadge": {
+    "message": "Toolbar badge",
+    "description": "Extension text: Toolbar badge"
+  },
+  "notifications": {
+    "message": "Notifications",
+    "description": "Extension text: Notifications"
+  },
+  "account2": {
+    "message": "Account",
+    "description": "Extension text: Account"
+  },
+  "privacyAndPermissions": {
+    "message": "Privacy and permissions",
+    "description": "Extension text: Privacy and permissions"
+  },
+  "privacy": {
+    "message": "Privacy",
+    "description": "Extension text: Privacy"
+  },
+  "about": {
+    "message": "About",
+    "description": "Extension text: About"
+  },
+  "settingsSections": {
+    "message": "Settings sections",
+    "description": "Extension text: Settings sections"
+  },
+  "documentation": {
+    "message": "Documentation",
+    "description": "Extension text: Documentation"
+  },
+  "sourceCode": {
+    "message": "Source code",
+    "description": "Extension text: Source code"
+  },
+  "token": {
+    "message": "Token",
+    "description": "Extension text: Token"
+  },
+  "scopes": {
+    "message": "Scopes",
+    "description": "Extension text: Scopes"
+  },
+  "noneFineGrainedTokensUsePerRepositoryPermissions": {
+    "message": "None: fine-grained tokens use per-repository permissions.",
+    "description": "Extension text: None: fine-grained tokens use per-repository permissions."
+  },
+  "none": {
+    "message": "None",
+    "description": "Extension text: None"
+  },
+  "expires": {
+    "message": "Expires",
+    "description": "Extension text: Expires"
+  },
+  "version": {
+    "message": "Version",
+    "description": "Extension text: Version"
+  },
+  "noKeyboardShortcutOpensProwlYet": {
+    "message": "No keyboard shortcut opens Prowl yet.",
+    "description": "Extension text: No keyboard shortcut opens Prowl yet."
+  },
+  "changeItAtChromeExtensionsShortcuts": {
+    "message": "Change it at chrome://extensions/shortcuts.",
+    "description": "Extension text: Change it at chrome://extensions/shortcuts."
+  },
+  "pullRequestsYouOpened": {
+    "message": "Pull requests you opened",
+    "description": "Extension text: Pull requests you opened"
+  },
+  "pullRequestsThatAskYouForAReviewYour": {
+    "message": "Pull requests that ask you for a review (your teams have their own section)",
+    "description": "Extension text: Pull requests that ask you for a review (your teams have their own section)"
+  },
+  "pullRequestsThatMentionYou": {
+    "message": "Pull requests that mention you",
+    "description": "Extension text: Pull requests that mention you"
+  },
+  "pullRequestsAssignedToYou": {
+    "message": "Pull requests assigned to you",
+    "description": "Extension text: Pull requests assigned to you"
+  },
+  "ciFails": {
+    "message": "CI fails",
+    "description": "Extension text: CI fails"
+  },
+  "ciPasses": {
+    "message": "CI passes",
+    "description": "Extension text: CI passes"
+  },
+  "afterItFailedBefore": {
+    "message": "After it failed before.",
+    "description": "Extension text: After it failed before."
+  },
+  "newReview": {
+    "message": "New review",
+    "description": "Extension text: New review"
+  },
+  "aReviewThatOnlyLeavesComments": {
+    "message": "A review that only leaves comments.",
+    "description": "Extension text: A review that only leaves comments."
+  },
+  "newComment": {
+    "message": "New comment",
+    "description": "Extension text: New comment"
+  },
+  "countsPullRequestsThatNeedYouFailingCiChanges": {
+    "message": "Counts pull requests that need you: failing CI, changes requested, conflicts or ready to merge.",
+    "description": "Extension text: Counts pull requests that need you: failing CI, changes requested, conflicts or ready to merge."
+  },
+  "countsPullRequestsWithChangesYouHaveNotLooked": {
+    "message": "Counts pull requests with changes you have not looked at yet.",
+    "description": "Extension text: Counts pull requests with changes you have not looked at yet."
+  },
+  "theToolbarIconShowsNoNumber": {
+    "message": "The toolbar icon shows no number.",
+    "description": "Extension text: The toolbar icon shows no number."
+  },
+  "startAndEndAreTheSameSoNothingIs": {
+    "message": "Start and end are the same, so nothing is silenced.",
+    "description": "Extension text: Start and end are the same, so nothing is silenced."
+  },
+  "thisWindowCrossesMidnightAndEndsTheNextDay": {
+    "message": "This window crosses midnight and ends the next day.",
+    "description": "Extension text: This window crosses midnight and ends the next day."
+  },
+  "classicPersonalAccessToken": {
+    "message": "Classic personal access token",
+    "description": "Extension text: Classic personal access token"
+  },
+  "fineGrainedPersonalAccessToken": {
+    "message": "Fine-grained personal access token",
+    "description": "Extension text: Fine-grained personal access token"
+  },
+  "oauthTokenSignedInWithGithub": {
+    "message": "OAuth token (signed in with GitHub)",
+    "description": "Extension text: OAuth token (signed in with GitHub)"
+  },
+  "unknown": {
+    "message": "Unknown",
+    "description": "Extension text: Unknown"
+  },
+  "never": {
+    "message": "Never",
+    "description": "Extension text: Never"
+  },
+  "expiredOn": {
+    "message": "Expired on $P1$",
+    "description": "Extension text: Expired on $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sidePanel": {
+    "message": "Side panel",
+    "description": "Extension text: Side panel"
+  },
+  "showProwlInChromeSSidePanel": {
+    "message": "Show Prowl in Chrome's side panel.",
+    "description": "Extension text: Show Prowl in Chrome's side panel."
+  },
+  "storage": {
+    "message": "Storage",
+    "description": "Extension text: Storage"
+  },
+  "keepYourSettingsAndPullRequestsInThisBrowser": {
+    "message": "Keep your settings and pull requests in this browser.",
+    "description": "Extension text: Keep your settings and pull requests in this browser."
+  },
+  "alarms": {
+    "message": "Alarms",
+    "description": "Extension text: Alarms"
+  },
+  "checkGithubOnAScheduleEvenWhenThePanel": {
+    "message": "Check GitHub on a schedule, even when the panel is closed.",
+    "description": "Extension text: Check GitHub on a schedule, even when the panel is closed."
+  },
+  "tellYouWhenAPullRequestChanges": {
+    "message": "Tell you when a pull request changes.",
+    "description": "Extension text: Tell you when a pull request changes."
+  },
+  "readYourPullRequestsAndActOnThemUsing": {
+    "message": "Read your pull requests and act on them, using your token.",
+    "description": "Extension text: Read your pull requests and act on them, using your token."
+  },
+  "signInWithGithubProwlAsksForThisOnly": {
+    "message": "Sign in with GitHub. Prowl asks for this only while you sign in, then gives it back.",
+    "description": "Extension text: Sign in with GitHub. Prowl asks for this only while you sign in, then gives it back."
+  },
+  "readAndChangeYourDataOnThisSite": {
+    "message": "Read and change your data on this site.",
+    "description": "Extension text: Read and change your data on this site."
+  },
+  "notDescribedByThisVersionOfProwl": {
+    "message": "Not described by this version of Prowl.",
+    "description": "Extension text: Not described by this version of Prowl."
+  },
+  "prowlTestNotification": {
+    "message": "Prowl test notification",
+    "description": "Extension text: Prowl test notification"
+  },
+  "notificationsFromProwlLookLikeThis": {
+    "message": "Notifications from Prowl look like this.",
+    "description": "Extension text: Notifications from Prowl look like this."
+  },
+  "testNotificationSent": {
+    "message": "Test notification sent.",
+    "description": "Extension text: Test notification sent."
+  },
+  "couldNotShowANotification": {
+    "message": "Could not show a notification.",
+    "description": "Extension text: Could not show a notification."
+  },
+  "desktopNotifications": {
+    "message": "Desktop notifications",
+    "description": "Extension text: Desktop notifications"
+  },
+  "showANotificationWhenAPullRequestChanges": {
+    "message": "Show a notification when a pull request changes.",
+    "description": "Extension text: Show a notification when a pull request changes."
+  },
+  "notifyMeWhen": {
+    "message": "Notify me when",
+    "description": "Extension text: Notify me when"
+  },
+  "quietHours": {
+    "message": "Quiet hours",
+    "description": "Extension text: Quiet hours"
+  },
+  "silenceNotificationsAtSetTimesEveryDayInYour": {
+    "message": "Silence notifications at set times every day, in your local time.",
+    "description": "Extension text: Silence notifications at set times every day, in your local time."
+  },
+  "from": {
+    "message": "From",
+    "description": "Extension text: From"
+  },
+  "until": {
+    "message": "Until",
+    "description": "Extension text: Until"
+  },
+  "sendTestNotification": {
+    "message": "Send test notification",
+    "description": "Extension text: Send test notification"
+  },
+  "nothingAppearsCheckThatYourSystemLetsChromeShow": {
+    "message": "Nothing appears? Check that your system lets Chrome show notifications.",
+    "description": "Extension text: Nothing appears? Check that your system lets Chrome show notifications."
+  },
+  "prowlCannotSeeOrChangeThePagesYouVisit": {
+    "message": "Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.",
+    "description": "Extension text: Prowl cannot see or change the pages you visit: it has no access to your tabs or their content."
+  },
+  "syncSettingsWithYourChromeProfile": {
+    "message": "Sync settings with your Chrome profile",
+    "description": "Extension text: Sync settings with your Chrome profile"
+  },
+  "yourSettingsFollowYouToChromeOnYourOther": {
+    "message": "Your settings follow you to Chrome on your other computers through Chrome sync (your Google account). Your token and what you snoozed or muted stay on this device.",
+    "description": "Extension text: Your settings follow you to Chrome on your other computers through Chrome sync (your Google account). Your token and what you snoozed or muted stay on this device."
+  },
+  "whatProwlMayDo": {
+    "message": "What Prowl may do",
+    "description": "Extension text: What Prowl may do"
+  },
+  "readThePrivacyPolicy": {
+    "message": "Read the privacy policy",
+    "description": "Extension text: Read the privacy policy"
+  },
+  "giveTheSectionAName": {
+    "message": "Give the section a name.",
+    "description": "Extension text: Give the section a name."
+  },
+  "editCustomSection": {
+    "message": "Edit custom section",
+    "description": "Extension text: Edit custom section"
+  },
+  "addCustomSection": {
+    "message": "Add custom section",
+    "description": "Extension text: Add custom section"
+  },
+  "aTabInTheListThatFollowsAnyGithub": {
+    "message": "A tab in the list that follows any GitHub pull request search.",
+    "description": "Extension text: A tab in the list that follows any GitHub pull request search."
+  },
+  "save": {
+    "message": "Save",
+    "description": "Extension text: Save"
+  },
+  "name": {
+    "message": "Name",
+    "description": "Extension text: Name"
+  },
+  "shownOnTheTab": {
+    "message": "Shown on the tab.",
+    "description": "Extension text: Shown on the tab."
+  },
+  "searchQuery": {
+    "message": "Search query",
+    "description": "Extension text: Search query"
+  },
+  "githubSSearchSyntaxForExampleLabelBugReview": {
+    "message": "GitHub's search syntax, for example: label:bug review-requested:@me. Prowl adds is:pr.",
+    "description": "Extension text: GitHub's search syntax, for example: label:bug review-requested:@me. Prowl adds is:pr."
+  },
+  "removed": {
+    "message": "Removed “$P1$”",
+    "description": "Extension text: Removed “$1”",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "undo": {
+    "message": "Undo",
+    "description": "Extension text: Undo"
+  },
+  "edit": {
+    "message": "Edit $P1$",
+    "description": "Extension text: Edit $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "edit2": {
+    "message": "Edit",
+    "description": "Extension text: Edit"
+  },
+  "remove2": {
+    "message": "Remove",
+    "description": "Extension text: Remove"
+  },
+  "chooseWhichPullRequestsProwlFollows": {
+    "message": "Choose which pull requests Prowl follows.",
+    "description": "Extension text: Choose which pull requests Prowl follows."
+  },
+  "onlyFollowPullRequestsInTheseLeaveEmptyTo": {
+    "message": "Only follow pull requests in these. Leave empty to follow every repository.",
+    "description": "Extension text: Only follow pull requests in these. Leave empty to follow every repository."
+  },
+  "signInAgain": {
+    "message": "Sign in again",
+    "description": "Extension text: Sign in again"
+  },
+  "githubListsNoTeamForYourAccount": {
+    "message": "GitHub lists no team for your account.",
+    "description": "Extension text: GitHub lists no team for your account."
+  },
+  "refreshTeams": {
+    "message": "Refresh teams",
+    "description": "Extension text: Refresh teams"
+  },
+  "classicTokenHelp": {
+    "message": "Sees every repository you can access, with full CI status. It needs the $P1$ scope, and $P2$ to find your teams’ review requests; the link selects both for you.",
+    "description": "Extension text: Sees every repository you can access, with full CI status. It needs the $1 scope, and $2 to find your teams’ review requests; the link selects both for you.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openWithShortcut": {
+    "message": "Open Prowl from the keyboard with $P1$.",
+    "description": "Extension text: Open Prowl from the keyboard with $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "codeCountdown": {
+    "message": "Code expires in $P1$",
+    "description": "Extension text: Code expires in $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "versionNumber": {
+    "message": "Version $P1$",
+    "description": "Extension text: Version $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionLoadError": {
+    "message": "Could not load “$P1$”: $P2$",
+    "description": "Extension text: Could not load “$1”: $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "snoozedCount": {
+    "message": "Snoozed ($P1$)",
+    "description": "Extension text: Snoozed ($1)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notReadyReasons": {
+    "message": "Not ready: $P1$.",
+    "description": "Extension text: Not ready: $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "andMore": {
+    "message": " and $P1$ more",
+    "description": "Extension text:  and $1 more",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedBy": {
+    "message": "Closed by $P1$",
+    "description": "Extension text: Closed by $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOne": {
+    "message": "$P1$ pull request",
+    "description": "Extension text: $1 pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOther": {
+    "message": "$P1$ pull requests",
+    "description": "Extension text: $1 pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOne": {
+    "message": "$P1$ comment",
+    "description": "Extension text: $1 comment",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOther": {
+    "message": "$P1$ comments",
+    "description": "Extension text: $1 comments",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOne": {
+    "message": "$P1$ unresolved thread",
+    "description": "Extension text: $1 unresolved thread",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOther": {
+    "message": "$P1$ unresolved threads",
+    "description": "Extension text: $1 unresolved threads",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOne": {
+    "message": "$P1$ check",
+    "description": "Extension text: $1 check",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOther": {
+    "message": "$P1$ checks",
+    "description": "Extension text: $1 checks",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOne": {
+    "message": "$P1$ more check",
+    "description": "Extension text: $1 more check",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOther": {
+    "message": "$P1$ more checks",
+    "description": "Extension text: $1 more checks",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOne": {
+    "message": "Updated. $P1$ pull request.",
+    "description": "Extension text: Updated. $1 pull request.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOther": {
+    "message": "Updated. $P1$ pull requests.",
+    "description": "Extension text: Updated. $1 pull requests.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOne": {
+    "message": "in $P1$ day",
+    "description": "Extension text: in $1 day",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOther": {
+    "message": "in $P1$ days",
+    "description": "Extension text: in $1 days",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expiryDate": {
+    "message": "$P1$ ($P2$)",
+    "description": "Extension text: $1 ($2)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notificationUpdateOne": {
+    "message": "$P1$ pull request update",
+    "description": "Extension text: $1 pull request update",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationUpdateOther": {
+    "message": "$P1$ pull request updates",
+    "description": "Extension text: $1 pull request updates",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conflictsLower": {
+    "message": "conflicts",
+    "description": "Extension text: conflicts"
+  },
+  "include": {
+    "message": "Include",
+    "description": "Extension text: Include"
+  },
+  "exclude": {
+    "message": "Exclude",
+    "description": "Extension text: Exclude"
+  },
+  "createdByMe": {
+    "message": "Created by me",
+    "description": "Extension text: Created by me"
+  },
+  "reviewRequestedSection": {
+    "message": "Review requested",
+    "description": "Extension text: Review requested"
+  },
+  "teamReviews": {
+    "message": "Team reviews",
+    "description": "Extension text: Team reviews"
+  },
+  "mentionedSection": {
+    "message": "Mentioned",
+    "description": "Extension text: Mentioned"
+  },
+  "assignedToMe": {
+    "message": "Assigned to me",
+    "description": "Extension text: Assigned to me"
+  },
+  "extensionName": {
+    "message": "Prowl — GitHub Pull Request Manager",
+    "description": "Extension text: Prowl — GitHub Pull Request Manager"
+  },
+  "extensionDescription": {
+    "message": "Open source GitHub pull request manager for Chrome. Track CI, reviews and merge status in your side panel. No tracking.",
+    "description": "Extension text: Open source GitHub pull request manager for Chrome. Track CI, reviews and merge status in your side panel. No tracking."
+  },
+  "openProwl": {
+    "message": "Open Prowl",
+    "description": "Extension text: Open Prowl"
+  },
+  "searchOperatorsHelp": {
+    "message": "AND, OR and NOT only work between search words, not between qualifiers: GitHub rejects \"author:a OR author:b\". Use one section per qualifier instead.",
+    "description": "Extension text: AND, OR and NOT only work between search words, not between qualifiers: GitHub rejects \"author:a OR author:b\". Use one section per qualifier instead."
+  },
+  "searchWordsLimit": {
+    "message": "GitHub limits the search words to $P1$ characters, not counting qualifiers such as author:@me (found $P2$).",
+    "description": "Extension text: GitHub limits the search words to $1 characters, not counting qualifiers such as author:@me (found $2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listTeamsScopeHelp": {
+    "message": "GitHub would not list your teams. Sign in again with the read:org scope, or use a fine-grained token owned by the organization with the Members: read permission.",
+    "description": "Extension text: GitHub would not list your teams. Sign in again with the read:org scope, or use a fine-grained token owned by the organization with the Members: read permission."
+  },
+  "autoMergeBy": {
+    "message": "Auto-merge on ($P1$), by $P2$",
+    "description": "Extension text: Auto-merge on ($1), by $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeMethod": {
+    "message": "Auto-merge on ($P1$)",
+    "description": "Extension text: Auto-merge on ($1)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "tokenPlaceholder": {
+    "message": "ghp_… or github_pat_…",
+    "description": "Extension text: ghp_… or github_pat_…"
+  },
+  "githubDidNotFindPullRequest": {
+    "message": "GitHub did not find the pull request.",
+    "description": "Extension text: GitHub did not find the pull request."
+  },
+  "githubDidNotConfirmChange": {
+    "message": "GitHub did not confirm the change.",
+    "description": "Extension text: GitHub did not confirm the change."
+  },
+  "githubDidNotConfirmUpdate": {
+    "message": "GitHub did not confirm the update.",
+    "description": "Extension text: GitHub did not confirm the update."
+  },
+  "noRepoScope": {
+    "message": "This token has no repo scope, so Prowl can only see public repositories. Create a token with the repo scope to follow private ones.",
+    "description": "Extension text: This token has no repo scope, so Prowl can only see public repositories. Create a token with the repo scope to follow private ones."
+  },
+  "githubErrorDetail": {
+    "message": "GitHub returned an error: $P1$",
+    "description": "Extension text: GitHub returned an error: $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updateWithMerge": {
+    "message": "Update with a merge commit",
+    "description": "Extension text: Update with a merge commit"
+  },
+  "rerunFailed": {
+    "message": "Re-run failed",
+    "description": "Extension text: Re-run failed"
+  },
+  "mergeMethod": {
+    "message": "Merge method",
+    "description": "Extension text: Merge method"
+  },
+  "detailsFor": {
+    "message": "Details for $P1$",
+    "description": "Extension text: Details for $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "onGithub": {
+    "message": "on GitHub",
+    "description": "Extension text: on GitHub"
+  },
+  "requestChangesDescription": {
+    "message": "Tell the author what has to change in $P1$.",
+    "description": "Extension text: Tell the author what has to change in $1.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repositories": {
+    "message": "Repositories",
+    "description": "Extension text: Repositories"
+  },
+  "authorBy": {
+    "message": ", by $P1$",
+    "description": "Extension text: , by $1",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "actionReference": {
+    "message": "$P1$: $P2$",
+    "description": "Extension text: $1: $2",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "selectedSection": {
+    "message": " sections, $P1$ selected",
+    "description": "Extension text:  sections, $1 selected",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionsSuffix": {
+    "message": " sections",
+    "description": "Extension text:  sections"
+  },
+  "copy": {
+    "message": "Copy",
+    "description": "Extension text: Copy"
+  },
+  "pullNounOne": {
+    "message": " pull request"
+  },
+  "pullNounOther": {
+    "message": " pull requests"
+  },
+  "failed2One": {
+    "message": "$P1$ failed",
+    "description": "Extension text: $1 failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2One": {
+    "message": "$P1$ pending",
+    "description": "Extension text: $1 pending",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "passed2One": {
+    "message": "$P1$ passed",
+    "description": "Extension text: $1 passed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2One": {
+    "message": "$P1$ skipped",
+    "description": "Extension text: $1 skipped",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingOne": {
+    "message": "$P1$ failing",
+    "description": "Extension text: $1 failing",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "languageTag": {
+    "message": "en",
+    "description": "BCP 47 language of this catalog, used for document language and plural rules."
+  },
+  "keyEnter": {
+    "message": "Enter",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keySpace": {
+    "message": "Space",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keyEscape": {
+    "message": "Esc",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "squashMethod": {
+    "message": "squash",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "rebaseMethod": {
+    "message": "rebase",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "language": {
+    "message": "Language"
+  },
+  "headCommitChangedRefreshAndTryAgain": {
+    "message": "The head commit changed. Refresh and try again.",
+    "description": "Check restart error when the pull request head changes while loading suites."
+  },
+  "notAllCheckSuitesCouldBeLoaded": {
+    "message": "Not all check suites could be loaded. Re-run checks on GitHub.",
+    "description": "Check restart error when check suite pagination is incomplete."
+  },
+  "prowl": {
+    "message": "Prowl",
+    "description": "Extension text: Prowl"
+  },
+  "turnOffAutoMerge": {
+    "message": "Turn off auto-merge",
+    "description": "Extension text: Turn off auto-merge"
+  },
+  "mergeOnGitHub": {
+    "message": "Merge on GitHub",
+    "description": "Extension text: Merge on GitHub"
+  },
+  "mergeWithoutWaiting": {
+    "message": "Merge without waiting",
+    "description": "Extension text: Merge without waiting"
+  },
+  "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
+    "message": "Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "youCanBypassTheBranchRulesForThisPullRequest": {
+    "message": "You can bypass the branch rules for this pull request.",
+    "description": "Extension text: You can bypass the branch rules for this pull request."
+  },
+  "justOpened": {
+    "message": "Just opened",
+    "description": "Extension text: Just opened"
+  },
+  "mergeStatus": {
+    "message": "Merge status",
+    "description": "Extension text: Merge status"
+  },
+  "checkingMergeStatus": {
+    "message": "Checking merge status…",
+    "description": "Extension text: Checking merge status…"
+  },
+  "thisTokenCanTReadChecks": {
+    "message": "This token can't read checks ·",
+    "description": "Extension text: This token can't read checks ·"
+  },
+  "viewOnGitHub": {
+    "message": "View on GitHub",
+    "description": "Extension text: View on GitHub"
+  },
+  "someDetailsAreOnlyOnGitHub": {
+    "message": "Some details are only on GitHub ·",
+    "description": "Extension text: Some details are only on GitHub ·"
+  },
+  "actionsFor2": {
+    "message": "Actions for #$P1$",
+    "description": "Extension text: Actions for #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "viewChangesOnGitHub": {
+    "message": "View changes on GitHub",
+    "description": "Extension text: View changes on GitHub"
+  },
+  "offlineRetryTitle": {
+    "message": "Could not reach GitHub — $P1$",
+    "description": "Extension text: Could not reach GitHub — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveOnGitHub": {
+    "message": "Resolve on GitHub",
+    "description": "Extension text: Resolve on GitHub"
+  },
+  "behind": {
+    "message": "Behind $P1$",
+    "description": "Extension text: Behind $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergeStatusUnknown": {
+    "message": "Merge status unknown",
+    "description": "Extension text: Merge status unknown"
+  },
+  "openOnGitHub": {
+    "message": "Open on GitHub",
+    "description": "Extension text: Open on GitHub"
+  },
+  "blockedByBranchRules": {
+    "message": "Blocked by branch rules",
+    "description": "Extension text: Blocked by branch rules"
+  },
+  "detailsOnGitHub": {
+    "message": "Details on GitHub",
+    "description": "Extension text: Details on GitHub"
+  },
+  "autoMergeOnMergesWhenReady": {
+    "message": "Auto-merge on, merges when ready",
+    "description": "Extension text: Auto-merge on, merges when ready"
+  },
+  "listUpdated2": {
+    "message": "List updated $P1$",
+    "description": "Extension text: List updated $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "changesRequestedBy": {
+    "message": "Changes requested by $P1$",
+    "description": "Extension text: Changes requested by $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalNeeded": {
+    "message": "$P1$ approval needed",
+    "description": "Extension text: $P1$ approval needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalsNeeded": {
+    "message": "$P1$ approvals needed",
+    "description": "Extension text: $P1$ approvals needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckFailed": {
+    "message": "$P1$ required check failed",
+    "description": "Extension text: $P1$ required check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksFailed": {
+    "message": "$P1$ required checks failed",
+    "description": "Extension text: $P1$ required checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkFailed": {
+    "message": "$P1$ check failed",
+    "description": "Extension text: $P1$ check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailed": {
+    "message": "$P1$ checks failed",
+    "description": "Extension text: $P1$ checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalCheckFailed": {
+    "message": "$P1$ optional check failed",
+    "description": "Extension text: $P1$ optional check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalChecksFailed": {
+    "message": "$P1$ optional checks failed",
+    "description": "Extension text: $P1$ optional checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckRunning": {
+    "message": "$P1$ required check running",
+    "description": "Extension text: $P1$ required check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksRunning": {
+    "message": "$P1$ required checks running",
+    "description": "Extension text: $P1$ required checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkRunning": {
+    "message": "$P1$ check running",
+    "description": "Extension text: $P1$ check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning2": {
+    "message": "$P1$ checks running",
+    "description": "Extension text: $P1$ checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationToResolve": {
+    "message": "$P1$ conversation to resolve",
+    "description": "Extension text: $P1$ conversation to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationsToResolve": {
+    "message": "$P1$ conversations to resolve",
+    "description": "Extension text: $P1$ conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolved2": {
+    "message": "$P1$ unresolved",
+    "description": "Extension text: $P1$ unresolved",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updatingMergeStatus2": {
+    "message": ". Updating merge status",
+    "description": "Extension text: . Updating merge status"
+  },
+  "noReviewRequestsForYourTeams": {
+    "message": "No review requests for your teams.",
+    "description": "Text in ListSections.tsx"
+  },
+  "allLoadedPullRequestsAreSnoozed": {
+    "message": "All loaded pull requests are snoozed",
+    "description": "Text in ListSections.tsx"
+  },
+  "theyReturnHereWhenTheSnoozeEnds": {
+    "message": "They return here when the snooze ends.",
+    "description": "Text in ListSections.tsx"
+  },
+  "showSnoozed": {
+    "message": "Show snoozed",
+    "description": "Text in ListSections.tsx"
+  },
+  "seeYourPullRequestsHere": {
+    "message": "See your pull requests here",
+    "description": "Text in Onboarding.tsx"
+  },
+  "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
+    "message": "Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub.",
+    "description": "Text in Onboarding.tsx"
+  },
+  "useAPersonalAccessToken": {
+    "message": "Use a personal access token",
+    "description": "Text in Onboarding.tsx"
+  },
+  "prowlOnlyWatchesThePullRequestsItLoads": {
+    "message": "Prowl only watches the pull requests it loads.",
+    "description": "Text in Settings.tsx"
+  },
+  "refreshEveryMinutes": {
+    "message": "Refresh every (minutes)",
+    "description": "Text in Settings.tsx"
+  },
+  "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
+    "message": "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+    "description": "Text in Settings.tsx"
+  },
+  "list": {
+    "message": "List",
+    "description": "Text in Settings.tsx"
+  },
+  "reviewRequestsSentToYourTeams": {
+    "message": "Review requests sent to your teams",
+    "description": "Text in SettingsModel.ts"
+  },
+  "whatProwlCanAccess": {
+    "message": "What Prowl can access",
+    "description": "Text in SettingsPrivacy.tsx"
+  },
+  "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
+    "message": "Exclude pull requests in these, even when they match an include.",
+    "description": "Text in SettingsScope.tsx"
+  },
+  "useAFineGrainedTokenOwnedByTheOrganizationWith": {
+    "message": "Use a fine-grained token owned by the organization with the Members: read permission.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "prowlCanTSeeYourTeams": {
+    "message": "Prowl can't see your teams.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "couldnTLoadYourTeams": {
+    "message": "Couldn't load your teams.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "thisTokenCanTTellWhichTeamAskedSoSwitched": {
+    "message": "This token can't tell which team asked, so switched-off teams still show.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "loadingYourTeams": {
+    "message": "Loading your teams…",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "missingATeam": {
+    "message": "Missing a team?",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "sectionPartialResults": {
+    "message": "Partial results for “$P1$”: $P2$",
+    "description": "Section load error when only partial results were returned.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "searchingSection": {
+    "message": "Searching “$P1$”…",
+    "description": "Status while a section search is running.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "nothingInLoadedMatches": {
+    "message": "Nothing in “$P1$” matches “$P2$”. This search only covers the loaded PRs.",
+    "description": "Empty filter result when the section has more pull requests on GitHub.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listCoverage": {
+    "message": "List coverage",
+    "description": "Accessible label for the section search coverage notice."
+  },
+  "loadedCount": {
+    "message": "$P1$ loaded · ",
+    "description": "Number of pull requests loaded before the GitHub search link.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "searchSsoRequired": {
+    "message": "An organization requires single sign-on (SAML) that this token is not authorized for, so its pull requests are missing. Authorize the token for that organization on GitHub.",
+    "description": "Warning when organization SAML authorization hides search results."
+  },
+  "searchCursorUnavailable": {
+    "message": "GitHub did not provide a usable next-page cursor.",
+    "description": "Warning when search pagination cannot continue."
+  },
+  "mergeRequirementsUnreadable": {
+    "message": "Some merge requirements could not be read: $P1$",
+    "description": "Warning with GitHub errors explaining incomplete merge requirements.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "detailsUnreadable": {
+    "message": "Some details could not be read: $P1$",
+    "description": "Warning with GitHub errors explaining incomplete pull request details.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewsNotLoaded": {
+    "message": "Some reviews are not loaded. View the full conversation on GitHub.",
+    "description": "Warning when reviews were truncated by the API."
+  },
+  "reviewRequestsNotLoaded": {
+    "message": "Some review requests are not loaded. View the full conversation on GitHub.",
+    "description": "Warning when requested reviewers were truncated by the API."
+  },
+  "previewNewPr": {
+    "message": "New PR",
+    "description": "Preview button to simulate a new pull request."
+  },
+  "previewMergePr": {
+    "message": "Merge PR",
+    "description": "Preview button to simulate a merged pull request."
+  },
+  "previewClosePr": {
+    "message": "Close PR",
+    "description": "Preview button to simulate a closed pull request."
+  },
+  "previewUpdateFailed": {
+    "message": "Could not simulate the update. Reload to try again.",
+    "description": "Preview simulation error."
+  },
+  "previewTestAnimations": {
+    "message": "Test PR animations",
+    "description": "Accessible label for preview animation controls."
+  },
+  "previewTryUpdate": {
+    "message": "Try an update",
+    "description": "Heading for preview simulation controls."
+  },
+  "previewTitle": {
+    "message": "Prowl — mock preview",
+    "description": "Browser title for the mock preview."
+  },
+  "previewMode": {
+    "message": "Preview mode",
+    "description": "Accessible label for the preview information banner."
+  },
+  "previewBanner": {
+    "message": "Mock preview · Sample data · Reload to reset",
+    "description": "Information banner on the mock preview page."
+  },
+  "matchChromeLanguage": {
+    "message": "Match Chrome’s language"
+  },
+  "languageHint": {
+    "message": "Changes apply immediately. English is used if a translation is unavailable."
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.",
+    "description": "Error when only commit statuses or non-rerunnable suites failed."
+  }
+}

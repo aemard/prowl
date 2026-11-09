@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import { TextField } from './ui/TextField';
 
 export interface NumberFieldProps {
@@ -49,7 +50,7 @@ export function NumberField({
       hint={hint}
       error={
         draft !== undefined && parse(draft) === undefined
-          ? `Enter a whole number from ${min} to ${max}.`
+          ? t('enterAWholeNumberFromTo', min, max)
           : undefined
       }
       onValueChange={(text) => {

@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import { useEffect, useRef } from 'preact/hooks';
+import { t } from '../../../lib/i18n';
 import { CheckCircleFillIcon, InfoIcon, XCircleFillIcon, XIcon } from '../icons';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
@@ -55,7 +56,7 @@ const ICONS = { info: InfoIcon, success: CheckCircleFillIcon, danger: XCircleFil
  */
 export function ToastRegion() {
   return (
-    <section class="ui-toast-region" aria-label="Messages">
+    <section class="ui-toast-region" aria-label={t('messages')}>
       <div class="ui-toast-region__list" aria-live="polite" aria-relevant="additions text">
         {toasts.value.map((toast) => (
           <ToastView key={toast.id} toast={toast} />
@@ -116,7 +117,7 @@ function ToastView({ toast }: { toast: Toast }) {
           {action.label}
         </Button>
       )}
-      <IconButton label="Dismiss" size="sm" onClick={() => dismissToast(toast.id)}>
+      <IconButton label={t('dismiss')} size="sm" onClick={() => dismissToast(toast.id)}>
         <XIcon />
       </IconButton>
     </div>

@@ -1,4 +1,5 @@
 import { env } from '../../lib/env';
+import { t } from '../../lib/i18n';
 import type { SectionCoverage } from '../../lib/model';
 import { GitHubLink } from './GitHubLink';
 
@@ -14,11 +15,11 @@ export function SectionCoverageNotice({
   // One link, one search: joined queries would only match PRs that satisfy all of them.
   const query = coverage.queries.find(({ cursor }) => cursor)?.query ?? coverage.queries[0]?.query;
   return (
-    <aside class="list__coverage" aria-label="List coverage">
-      <span>{count} loaded · </span>
+    <aside class="list__coverage" aria-label={t('listCoverage')}>
+      <span>{t('loadedCount', count)}</span>
       {query && (
         <GitHubLink href={`${env.webUrl}/pulls?q=${encodeURIComponent(query)}`}>
-          View on GitHub
+          {t('viewOnGitHub')}
         </GitHubLink>
       )}
     </aside>
