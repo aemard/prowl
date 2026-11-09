@@ -123,7 +123,7 @@ const CASES: Case[] = [
     'unstable without a detail: not required',
     { checks: counts(2), mergeStateStatus: 'unstable' },
     undefined,
-    ['Ready to merge', '2 checks failed'],
+    ['Ready to merge', '2 optional checks failed'],
   ],
   [
     'a detail with no checks (unreadable) falls back to the counts',

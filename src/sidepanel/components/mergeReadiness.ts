@@ -56,9 +56,9 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
       ? listed.filter((check) => check.required && check.state === 'failed').length
       : failed;
     lines.push(
-      required > 0
+      required > 0 && (listed || pr.mergeStateStatus !== 'unstable')
         ? {
-            tone: !listed && pr.mergeStateStatus === 'unstable' ? 'neutral' : 'danger',
+            tone: 'danger',
             text: `${plural(required, listed ? 'required check' : 'check')} failed`,
           }
         : { tone: 'neutral', text: `${plural(failed, 'optional check')} failed` },

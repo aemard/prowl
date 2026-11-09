@@ -153,7 +153,11 @@ describe('PullRequestDetails', () => {
   it('explains checks that GitHub did not return although the PR has some', async () => {
     stubDetailFetch(() => detailNode({ checks: [null] }));
     show();
-    await screen.findByText(/Checks aren't available with this token/);
+    const hint = await screen.findByText(/This token can't read checks/);
+    expect(within(hint).getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toBe(
+      `${pr.url}/checks`,
+    );
+    expect(screen.queryByText('No checks on the latest commit.')).toBeNull();
   });
 
   it('points to GitHub for checks beyond the ones it read', async () => {
