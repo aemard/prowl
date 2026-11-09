@@ -7,7 +7,6 @@ import { SignOutDialog } from '../components/SignOutDialog';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { navigate } from '../state/router';
 import { auth } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
 import { TOKEN_TYPES, tokenExpiry } from './SettingsModel';
@@ -70,9 +69,6 @@ export function AccountSettings() {
           </div>
         )}
       </dl>
-      <Button class="settings-add" onClick={() => navigate('setup')}>
-        Run setup again
-      </Button>
       <Button class="settings-add" icon={<SignOutIcon />} onClick={() => setConfirming(true)}>
         Sign out
       </Button>
@@ -121,13 +117,5 @@ function AboutContent() {
         ))}
       </ul>
     </>
-  );
-}
-
-export function AboutSettings() {
-  return (
-    <SettingsGroup title="About">
-      <AboutContent />
-    </SettingsGroup>
   );
 }

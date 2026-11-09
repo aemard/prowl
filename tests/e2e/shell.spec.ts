@@ -122,7 +122,7 @@ test.describe('signed in', () => {
     await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeFocused();
 
     await serviceWorker.evaluate(() => chrome.storage.local.remove('auth'));
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await seedStorage({ auth });
     await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
   });

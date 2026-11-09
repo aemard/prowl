@@ -22,7 +22,7 @@ describe('registerBackground', () => {
     expect(spy).toHaveBeenCalledTimes(2);
     expect(spy).toHaveBeenCalledWith({ openPanelOnActionClick: true });
     await settle();
-    expect(await getItem('onboarding')).toEqual({ status: 'pending', nextStep: 0 });
+    expect(await getItem('onboarding')).toEqual({ status: 'pending' });
     // Signed out, a poll unschedules the alarm.
     expect(alarm()).toBeUndefined();
   });

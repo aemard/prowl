@@ -3,8 +3,7 @@ import { useId, useRef, useState } from 'preact/hooks';
 import { env } from '../../lib/env';
 import { AUTH_DOCS_URL } from '../../lib/github/auth/deviceFlow';
 import { signInErrorMessage, TOKEN_URLS, validatePat } from '../../lib/github/auth/pat';
-import { LinkExternalIcon, MarkGithubIcon } from '../components/icons';
-import { lazy } from '../components/lazy';
+import { LinkExternalIcon } from '../components/icons';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -13,9 +12,6 @@ import { openGitHubUrl } from '../openUrl';
 import { completeSignIn } from '../state/session';
 import { DeviceFlow } from './DeviceFlow';
 import './Onboarding.css';
-
-/** Version, shortcut and links, as in Settings; loaded apart so sign-in does not wait for it. */
-const AboutSettings = lazy(() => import('./SettingsAccount').then((m) => m.AboutSettings));
 
 /** A link to a GitHub page; opens through the allowlisted helper, not in the panel itself. */
 function GitHubLink({ href, children }: { href: string; children: ComponentChildren }) {
@@ -75,13 +71,8 @@ export function OnboardingView() {
     <div class="onboarding">
       <EmptyState
         class="onboarding__intro"
-        icon={<MarkGithubIcon size={24} />}
-        title="Sign in with GitHub"
-        description={
-          deviceFlow
-            ? 'Approve Prowl on GitHub. Your token stays in this browser and is only ever sent to GitHub.'
-            : 'Paste a personal access token. It stays in this browser and is only ever sent to GitHub.'
-        }
+        title="See your pull requests here"
+        description="Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub."
       />
 
       {deviceFlow ? (
@@ -121,6 +112,7 @@ export function OnboardingView() {
           </Button>
         </form>
 
+        <p>A classic token needs repo and read:org. A fine-grained token can miss CI status.</p>
         <Button
           variant="ghost"
           aria-expanded={helpOpen}
@@ -164,8 +156,6 @@ export function OnboardingView() {
           </article>
         </section>
       </div>
-
-      <AboutSettings />
     </div>
   );
 }

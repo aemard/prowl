@@ -161,10 +161,14 @@ describe('SettingsView', () => {
   describe('teams', () => {
     it('lists the teams by organization and follows or unfollows each one', async () => {
       await open({}, buildAuth(), { teams: teamsState() });
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
-      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
+      const teams = group('Sections');
       expect(
-        teams.getAllByRole('group').map((g) => g.querySelector('legend')?.textContent),
+        teams
+          .getAllByRole('group')
+          .map((g) => g.querySelector('legend')?.textContent)
+          .filter((name) => name !== 'Include' && name !== 'Exclude'),
       ).toEqual(['acme', 'octo']);
       expect(toggle('Web', teams).getAttribute('aria-checked')).toBe('true');
       fireEvent.click(toggle('Ops', teams));
@@ -173,11 +177,12 @@ describe('SettingsView', () => {
       await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual([]));
     });
 
-    it('opens even while Team reviews is off and refreshes the teams on demand', async () => {
+    it('opens when Team reviews is enabled and refreshes the teams on demand', async () => {
       const send = vi.spyOn(chrome.runtime, 'sendMessage');
       await open({}, buildAuth(), { teams: teamsState() });
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
-      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
+      const teams = group('Sections');
 
       fireEvent.click(teams.getByRole('button', { name: 'Refresh teams' }));
       await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' }));
@@ -190,8 +195,9 @@ describe('SettingsView', () => {
           error: { kind: 'missing_scope', message: 'GitHub would not list your teams.' },
         }),
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
-      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
+      const teams = group('Sections');
       expect(teams.getByText('GitHub would not list your teams.')).toBeTruthy();
       fireEvent.click(teams.getByRole('button', { name: 'Sign in again' }));
       expect(location.hash).toBe('#/onboarding');
@@ -199,13 +205,15 @@ describe('SettingsView', () => {
 
     it('says when GitHub lists no team, and when it has not looked yet', async () => {
       await open({}, buildAuth(), { teams: teamsState({ teams: [] }) });
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
       expect(screen.getByText('GitHub lists no team for your account.')).toBeTruthy();
       cleanup();
       stop?.();
       await chrome.storage.local.remove('teams');
       await open();
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
       expect(screen.getByText('Not checked yet')).toBeTruthy();
     });
 
@@ -216,8 +224,9 @@ describe('SettingsView', () => {
         name: `T${i}`,
       }));
       await open({}, buildAuth(), { teams: teamsState({ teams: many }) });
-      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
-      expect(screen.getByText(/You follow 12 teams; Prowl searches the first 10/)).toBeTruthy();
+      fireEvent.click(toggle('Team reviews'));
+      await screen.findByRole('button', { name: 'Refresh teams' });
+      expect(screen.getByText(/Prowl checks at most 10 teams each refresh/)).toBeTruthy();
     });
   });
 

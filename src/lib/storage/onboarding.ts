@@ -1,19 +1,14 @@
-/** First-run setup is installation-local, separate from synced preferences and authentication. */
+/** Install-local first-run notice marker; legacy progress fields are ignored. */
 import { type OnboardingState, STORAGE_KEYS } from '../model';
 import { updateItem } from './storage';
 
-export const PENDING_SETUP: OnboardingState = { status: 'pending', nextStep: 0 };
-export const COMPLETED_SETUP: OnboardingState = { status: 'completed', nextStep: 0 };
+export const PENDING_NOTICE: OnboardingState = { status: 'pending' };
+export const DISMISSED_NOTICE: OnboardingState = { status: 'completed' };
 
 export function normalizeOnboarding(state: OnboardingState | undefined) {
-  return state?.status === 'pending' && state.nextStep === 2 ? COMPLETED_SETUP : state;
+  return state ? { status: state.status } : undefined;
 }
 
-/**
- * Chrome reports install once and update for every newer extension version. Missing setup
- * on update means a legacy installation: never surprise existing users with a wizard.
- * An existing state (including progress) wins even if the extension updates mid-wizard.
- */
 export async function initializeOnboarding(
   reason: chrome.runtime.InstalledDetails['reason'],
 ): Promise<void> {
@@ -21,17 +16,10 @@ export async function initializeOnboarding(
   await updateItem(
     STORAGE_KEYS.onboarding,
     (current) =>
-      normalizeOnboarding(current) ?? (reason === 'install' ? PENDING_SETUP : COMPLETED_SETUP),
+      normalizeOnboarding(current) ?? (reason === 'install' ? PENDING_NOTICE : DISMISSED_NOTICE),
   );
 }
 
-/** Only pending setup needs a resumable step. A Settings rerun keeps its previous status. */
-export async function saveSetupStep(nextStep: 0 | 1 | 2): Promise<void> {
-  await updateItem(STORAGE_KEYS.onboarding, (current) =>
-    current?.status === 'pending' ? { ...current, nextStep } : (current ?? COMPLETED_SETUP),
-  );
-}
-
-export async function finishSetup(status: 'completed' | 'skipped'): Promise<void> {
-  await updateItem(STORAGE_KEYS.onboarding, () => ({ status, nextStep: 0 }));
+export async function dismissFirstRun(): Promise<void> {
+  await updateItem(STORAGE_KEYS.onboarding, () => DISMISSED_NOTICE);
 }

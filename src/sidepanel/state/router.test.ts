@@ -17,7 +17,7 @@ describe('resolveRoute', () => {
     ['#/settings', false, 'onboarding'],
     ['#/onboarding', false, 'onboarding'],
     ['', true, 'list'],
-    ['#/setup', true, 'setup'],
+    ['#/setup', true, 'list'],
     ['#/settings', true, 'settings'],
     ['#/', true, 'list'],
     ['#/', true, 'list'],
@@ -32,15 +32,9 @@ describe('resolveRoute', () => {
 describe('route', () => {
   it('does not gate old third-step progress', () => {
     auth.value = buildAuth();
-    onboarding.value = { status: 'pending', nextStep: 2 };
+    onboarding.value = { status: 'pending' };
     navigate('list');
     expect(route.value).toBe('list');
-  });
-
-  it('forces pending setup even when the user requests the PR list, until completed', () => {
-    expect(resolveRoute('#/', true, true)).toBe('setup');
-    expect(resolveRoute('#/settings', true, true)).toBe('setup');
-    expect(resolveRoute('#/', true, false)).toBe('list');
   });
 
   it('lands signed-out users on onboarding and signed-in users on the list', () => {

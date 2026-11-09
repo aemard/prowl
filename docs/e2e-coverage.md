@@ -52,9 +52,11 @@ only for visible finite animations before axe (closed disclosures cannot block s
 `settings.spec.ts` covers the always-visible refresh interval, cost estimate, loaded limit and notification
 choices surviving the master switch. `coverage.spec.ts` checks Change limit focuses that field.
 `settings.preferences.spec.ts` finds version/shortcut/documentation under Account.
-`teams.spec.ts` reaches the same Team reviews dialog from the section header and Settings →
-Sections, checks organization switches, refresh, missing-scope recovery and focus restoration.
+`teams.spec.ts` reaches the shared inline Edit teams picker from the section header and
+Settings → Sections, checks organization switches, refresh and missing-scope recovery.
 The cap is information, with no section error (unit coverage in `fetchPullRequests.teams.test.ts`
-and `Settings.teams.test.tsx`). No glass spec is included. setup-wizard.spec.ts covers two-step completion, resume, skipping, Account reruns and inline
-team choices, with focus and accessibility checks. Fixtures mark other scenarios complete.
+and `Settings.teams.test.tsx`). `first-run.spec.ts` replaces the deleted wizard spec and covers first-run list/header visibility,
+notifications, the team action and persistent dismissal; no wizard or Account rerun remains.
+Unit tests cover install/update markers, old progress, no-op defaults, immediate team saves,
+cap labels, loading, no teams, singular counts and the single missing read:org notice.
 E2E updated here but not run in this environment.

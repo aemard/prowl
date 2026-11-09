@@ -22,7 +22,7 @@ import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
-import { pollState } from '../state/store';
+import { pollState, teams } from '../state/store';
 import {
   filterQuery,
   foldKey,
@@ -159,7 +159,9 @@ function EmptySection({
   if (
     shown.length + snoozed.length > 0 ||
     snap.sectionErrors?.[selected.id] !== undefined ||
-    searching(data)
+    searching(data) ||
+    (selected.kind === 'team_review_requested' &&
+      (!teams.value || teams.value.error || teams.value.teams.length === 0))
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
@@ -205,7 +207,10 @@ export function SectionContent({
     pullRequestsOf(data.snap, data.selected.id).every((pr) =>
       isSnoozed(data.local, pr.id, data.now),
     );
-  const error = data.snap.sectionErrors?.[data.selected.id];
+  const error =
+    data.selected.kind === 'team_review_requested' && teams.value?.error
+      ? undefined
+      : data.snap.sectionErrors?.[data.selected.id];
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>

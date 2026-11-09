@@ -1,51 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import {
-  finishSetup,
-  initializeOnboarding,
-  normalizeOnboarding,
-  saveSetupStep,
-} from './onboarding';
-import { getItem, setItem } from './storage';
+import { dismissFirstRun, initializeOnboarding, normalizeOnboarding } from './onboarding';
+import { getItem } from './storage';
 
-const state = () => getItem('onboarding');
-
-describe('first-run setup initialization', () => {
-  it('treats the old third step as completed', async () => {
-    expect(normalizeOnboarding({ status: 'pending', nextStep: 2 })).toEqual({
-      status: 'completed',
-      nextStep: 0,
-    });
-    await setItem('onboarding', { status: 'pending', nextStep: 2 });
-    await initializeOnboarding('update');
-    expect(await state()).toEqual({ status: 'completed', nextStep: 0 });
-  });
-
-  it('starts on a fresh installation and persists progress through updates', async () => {
+describe('install-local first-run marker', () => {
+  it('marks only fresh installs pending', async () => {
     await initializeOnboarding('install');
-    expect(await state()).toEqual({ status: 'pending', nextStep: 0 });
-    await saveSetupStep(1);
+    expect(await getItem('onboarding')).toEqual({ status: 'pending' });
+    await dismissFirstRun();
     await initializeOnboarding('update');
-    expect(await state()).toEqual({ status: 'pending', nextStep: 1 });
+    expect(await getItem('onboarding')).toEqual({ status: 'completed' });
   });
-
-  it('does not interrupt existing installations on extension update', async () => {
+  it('never shows the note for an existing installation', async () => {
     await initializeOnboarding('update');
-    expect(await state()).toEqual({ status: 'completed', nextStep: 0 });
-    await initializeOnboarding('install');
-    expect(await state()).toEqual({ status: 'completed', nextStep: 0 });
+    expect(await getItem('onboarding')).toEqual({ status: 'completed' });
   });
-
-  it('does not reset progress on startup or other install reasons', async () => {
-    await initializeOnboarding('chrome_update');
-    expect(await state()).toBeUndefined();
-  });
-
-  it('keeps completed or skipped state and never resumes those automatically', async () => {
-    await setItem('onboarding', { status: 'pending', nextStep: 2 });
-    await finishSetup('skipped');
-    await saveSetupStep(1);
-    expect(await state()).toEqual({ status: 'skipped', nextStep: 0 });
-    await finishSetup('completed');
-    expect(await state()).toEqual({ status: 'completed', nextStep: 0 });
+  it('ignores legacy progress while keeping pending notices', () => {
+    const legacy = { status: 'pending' as const, nextStep: 2 };
+    expect(normalizeOnboarding(legacy)).toEqual({ status: 'pending' });
   });
 });

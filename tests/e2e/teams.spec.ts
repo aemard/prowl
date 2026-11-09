@@ -109,11 +109,11 @@ test('finds the teams and lists what they are asked to review in Team reviews', 
   await expect(panel.getByRole('tabpanel', { name: 'Team reviews' })).toBeVisible();
   await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id, draft.id]);
   await expect(panel.getByText('Following 2 teams')).toBeVisible();
-  const choose = panel.getByRole('button', { name: 'Choose teams' });
+  const choose = panel.getByRole('button', { name: 'Edit teams' });
   await choose.click();
-  const picker = panel.getByRole('dialog', { name: 'Team reviews' });
+  const picker = panel.locator('.team-picker');
   await expect(picker.getByRole('switch', { name: 'Core' })).toBeChecked();
-  await picker.getByRole('button', { name: 'Done' }).click();
+  await choose.click();
   await expect(choose).toBeFocused();
   // The badge includes the failing draft too.
   await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('2');
@@ -146,8 +146,8 @@ test('follows and unfollows teams from Settings, which changes the searches', as
   await poll();
 
   const panel = await openPanel('#/settings');
-  await panel.getByRole('button', { name: 'Choose teams' }).click();
-  const teams = panel.getByRole('dialog', { name: 'Team reviews' });
+  await panel.getByRole('button', { name: 'Edit teams' }).click();
+  const teams = panel.locator('.team-picker');
   await expect(teams.getByRole('group', { name: 'acme' })).toBeVisible();
   await expect(teams.getByRole('switch', { name: 'Core' })).toBeChecked();
   await expect(teams.getByText(/Checked just now/)).toBeVisible();
@@ -195,17 +195,15 @@ test('explains a missing read:org scope in the section, then finds the teams on 
   expect(before.teams?.error?.kind).toBe('missing_scope');
   expect(before.pollState?.lastError).toBeNull();
   const settings = await openPanel('#/settings');
-  await settings.getByRole('button', { name: 'Choose teams' }).click();
-  const group = settings.getByRole('dialog', { name: 'Team reviews' });
+  await settings.getByRole('button', { name: 'Edit teams' }).click();
+  const group = settings.locator('.team-picker');
   await expect(group.getByText(/GitHub would not list your teams/)).toBeVisible();
   await expect(group.getByRole('button', { name: 'Sign in again' })).toBeVisible();
   await settings.close();
 
   const panel = await openPanel();
   await panel.getByRole('tab', { name: /^Teams/ }).click();
-  await expect(
-    panel.getByText(/Could not load “Team reviews”: GitHub would not list your teams/),
-  ).toBeVisible();
+  await expect(panel.getByText(/GitHub would not list your teams/)).toBeVisible();
 
   // The token got the permission on GitHub: a refresh from the panel finds the teams now.
   serveTeams(github);

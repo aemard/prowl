@@ -41,17 +41,16 @@ describe('App', () => {
     expect(screen.getByRole('main', { name: 'Sign in' })).toBeTruthy();
   });
 
-  it('gates a fresh signed-in installation behind setup and hides list controls', async () => {
-    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 0 } });
-    const heading = await screen.findByRole('heading', { name: 'Your pull requests' });
-    expect(screen.getByRole('main', { name: 'Set up Prowl' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull();
-    expect(document.activeElement).toBe(heading);
+  it('shows the first-run note with the list and full header', async () => {
+    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 1 } });
+    expect(screen.getByRole('main', { name: 'Pull requests' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Got it' })).toBeTruthy();
   });
 
   it('lands signed-out users on onboarding', async () => {
     await open();
-    expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'See your pull requests here' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
   });
 

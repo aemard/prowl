@@ -415,10 +415,9 @@ export interface Settings {
   unfollowedTeams: string[];
 }
 
-/** Install-local setup progress, retained on sign-out and never synced. */
+/** Install-local first-run notice status, retained on sign-out and never synced. */
 export interface OnboardingState {
   status: 'pending' | 'completed' | 'skipped';
-  nextStep: 0 | 1 | 2;
 }
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */

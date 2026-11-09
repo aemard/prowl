@@ -76,15 +76,9 @@ describe('OnboardingView', () => {
     ).toBe('true');
   });
 
-  it('ends with the version, the shortcut and the links of Settings', async () => {
-    render(<OnboardingView />);
-    expect(await screen.findByText('Ctrl+Shift+P')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Source code' })).toBeTruthy();
-  });
-
   it('explains both token types and links to pre-filled creation pages', () => {
     renderTokens();
-    expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'See your pull requests here' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Classic token' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Fine-grained token' })).toBeTruthy();
     expect(screen.getByText(/does not offer the Checks permission/)).toBeTruthy();

@@ -63,15 +63,18 @@ working knowledge. Keep it short and current: newest knowledge wins.
 - Settings has six groups, in order: Sections, Refresh, Notifications, List, Account, Privacy
   and permissions. About content is in Account. Use `changePrLimit()` for Change limit; its
   signal survives the lazy mount and the shell must preserve the field's focus.
-- Team UI: reuse `TeamPicker`/`ChooseTeams` from `views/SettingsTeams.tsx`. The dialog is reachable
-  from Team reviews and its Settings → Sections row; never add a Settings → Teams group.
-  The cap is informational in `TeamReviewsHeader`, not a `sectionErrors` entry. Keep the
-  existing design system and base CSS; only token-based spacing for new markup is needed.
+- Team UI: reuse `TeamPicker` / `EditTeams` from `views/SettingsTeams.tsx` in Team reviews
+  and its enabled Settings → Sections row. Enabling the row expands the picker; switches
+  save immediately. Keep cards below the disclosure and focus on its Edit teams button.
+  Discovery runs automatically without a matching account cache; show Loading your teams…
+  while waiting. The section owns the single scope/no-team notice, not its nested picker.
+  The ten-team cap is information, with a label on each followed team beyond the first ten.
 
-### Install-local setup
+### Install-local first run (2026-11-09)
 
-Only onInstalled reason install creates pending onboarding; updates without a marker complete
-it for legacy installs. Sign-out and settings sync retain the local marker. The two-step wizard
-saves choices on Continue and completion; Skip discards the current draft. TeamPicker accepts
-draft selections for the wizard and saves immediately in Settings. Step headings receive focus.
-Pending nextStep 2 from the old three-step wizard is treated as completed.
+Only onInstalled reason install creates pending onboarding. Updates without a marker complete
+it for legacy installs. Sign-out and settings sync retain the local marker. `FirstRunNote`
+reads status only; legacy pending progress at any step shows the notice above the full list.
+`dismissFirstRun()` completes the marker permanently. There is no setup route or rerun.
+Save notifications before dismissing; failed saves keep the note. Keep the preview's
+`#onboarding` signed-out fresh-install path. No-op settings saves must not queue a poll.
