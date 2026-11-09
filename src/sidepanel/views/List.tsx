@@ -52,6 +52,7 @@ function NoSections() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       <EmptyState
         icon={<InboxIcon size={24} />}
         title="No sections turned on"
@@ -68,6 +69,7 @@ function LoadingList() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       {failure?.lastError && !failure.inFlight ? (
         <EmptyState
           icon={<AlertIcon size={24} />}
@@ -152,6 +154,7 @@ function LoadedList({
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
+        <FirstRunNote />
         <SectionContent key={data.selected.id} data={data} filterInput={filterInput} />
       </div>
     </div>
@@ -178,10 +181,5 @@ function ListBody() {
 }
 
 export function ListView() {
-  return (
-    <>
-      <FirstRunNote />
-      <ListBody />
-    </>
-  );
+  return <ListBody />;
 }

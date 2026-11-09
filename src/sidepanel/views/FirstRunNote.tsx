@@ -26,7 +26,7 @@ export function FirstRunNote() {
   const count =
     teams.value?.login === auth.value?.viewer.login ? (teams.value?.teams.length ?? 0) : 0;
   return (
-    <div class="list__notice first-run-note" role="status">
+    <div class="list__notice list__notice--neutral first-run-note" role="status">
       <div class="first-run-note__body">
         <p>
           Following pull requests you opened and reviews asked of you. Notifications are{' '}
