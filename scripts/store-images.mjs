@@ -5,6 +5,7 @@
 // pixel sizes, so these pages render at 1x.
 // Usage: pnpm screenshots, then pnpm store-images (commit the PNGs). Headlines use Inter when
 // it is installed, else the system UI font.
+// To rebuild only the marquee: pnpm store-images promo-marquee.png.
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -15,7 +16,10 @@ const dataUrl = (path, type) =>
   `data:${type};base64,${readFileSync(resolve(root, path)).toString('base64')}`;
 const logo = dataUrl('src/assets/logo.png', 'image/png');
 const shot = (name) => dataUrl(`docs/screenshots/${name}.png`, 'image/png');
-const tokens = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8');
+// The tokens are split across two stylesheets; a style string cannot follow @import.
+const tokens = ['tokens.base.css', 'tokens.css']
+  .map((file) => readFileSync(resolve(root, 'src/styles', file), 'utf8'))
+  .join('\n');
 
 const style = `
 ${tokens}
@@ -125,24 +129,28 @@ const IMAGES = [
     file: 'promo-marquee.png',
     size: [1400, 560],
     html: `
-      <div class="canvas" data-tone="ink" style="gap:72px;padding:0 0 0 112px">
+      <div class="canvas" data-tone="teal" style="gap:72px;padding:0 0 0 112px">
         <div class="copy" style="flex:1">
           <div class="brand" style="font-size:44px;gap:20px">
             <img src="${logo}" width="88" height="88" alt="">Prowl
           </div>
-          <p style="font-size:30px">Your GitHub pull requests in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
+          <p style="font-size:30px">Your pull requests. A little calmer.</p><p style="font-size:20px">CI, reviews and merge status, right in Chrome's side panel.</p><p style="font-size:20px">Open source · MIT licensed · No tracking</p>
         </div>
         <div style="display:flex;gap:24px;align-self:flex-start;margin-top:72px">
-          ${panel('list-light', 560)}${panel('list-dark', 560)}
+          ${panel('list-ready', 560)}
         </div>
       </div>`,
   },
 ];
 
+const target = process.argv[2];
+const images = target ? IMAGES.filter(({ file }) => file === target) : IMAGES;
+if (images.length === 0) throw new Error(`Unknown store image: ${target}`);
+
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.PROWL_CHROMIUM || undefined });
 try {
-  for (const { file, size, html } of IMAGES) {
+  for (const { file, size, html } of images) {
     const [width, height] = size;
     const page = await browser.newPage({ viewport: { width, height } });
     await page.setContent(
