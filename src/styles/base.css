@@ -59,7 +59,7 @@ kbd {
   color: var(--color-fg);
 }
 
-/* One focus ring everywhere; components only tune the offset. */
+/* Default focus ring; text controls use an inset ring to avoid overflow clipping. */
 :focus-visible {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);

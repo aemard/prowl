@@ -72,11 +72,6 @@
   --duration-shimmer: 1400ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Layers */
-  --z-sticky: 10;
-  --z-menu: 40;
-  --z-toast: 50;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -120,6 +115,7 @@
   --color-fg-on-solid: #ffffff;
   --color-fg-on-accent: #ffffff;
   --color-focus: #007a6d;
+  --color-focus-ring-soft: color-mix(in srgb, var(--color-focus) 22%, transparent);
   --color-backdrop: rgb(18 18 21 / 0.32);
   --color-skeleton: var(--gray-4);
   --color-skeleton-shine: var(--gray-2);
