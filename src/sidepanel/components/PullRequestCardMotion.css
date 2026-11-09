@@ -1,8 +1,10 @@
-.pr-card {
-  --card-enter-duration: 320ms;
-  --card-exit-duration: 240ms;
-  --card-collapse-duration: 240ms;
+@property --card-wash {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
 
+.pr-card {
   display: grid;
   /* Long repository names must shrink inside the card, including during row animation. */
   grid-template-columns: minmax(0, 1fr);
@@ -18,62 +20,43 @@
   overflow: clip;
 }
 
-.pr-card[data-activity="new"] {
+.pr-card[data-activity] {
   --card-tint: var(--color-brand-surface);
   --card-accent: var(--color-success-fg);
-  animation: card-arrive var(--card-enter-duration) var(--ease-out) both;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--card-accent) var(--card-wash), transparent),
+      transparent 85%
+    ),
+    var(--glass-card);
+}
+
+.pr-card[data-activity="new"] {
+  animation:
+    card-arrive 700ms var(--ease-out) both,
+    card-arrive-wash 1100ms linear both;
 }
 
 .pr-card[data-activity="merged"] {
   --card-tint: var(--color-done-bg);
   --card-accent: var(--color-done-fg);
+  animation:
+    card-merge-away 1100ms var(--ease-standard) both,
+    card-wash 1100ms ease-out both;
 }
 
 .pr-card[data-activity="closed"] {
   --card-tint: var(--color-bg-hover);
   --card-accent: var(--color-fg-muted);
-}
-
-.pr-card[data-activity="merged"],
-.pr-card[data-activity="closed"],
-.pr-card[data-activity="fade"] {
-  /* Fade first, then let the invisible row settle closed. Keep the retention timer in sync. */
   animation:
-    card-depart var(--card-exit-duration) var(--ease-out) both,
-    card-collapse var(--card-collapse-duration) var(--ease-out) var(--card-exit-duration) both;
+    card-close-away 1100ms var(--ease-standard) both,
+    card-wash 1100ms ease-out both;
 }
 
-/* A translucent overlay preserves the card surface and never affects layout or hit targets. */
-.pr-card[data-activity="new"] .pr-card__body::after,
-.pr-card[data-activity="merged"] .pr-card__body::after,
-.pr-card[data-activity="closed"] .pr-card__body::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.pr-card[data-activity="new"] .pr-card__body::after {
-  background: var(--color-accent-bg);
-  animation: card-highlight 1200ms var(--ease-out) var(--card-enter-duration) both;
-}
-
-.pr-card[data-activity="merged"] .pr-card__body::after {
-  background: color-mix(in srgb, var(--color-done-fg) 8%, transparent);
-}
-
-.pr-card[data-activity="closed"] .pr-card__body::after {
-  background: color-mix(in srgb, var(--color-danger-fg) 8%, transparent);
-}
-
-@keyframes card-highlight {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 0;
-  }
+/* A PR that only left this section (still open elsewhere) folds away without a tint. */
+.pr-card[data-activity="fade"] {
+  animation: card-close-away 1100ms var(--ease-standard) both;
 }
 
 .pr-card__activity {
@@ -87,48 +70,112 @@
   background: var(--card-tint);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
+  animation: card-label 1100ms var(--ease-out) both;
+}
+
+.pr-card__activity svg {
+  animation: card-mark 500ms var(--ease-out) both;
 }
 
 @keyframes card-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes card-depart {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-}
-
-@keyframes card-collapse {
-  from {
-    grid-template-rows: 1fr;
-  }
-  to {
+  0% {
     grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  65% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes card-merge-away {
+  0%,
+  55% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes card-close-away {
+  0%,
+  45% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+/* Tint is painted on the same rounded surface as the card border. */
+@keyframes card-wash {
+  0%,
+  100% {
+    --card-wash: 0%;
+  }
+  20%,
+  50% {
+    --card-wash: 9%;
+  }
+}
+
+@keyframes card-arrive-wash {
+  0%,
+  64% {
+    --card-wash: 9%;
+  }
+  100% {
+    --card-wash: 0%;
+  }
+}
+
+@keyframes card-label {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  20%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-mark {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pr-card[data-activity],
-  .pr-card__body::after,
   .pr-card__activity,
   .pr-card__activity svg {
     animation: none;
   }
-
-  .pr-card__body::after {
-    content: none;
+  .pr-card[data-activity] {
+    --card-wash: 4%;
   }
 }
