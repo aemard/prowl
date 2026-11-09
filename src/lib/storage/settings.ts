@@ -22,9 +22,6 @@ export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
 export const MAX_SECTION_LABEL_LENGTH = 60;
-/** `hideStaleAfterDays` range; 0 never hides. */
-export const MIN_HIDE_STALE_DAYS = 0;
-export const MAX_HIDE_STALE_DAYS = 365;
 
 export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 
@@ -90,7 +87,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   theme: 'system',
   sort: 'updated',
   groupByRepo: true,
-  hideStaleAfterDays: 20,
+  hideStaleAfterDays: 0,
   hideDrafts: false,
   hideBots: false,
   unfollowedTeams: [],
@@ -310,14 +307,10 @@ export function normalizeSettings(value: unknown): Settings {
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
-    hideStaleAfterDays: clampInt(
-      raw.hideStaleAfterDays,
-      MIN_HIDE_STALE_DAYS,
-      MAX_HIDE_STALE_DAYS,
-      DEFAULT_SETTINGS.hideStaleAfterDays,
-    ),
-    hideDrafts: bool(raw.hideDrafts, DEFAULT_SETTINGS.hideDrafts),
-    hideBots: bool(raw.hideBots, DEFAULT_SETTINGS.hideBots),
+    // Keep explicit off values for older synced installs (missing stale keys default to 20).
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
     unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }

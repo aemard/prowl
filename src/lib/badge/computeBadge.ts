@@ -3,9 +3,9 @@
  * since you last looked), whether one of them is red, and a tooltip saying why. Pure: the
  * service worker (`src/background/badge.ts`) paints the result.
  */
+import { activityKey } from '../activity';
 import { isReadyToMerge } from '../diff/diffSnapshots';
-import { type HideSettings, hiddenReasons } from '../hidden';
-import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
+import type { BadgeMode, PrLocalState, PullRequest, Settings, Snapshot } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
 
 export interface BadgeView {
@@ -39,8 +39,7 @@ const reasonsOf = (pr: PullRequest) =>
   pr.state === 'open' ? REASONS.filter((reason) => reason.applies(pr)) : [];
 
 /**
- * The badge for `snapshot` under `mode`. Only PRs in a section count, never a snoozed one nor
- * one the list hides (`hide`); a muted one does: mute only silences notifications. `attention`
+ * The badge for `snapshot` under `mode`. Only PRs in a section count, never a snoozed one; a muted one does: mute only silences notifications. `attention`
  * counts open PRs with failing CI, requested changes, conflicts or ready to merge; `unseen`
  * counts PRs updated since the user saw them. No snapshot (signed out) and `off` show nothing.
  */
@@ -48,16 +47,18 @@ export function computeBadge(
   snapshot: Snapshot | undefined,
   local: PrLocalState,
   mode: BadgeMode,
-  hide: HideSettings,
+  _settings: Settings,
   now: number,
 ): BadgeView {
   if (!snapshot || mode === 'off') return NO_BADGE;
   const ids = new Set(Object.values(snapshot.sections).flat());
   const counted = [...ids]
     .flatMap((id) => snapshot.pullRequests[id] ?? [])
-    .filter((pr) => !isSnoozed(local, pr.id, now) && hiddenReasons(pr, hide, now).length === 0)
+    .filter((pr) => !isSnoozed(local, pr.id, now))
     .filter((pr) =>
-      mode === 'attention' ? reasonsOf(pr).length > 0 : !isSeen(local, pr.id, pr.updatedAt),
+      mode === 'attention'
+        ? reasonsOf(pr).length > 0
+        : !isSeen(local, pr.id, pr.updatedAt, activityKey(pr)),
     );
   if (counted.length === 0) return NO_BADGE;
 

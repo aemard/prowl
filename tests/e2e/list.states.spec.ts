@@ -83,7 +83,7 @@ test.describe('other states', () => {
     await poll();
 
     const panel = await openPanel();
-    expect(await tabNames(panel)).toEqual(['Mine7', 'StaleCould not load']);
+    expect(await tabNames(panel)).toEqual(['Mine8', 'StaleCould not load']);
     await panel.getByRole('tab', { name: /Stale/ }).click();
     await expect(panel.getByText(/Could not load “Stale”/)).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'No pull requests' })).toHaveCount(0);

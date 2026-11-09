@@ -1,6 +1,6 @@
 # Privacy
 
-*Last updated 7 October 2026.*
+*Last updated 1 November 2026.*
 
 Prowl is a browser extension that runs on your device. It has no server of its own, no account
 and no analytics. The only service it talks to is GitHub.
@@ -27,8 +27,14 @@ your browser profile can read your token.
   Removed when you sign out or Chrome closes.
 - **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
   notification choices and quiet hours. Removed when you uninstall Prowl.
-- **Local choices:** which pull requests you snoozed, muted or have seen, by pull request id.
-  Removed when you uninstall Prowl.
+- **Local choices:** which pull requests you snoozed, muted, always show or have seen, by pull
+  request id. Removed when you uninstall Prowl.
+- **Observed activity:** the useful CI/review facts seen then, for detecting activity changes.
+  Removed when you sign out or replace your token.
+- **Panel organization:** the selected section and folded repositories, scoped to the current
+  account. Removed when you sign out. Search text is kept only while the panel stays open.
+- **Unsent comments and change requests:** kept only in panel memory until sent, the panel
+  closes or the account changes. Never written to browser storage or sent automatically.
 
 Nothing is stored anywhere else, and none of it is sent to the Prowl project.
 
@@ -84,8 +90,8 @@ declared content script, which Prowl does not have.
 **Settings sync is off unless you turn it on** (Settings > Privacy and permissions). When it is on,
 your settings, and only your settings, are copied to `chrome.storage.sync`, which Chrome keeps
 in your Google account and copies to Chrome on your other computers. Your token, the pull
-requests Prowl fetched, your teams and what you snoozed or muted never go there. The choice is
-per device.
+requests Prowl fetched, your teams, panel organization and local PR choices never go there. The
+choice is per device.
 
 The manifest also declares one keyboard shortcut (`commands`: Ctrl+Shift+P, ⌘⇧P on Mac, opens the side panel;
 change it at chrome://extensions/shortcuts). A shortcut is not a permission: Chrome shows no

@@ -25,8 +25,6 @@ export interface PullRequestCardProps {
   muted?: boolean;
   /** ISO time the snooze ends, when the PR is snoozed. */
   snoozedUntil?: string | null;
-  /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
-  hiddenBecause?: string;
   /** The card sits under its repository's header, so its own row shows only `#number`. */
   grouped?: boolean;
   /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
@@ -78,7 +76,6 @@ export function PullRequestCard({
   now,
   muted,
   snoozedUntil,
-  hiddenBecause,
   grouped,
   teams,
 }: PullRequestCardProps) {
@@ -114,7 +111,6 @@ export function PullRequestCard({
         <CardChips
           statuses={statuses}
           refreshingMerge={refreshingMerge}
-          hiddenBecause={hiddenBecause}
           teams={teams}
           teamRequest={teamRequest}
         />
@@ -123,7 +119,6 @@ export function PullRequestCard({
           {describePullRequest(pr, statuses, unseen, now)}
           {refreshingMerge && `. Updating merge status`}
           {teamRequest && `. ${teamRequest}`}
-          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
         </span>
       </div>
       {expanded && <PullRequestDetails pr={pr} id={detailId} />}

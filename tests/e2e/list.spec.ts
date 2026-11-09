@@ -32,14 +32,14 @@ test.describe('with a rich set of pull requests', () => {
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('tab')).toHaveCount(4);
-    expect(await tabNames(panel)).toEqual(['Mine7', 'Review3', 'Mentions1', 'Assigned2']);
+    expect(await tabNames(panel)).toEqual(['Mine8', 'Review3', 'Mentions1', 'Assigned3']);
     await expect(panel.getByRole('tab', { name: /^Mine/ })).toHaveAttribute(
       'title',
       'Created by me',
     );
-    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine8');
     await expect(panel.getByRole('tabpanel', { name: 'Created by me' })).toBeVisible();
-    await expect(panel.getByRole('listitem')).toHaveCount(7);
+    await expect(panel.getByRole('listitem')).toHaveCount(8);
 
     // Header and filter on top, the bar at the bottom edge, and the list ends above the bar.
     const filter = await box(panel.getByRole('searchbox'));
@@ -62,7 +62,7 @@ test.describe('with a rich set of pull requests', () => {
     await expect(panel.getByRole('tab', { name: /^Assigned/ })).toBeFocused();
     await panel.keyboard.press('Home');
     await expect(panel.getByRole('tab', { name: /^Mine/ })).toBeFocused();
-    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+    await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine8');
   });
 
   test('fits 320 to 600 px wide panels, with the sections past the fourth under "More"', async ({
@@ -267,7 +267,7 @@ test.describe('with a rich set of pull requests', () => {
 
     await panel.getByRole('button', { name: 'Clear filter' }).click();
     await expect(filter).toBeFocused();
-    await expect(panel.getByRole('listitem')).toHaveCount(7);
+    await expect(panel.getByRole('listitem')).toHaveCount(8);
 
     // Author, repository, label and number are searched too.
     await panel.getByRole('tab', { name: /^Review/ }).click();

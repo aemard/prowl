@@ -20,7 +20,7 @@ export const AUTHORED = {
   badges: prId(58, 'octo/docs'),
   deps: prId(1042, 'northwind-engineering/internal-platform-services-monorepo'),
   contrast: prId(2470, 'acme/web'),
-  /** No commit for 34 days: hidden by default. */
+  /** No commit for 34 days: still visible. */
   stale: prId(2311, 'acme/web'),
 };
 
@@ -93,16 +93,24 @@ export async function expectRepositoryKeyboardFolding(
   await panel.keyboard.press('Space');
   await expect(header('acme/api')).toHaveAttribute('aria-expanded', 'false');
   await expect(cardFor(panel, rateLimit)).toHaveCount(0);
-  // Five groups and five cards: the folded group's two are gone.
-  await expect(panel.getByRole('listitem')).toHaveCount(5 + 5);
-  await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine7');
+  // Five groups and six cards: the folded group's two are gone.
+  await expect(panel.getByRole('listitem')).toHaveCount(5 + 6);
+  await expect(panel.getByRole('tab', { selected: true })).toHaveText('Mine8');
   await expect(header('acme/api')).toBeFocused();
 
   // j / k go from card to card across the headers, past the folded group.
   await panel.getByRole('button', { name: /^Details for Dark mode: fix contrast/ }).focus();
   await panel.keyboard.press('j');
   await expect(
+    panel.getByRole('button', { name: /^Details for Experiment: lazy-load/ }),
+  ).toBeFocused();
+  await panel.keyboard.press('j');
+  await expect(
     panel.getByRole('button', { name: /^Details for Fix crash when rotating/ }),
+  ).toBeFocused();
+  await panel.keyboard.press('k');
+  await expect(
+    panel.getByRole('button', { name: /^Details for Experiment: lazy-load/ }),
   ).toBeFocused();
   await panel.keyboard.press('k');
   await expect(panel.getByRole('button', { name: /^Details for Dark mode/ })).toBeFocused();

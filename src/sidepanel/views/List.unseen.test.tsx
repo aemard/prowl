@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { activityKey } from '../../lib/activity';
 import { computeBadge } from '../../lib/badge/computeBadge';
 import { buildSnapshotOf } from '../../test/panel';
 import { prLocal, settings, snapshot } from '../state/store';
@@ -53,7 +54,9 @@ describe('unseen changes', () => {
     act(() => void vi.advanceTimersByTime(1499));
     expect(markSeen(send)).toEqual([]);
     act(() => void vi.advanceTimersByTime(1));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([
+      { type: 'markSeen', prIds: [a.id], versions: { [a.id]: activityKey(a) } },
+    ]);
 
     act(() => void vi.advanceTimersByTime(10_000));
     expect(markSeen(send)).toHaveLength(1);
@@ -84,7 +87,9 @@ describe('unseen changes', () => {
     expect(markSeen(send)).toEqual([]);
     observer().show([c.id]);
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [c.id] }]);
+    expect(markSeen(send)).toEqual([
+      { type: 'markSeen', prIds: [c.id], versions: { [c.id]: activityKey(c) } },
+    ]);
   });
 
   it('does nothing while the panel is hidden, and starts when it shows', () => {
@@ -98,7 +103,9 @@ describe('unseen changes', () => {
     Reflect.deleteProperty(document, 'visibilityState');
     act(() => void document.dispatchEvent(new Event('visibilitychange')));
     act(() => void vi.advanceTimersByTime(1500));
-    expect(markSeen(send)).toEqual([{ type: 'markSeen', prIds: [a.id] }]);
+    expect(markSeen(send)).toEqual([
+      { type: 'markSeen', prIds: [a.id], versions: { [a.id]: activityKey(a) } },
+    ]);
   });
 
   it('drops the dot once the worker has stored it as seen', () => {

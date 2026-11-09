@@ -38,7 +38,7 @@ describe('DEFAULT_SETTINGS', () => {
       theme: 'system',
       sort: 'updated',
       groupByRepo: true,
-      hideStaleAfterDays: 20,
+      hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,
       unfollowedTeams: [],
@@ -102,8 +102,8 @@ describe('normalizeSettings', () => {
       sort: 'repo',
       groupByRepo: true,
       hideStaleAfterDays: 0,
-      hideDrafts: true,
-      hideBots: true,
+      hideDrafts: false,
+      hideBots: false,
       unfollowedTeams: ['acme/core', 'octo-org/web.ui'],
     };
     expect(normalizeSettings(custom)).toEqual(custom);
@@ -179,31 +179,22 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
   });
 
-  it.each([
-    [0, 0],
-    [-1, 0],
-    [7.4, 7],
-    [365, 365],
-    [366, 365],
-    [Number.POSITIVE_INFINITY, 20],
-    ['30', 20],
-    [null, 20],
-  ])('repairs hideStaleAfterDays %j to %j', (value, expected) => {
-    expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
-  });
-
-  it.each(['groupByRepo', 'hideDrafts', 'hideBots'] as const)(
-    'repairs %s: a boolean, else its default',
-    (key) => {
-      expect(normalizeSettings({ [key]: true })[key]).toBe(true);
-      expect(normalizeSettings({ [key]: false })[key]).toBe(false);
-      for (const value of ['yes', 1, null, undefined]) {
-        expect(normalizeSettings({ [key]: value })[key]).toBe(DEFAULT_SETTINGS[key]);
-      }
-      // Settings stored before the switches existed.
-      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(DEFAULT_SETTINGS[key]);
+  it.each([0, -1, 7.4, 20, 365, 366, Number.POSITIVE_INFINITY, '30', null, undefined])(
+    'normalizes legacy hideStaleAfterDays %j to zero',
+    (value) => {
+      expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(0);
     },
   );
+
+  it.each(['groupByRepo'] as const)('repairs %s: a boolean, else its default', (key) => {
+    expect(normalizeSettings({ [key]: true })[key]).toBe(true);
+    expect(normalizeSettings({ [key]: false })[key]).toBe(false);
+    for (const value of ['yes', 1, null, undefined]) {
+      expect(normalizeSettings({ [key]: value })[key]).toBe(DEFAULT_SETTINGS[key]);
+    }
+    // Settings stored before the switches existed.
+    expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(DEFAULT_SETTINGS[key]);
+  });
 
   it('repairs notification switches and quiet hours', () => {
     const { notifications } = normalizeSettings({
@@ -291,4 +282,10 @@ describe('normalizeSettings', () => {
       theme: 'dark',
     });
   });
+});
+
+it('forces all legacy hiding preferences off on every read', () => {
+  expect(
+    normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
+  ).toMatchObject({ version: 1, hideStaleAfterDays: 0, hideDrafts: false, hideBots: false });
 });

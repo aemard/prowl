@@ -17,7 +17,7 @@ for (const count of [50, 51]) {
       }),
     );
     github.onGraphQL('ProwlSearch', (variables) => searchResponse(nodes, variables));
-    await seedStorage({ settings: { hideDrafts: true } });
+    await seedStorage({ settings: { maxPerSection: 50 } });
     await signIn();
     await poll();
     const panel = await openPanel();
