@@ -133,9 +133,7 @@ function contrastTable(): string {
 describe('design tokens', () => {
   it('orders sticky chrome, menus and toasts independently of DOM order', () => {
     const layers = rootBlocks.find((block) => block.has('--z-sticky')) ?? empty;
-    const levels = ['sticky', 'menu', 'toast'].map((name) =>
-      Number(layers.get(`--z-${name}`)),
-    );
+    const levels = ['sticky', 'menu', 'toast'].map((name) => Number(layers.get(`--z-${name}`)));
     expect(levels.every((level) => Number.isFinite(level))).toBe(true);
     expect(levels.every((level, index) => index === 0 || level > (levels[index - 1] ?? 0))).toBe(
       true,
