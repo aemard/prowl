@@ -1,4 +1,5 @@
 import type { ComponentChildren, TargetedKeyboardEvent, TargetedMouseEvent } from 'preact';
+import { createPortal } from 'preact/compat';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { CheckIcon } from '../icons';
 import { cx } from './cx';
@@ -233,20 +234,24 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
   return (
     <>
       {trigger(menuTriggerProps(state, id))}
-      {state.open && (
-        <div
-          ref={state.menuRef}
-          id={`${id}-menu`}
-          role="menu"
-          class="ui-menu"
-          aria-labelledby={label ? undefined : `${id}-trigger`}
-          aria-label={label}
-          tabIndex={-1}
-          onKeyDown={(event) => onMenuKeyDown(event, items, state)}
-        >
-          {items.map((item, index) => menuEntry(item, index, state))}
-        </div>
-      )}
+      {state.open &&
+        createPortal(
+          <div
+            ref={state.menuRef}
+            id={`${id}-menu`}
+            role="menu"
+            class="ui-menu"
+            aria-labelledby={label ? undefined : `${id}-trigger`}
+            aria-label={label}
+            tabIndex={-1}
+            onKeyDown={(event) => onMenuKeyDown(event, items, state)}
+          >
+            {items.map((item, index) => menuEntry(item, index, state))}
+          </div>,
+          // Keep modal menus in the dialog's top layer and focus trap. All other menus
+          // escape sticky chrome and card stacking contexts.
+          state.triggerRef.current?.closest('dialog') ?? document.body,
+        )}
     </>
   );
 }

@@ -131,6 +131,17 @@ function contrastTable(): string {
 }
 
 describe('design tokens', () => {
+  it('orders sticky chrome, header, menus and toasts independently of DOM order', () => {
+    const layers = rootBlocks.find((block) => block.has('--z-sticky')) ?? empty;
+    const levels = ['sticky', 'header', 'menu', 'toast'].map((name) =>
+      Number(layers.get(`--z-${name}`)),
+    );
+    expect(levels.every((level) => Number.isFinite(level))).toBe(true);
+    expect(levels.every((level, index) => index === 0 || level > (levels[index - 1] ?? 0))).toBe(
+      true,
+    );
+  });
+
   it('keeps brand text readable on the mint logo background', () => {
     expect(ratio(light, 'brand-ink', 'brand-mint')).toBeGreaterThanOrEqual(4.5);
   });

@@ -66,6 +66,13 @@ describe('Menu', () => {
     expect(menu()).toBeNull();
   });
 
+  it('portals outside the trigger container so sticky chrome cannot cover it', () => {
+    const { trigger } = setup();
+    fireEvent.click(trigger);
+    expect(screen.getByRole('menu').parentElement).toBe(document.body);
+    expect(trigger.parentElement?.contains(screen.getByRole('menu'))).toBe(false);
+  });
+
   it('opens from the keyboard on the first or last item', () => {
     const { trigger } = setup();
     key('ArrowDown', trigger);
@@ -305,6 +312,7 @@ describe('Menu', () => {
       </Dialog>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Method' }));
+    expect(screen.getByRole('menu').parentElement).toBe(screen.getByRole('dialog'));
     const escKey = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
     act(() => {
       document.activeElement?.dispatchEvent(escKey);

@@ -93,8 +93,8 @@ export function PullRequestCard({
   return (
     <li class="pr-card" ref={card}>
       <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
-        {unseen && <span class="pr-card__dot" title="Unseen changes" />}
         <CardHead
+          unseen={unseen}
           pr={pr}
           now={now}
           muted={muted}

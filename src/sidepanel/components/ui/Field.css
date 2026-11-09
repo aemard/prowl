@@ -51,11 +51,11 @@
   border-color: var(--color-fg-muted);
 }
 
-/* Inputs show focus for mouse users too (a caret alone is easy to miss). */
+/* Keep pointer and keyboard focus inside the control, safe from ancestor clipping. */
 .ui-control:focus {
   border-color: var(--color-focus);
-  outline: var(--border-width) solid var(--color-focus);
-  outline-offset: 0;
+  outline: none;
+  box-shadow: inset 0 0 0 var(--focus-width) var(--color-focus-ring-soft);
 }
 
 .ui-control:disabled {
@@ -69,5 +69,6 @@
 }
 
 .ui-field[data-invalid] .ui-control:focus {
-  outline-color: var(--color-danger-fg);
+  box-shadow: inset 0 0 0 var(--focus-width)
+    color-mix(in srgb, var(--color-danger-fg) 22%, transparent);
 }

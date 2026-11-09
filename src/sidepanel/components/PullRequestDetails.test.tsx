@@ -164,16 +164,27 @@ describe('PullRequestDetails', () => {
   });
 
   it('points to GitHub for checks beyond the ones it read', async () => {
-    stubDetailFetch(({ after }) =>
-      detailNode({
-        checks: Array.from({ length: 600 }, (_, i) => checkRunNode(`job-${i}`, 'FAILURE')),
-        after,
-      }),
-    );
-    show();
-    const more = await screen.findByRole('link', { name: 'on GitHub' });
+    const checks = Array.from({ length: 600 }, (_, i) => checkRunNode(`job-${i}`, 'FAILURE'));
+    const cursors: unknown[] = [];
+    stubDetailFetch(({ after }) => {
+      cursors.push(after);
+      return detailNode({ checks, after, pageSize: 100 });
+    });
+    const { container } = show();
+    // Scope the queries so they needn't inspect all 500 check links.
+    const text = await screen.findByText('on GitHub', {
+      selector: 'a[href="https://github.com/acme/widgets/pull/1/checks"]',
+    });
+    const more = within(text.parentElement as HTMLElement).getByRole('link', {
+      name: 'on GitHub',
+    });
     expect(more.parentElement?.textContent).toBe('100 more checks on GitHub');
     expect(more.getAttribute('href')).toBe('https://github.com/acme/widgets/pull/1/checks');
+    expect(cursors).toEqual([null, '100', '200', '300', '400']);
+    expect(details.value[pr.id]?.detail?.checks).toHaveLength(500);
+    expect(container.querySelectorAll('ul[aria-labelledby="detail-checks"] > li')).toHaveLength(
+      500,
+    );
   });
 
   it('reports a failure with GitHub’s words and loads again on Try again', async () => {
