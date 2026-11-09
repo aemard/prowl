@@ -33,6 +33,13 @@ describe('saveSettings', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('does not start another poll when saving untouched defaults', async () => {
+    const send = polls();
+    await saveSettings((current) => current, { refresh: true });
+    await vi.advanceTimersByTimeAsync(REFRESH_DELAY_MS * 2);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('refreshes once, after the last of several changes', async () => {
     const send = polls();
     await saveSettings({ maxPerSection: 20 }, { refresh: true });

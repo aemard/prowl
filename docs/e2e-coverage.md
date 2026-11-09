@@ -9,7 +9,7 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | **Surface**: MV3, native side panel | `smoke` loads the extension, checks MV3 and `side_panel`; `shell` |
 | **Scope**: authored by default | `poller` (default query), `list` › sections in a bar at the bottom |
 | Scope presets: review requested (direct), mentioned, assigned, custom search | `scope` (every preset and a custom query reach `ProwlSearch`), `settings` › scope |
-| Team review requests: teams discovered with `GET /user/teams`, one search per team, merged; missing `read:org` shown in the section; refresh on request | `teams` (discovery, searches, counts with a hidden draft, badge, axe; missing scope, then `refreshTeams`), `scope` (the team preset reaches `ProwlSearch`) |
+| Team review requests: teams discovered with `GET /user/teams`, one search per team, merged; missing `read:org` shown in the section; refresh on request | `teams` (discovery, searches, counts including a draft, badge, axe; missing scope, then `refreshTeams`), `scope` (the team preset reaches `ProwlSearch`) |
 | Repo include / exclude | `scope` (`user:`/`-repo:` qualifiers and client-side exclusion), `settings` › include and exclude lists |
 | **PR state**: CI rollup, review decision, mergeable/conflicts, draft, labels, last activity, age, unresolved comments | `list` › a card says everything about its pull request, label text is readable; `detail` › why it is blocked |
 | **Notifications**: CI failed | `notifications` › CI going from pending to failed notifies once per commit |
@@ -36,10 +36,27 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Errors, offline, revoked token | `errors` (401, 403 rate limit, 502, refused connection, stale data) |
 | Keyboard and accessibility | `keyboard` (shortcuts, axe light/dark on list, expanded card, settings, shortcuts dialog); axe in every spec |
 | Section bar at the bottom (US-033) | `list` › sections in a bar at the bottom (position, names, arrows / Home / End); fits 320 to 600 px wide panels, with the sections past the fourth under "More" (truncation, menu, selected More, Tab order, axe light/dark); keeps menus, toasts and keyboard focus clear of the bar |
-| Hide PRs with no recent commit (US-034) | `list.visibility` › hides pull requests with no commit for 20 days behind a button at the end (not counted, reveal with the reason, survives Settings, Hide again, axe light/dark); a new number of days in Settings applies at once, and 0 hides nothing |
-| Hide drafts and bot PRs (US-035) | `list.visibility` › hides drafts with a switch in Settings (Draft chip says why, count, reveal with the stale PR under the same button, axe light/dark, off again); hides bot PRs with a switch (Dependabot, one button for every reason: "Bot", "Bot, No commit for 41 d", axe light/dark) |
-| Group PRs by repository (US-036) | `list.visibility` › groups pull requests by repository with its own switch, and folds a group (switch in Settings apart from the sort, headers and counts, fold by keyboard, `j` / `k` across headers and past a folded group, quick filter, hidden PRs stay flat, folds survive Settings, axe light/dark); does not mark the cards of a folded group as seen; `list` › looks right grouped (axe light/dark, `list-grouped` screenshot) |
+| Visibility (replaces US-034 / hiding toggles) | `list.visibility` › old PRs, drafts and bots stay visible; Appearance has no hide controls; no hidden reveal or counts summary |
+| Group PRs by repository (US-036) | `list.visibility` › groups pull requests by repository with its own switch, and folds a group (switch in Settings apart from the sort, headers and counts, fold by keyboard, `j` / `k` across headers and past a folded group, quick filter, folds survive Settings, axe light/dark); does not mark the cards of a folded group as seen; `list` › looks right grouped (axe light/dark, `list-grouped` screenshot) |
+| Reading context and snooze (#50) | `list-context` › reopening restores the section and the folds but not the search; an all-snoozed list uses the approved empty-state copy, opens one fold with focus, shows its end date and restores a PR via Unsnooze (axe); a changed check is unseen without a new `updatedAt` |
 | Performance budget | `performance` › first list render ≤ 150 ms from cache |
 | Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 
 Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time.
+
+## Settings simplification (2026-11-08)
+
+`auth.spec.ts` covers GitHub-first sign-in, token/help disclosure and 320px layout;
+`device-flow.spec.ts` covers denied web permission and device flow recovery. Fixtures wait
+only for visible finite animations before axe (closed disclosures cannot block scans).
+`settings.spec.ts` covers the always-visible refresh interval, cost estimate, loaded limit and notification
+choices surviving the master switch. `coverage.spec.ts` checks Change limit focuses that field.
+`settings.preferences.spec.ts` finds version/shortcut/documentation under Account.
+`teams.spec.ts` reaches the shared inline Edit teams picker from the section header and
+Settings → Sections, checks organization switches, refresh and missing-scope recovery.
+The cap is information, with no section error (unit coverage in `fetchPullRequests.teams.test.ts`
+and `Settings.teams.test.tsx`). `first-run.spec.ts` replaces the deleted wizard spec and covers first-run list/header visibility,
+notifications, the team action and persistent dismissal; no wizard or Account rerun remains.
+Unit tests cover install/update markers, old progress, no-op defaults, immediate team saves,
+cap labels, loading, no teams, singular counts and the single missing read:org notice.
+E2E updated here but not run in this environment.

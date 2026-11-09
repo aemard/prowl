@@ -16,7 +16,7 @@ const failing = node(1, 'Fix the flaky login test', {
 });
 /** Asked of both teams. */
 const shared = node(2, 'Share the button styles', { updatedAt: '2026-10-07T08:00:00Z' });
-/** Asked of acme/web; a draft with failing CI, hidden by `hideDrafts`. */
+/** Asked of acme/web; a visible draft with failing CI. */
 const draft = node(3, 'New page header', {
   isDraft: true,
   updatedAt: '2026-10-07T07:00:00Z',
@@ -32,7 +32,6 @@ const SETTINGS = {
     ...section,
     enabled: section.kind === 'review_requested' || section.kind === 'team_review_requested',
   })),
-  hideDrafts: true,
 };
 
 function serveSearches(github: MockGitHub) {
@@ -103,15 +102,21 @@ test('finds the teams and lists what they are asked to review in Team reviews', 
   expect(snapshot?.teamRequests?.[shared.id]).toEqual(['acme/core', 'acme/web']);
 
   const panel = await openPanel();
-  // The hidden draft is left out of the count, like in any section.
-  await expect(panel.getByRole('tab')).toHaveText(['Review1', 'Teams2']);
+  // Drafts count like every unsnoozed loaded PR.
+  await expect(panel.getByRole('tab')).toHaveText(['Review1', 'Teams3']);
   await expect(panel.getByRole('tab', { name: /^Teams/ })).toHaveAttribute('title', 'Team reviews');
   await panel.getByRole('tab', { name: /^Teams/ }).click();
   await expect(panel.getByRole('tabpanel', { name: 'Team reviews' })).toBeVisible();
-  await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id]);
-  await expect(panel.getByRole('button', { name: 'Show 1 hidden' })).toBeVisible();
-  // The badge counts the team PR with failing CI, not the hidden draft.
-  await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('1');
+  await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id, draft.id]);
+  await expect(panel.getByText('Following 2 teams')).toBeVisible();
+  const choose = panel.getByRole('button', { name: 'Edit teams' });
+  await choose.click();
+  const picker = panel.locator('.team-picker');
+  await expect(picker.getByRole('switch', { name: 'Core' })).toBeChecked();
+  await choose.click();
+  await expect(choose).toBeFocused();
+  // The badge includes the failing draft too.
+  await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('2');
   // Each card says which of the viewer's teams is asked, in the chip and to a screen reader.
   const sharedCard = panel.locator(`[data-pr-id="${shared.id}"]`);
   await expect(sharedCard.getByTitle('Review requested from @acme/core, @acme/web')).toHaveText(
@@ -141,7 +146,8 @@ test('follows and unfollows teams from Settings, which changes the searches', as
   await poll();
 
   const panel = await openPanel('#/settings');
-  const teams = panel.locator('section', { has: panel.getByRole('heading', { name: 'Teams' }) });
+  await panel.getByRole('button', { name: 'Edit teams' }).click();
+  const teams = panel.locator('.team-picker');
   await expect(teams.getByRole('group', { name: 'acme' })).toBeVisible();
   await expect(teams.getByRole('switch', { name: 'Core' })).toBeChecked();
   await expect(teams.getByText(/Checked just now/)).toBeVisible();
@@ -189,23 +195,20 @@ test('explains a missing read:org scope in the section, then finds the teams on 
   expect(before.teams?.error?.kind).toBe('missing_scope');
   expect(before.pollState?.lastError).toBeNull();
   const settings = await openPanel('#/settings');
-  const group = settings.locator('section', {
-    has: settings.getByRole('heading', { name: 'Teams' }),
-  });
+  await settings.getByRole('button', { name: 'Edit teams' }).click();
+  const group = settings.locator('.team-picker');
   await expect(group.getByText(/GitHub would not list your teams/)).toBeVisible();
   await expect(group.getByRole('button', { name: 'Sign in again' })).toBeVisible();
   await settings.close();
 
   const panel = await openPanel();
   await panel.getByRole('tab', { name: /^Teams/ }).click();
-  await expect(
-    panel.getByText(/Could not load “Team reviews”: GitHub would not list your teams/),
-  ).toBeVisible();
+  await expect(panel.getByText(/GitHub would not list your teams/)).toBeVisible();
 
   // The token got the permission on GitHub: a refresh from the panel finds the teams now.
   serveTeams(github);
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'refreshTeams' }));
   await expect(panel.getByText(/Could not load “Team reviews”/)).toHaveCount(0);
-  await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id]);
+  await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id, draft.id]);
   expect((await stored(serviceWorker)).teams?.error).toBeNull();
 });

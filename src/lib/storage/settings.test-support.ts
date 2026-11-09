@@ -7,7 +7,7 @@ export const presets = (overrides: Partial<Record<string, boolean>> = {}): Secti
     id: 'review_requested',
     kind: 'review_requested',
     label: 'Review requested',
-    enabled: overrides.review_requested ?? false,
+    enabled: overrides.review_requested ?? true,
   },
   {
     id: 'team_review_requested',

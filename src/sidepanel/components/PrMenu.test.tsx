@@ -18,6 +18,11 @@ const item = (name: RegExp | string) => screen.getByRole('menuitem', { name });
 const labels = () => screen.getAllByRole('menuitem').map((el) => el.textContent ?? '');
 
 describe('PrMenu', () => {
+  it('does not offer Always show', () => {
+    open();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Always show this PR' })).toBeNull();
+  });
+
   beforeEach(() => {
     auth.value = buildAuth('octocat');
     prLocal.value = { snoozed: {}, muted: {}, seen: {} };

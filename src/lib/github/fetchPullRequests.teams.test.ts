@@ -62,8 +62,8 @@ describe('fetchPullRequests', () => {
       error: { kind: 'missing_scope', message: 'Needs read:org.' },
     };
     it.each([
-      ['no team list', null, /GitHub lists no team for your account/],
-      ['no team', discovered(), /GitHub lists no team for your account/],
+      ['no team list', null, undefined],
+      ['no team', discovered(), undefined],
       ['a failed discovery', missingScope, /^Needs read:org\.$/],
     ])('reports %s without searching', async (_, teams, message) => {
       const { client, calls } = setup({});
@@ -74,11 +74,12 @@ describe('fetchPullRequests', () => {
         teams,
       );
       expect(calls).toEqual([]);
-      expect(result.sectionErrors.team_review_requested).toMatch(message);
-      expect(result.sections).toEqual({});
+      if (message) expect(result.sectionErrors.team_review_requested).toMatch(message);
+      else expect(result.sectionErrors).toEqual({});
+      expect(result.sections).toEqual(message ? {} : { team_review_requested: [] });
     });
 
-    it('asks to follow a team when every team is unfollowed', async () => {
+    it('reports a discovery error when every team is unfollowed', async () => {
       const { client, calls } = setup({});
       const result = await fetchPullRequests(
         client,
@@ -88,7 +89,7 @@ describe('fetchPullRequests', () => {
       );
       expect(calls).toEqual([]);
       expect(result.sectionErrors).toEqual({
-        team_review_requested: 'You follow none of your teams. Follow one in Settings.',
+        team_review_requested: 'Down.',
       });
     });
 
@@ -163,7 +164,7 @@ describe('fetchPullRequests', () => {
       ).rejects.toMatchObject({ kind: 'unauthorized' });
     });
 
-    it(`searches the first ${MAX_TEAM_SEARCHES} followed teams and says how many it skipped`, async () => {
+    it(`searches the first ${MAX_TEAM_SEARCHES} followed teams without treating the cap as an error`, async () => {
       const keys = Array.from({ length: MAX_TEAM_SEARCHES + 2 }, (_, i) => `acme/t${i + 10}`);
       const { client, queries } = setup({ ProwlSearch: bySearch({}) });
       const result = await fetchPullRequests(
@@ -174,9 +175,7 @@ describe('fetchPullRequests', () => {
       );
       expect(queries()).toHaveLength(MAX_TEAM_SEARCHES);
       expect(result.sections).toEqual({ team_review_requested: [] });
-      expect(result.sectionErrors.team_review_requested).toBe(
-        `Partial results: ${MAX_TEAM_SEARCHES} of 12 followed teams searched. Choose teams in Settings.`,
-      );
+      expect(result.sectionErrors).toEqual({});
     });
   });
 });

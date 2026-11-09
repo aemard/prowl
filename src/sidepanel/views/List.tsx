@@ -7,11 +7,12 @@ import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
 import { TextField } from '../components/ui/TextField';
+import { selectSection } from '../state/listContext';
 import { navigate } from '../state/router';
 import { pollState } from '../state/store';
+import { FirstRunNote } from './FirstRunNote';
 import { KINDS, SectionContent } from './ListSections';
 import {
-  activeSectionId,
   filterQuery,
   type LoadedListData,
   pullRequestsOf,
@@ -25,7 +26,6 @@ export {
   filterQuery,
   foldedGroups,
   LIST_RENDERED_MARK,
-  showHidden,
 } from './ListState';
 
 function ListSkeleton() {
@@ -52,6 +52,7 @@ function NoSections() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       <EmptyState
         icon={<InboxIcon size={24} />}
         title="No sections turned on"
@@ -68,6 +69,7 @@ function LoadingList() {
   return (
     <>
       <StatusBanner />
+      <FirstRunNote />
       {failure?.lastError && !failure.inFlight ? (
         <EmptyState
           icon={<AlertIcon size={24} />}
@@ -146,20 +148,21 @@ function LoadedList({
           tabs={tabs}
           selectedId={data.selected.id}
           onSelect={(id) => {
-            activeSectionId.value = id;
+            void selectSection(id);
           }}
           idPrefix={idPrefix}
         />
       )}
       <div id={panelId(idPrefix)} ref={panel} {...panelProps}>
-        <SectionContent data={data} filterInput={filterInput} />
+        <FirstRunNote />
+        <SectionContent key={data.selected.id} data={data} filterInput={filterInput} />
       </div>
     </div>
   );
 }
 
 /** The pull request list: a quick filter, one card per PR and the section bar at the bottom. */
-export function ListView() {
+function ListBody() {
   const data = useListData();
   const idPrefix = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -175,4 +178,8 @@ export function ListView() {
       idPrefix={idPrefix}
     />
   );
+}
+
+export function ListView() {
+  return <ListBody />;
 }

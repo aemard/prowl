@@ -9,6 +9,7 @@ import { StatusBanner } from './components/StatusBanner';
 import { Skeleton } from './components/ui/Skeleton';
 import { ToastRegion } from './components/ui/Toast';
 import { type Route, route } from './state/router';
+import { PR_LIMIT_ID, settingsFocus } from './state/settings';
 import { hydrated, settings } from './state/store';
 import { ListView } from './views/List';
 import { OnboardingView } from './views/Onboarding';
@@ -70,7 +71,8 @@ function Shell() {
   // screen reader users land on what they just opened.
   useEffect(() => {
     if (firstRender.current) firstRender.current = false;
-    else mainRef.current?.focus();
+    else if (settingsFocus.peek() !== 'pr-limit' && document.activeElement?.id !== PR_LIMIT_ID)
+      mainRef.current?.focus();
   }, [current]);
 
   useShortcuts(current === 'list');
@@ -79,7 +81,7 @@ function Shell() {
     <>
       <Header />
       <main ref={mainRef} class="app-main" tabIndex={-1} aria-label={LABELS[current]}>
-        {current !== 'onboarding' && current !== 'list' && <StatusBanner />}
+        {current === 'settings' && <StatusBanner />}
         <View />
       </main>
       <ShortcutsDialog />

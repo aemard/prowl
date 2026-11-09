@@ -1,10 +1,10 @@
-import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import type { Section, Snapshot } from '../../lib/model';
 import { isSeen } from '../../lib/storage/prLocal';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
-import { auth, prLocal, settings, snapshot } from '../state/store';
+import { useCardTransitions } from '../state/cardTransitions';
+import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
 import {
   filterPullRequests,
   groupByRepo,
@@ -13,23 +13,18 @@ import {
   splitSection,
 } from './ListModel';
 
-/**
- * Selected tab, quick filter, whether hidden PRs are revealed and which repository groups are
- * folded (a `foldKey` per section and repository) live outside the view, so they survive a
- * visit to Settings and last until the panel closes. Exported for tests, which reset them.
- */
-export const activeSectionId = signal<string | undefined>(undefined);
-export const filterQuery = signal('');
-export const showHidden = signal(false);
-export const foldedGroups = signal<string[]>([]);
+export {
+  activeSectionId,
+  filterQuery,
+  foldedGroups,
+  foldKey,
+  toggleFolded,
+} from '../state/listContext';
 
-export const foldKey = (sectionId: string, repo: string) => `${sectionId}\n${repo}`;
-export function toggleFolded(key: string) {
-  const folded = foldedGroups.value;
-  foldedGroups.value = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
-}
+import { activityKey } from '../../lib/activity';
+import { activeSectionId, filterQuery, foldedGroups, foldKey } from '../state/listContext';
 
-const NOTHING: SectionParts = { shown: [], hidden: [], snoozed: [] };
+const NOTHING: SectionParts = { shown: [], snoozed: [] };
 export const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
   (snap.sections[sectionId] ?? []).flatMap((id) => snap.pullRequests[id] ?? []);
 
@@ -41,8 +36,8 @@ function currentSnapshot() {
 }
 
 /**
- * Per section, the PRs that pass the filter in the chosen order: cards (counted), hidden ones
- * and snoozed ones, each set aside behind a button at the end.
+ * Per section, the PRs that pass the filter in the chosen order: cards (counted)
+ * and snoozed ones set aside behind one fold at the end.
  */
 function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: string) {
   const current = settings.value;
@@ -69,24 +64,33 @@ function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: str
 export function useListData() {
   const now = useNow(30_000);
   const current = settings.value;
-  const snap = currentSnapshot();
+  const { snap, activityBySection } = useCardTransitions(
+    currentSnapshot(),
+    pollState.value,
+    JSON.stringify([
+      current.sections,
+      current.repoInclude,
+      current.repoExclude,
+      current.unfollowedTeams,
+    ]),
+  );
   const local = prLocal.value;
   const query = filterQuery.value;
   const enabled = current.sections.filter((section) => section.enabled);
   const selected = enabled.find((section) => section.id === activeSectionId.value) ?? enabled[0];
   const parts = sectionParts(enabled, snap, query);
-  const { shown, hidden, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
+  const { shown, snoozed } = (selected && parts.get(selected.id)) || NOTHING;
   // Grouped, only the cards of open groups are rendered: a folded group is not on screen, so its
-  // cards are not marked seen. Hidden and snoozed PRs stay flat, with their repository on the card.
+  // cards are not marked seen. Snoozed PRs stay flat, with their repository on the card.
   const grouped = current.groupByRepo;
   const groups = grouped ? groupByRepo(shown) : [];
   const isFolded = (repo: string) => foldedGroups.value.includes(foldKey(selected?.id ?? '', repo));
   const rendered = grouped
     ? groups.filter(({ repo }) => !isFolded(repo)).flatMap((g) => g.prs)
     : shown;
-  const revealed = showHidden.value ? hidden.map(({ pr }) => pr) : [];
   return {
     now,
+    activity: activityBySection[selected?.id ?? ''] ?? {},
     snap,
     local,
     query,
@@ -94,12 +98,11 @@ export function useListData() {
     selected,
     parts,
     shown,
-    hidden,
     snoozed,
     grouped,
     groups,
     isFolded,
-    seeable: [...rendered, ...revealed],
+    seeable: rendered,
   };
 }
 
@@ -137,9 +140,11 @@ function useMarkSeen(
   list: { current: HTMLElement | null },
   renderedKey: string,
   unseenKey: string,
+  versions: Record<string, string>,
 ) {
   const [onScreen, setOnScreen] = useState<string[]>([]);
   const panelVisible = usePanelVisible();
+  const versionKey = JSON.stringify(versions);
   useEffect(() => {
     const visible = new Set<string>();
     const observer = new IntersectionObserver(
@@ -172,11 +177,18 @@ function useMarkSeen(
     const prIds = onScreen.filter((id) => unseen.has(id));
     if (!panelVisible || prIds.length === 0) return;
     const timer = setTimeout(
-      () => void sendToBackground({ type: 'markSeen', prIds }),
+      () =>
+        void sendToBackground({
+          type: 'markSeen',
+          prIds,
+          versions: Object.fromEntries(
+            Object.entries(versions).filter(([id]) => prIds.includes(id)),
+          ),
+        }),
       SEEN_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [panelVisible, onScreen, unseenKey]);
+  }, [panelVisible, onScreen, unseenKey, versionKey]);
 }
 
 export function useListVisibility(panel: { current: HTMLElement | null }, data: ListData) {
@@ -185,12 +197,16 @@ export function useListVisibility(panel: { current: HTMLElement | null }, data: 
     listRendered = true;
     performance.mark(LIST_RENDERED_MARK);
   });
+  const versions = Object.fromEntries(data.seeable.map((pr) => [pr.id, activityKey(pr)]));
   useMarkSeen(
     panel,
-    [data.enabled.length > 1, ...data.seeable.map((pr) => pr.id)].join('\n'),
+    [data.enabled.length > 1, ...data.seeable.map((pr) => `${pr.id}:${versions[pr.id]}`)].join(
+      '\n',
+    ),
     data.seeable
-      .filter((pr) => !isSeen(data.local, pr.id, pr.updatedAt))
+      .filter((pr) => !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr)))
       .map((pr) => pr.id)
       .join('\n'),
+    versions,
   );
 }

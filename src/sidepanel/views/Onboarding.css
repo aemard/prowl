@@ -18,23 +18,6 @@
   text-wrap: pretty;
 }
 
-/* A rule on both sides of the text. */
-.onboarding__or {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--color-fg-muted);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-}
-
-.onboarding__or::before,
-.onboarding__or::after {
-  content: "";
-  flex: 1;
-  border-top: var(--border-width) solid var(--color-border);
-}
-
 .onboarding__form {
   display: flex;
   flex-direction: column;
@@ -85,4 +68,9 @@
 .onboarding .settings-group {
   padding: var(--space-4) 0 0;
   border-top: var(--border-width) solid var(--color-border-subtle);
+}
+
+/* Author display rules must respect the token-help disclosure. */
+.onboarding__tokens[hidden] {
+  display: none;
 }

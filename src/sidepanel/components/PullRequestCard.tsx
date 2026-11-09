@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import type { PullRequest } from '../../lib/model';
+import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { pollState } from '../state/store';
 import { GitHubLink } from './GitHubLink';
@@ -7,6 +8,7 @@ import { lazy } from './lazy';
 import { CardChips, CardHead, CardMeta } from './PullRequestCardParts';
 import { describePullRequest, pullRequestStatuses } from './prStatus';
 import './PullRequestCard.css';
+import './PullRequestCardMotion.css';
 
 /** The expanded part (checks, reviewers, actions, dialogs) loads with the first expand. */
 const PullRequestDetails = lazy(
@@ -16,6 +18,7 @@ const PullRequestDetails = lazy(
 );
 
 export interface PullRequestCardProps {
+  activity?: ActivityKind;
   pr: PullRequest;
   /** Changed since the user last saw it. */
   unseen: boolean;
@@ -25,8 +28,6 @@ export interface PullRequestCardProps {
   muted?: boolean;
   /** ISO time the snooze ends, when the PR is snoozed. */
   snoozedUntil?: string | null;
-  /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
-  hiddenBecause?: string;
   /** The card sits under its repository's header, so its own row shows only `#number`. */
   grouped?: boolean;
   /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
@@ -74,11 +75,11 @@ function useCardInteractions(id: string) {
  */
 export function PullRequestCard({
   pr,
+  activity,
   unseen,
   now,
   muted,
   snoozedUntil,
-  hiddenBecause,
   grouped,
   teams,
 }: PullRequestCardProps) {
@@ -91,42 +92,48 @@ export function PullRequestCard({
     teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
 
   return (
-    <li class="pr-card" ref={card}>
-      <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
-        {unseen && <span class="pr-card__dot" title="Unseen changes" />}
-        <CardHead
-          pr={pr}
-          now={now}
-          muted={muted}
-          snoozedUntil={snoozedUntil}
-          grouped={grouped}
-          expanded={expanded}
-          detailId={detailId}
-        />
-        <GitHubLink
-          class="pr-card__title"
-          href={pr.url}
-          title={pr.title}
-          aria-label={`${pr.title}, ${pr.repo.nameWithOwner}#${pr.number}`}
-        >
-          {pr.title}
-        </GitHubLink>
-        <CardChips
-          statuses={statuses}
-          refreshingMerge={refreshingMerge}
-          hiddenBecause={hiddenBecause}
-          teams={teams}
-          teamRequest={teamRequest}
-        />
-        <CardMeta pr={pr} now={now} />
-        <span id={`${detailId}-facts`} hidden>
-          {describePullRequest(pr, statuses, unseen, now)}
-          {refreshingMerge && `. Updating merge status`}
-          {teamRequest && `. ${teamRequest}`}
-          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
-        </span>
+    <li
+      class="pr-card"
+      ref={card}
+      data-activity={activity}
+      inert={activity !== undefined && activity !== 'new'}
+    >
+      <div class="pr-card__body">
+        <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
+          {unseen && <span class="pr-card__dot" title="Unseen changes" />}
+          <CardHead
+            pr={pr}
+            activity={activity}
+            now={now}
+            muted={muted}
+            snoozedUntil={snoozedUntil}
+            grouped={grouped}
+            expanded={expanded}
+            detailId={detailId}
+          />
+          <GitHubLink
+            class="pr-card__title"
+            href={pr.url}
+            title={pr.title}
+            aria-label={`${pr.title}, ${pr.repo.nameWithOwner}#${pr.number}`}
+          >
+            {pr.title}
+          </GitHubLink>
+          <CardChips
+            statuses={statuses}
+            refreshingMerge={refreshingMerge}
+            teams={teams}
+            teamRequest={teamRequest}
+          />
+          <CardMeta pr={pr} now={now} />
+          <span id={`${detailId}-facts`} hidden>
+            {describePullRequest(pr, statuses, unseen, now)}
+            {refreshingMerge && `. Updating merge status`}
+            {teamRequest && `. ${teamRequest}`}
+          </span>
+        </div>
+        {expanded && <PullRequestDetails pr={pr} id={detailId} />}
       </div>
-      {expanded && <PullRequestDetails pr={pr} id={detailId} />}
     </li>
   );
 }
