@@ -73,9 +73,6 @@
   "githubDidNotConfirmTheMerge": {
     "message": "GitHub がマージを確認できませんでした。"
   },
-  "noFailedChecksToReRun": {
-    "message": "再実行する失敗したチェックがありません。"
-  },
   "somethingWentWrong": {
     "message": "問題が発生しました。"
   },
@@ -2417,5 +2414,8 @@
   },
   "languageHint": {
     "message": "変更はすぐに反映されます。翻訳がない場合は英語で表示されます。"
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "ここで再実行できる失敗したチェック実行はありません。その他のチェックは GitHub か、報告元のサービスで再実行してください。"
   }
 }

@@ -73,9 +73,6 @@
   "githubDidNotConfirmTheMerge": {
     "message": "GitHub 未确认此次合并。"
   },
-  "noFailedChecksToReRun": {
-    "message": "没有可重新运行的失败检查。"
-  },
   "somethingWentWrong": {
     "message": "出了点问题。"
   },
@@ -2417,5 +2414,8 @@
   },
   "languageHint": {
     "message": "更改立即生效。没有可用翻译时使用英语。"
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "这里没有可重新运行的失败检查。请在 GitHub 或报告这些检查的服务上重新运行其他检查。"
   }
 }

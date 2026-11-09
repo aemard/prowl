@@ -88,10 +88,6 @@
     "message": "GitHub did not confirm the merge.",
     "description": "Extension text: GitHub did not confirm the merge."
   },
-  "noFailedChecksToReRun": {
-    "message": "No failed checks to re-run.",
-    "description": "Extension text: No failed checks to re-run."
-  },
   "somethingWentWrong": {
     "message": "Something went wrong.",
     "description": "Extension text: Something went wrong."
@@ -2844,5 +2840,9 @@
   },
   "languageHint": {
     "message": "Changes apply immediately. English is used if a translation is unavailable."
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.",
+    "description": "Error when only commit statuses or non-rerunnable suites failed."
   }
 }

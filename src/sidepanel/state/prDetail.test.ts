@@ -133,6 +133,48 @@ describe('loadDetail', () => {
     expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('run-1');
   });
 
+  it.each([
+    ['B then A', false, 'ghp_other'],
+    ['A then B', true, 'ghp_other'],
+    ['B then A', false, 'ghp_test'],
+    ['A then B', true, 'ghp_test'],
+  ])(
+    'drops old auth responses in order %s (old first: %s) after signing in with token %s',
+    async (_, oldFirst, token) => {
+      const releases: (() => void)[] = [];
+      stubDetailFetch(
+        () =>
+          new Promise((resolve) => {
+            const name = releases.length === 0 ? 'account-A' : 'account-B';
+            releases.push(() => resolve(detailNode({ checks: [checkRunNode(name)] })));
+          }),
+      );
+      const first = loadDetail(pr);
+      auth.value = undefined;
+      auth.value = { ...buildAuth(), token };
+      const second = loadDetail(pr);
+      const pending = details.value[pr.id];
+
+      if (oldFirst) {
+        releases[0]?.();
+        await first;
+        expect(details.value[pr.id]).toBe(pending);
+        expect(details.value[pr.id]).toMatchObject({ loading: true });
+        expect(details.value[pr.id]?.detail).toBeUndefined();
+      }
+      releases[1]?.();
+      await second;
+      const completed = details.value[pr.id];
+      expect(completed).toMatchObject({ loading: false });
+      expect(completed?.detail?.checks[0]?.name).toBe('account-B');
+      if (!oldFirst) {
+        releases[0]?.();
+        await first;
+        expect(details.value[pr.id]).toBe(completed);
+      }
+    },
+  );
+
   it('keeps GitHub’s message on a failure and tries again on the next load', async () => {
     stubDetailFetch(() => jsonResponse({ message: 'Bad credentials' }, { status: 401 }));
     await loadDetail(pr);

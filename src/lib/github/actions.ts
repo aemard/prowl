@@ -188,6 +188,9 @@ interface FailedSuitesData {
   } | null;
 }
 
+/** Bound the read to 250 suites; incomplete reads never start partial restarts. */
+const MAX_SUITE_PAGES = 5;
+
 /** Suite conclusions worth a re-run. Cancelled and skipped suites are left alone. */
 const RERUNNABLE = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE']);
 
@@ -222,7 +225,7 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
     }
     if (!suites?.pageInfo?.hasNextPage) break;
     const cursor: string | null = suites.pageInfo.endCursor;
-    if (page >= 4 || !cursor || cursors.has(cursor)) {
+    if (page + 1 >= MAX_SUITE_PAGES || !cursor || cursors.has(cursor)) {
       throw new GitHubError('validation', t('notAllCheckSuitesCouldBeLoaded'));
     }
     cursors.add(cursor);
@@ -231,21 +234,31 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
       after: cursor,
     }));
   }
-  if (paths.size === 0) throw new GitHubError('validation', t('noFailedChecksToReRun'));
-
-  const results = await Promise.allSettled([...paths].map((path) => client.rest('POST', path)));
-  const failure = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
-  if (failure) {
-    const reason =
-      failure.reason instanceof GitHubError
-        ? failure.reason
-        : new GitHubError('server', t('somethingWentWrong'));
-    const worked = results.length - results.filter((r) => r.status === 'rejected').length;
-    throw worked === 0
-      ? reason
-      : new GitHubError(reason.kind, t('reRanOf', worked, results.length, reason.message));
+  if (paths.size === 0) {
+    throw new GitHubError('validation', t('noFailedCheckRunsToReRunHere'));
   }
-  return paths.size;
+  return restartChecks(client, paths);
+}
+
+/** Send one request at a time, retaining the first failure and the partial-success count. */
+async function restartChecks(client: GitHubClient, paths: Set<string>): Promise<number> {
+  let worked = 0;
+  let failure: GitHubError | undefined;
+  for (const path of paths) {
+    try {
+      await client.rest('POST', path);
+      worked++;
+    } catch (error) {
+      failure ??=
+        error instanceof GitHubError ? error : new GitHubError('server', t('somethingWentWrong'));
+    }
+  }
+  if (failure) {
+    throw worked === 0
+      ? failure
+      : new GitHubError(failure.kind, t('reRanOf', worked, paths.size, failure.message));
+  }
+  return worked;
 }
 
 export const MARK_READY_MUTATION = /* GraphQL */ `

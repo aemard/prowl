@@ -73,9 +73,6 @@
   "githubDidNotConfirmTheMerge": {
     "message": "GitHub hat den Merge nicht bestätigt."
   },
-  "noFailedChecksToReRun": {
-    "message": "Keine fehlgeschlagenen Prüfungen zum erneuten Ausführen."
-  },
   "somethingWentWrong": {
     "message": "Etwas ist schiefgelaufen."
   },
@@ -2417,5 +2414,8 @@
   },
   "languageHint": {
     "message": "Änderungen werden sofort übernommen. Fehlt eine Übersetzung, wird Englisch verwendet."
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "Keine fehlgeschlagenen Check-Runs zum erneuten Ausführen. Starte andere Checks auf GitHub oder bei dem Dienst neu, der sie gemeldet hat."
   }
 }

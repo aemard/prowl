@@ -73,9 +73,6 @@
   "githubDidNotConfirmTheMerge": {
     "message": "GitHub no ha confirmado la fusión."
   },
-  "noFailedChecksToReRun": {
-    "message": "No hay comprobaciones fallidas que repetir."
-  },
   "somethingWentWrong": {
     "message": "Se ha producido un error."
   },
@@ -2417,5 +2414,8 @@
   },
   "languageHint": {
     "message": "Los cambios se aplican de inmediato. Si falta una traducción, se usa el inglés."
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "No hay ejecuciones de comprobaciones fallidas que volver a ejecutar aquí. Vuelve a ejecutar las demás comprobaciones en GitHub o en el servicio que las informó."
   }
 }
