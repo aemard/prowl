@@ -1,3 +1,4 @@
+import { countMessage, formatNumber, t, uiLocale } from '../../lib/i18n';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { formatSnoozeEnd } from '../../lib/time/snooze';
 import { toggleExpanded } from '../state/prDetail';
@@ -48,7 +49,6 @@ type CardHeadProps = Pick<
 type Statuses = ReturnType<typeof pullRequestStatuses>;
 /** Labels shown on a card; the rest collapse into "+N". */
 const MAX_LABELS = 3;
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 export function CardHead({
   pr,
@@ -63,7 +63,7 @@ export function CardHead({
 }: CardHeadProps) {
   return (
     <span class="pr-card__head">
-      {unseen && <span class="pr-card__dot" title="Unseen changes" />}
+      {unseen && <span class="pr-card__dot" title={t('unseenChanges')} />}
       <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
       <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
         {!grouped && <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>}
@@ -75,7 +75,7 @@ export function CardHead({
       <IconButton
         class="pr-card__toggle"
         size="sm"
-        label={`Details for ${pr.title}`}
+        label={t('detailsFor', pr.title)}
         aria-expanded={expanded}
         aria-controls={expanded ? detailId : undefined}
         aria-describedby={`${detailId}-facts`}
@@ -88,9 +88,24 @@ export function CardHead({
 }
 
 const ACTIVITY = {
-  new: { Icon: GitPullRequestIcon, label: 'Just opened' },
-  merged: { Icon: GitMergeIcon, label: 'Merged' },
-  closed: { Icon: GitPullRequestClosedIcon, label: 'Closed' },
+  new: {
+    Icon: GitPullRequestIcon,
+    get label() {
+      return t('justOpened');
+    },
+  },
+  merged: {
+    Icon: GitMergeIcon,
+    get label() {
+      return t('merged');
+    },
+  },
+  closed: {
+    Icon: GitPullRequestClosedIcon,
+    get label() {
+      return t('closed');
+    },
+  },
 };
 
 function CardUpdate({ pr, now, activity }: Pick<CardHeadProps, 'pr' | 'now' | 'activity'>) {
@@ -107,7 +122,7 @@ function CardUpdate({ pr, now, activity }: Pick<CardHeadProps, 'pr' | 'now' | 'a
     <time
       class="pr-card__updated"
       dateTime={pr.updatedAt}
-      title={`Last activity ${new Date(pr.updatedAt).toLocaleString()}`}
+      title={t('lastActivity', new Date(pr.updatedAt).toLocaleString(uiLocale()))}
     >
       {formatRelativeTime(pr.updatedAt, now)}
     </time>
@@ -122,18 +137,18 @@ function CardFlags({
   return (
     <>
       {muted && (
-        <span class="pr-card__flag" title="Notifications muted">
+        <span class="pr-card__flag" title={t('notificationsMuted')}>
           <BellSlashIcon size={12} />
-          <span class="sr-only">Notifications muted</span>
+          <span class="sr-only">{t('notificationsMuted')}</span>
         </span>
       )}
       {snoozedUntil && (
         <span
           class="pr-card__flag"
-          title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
+          title={t('snoozedUntil', new Date(snoozedUntil).toLocaleString(uiLocale()))}
         >
           <ClockIcon size={12} />
-          Snoozed until {formatSnoozeEnd(snoozedUntil, now)}
+          {t('snoozedUntil', formatSnoozeEnd(snoozedUntil, now))}
         </span>
       )}
     </>
@@ -158,9 +173,9 @@ export function CardChips({
         <Badge
           variant="plain"
           icon={<SyncIcon size={12} />}
-          title="Checking the latest merge status on GitHub"
+          title={t('checkingTheLatestMergeStatusOnGithub')}
         >
-          Updating merge status
+          {t('updatingMergeStatus')}
         </Badge>
       )}
       {teamRequest && (
@@ -211,7 +226,7 @@ function CardLabels({ pr }: Pick<PullRequestCardProps, 'pr'>) {
           ))}
           {hidden.length > 0 && (
             <span class="pr-label pr-label--more" title={hidden.map((l) => l.name).join(', ')}>
-              +{hidden.length}
+              +{formatNumber(hidden.length)}
             </span>
           )}
         </span>
@@ -228,22 +243,31 @@ function CardFooter({ pr, now }: Pick<PullRequestCardProps, 'pr' | 'now'>) {
   return (
     <span class="pr-card__foot">
       {pr.commentCount > 0 && (
-        <span class="pr-card__stat" title={plural(pr.commentCount, 'comment')}>
+        <span
+          class="pr-card__stat"
+          title={countMessage(pr.commentCount, 'commentCountOne', 'commentCountOther')}
+        >
           <CommentIcon size={12} />
-          {pr.commentCount}
+          {formatNumber(pr.commentCount)}
         </span>
       )}
       {pr.unresolvedThreads > 0 && (
-        <span class="pr-card__stat" title={plural(pr.unresolvedThreads, 'unresolved thread')}>
+        <span
+          class="pr-card__stat"
+          title={countMessage(pr.unresolvedThreads, 'unresolvedCountOne', 'unresolvedCountOther')}
+        >
           <CommentDiscussionIcon size={12} />
-          {pr.unresolvedThreads} unresolved
+          {t('unresolved2', pr.unresolvedThreads)}
         </span>
       )}
-      <span class="pr-card__age" title={by ? `Opened by ${by}` : undefined}>
-        <time dateTime={pr.createdAt} title={`Opened ${new Date(pr.createdAt).toLocaleString()}`}>
-          Opened {formatRelativeTime(pr.createdAt, now)}
+      <span class="pr-card__age" title={by ? t('openedBy', by) : undefined}>
+        <time
+          dateTime={pr.createdAt}
+          title={t('opened', new Date(pr.createdAt).toLocaleString(uiLocale()))}
+        >
+          {t('opened', formatRelativeTime(pr.createdAt, now))}
         </time>
-        {by && ` by ${by}`}
+        {by && t('by2', by)}
       </span>
     </span>
   );

@@ -3,19 +3,64 @@
  * `useShortcuts` in components/Shortcuts.tsx performs it.
  */
 import { signal } from '@preact/signals';
+import { t } from '../../lib/i18n';
 import { sendToBackground } from './background';
 
 export type Shortcut = 'next' | 'previous' | 'open' | 'refresh' | 'filter' | 'help';
 
 export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
-  { keys: ['j', '↓'], action: 'Next pull request' },
-  { keys: ['k', '↑'], action: 'Previous pull request' },
-  { keys: ['Enter', 'Space'], action: 'Expand or collapse the focused pull request' },
-  { keys: ['o'], action: 'Open the focused pull request on GitHub' },
-  { keys: ['r'], action: 'Refresh now' },
-  { keys: ['/'], action: 'Filter pull requests' },
-  { keys: ['?'], action: 'Show keyboard shortcuts' },
-  { keys: ['Esc'], action: 'Close a dialog or menu, collapse a pull request' },
+  {
+    keys: ['j', '↓'],
+    get action() {
+      return t('nextPullRequest');
+    },
+  },
+  {
+    keys: ['k', '↑'],
+    get action() {
+      return t('previousPullRequest');
+    },
+  },
+  {
+    get keys() {
+      return [t('keyEnter'), t('keySpace')];
+    },
+    get action() {
+      return t('expandOrCollapseTheFocusedPullRequest');
+    },
+  },
+  {
+    keys: ['o'],
+    get action() {
+      return t('openTheFocusedPullRequestOnGithub');
+    },
+  },
+  {
+    keys: ['r'],
+    get action() {
+      return t('refreshNow');
+    },
+  },
+  {
+    keys: ['/'],
+    get action() {
+      return t('filterPullRequests');
+    },
+  },
+  {
+    keys: ['?'],
+    get action() {
+      return t('showKeyboardShortcuts');
+    },
+  },
+  {
+    get keys() {
+      return [t('keyEscape')];
+    },
+    get action() {
+      return t('closeADialogOrMenuCollapseAPullRequest');
+    },
+  },
 ];
 
 interface KeyLike {

@@ -8,6 +8,7 @@ import { env } from '../../lib/env';
 import { createGitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
 import { fetchPullRequestDetail } from '../../lib/github/fetchPullRequestDetail';
+import { t } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { auth } from './store';
 
@@ -90,7 +91,7 @@ export async function loadDetail(pr: PullRequest): Promise<void> {
   ).then(
     (detail) => ({ detail }),
     (error: unknown) => ({
-      error: error instanceof GitHubError ? error.message : 'Could not load the details.',
+      error: error instanceof GitHubError ? error.message : t('couldNotLoadTheDetails'),
     }),
   );
   if (auth.value === session && details.value[pr.id] === request) {

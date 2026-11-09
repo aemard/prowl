@@ -3,7 +3,9 @@ import { useId, useRef, useState } from 'preact/hooks';
 import { env } from '../../lib/env';
 import { AUTH_DOCS_URL } from '../../lib/github/auth/deviceFlow';
 import { signInErrorMessage, TOKEN_URLS, validatePat } from '../../lib/github/auth/pat';
+import { t } from '../../lib/i18n';
 import { LinkExternalIcon } from '../components/icons';
+import { Message } from '../components/Message';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -69,8 +71,8 @@ export function OnboardingView() {
     <div class="onboarding">
       <EmptyState
         class="onboarding__intro"
-        title="See your pull requests here"
-        description="Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub."
+        title={t('seeYourPullRequestsHere')}
+        description={t('approveProwlOnGitHubYourTokenStaysInThisBrowser')}
       />
 
       {deviceFlow ? (
@@ -82,60 +84,53 @@ export function OnboardingView() {
             aria-controls={patId}
             onClick={() => setPatOpen(!patOpen)}
           >
-            Use a personal access token
+            {t('useAPersonalAccessToken')}
           </Button>
         </>
       ) : (
         <p class="onboarding__unavailable">
-          Signing in from the browser is not available in this build.{' '}
-          <GitHubLink href={AUTH_DOCS_URL}>How to sign in with a token</GitHubLink>
+          {t('signingInFromTheBrowserIsNotAvailableIn')}{' '}
+          <GitHubLink href={AUTH_DOCS_URL}>{t('howToSignInWithAToken')}</GitHubLink>
         </p>
       )}
 
       <div id={patId} hidden={!patOpen}>
         <form class="onboarding__form" onSubmit={submit} noValidate>
           <TextField
-            label="Personal access token"
+            label={t('personalAccessToken')}
             type="password"
             value={token}
             onValueChange={setToken}
             error={error}
-            placeholder="ghp_… or github_pat_…"
+            placeholder={t('tokenPlaceholder')}
             autoComplete="off"
             spellcheck={false}
             inputRef={input}
           />
           <Button type="submit" variant={deviceFlow ? 'secondary' : 'primary'} loading={busy}>
-            Sign in
+            {t('signIn')}
           </Button>
         </form>
 
-        <section class="onboarding__tokens" aria-label="Create a token">
+        <section class="onboarding__tokens" aria-label={t('createAToken')}>
           <article class="onboarding__card">
             <header class="onboarding__card-header">
-              <h3 class="onboarding__card-title">Classic token</h3>
-              <Badge tone="success">Recommended</Badge>
+              <h3 class="onboarding__card-title">{t('classicToken')}</h3>
+              <Badge tone="success">{t('recommended')}</Badge>
             </header>
             <p>
-              Sees every repository you can access, with full CI status. It needs the{' '}
-              <code>repo</code> scope, and <code>read:org</code> to find your teams’ review
-              requests; the link selects both for you.
+              <Message id="classicTokenHelp" values={[<code>repo</code>, <code>read:org</code>]} />
             </p>
-            <GitHubLink href={TOKEN_URLS.classic}>Create a classic token</GitHubLink>
+            <GitHubLink href={TOKEN_URLS.classic}>{t('createAClassicToken')}</GitHubLink>
           </article>
 
           <article class="onboarding__card">
             <header class="onboarding__card-header">
-              <h3 class="onboarding__card-title">Fine-grained token</h3>
-              <Badge tone="attention">Limited</Badge>
+              <h3 class="onboarding__card-title">{t('fineGrainedToken')}</h3>
+              <Badge tone="attention">{t('limited')}</Badge>
             </header>
-            <p>
-              Covers one account or organization and the repositories you pick. Grant Pull requests,
-              Contents and Actions (read and write, to approve, merge and re-run checks) and Commit
-              statuses (read), plus Members (read) on an organization to find its teams. GitHub does
-              not offer the Checks permission to fine-grained tokens, so CI status can be missing.
-            </p>
-            <GitHubLink href={TOKEN_URLS.fineGrained}>Create a fine-grained token</GitHubLink>
+            <p>{t('coversOneAccountOrOrganizationAndTheRepositoriesYou')}</p>
+            <GitHubLink href={TOKEN_URLS.fineGrained}>{t('createAFineGrainedToken')}</GitHubLink>
           </article>
         </section>
       </div>

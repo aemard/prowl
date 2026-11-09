@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * One poll's worth of GitHub reads: every enabled section's search, the merge facts of the PRs
  * that left all sections, then merge facts of the PRs that changed. Requests run one after another, as GitHub asks of clients
@@ -80,8 +81,7 @@ export async function fetchPullRequests(
     priorityIds,
     partialErrors: context.partialErrors,
     reportPartial: (id, messages) => {
-      result.sectionErrors[id] =
-        `Some merge requirements could not be read: ${context.problemText(messages)}`;
+      result.sectionErrors[id] = t('mergeRequirementsUnreadable', context.problemText(messages));
       context.coverageFor(id, {
         hasMore: false,
         queries: [],

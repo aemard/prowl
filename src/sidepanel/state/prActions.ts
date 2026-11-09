@@ -8,6 +8,7 @@ import { signal } from '@preact/signals';
 import { env } from '../../lib/env';
 import { createGitHubClient, type GitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
@@ -41,14 +42,14 @@ export async function runPrAction(
   try {
     await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
     if (auth.value !== session) return false;
-    showToast({ message: `${done} ${prRef(pr)}`, tone: 'success' });
+    showToast({ message: t('message2', done, prRef(pr)), tone: 'success' });
     void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
     return true;
   } catch (error) {
     if (auth.value !== session) return false;
-    const reason = error instanceof GitHubError ? error.message : 'Something went wrong.';
+    const reason = error instanceof GitHubError ? error.message : t('somethingWentWrong');
     if (onError) onError(reason);
-    else showToast({ message: `${name} failed: ${reason}`, tone: 'danger' });
+    else showToast({ message: t('failed3', name, reason), tone: 'danger' });
     return false;
   } finally {
     const { [pr.id]: _finished, ...others } = pendingActions.value;

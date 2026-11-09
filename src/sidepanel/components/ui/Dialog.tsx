@@ -1,5 +1,6 @@
 import type { ComponentChildren, RefObject, TargetedKeyboardEvent } from 'preact';
 import { useId, useLayoutEffect, useRef } from 'preact/hooks';
+import { t } from '../../../lib/i18n';
 import { XIcon } from '../icons';
 import { cx, focusableIn } from './cx';
 import { IconButton } from './IconButton';
@@ -92,7 +93,7 @@ function DialogContent({
         <h2 id={titleId} class="ui-dialog__title">
           {title}
         </h2>
-        <IconButton label="Close" size="sm" class="ui-dialog__close" onClick={onClose}>
+        <IconButton label={t('close')} size="sm" class="ui-dialog__close" onClick={onClose}>
           <XIcon />
         </IconButton>
       </div>

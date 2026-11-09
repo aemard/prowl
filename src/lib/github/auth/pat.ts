@@ -4,6 +4,7 @@
  * except the `AuthState` itself (the client masks it in GitHub's messages).
  */
 import { env } from '../../env';
+import { t } from '../../i18n';
 import type { AuthState, Viewer } from '../../model';
 import { createGitHubClient, type FetchLike } from '../client';
 import { GitHubError } from '../errors';
@@ -50,13 +51,6 @@ function parseScopes(header: string | null): string[] | null {
         .filter(Boolean);
 }
 
-const NO_REPO_SCOPE =
-  'This token has no repo scope, so Prowl can only see public repositories. Create a token with the repo scope to follow private ones.';
-const NO_READ_ORG_SCOPE =
-  'Without the read:org scope, Team reviews may not find your teams: add it to follow the pull requests your teams are asked to review.';
-const NO_CHECKS_PERMISSION =
-  'GitHub does not offer the Checks permission to fine-grained tokens, so CI status can be missing. A classic token with the repo scope shows it in full.';
-
 const EXPIRATION = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (UTC|[+-]\d{2}:?\d{2})$/;
 
 /**
@@ -75,11 +69,11 @@ export function parseTokenExpiration(header: string | null): string | null | und
 
 /** Why the token works but not fully; null when nothing is known to be missing. */
 function warningFor(tokenType: TokenType, scopes: string[] | null): string | null {
-  if (tokenType === 'fine_grained') return NO_CHECKS_PERMISSION;
+  if (tokenType === 'fine_grained') return t('githubDoesNotOfferTheChecksPermissionToFine');
   if (scopes === null) return null;
   const warnings = [
-    scopes.includes('repo') ? '' : NO_REPO_SCOPE,
-    hasReadOrg(scopes) ? '' : NO_READ_ORG_SCOPE,
+    scopes.includes('repo') ? '' : t('noRepoScope'),
+    hasReadOrg(scopes) ? '' : t('withoutTheReadOrgScopeTeamReviewsMayNot'),
   ];
   return warnings.filter(Boolean).join(' ') || null;
 }
@@ -87,7 +81,7 @@ function warningFor(tokenType: TokenType, scopes: string[] | null): string | nul
 function toViewer(node: unknown): Viewer {
   const { login, avatarUrl, name } = (node ?? {}) as Record<string, unknown>;
   if (typeof login !== 'string' || typeof avatarUrl !== 'string') {
-    throw new GitHubError('server', 'GitHub returned an unexpected response.');
+    throw new GitHubError('server', t('githubReturnedAnUnexpectedResponse'));
   }
   return { login, avatarUrl, name: typeof name === 'string' ? name : null };
 }
@@ -109,12 +103,9 @@ export async function validatePat(
   { apiUrl = env.apiUrl, fetch }: { apiUrl?: string; fetch?: FetchLike } = {},
 ): Promise<PatValidation> {
   const trimmed = token.trim();
-  if (trimmed === '') throw new GitHubError('validation', 'Paste a token to sign in.');
+  if (trimmed === '') throw new GitHubError('validation', t('pasteATokenToSignIn'));
   if (!TOKEN_SHAPE.test(trimmed)) {
-    throw new GitHubError(
-      'validation',
-      'That does not look like a GitHub token. Copy it again, without spaces or quotes.',
-    );
+    throw new GitHubError('validation', t('thatDoesNotLookLikeAGithubTokenCopy'));
   }
 
   const client = createGitHubClient({ token: trimmed, apiUrl, fetch });
@@ -144,21 +135,21 @@ export async function validatePat(
 
 /** What to tell the user when `validatePat` throws. Never contains the token. */
 export function signInErrorMessage(error: unknown): string {
-  if (!(error instanceof GitHubError)) return 'Could not sign in. Try again.';
+  if (!(error instanceof GitHubError)) return t('couldNotSignInTryAgain');
   switch (error.kind) {
     case 'validation':
       return error.message;
     case 'unauthorized':
-      return 'GitHub rejected this token. Check that you copied all of it and that it has not expired or been revoked.';
+      return t('githubRejectedThisTokenCheckThatYouCopiedAll');
     case 'forbidden':
-      return `GitHub refused this token: ${error.message}`;
+      return t('githubRefusedThisToken', error.message);
     case 'rate_limited':
-      return 'GitHub rate limit reached. Try again in a minute.';
+      return t('githubRateLimitReachedTryAgainInAMinute');
     case 'network':
-      return 'Could not reach GitHub. Check your connection and try again.';
+      return t('couldNotReachGithubCheckYourConnectionAndTry');
     case 'server':
-      return 'GitHub is having trouble right now. Try again in a moment.';
+      return t('githubIsHavingTroubleRightNowTryAgainIn');
     default:
-      return `GitHub returned an error: ${error.message}`;
+      return t('githubErrorDetail', error.message);
   }
 }

@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * GitHub GraphQL nodes -> `PullRequest` of `src/lib/model.ts`. The only place that reads raw
  * PR JSON. Enum values GitHub may add later map to safe defaults instead of leaking through.
@@ -312,7 +313,7 @@ export function mapPullRequestDetail(
   const warnings = limitedConnections({
     reviews: node.latestReviews,
     'review requests': node.reviewRequests,
-  }).map((name) => `Some ${name} are not loaded. View the full conversation on GitHub.`);
+  }).map((name) => t(name === 'reviews' ? 'reviewsNotLoaded' : 'reviewRequestsNotLoaded'));
   const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
     const mapped = pick(REVIEW_STATES, state, null);
     return mapped

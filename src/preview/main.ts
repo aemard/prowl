@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n';
 import type { AuthState } from '../lib/model';
 import { installFakeChrome } from '../test/chrome';
 import { installMockApi } from './mockApi';
@@ -5,6 +6,12 @@ import './preview.css';
 
 async function start() {
   const fake = installFakeChrome();
+  document.title = t('previewTitle');
+  const banner = document.getElementById('preview-banner');
+  if (banner) {
+    banner.setAttribute('aria-label', t('previewMode'));
+    banner.textContent = t('previewBanner');
+  }
   installMockApi();
   fake.runtime.getURL = (path) => new URL(path, location.origin).href;
   fake.tabs.create = async (props) => {

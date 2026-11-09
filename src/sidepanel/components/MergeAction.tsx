@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
+import { t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
@@ -16,14 +17,16 @@ import { TextField } from './ui/TextField';
 import './MergeAction.css';
 
 const METHODS: Record<MergeMethod, string> = {
-  merge: 'Create a merge commit',
-  squash: 'Squash and merge',
-  rebase: 'Rebase and merge',
+  get merge() {
+    return t('createAMergeCommit');
+  },
+  get squash() {
+    return t('squashAndMerge');
+  },
+  get rebase() {
+    return t('rebaseAndMerge');
+  },
 };
-
-const MERGE = 'Merge';
-const ENABLE_AUTO_MERGE = 'Enable auto-merge';
-const DISABLE_AUTO_MERGE = 'Turn off auto-merge';
 
 function useMergeControls(pr: PullRequest) {
   const [confirming, setConfirming] = useState(false);
@@ -33,7 +36,7 @@ function useMergeControls(pr: PullRequest) {
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async (method: MergeMethod) => {
-    const merged = await runPrAction(pr, MERGE, 'Merged', (client) =>
+    const merged = await runPrAction(pr, t('merge'), t('merged'), (client) =>
       mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title }),
     );
     setConfirming(false);
@@ -41,7 +44,7 @@ function useMergeControls(pr: PullRequest) {
     else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
-    const enabled = await runPrAction(pr, ENABLE_AUTO_MERGE, 'Auto-merge is on for', (client) =>
+    const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>
       setAutoMerge(client, pr.id, method, pr.headSha, title),
     );
     setConfirming(false);
@@ -109,7 +112,9 @@ export function MergeAction({ pr, placement = 'all' }: { pr: PullRequest; placem
     [controls.picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
   if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
   if (!method)
-    return placement === 'auto' ? null : <GitHubLink href={pr.url}>Merge on GitHub</GitHubLink>;
+    return placement === 'auto' ? null : (
+      <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
+    );
   return (
     <>
       <MergeButtons pr={pr} controls={controls} placement={placement} />
@@ -133,7 +138,7 @@ function MergeButtons({
   const { pending, setConfirming } = controls;
   const ref = prRef(pr);
   const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  const label = canMerge ? (ready ? MERGE : 'Merge without waiting') : ENABLE_AUTO_MERGE;
+  const label = canMerge ? (ready ? t('merge') : t('mergeWithoutWaiting')) : t('enableAutoMerge');
   return (
     <>
       {(canMerge || offerAutoMerge) && (
@@ -141,9 +146,11 @@ function MergeButtons({
           size="sm"
           variant={ready ? 'primary' : 'secondary'}
           icon={<GitMergeIcon size={12} />}
-          aria-label={`${label} ${ref}`}
-          loading={pending === (canMerge ? MERGE : ENABLE_AUTO_MERGE)}
-          disabled={pending !== undefined && pending !== (canMerge ? MERGE : ENABLE_AUTO_MERGE)}
+          aria-label={t('message2', label, ref)}
+          loading={pending === (canMerge ? t('merge') : t('enableAutoMerge'))}
+          disabled={
+            pending !== undefined && pending !== (canMerge ? t('merge') : t('enableAutoMerge'))
+          }
           onClick={() => setConfirming(true)}
         >
           {label}
@@ -152,16 +159,16 @@ function MergeButtons({
       {placement !== 'merge' && pr.autoMerge && pr.viewerCanDisableAutoMerge === true && (
         <Button
           size="sm"
-          aria-label={`${DISABLE_AUTO_MERGE} of ${ref}`}
-          loading={pending === DISABLE_AUTO_MERGE}
-          disabled={pending !== undefined && pending !== DISABLE_AUTO_MERGE}
+          aria-label={t('of', t('turnOffAutoMerge'), ref)}
+          loading={pending === t('turnOffAutoMerge')}
+          disabled={pending !== undefined && pending !== t('turnOffAutoMerge')}
           onClick={() =>
-            void runPrAction(pr, DISABLE_AUTO_MERGE, 'Auto-merge is off for', (client) =>
+            void runPrAction(pr, t('turnOffAutoMerge'), t('autoMergeIsOffFor'), (client) =>
               setAutoMerge(client, pr.id, null, pr.headSha),
             )
           }
         >
-          {DISABLE_AUTO_MERGE}
+          {t('turnOffAutoMerge')}
         </Button>
       )}
     </>
@@ -183,20 +190,20 @@ function MergeDialog({ pr, method, controls, placement = 'all' }: MergeDialogPro
     <Dialog
       open
       onClose={close}
-      title="Merge pull request"
+      title={t('mergePullRequest')}
       description={
         !canMerge
-          ? `Let GitHub merge ${ref} into ${pr.baseRefName} once its checks and reviews pass.`
+          ? t('letGitHubMergeIntoOnceItsChecksAndReviewsPass', ref, pr.baseRefName)
           : offerAutoMerge
-            ? `Merge ${ref} into ${pr.baseRefName} now, or let GitHub merge it once its checks and reviews pass.`
-            : `Merge ${ref} into ${pr.baseRefName}.`
+            ? t('mergeIntoNowOrLetGithubMergeItOnce', ref, pr.baseRefName)
+            : t('mergeInto', ref, pr.baseRefName)
       }
       footer={
         <MergeFooter
           methodLabel={
             (currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods).length === 1
               ? METHODS[method]
-              : MERGE
+              : t('merge')
           }
           pending={pending}
           offerAutoMerge={offerAutoMerge}
@@ -207,7 +214,7 @@ function MergeDialog({ pr, method, controls, placement = 'all' }: MergeDialogPro
         />
       }
     >
-      {canMerge && !ready && <p>You can bypass the branch rules for this pull request.</p>}
+      {canMerge && !ready && <p>{t('youCanBypassTheBranchRulesForThisPullRequest')}</p>}
       <MergeFields pr={pr} method={method} controls={controls} blockers={blockers} />
     </Dialog>
   );
@@ -233,23 +240,23 @@ function MergeFooter({
   return (
     <>
       <Button disabled={pending !== undefined} onClick={close}>
-        Cancel
+        {t('cancel')}
       </Button>
       {offerAutoMerge && (
         <Button
           variant="primary"
-          loading={pending === ENABLE_AUTO_MERGE}
-          disabled={pending !== undefined && pending !== ENABLE_AUTO_MERGE}
+          loading={pending === t('enableAutoMerge')}
+          disabled={pending !== undefined && pending !== t('enableAutoMerge')}
           onClick={() => void enableAutoMerge()}
         >
-          {ENABLE_AUTO_MERGE}
+          {t('enableAutoMerge')}
         </Button>
       )}
       {canMerge && (
         <Button
           variant={offerAutoMerge ? 'secondary' : 'primary'}
-          loading={pending === MERGE}
-          disabled={pending !== undefined && pending !== MERGE}
+          loading={pending === t('merge')}
+          disabled={pending !== undefined && pending !== t('merge')}
           onClick={() => void merge()}
         >
           {methodLabel}
@@ -274,12 +281,12 @@ function MergeFields({
       {blockers.length > 0 && (
         <p class="merge-dialog__blockers">
           <AlertIcon size={12} />
-          <span>Not ready: {blockers.join('; ')}.</span>
+          <span>{t('notReadyReasons', blockers.join('; '))}</span>
         </p>
       )}
       {methods.length > 1 && (
         <Select
-          label="Merge method"
+          label={t('mergeMethod')}
           value={method}
           options={methods.map((value) => ({ value, label: METHODS[value] }))}
           disabled={pending !== undefined}
@@ -288,8 +295,8 @@ function MergeFields({
       )}
       {method !== 'rebase' && (
         <TextField
-          label="Commit title (optional)"
-          hint="Empty uses GitHub's default."
+          label={t('commitTitleOptional')}
+          hint={t('emptyUsesGithubSDefault')}
           value={title}
           readOnly={pending !== undefined}
           onValueChange={setTitle}

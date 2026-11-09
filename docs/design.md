@@ -307,8 +307,8 @@ Conflicts (warning) or Ready to merge (success, replaces Approved because it imp
 
 ## Soft Liquid Glass
 
-The panel uses a quiet mint/blue background, translucent rounded PR cards and a floating
-section bar. Glass colors live in the token stylesheets for system and forced light/dark themes.
+The panel uses a solid theme background, translucent rounded PR cards and a floating section
+bar. Glass colors live in the token stylesheets for system and forced light/dark themes.
 Only the header, search and navigation use backdrop blur; cards need no per-card filter.
 The search and header meet as one island, with the search remaining sticky above the cards.
 Titles use the 13 px token; states keep their icon, text and semantic tint. There are no

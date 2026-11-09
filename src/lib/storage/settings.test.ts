@@ -13,7 +13,7 @@ import { presets } from './settings.test-support';
 describe('DEFAULT_SETTINGS', () => {
   it('matches the product defaults', () => {
     expect(DEFAULT_SETTINGS).toEqual({
-      version: 1,
+      version: 2,
       sections: presets(),
       repoInclude: [],
       repoExclude: [],
@@ -36,6 +36,7 @@ describe('DEFAULT_SETTINGS', () => {
       },
       badge: 'attention',
       theme: 'system',
+      language: 'system',
       sort: 'updated',
       groupByRepo: true,
       hideStaleAfterDays: 0,
@@ -287,5 +288,10 @@ describe('normalizeSettings', () => {
 it('forces all legacy hiding preferences off on every read', () => {
   expect(
     normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
-  ).toMatchObject({ version: 1, hideStaleAfterDays: 0, hideDrafts: false, hideBots: false });
+  ).toMatchObject({
+    version: SETTINGS_VERSION,
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
+  });
 });

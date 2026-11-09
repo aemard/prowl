@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import { STORAGE_KEYS } from '../../lib/model';
 import { setItem } from '../../lib/storage/storage';
 import { GitHubLink } from '../components/GitHubLink';
@@ -10,8 +11,7 @@ import { SettingsGroup } from './SettingsGroup';
 import { describePermissions } from './SettingsModel';
 
 /** The promise the manifest lock (tests/unit/siteAccess.test.ts) keeps. */
-const NO_SITE_ACCESS =
-  'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.';
+const NO_SITE_ACCESS = t('prowlCannotSeeOrChangeThePagesYouVisit');
 
 /** What Chrome says Prowl may do right now, kept current as permissions are granted or removed. */
 function useGrantedPermissions() {
@@ -38,11 +38,11 @@ function useGrantedPermissions() {
 export function PrivacySettings() {
   const granted = useGrantedPermissions();
   return (
-    <SettingsGroup title="Privacy and permissions">
+    <SettingsGroup title={t('privacyAndPermissions')}>
       <p class="settings-promise">{NO_SITE_ACCESS}</p>
       <Switch
-        label="Sync settings with your Chrome profile"
-        description="Your settings follow you to Chrome on your other computers through Chrome sync (your Google account). Your token and what you snoozed or muted stay on this device."
+        label={t('syncSettingsWithYourChromeProfile')}
+        description={t('yourSettingsFollowYouToChromeOnYourOther')}
         checked={sync.value?.enabled === true}
         onChange={(on) => void setItem(STORAGE_KEYS.sync, { enabled: on, error: null })}
       />
@@ -52,9 +52,9 @@ export function PrivacySettings() {
         </p>
       )}
       <details>
-        <summary>What Prowl can access</summary>
+        <summary>{t('whatProwlCanAccess')}</summary>
         {granted && (
-          <ul class="settings-permissions" aria-label="What Prowl may do">
+          <ul class="settings-permissions" aria-label={t('whatProwlMayDo')}>
             {describePermissions(granted).map(({ title, detail }) => (
               <li key={title}>
                 <span class="settings-permissions__name">{title}</span>
@@ -65,7 +65,7 @@ export function PrivacySettings() {
         )}
       </details>
       <GitHubLink class="settings-link" href={PRIVACY_URL}>
-        Read the privacy policy
+        {t('readThePrivacyPolicy')}
         <LinkExternalIcon size={12} />
       </GitHubLink>
     </SettingsGroup>

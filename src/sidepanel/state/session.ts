@@ -1,5 +1,6 @@
 /** Signing in and out: what the panel owns of it (the worker reacts to the messages). */
 import { env } from '../../lib/env';
+import { t } from '../../lib/i18n';
 import { type AuthState, STORAGE_KEYS } from '../../lib/model';
 import { forgetSeenFacts } from '../../lib/storage/prLocal';
 import { SESSION_LOCK } from '../../lib/storage/session';
@@ -33,7 +34,7 @@ export async function completeSignIn(
   void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   navigate('list');
   if (warning) {
-    showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
+    showToast({ message: t('signedInAs', auth.viewer.login, warning), durationMs: 15_000 });
   }
 }
 

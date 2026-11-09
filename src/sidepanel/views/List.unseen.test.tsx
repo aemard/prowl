@@ -179,6 +179,24 @@ describe('unseen changes', () => {
     ]);
   });
 
+  it('checks live visibility before a pending seen message is sent', () => {
+    const send = vi.spyOn(chrome.runtime, 'sendMessage');
+    render(<ListView />);
+    observer().show([a.id]);
+    act(() => void vi.advanceTimersByTime(1000));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    // The browser state changed, but its event or the resulting effect cleanup has not run yet.
+    act(() => void vi.advanceTimersByTime(1200));
+    expect(markSeen(send)).toEqual([]);
+    act(() => void document.dispatchEvent(new Event('visibilitychange')));
+    Reflect.deleteProperty(document, 'visibilityState');
+    act(() => void document.dispatchEvent(new Event('visibilitychange')));
+    act(() => void vi.advanceTimersByTime(1499));
+    expect(markSeen(send)).toEqual([]);
+    act(() => void vi.advanceTimersByTime(1));
+    expect(markSeen(send)).toHaveLength(1);
+  });
+
   it('drops the dot once the worker has stored it as seen', () => {
     render(<ListView />);
     act(() => {

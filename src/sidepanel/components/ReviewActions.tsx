@@ -2,6 +2,7 @@ import type { Ref } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { type ReviewDraftKind, reviewDrafts, setReviewDraft } from '../state/reviewDrafts';
@@ -16,21 +17,27 @@ type Written = ReviewDraftKind;
 /** The two actions that need words: what the dialog says and what is sent with them. */
 const WRITTEN = {
   request_changes: {
-    name: 'Request changes',
-    done: 'Requested changes on',
-    description: (ref: string) => `Tell the author what has to change in ${ref}.`,
+    get name() {
+      return t('requestChanges');
+    },
+    get done() {
+      return t('requestedChangesOn');
+    },
+    description: (ref: string) => t('requestChangesDescription', ref),
     send: (client: GitHubClient, pr: PullRequest, text: string) =>
       requestChanges(client, pr.id, text, pr.headSha),
   },
   comment: {
-    name: 'Comment',
-    done: 'Commented on',
-    description: (ref: string) => `Add a comment to the conversation of ${ref}.`,
+    get name() {
+      return t('comment');
+    },
+    get done() {
+      return t('commentedOn');
+    },
+    description: (ref: string) => t('addACommentToTheConversationOf', ref),
     send: (client: GitHubClient, pr: PullRequest, text: string) => comment(client, pr.id, text),
   },
 } as const;
-
-const APPROVE = 'Approve';
 
 /**
  * Approve, request changes and comment, as buttons for the row of an expanded card's Actions.
@@ -64,7 +71,7 @@ export function ReviewActions({ pr }: { pr: PullRequest }) {
   const send = async (kind: Written) => {
     const { name, done, send: run } = WRITTEN[kind];
     const text = (drafts?.[kind] ?? '').trim();
-    if (!text) return fail('Write a message first.');
+    if (!text) return fail(t('writeAMessageFirst'));
     const sent = await runPrAction(pr, name, done, (client) => run(client, pr, text), fail);
     if (sent) {
       setWriting(null);
@@ -118,22 +125,22 @@ function ReviewButtons({
         <Button
           size="sm"
           icon={<CheckIcon size={12} />}
-          aria-label={`${APPROVE} ${ref}`}
-          {...state(APPROVE)}
+          aria-label={t('message2', t('approve'), ref)}
+          {...state(t('approve'))}
           onClick={() =>
-            void runPrAction(pr, APPROVE, 'Approved', (client) =>
+            void runPrAction(pr, t('approve'), t('approved2'), (client) =>
               approve(client, pr.id, undefined, pr.headSha),
             )
           }
         >
-          {APPROVE}
+          {t('approve')}
         </Button>
       )}
       {canReview && (
         <Button
           size="sm"
           icon={<FileDiffIcon size={12} />}
-          aria-label={`${WRITTEN.request_changes.name} ${ref}`}
+          aria-label={t('message2', WRITTEN.request_changes.name, ref)}
           {...state(WRITTEN.request_changes.name)}
           onClick={() => open('request_changes')}
         >
@@ -143,7 +150,7 @@ function ReviewButtons({
       <Button
         size="sm"
         icon={<CommentIcon size={12} />}
-        aria-label={`${WRITTEN.comment.name} on ${ref}`}
+        aria-label={t('on', WRITTEN.comment.name, ref)}
         {...state(WRITTEN.comment.name)}
         onClick={() => open('comment')}
       >
@@ -185,7 +192,7 @@ function WrittenDialog({
       footer={
         <>
           <Button disabled={pending !== undefined} onClick={close}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button variant="primary" loading={pending !== undefined} onClick={onSend}>
             {written.name}
@@ -194,7 +201,7 @@ function WrittenDialog({
       }
     >
       <TextField
-        label="Message"
+        label={t('message3')}
         multiline
         rows={4}
         required

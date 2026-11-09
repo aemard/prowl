@@ -9,6 +9,7 @@ import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
 import { type FetchResult, fetchPullRequests } from '../lib/github/fetchPullRequests';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
+import { setLanguage } from '../lib/i18n';
 import type { AuthState, PollState, PrEvent, RateLimit, Snapshot, TeamsState } from '../lib/model';
 import {
   baselineSeenFacts,
@@ -124,6 +125,7 @@ async function preparePoll(force: boolean) {
   }
   const { mergePending: _pending, ...state } = stored.pollState ?? IDLE;
   const settings = normalizeSettings(stored.settings);
+  await setLanguage(settings.language);
   const now = Date.now();
   // A rejected token cleared the alarm: only a forced poll (re-auth, refresh) tries again.
   if (state.lastError?.kind === 'unauthorized' && !force) return null;

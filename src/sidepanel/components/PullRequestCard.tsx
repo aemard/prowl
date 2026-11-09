@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
@@ -89,7 +90,7 @@ export function PullRequestCard({
   const statuses = pullRequestStatuses(pr);
   const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const teamRequest =
-    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
+    teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));
 
   return (
     <li
@@ -128,7 +129,7 @@ export function PullRequestCard({
           <CardMeta pr={pr} now={now} />
           <span id={`${detailId}-facts`} hidden>
             {describePullRequest(pr, statuses, unseen, now)}
-            {refreshingMerge && `. Updating merge status`}
+            {refreshingMerge && t('updatingMergeStatus2')}
             {teamRequest && `. ${teamRequest}`}
           </span>
         </div>

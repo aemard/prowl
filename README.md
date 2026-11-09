@@ -57,6 +57,10 @@ Details: [sign-in guide](docs/auth.md).
 
 ## Features
 
+- **Language**: in **Settings → Appearance → Language**, choose English, Japanese, Simplified
+  or Traditional Chinese, French, German or Spanish, or follow Chrome's language (the default).
+  The choice is saved and applies to the panel, notifications, dates and numbers, with English
+  as the fallback for unavailable translations.
 - **Scope**: PRs you authored by default; add review requested (from you), team reviews
   (requests to your teams, found with `read:org`), mentioned, assigned, custom GitHub
   searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of

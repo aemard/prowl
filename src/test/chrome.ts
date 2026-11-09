@@ -5,6 +5,7 @@
  */
 import { isDeepStrictEqual } from 'node:util';
 import { createManifest } from '../manifest';
+import { fakeI18n } from './i18n';
 
 type Listener<A extends unknown[]> = (...args: A) => unknown;
 
@@ -211,8 +212,18 @@ export function createFakeChrome() {
     { name: 'open-panel', description: 'Open Prowl', shortcut: 'Ctrl+Shift+P' },
   ];
   const grantedOrigins = new Set<string>();
+  const state = {
+    alarms,
+    notifications,
+    badge,
+    createdTabs,
+    grantedOrigins,
+    commands,
+    locale: 'en-US',
+  };
 
   return {
+    i18n: fakeI18n(() => state.locale),
     runtime: fakeRuntime(),
     storage: {
       local: new FakeStorageArea('local', storageOnChanged),
@@ -253,7 +264,7 @@ export function createFakeChrome() {
       onCommand: new FakeEvent<[string, chrome.tabs.Tab | undefined]>(),
     },
     /** Test-only inspection handles. Not part of the real API. */
-    __state: { alarms, notifications, badge, createdTabs, grantedOrigins, commands },
+    __state: state,
   };
 }
 

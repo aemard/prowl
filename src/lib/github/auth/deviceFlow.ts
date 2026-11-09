@@ -6,6 +6,7 @@
  * is; a cancelled flow rejects with the `AbortSignal`'s reason instead.
  */
 import { env } from '../../env';
+import { t } from '../../i18n';
 import type { FetchLike } from '../client';
 import { type PatValidation, validatePat } from './pat';
 
@@ -27,12 +28,21 @@ const SLOW_DOWN_SECONDS = 5;
 export type DeviceFlowFailure = 'expired' | 'denied' | 'unsupported' | 'network' | 'server';
 
 const MESSAGES: Record<DeviceFlowFailure, string> = {
-  expired: 'The code expired before it was used. Start again to get a new one.',
-  denied: 'Access was denied on GitHub. Start again to authorize Prowl, or paste a token instead.',
-  unsupported:
-    'Signing in from the browser is not available for this build of Prowl. Paste a token instead.',
-  network: 'Could not reach GitHub. Check your connection and try again.',
-  server: 'GitHub is having trouble right now. Try again in a moment.',
+  get expired() {
+    return t('theCodeExpiredBeforeItWasUsedStartAgain');
+  },
+  get denied() {
+    return t('accessWasDeniedOnGithubStartAgainToAuthorize');
+  },
+  get unsupported() {
+    return t('signingInFromTheBrowserIsNotAvailableFor');
+  },
+  get network() {
+    return t('couldNotReachGithubCheckYourConnectionAndTry');
+  },
+  get server() {
+    return t('githubIsHavingTroubleRightNowTryAgainIn');
+  },
 };
 
 export class DeviceFlowError extends Error {

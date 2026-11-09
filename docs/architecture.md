@@ -24,7 +24,7 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 |---|---|---|
 | Service worker `src/background/` | Polling schedule (`chrome.alarms`), fetching PRs, diffing snapshots, notifications, badge, persisting `snapshot` and `pollState` | Render UI |
 | Side panel `src/sidepanel/` | Rendering from storage, onboarding/auth, settings, user actions (approve, merge, ...) | Poll on a timer |
-| `src/lib/*` | Pure, unit-tested logic shared by both | Touch `chrome.*` except `src/lib/storage` |
+| `src/lib/*` | Unit-tested logic shared by both | Touch `chrome.*` except `src/lib/storage` and `src/lib/i18n.ts` |
 
 After a user action succeeds, the panel sends `{ type: 'poll', force: true }` so the service
 worker refreshes the snapshot. The panel never writes `snapshot` itself, except optimistic
@@ -44,6 +44,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
+| `src/lib/i18n.ts`, `public/_locales/` | Typed Chrome messages, a saved language preference and English fallback; localized counts, numbers and dates. `sectionLabel.ts` translates built-in names without changing stored settings. | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts` (poll orchestration), `mergeState.ts` (consulted-card refresh and priority hints), `pollState.ts` (auth guards and failure state), `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
 | `src/styles/` | `tokens.css` (theme entry and dark themes), `tokens.base.css` (shared scale and light theme), `base.css` | n/a |

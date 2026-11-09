@@ -1,3 +1,4 @@
+import { t, uiLocale } from '../i18n';
 /** Snooze presets offered on every card. Times are local, like the user's working day. */
 export type SnoozePreset = 'hour' | 'four_hours' | 'tomorrow' | 'monday';
 
@@ -21,18 +22,18 @@ export function snoozeUntil(preset: SnoozePreset, now: Date | number): Date {
 /** How long a preset lasts, to follow "Snooze": "for 1 hour", "until Monday". */
 export function snoozeLabel(preset: SnoozePreset): string {
   return {
-    hour: 'for 1 hour',
-    four_hours: 'for 4 hours',
-    tomorrow: 'until tomorrow',
-    monday: 'until Monday',
+    hour: t('for1Hour'),
+    four_hours: t('for4Hours'),
+    tomorrow: t('untilTomorrow'),
+    monday: t('untilMonday'),
   }[preset];
 }
 
 /** "14:30" today, else "Mon 09:00": when a snooze ends, short. */
 export function formatSnoozeEnd(until: Date | number | string, now: Date | number): string {
   const end = new Date(until);
-  const time = end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const time = end.toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
   return end.toDateString() === new Date(now).toDateString()
     ? time
-    : `${end.toLocaleDateString(undefined, { weekday: 'short' })} ${time}`;
+    : `${end.toLocaleDateString(uiLocale(), { weekday: 'short' })} ${time}`;
 }

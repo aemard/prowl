@@ -38,6 +38,7 @@ describe('manifest lock', () => {
   });
 
   it.each([
+    ['runtime-only locale metadata', { current_locale: 'en' }],
     ['a content script', { content_scripts: [{ matches: ['<all_urls>'], js: ['x.js'] }] }],
     ['web_accessible_resources', { web_accessible_resources: [{ resources: ['a'], matches: [] }] }],
     ['externally_connectable', { externally_connectable: { matches: ['https://*/*'] } }],
