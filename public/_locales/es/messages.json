@@ -2328,5 +2328,94 @@
         "content": "$2"
       }
     }
+  },
+  "listCoverage": {
+    "message": "List coverage",
+    "description": "Accessible label for the section search coverage notice."
+  },
+  "loadedCount": {
+    "message": "$P1$ loaded · ",
+    "description": "Number of pull requests loaded before the GitHub search link.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "searchSsoRequired": {
+    "message": "An organization requires single sign-on (SAML) that this token is not authorized for, so its pull requests are missing. Authorize the token for that organization on GitHub.",
+    "description": "Warning when organization SAML authorization hides search results."
+  },
+  "searchCursorUnavailable": {
+    "message": "GitHub did not provide a usable next-page cursor.",
+    "description": "Warning when search pagination cannot continue."
+  },
+  "mergeRequirementsUnreadable": {
+    "message": "Some merge requirements could not be read: $P1$",
+    "description": "Warning with GitHub errors explaining incomplete merge requirements.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "detailsUnreadable": {
+    "message": "Some details could not be read: $P1$",
+    "description": "Warning with GitHub errors explaining incomplete pull request details.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewsNotLoaded": {
+    "message": "Some reviews are not loaded. View the full conversation on GitHub.",
+    "description": "Warning when reviews were truncated by the API."
+  },
+  "reviewRequestsNotLoaded": {
+    "message": "Some review requests are not loaded. View the full conversation on GitHub.",
+    "description": "Warning when requested reviewers were truncated by the API."
+  },
+  "previewNewPr": {
+    "message": "New PR",
+    "description": "Preview button to simulate a new pull request."
+  },
+  "previewMergePr": {
+    "message": "Merge PR",
+    "description": "Preview button to simulate a merged pull request."
+  },
+  "previewClosePr": {
+    "message": "Close PR",
+    "description": "Preview button to simulate a closed pull request."
+  },
+  "previewUpdateFailed": {
+    "message": "Could not simulate the update. Reload to try again.",
+    "description": "Preview simulation error."
+  },
+  "previewTestAnimations": {
+    "message": "Test PR animations",
+    "description": "Accessible label for preview animation controls."
+  },
+  "previewTryUpdate": {
+    "message": "Try an update",
+    "description": "Heading for preview simulation controls."
+  },
+  "previewTitle": {
+    "message": "Prowl — mock preview",
+    "description": "Browser title for the mock preview."
+  },
+  "previewMode": {
+    "message": "Preview mode",
+    "description": "Accessible label for the preview information banner."
+  },
+  "previewBanner": {
+    "message": "Mock preview · Sample data · Reload to reset",
+    "description": "Information banner on the mock preview page."
+  },
+  "matchChromeLanguage": {
+    "message": "Usar el idioma de Chrome"
+  },
+  "languageHint": {
+    "message": "Los cambios se aplican de inmediato. Si falta una traducción, se usa el inglés."
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { t } from '../../lib/i18n';
-import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
+import type { BadgeMode, Language, SortOrder, Theme } from '../../lib/model';
 import {
   MAX_PER_SECTION,
   MAX_POLL_INTERVAL_MINUTES,
@@ -63,10 +63,29 @@ function PollingSettings() {
   );
 }
 
+const LANGUAGES: SelectOption<Language>[] = [
+  { value: 'system', label: t('matchChromeLanguage') },
+  { value: 'en', label: 'English' },
+  { value: 'ja', label: '日本語' },
+  { value: 'zh-CN', label: '简体中文' },
+  { value: 'zh-TW', label: '繁體中文' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'es', label: 'Español' },
+];
+
 function AppearanceSettings() {
   const { theme, sort, groupByRepo, badge } = settings.value;
   return (
     <SettingsGroup title={t('list')}>
+      <Select
+        label={t('language')}
+        name="language"
+        value={settings.value.language}
+        options={LANGUAGES}
+        hint={t('languageHint')}
+        onValueChange={(language) => void saveSettings({ language })}
+      />
       <Select
         label={t('theme')}
         value={theme}

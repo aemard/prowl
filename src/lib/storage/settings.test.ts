@@ -288,5 +288,10 @@ describe('normalizeSettings', () => {
 it('forces all legacy hiding preferences off on every read', () => {
   expect(
     normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
-  ).toMatchObject({ version: 1, hideStaleAfterDays: 0, hideDrafts: false, hideBots: false });
+  ).toMatchObject({
+    version: SETTINGS_VERSION,
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
+  });
 });

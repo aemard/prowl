@@ -31,7 +31,9 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   const missing =
     detail?.requiredApprovals &&
     !pr.incomplete?.includes('reviews') &&
-    !detail.warnings?.some((warning) => warning.includes('reviews'))
+    !detail.warnings?.some(
+      (warning) => warning.includes('reviews') || warning === t('reviewsNotLoaded'),
+    )
       ? Math.max(detail.requiredApprovals - approvals, 1)
       : 0;
   return {

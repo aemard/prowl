@@ -8,7 +8,7 @@ describe('SettingsView', () => {
   describe('appearance', () => {
     it('offers automatic selection and all seven languages, and saves the choice', async () => {
       await open();
-      const field = group('Appearance').getByLabelText('Language') as HTMLSelectElement;
+      const field = group('List').getByLabelText('Language') as HTMLSelectElement;
       expect(field.value).toBe('system');
       expect([...field.options].map(({ value, textContent }) => [value, textContent])).toEqual([
         ['system', 'Match Chrome’s language'],

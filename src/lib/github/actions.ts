@@ -201,8 +201,7 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
     id: prId,
     after: null,
   });
-  if (!node?.repository)
-    throw new GitHubError('not_found', t('githubDidNotFindPullRequest'));
+  if (!node?.repository) throw new GitHubError('not_found', t('githubDidNotFindPullRequest'));
   const repo = `/repos/${encodeURIComponent(node.repository.owner.login)}/${encodeURIComponent(node.repository.name)}`;
   const head = node.headRefOid;
   const cursors = new Set<string>();
@@ -224,10 +223,7 @@ export async function rerunFailedChecks(client: GitHubClient, prId: string): Pro
     if (!suites?.pageInfo?.hasNextPage) break;
     const cursor: string | null = suites.pageInfo.endCursor;
     if (page >= 4 || !cursor || cursors.has(cursor)) {
-      throw new GitHubError(
-        'validation',
-        t('notAllCheckSuitesCouldBeLoaded'),
-      );
+      throw new GitHubError('validation', t('notAllCheckSuitesCouldBeLoaded'));
     }
     cursors.add(cursor);
     ({ node } = await client.graphql<FailedSuitesData>(FAILED_SUITES_QUERY, {

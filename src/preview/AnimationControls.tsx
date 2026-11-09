@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { poll } from '../background/poller';
+import { t } from '../lib/i18n';
 import {
   GitMergeIcon,
   GitPullRequestClosedIcon,
@@ -10,9 +11,9 @@ import type { ActivityKind } from '../sidepanel/state/prActivity';
 import { simulatePullRequest } from './mockApi';
 
 const EVENTS = [
-  { kind: 'new', label: 'New PR', Icon: GitPullRequestIcon },
-  { kind: 'merged', label: 'Merge PR', Icon: GitMergeIcon },
-  { kind: 'closed', label: 'Close PR', Icon: GitPullRequestClosedIcon },
+  { kind: 'new', label: t('previewNewPr'), Icon: GitPullRequestIcon },
+  { kind: 'merged', label: t('previewMergePr'), Icon: GitMergeIcon },
+  { kind: 'closed', label: t('previewClosePr'), Icon: GitPullRequestClosedIcon },
 ] as const;
 
 export function AnimationControls() {
@@ -29,14 +30,14 @@ export function AnimationControls() {
       }
       await poll({ force: true });
     } catch {
-      setError('Could not simulate the update. Reload to try again.');
+      setError(t('previewUpdateFailed'));
     } finally {
       setBusy(false);
     }
   };
   return (
-    <section class="preview-controls" aria-label="Test PR animations">
-      <span class="preview-controls__label">Try an update</span>
+    <section class="preview-controls" aria-label={t('previewTestAnimations')}>
+      <span class="preview-controls__label">{t('previewTryUpdate')}</span>
       <div class="preview-controls__buttons">
         {EVENTS.map(({ kind, label, Icon }) => (
           <Button

@@ -52,7 +52,7 @@ export async function fetchPullRequestDetail(
   if (problems.length) {
     detail.warnings = [
       ...(detail.warnings ?? []),
-      `Some details could not be read: ${[...new Set(problems)].slice(0, 5).join(' ')}`,
+      t('detailsUnreadable', [...new Set(problems)].slice(0, 5).join(' ')),
     ];
   }
   if (pr) detail = await applyBranchRules(client, pr, detail);

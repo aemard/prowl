@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** Bounded section searches, coverage metadata and cached membership after cut scans. */
 import type {
   ErrorKind,
@@ -18,9 +19,6 @@ import { buildSearchQuery, filterByRepo } from './search';
 import { teamEvidence } from './teamEvidence';
 
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
-const SSO_REQUIRED =
-  'An organization requires single sign-on (SAML) that this token is not authorized for, so ' +
-  'its pull requests are missing. Authorize the token for that organization on GitHub.';
 const SAML = /\bSAML\b/i;
 
 /** Search page size: about 4 s on busy organizations, inside GitHub's 10 s execution limit. */
@@ -103,7 +101,7 @@ export class SearchContext {
         const cursor: string | null = page.pageInfo.endCursor;
         if (!hasMore) break;
         if (!cursor || cursor === after) {
-          problems.push('GitHub did not provide a usable next-page cursor.');
+          problems.push(t('searchCursorUnavailable'));
           cut = true;
           break;
         }
@@ -208,7 +206,7 @@ export class SearchContext {
     if (members.size) this.result.sections[section.id] = [...members];
   };
   problemText = (problems: string[]) =>
-    [...new Set(problems.map((message) => (SAML.test(message) ? SSO_REQUIRED : message)))]
+    [...new Set(problems.map((message) => (SAML.test(message) ? t('searchSsoRequired') : message)))]
       .slice(0, 5)
       .join(' ');
 
