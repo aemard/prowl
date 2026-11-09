@@ -51,9 +51,9 @@ describe('MaintenanceActions', () => {
       viewerCanMerge: true,
       author: { login: 'someone', avatarUrl: '', isBot: false },
     });
-    expect(screen.getByRole('button', { name: /^Convert to draft: / })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Convert to draft: / })).toBeNull();
     show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '', isBot: false } });
-    expect(screen.getAllByRole('button', { name: /draft|review/ })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /draft|review/ })).toHaveLength(1);
   });
 
   it('renders nothing when signed out', () => {
@@ -66,12 +66,14 @@ describe('MaintenanceActions', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
-        jsonResponse({ data: { convertPullRequestToDraft: { pullRequest: { isDraft: true } } } }),
+        jsonResponse({
+          data: { markPullRequestReadyForReview: { pullRequest: { isDraft: false } } },
+        }),
       ),
     );
-    show({ isDraft: false, viewerCanMerge: true });
-    fireEvent.click(screen.getByRole('button', { name: /^Convert to draft: / }));
-    await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Converted to draft:/));
+    show({ isDraft: true, viewerCanMerge: true });
+    fireEvent.click(screen.getByRole('button', { name: /^Ready for review: / }));
+    await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Marked ready for review:/));
   });
 
   it('runs a re-run and reports what GitHub refused', async () => {
@@ -97,7 +99,10 @@ describe('MaintenanceActions', () => {
     expect(screen.getAllByRole('button', { name: /^Update branch/ })).toHaveLength(1);
   });
 
-  it('updates the branch with a merge commit or a rebase, pinned to the head', async () => {
+  it.each([
+    ['Update with a merge commit', 'MERGE'],
+    ['Update with a rebase', 'REBASE'],
+  ])('updates the branch using %s, pinned to the head', async (label, method) => {
     const bodies: unknown[] = [];
     vi.stubGlobal(
       'fetch',
@@ -110,8 +115,8 @@ describe('MaintenanceActions', () => {
     );
     show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
     fireEvent.click(screen.getByRole('button', { name: /^Update branch of / }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Update with a rebase' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: label }));
     await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Updated the branch of /));
-    expect(bodies).toEqual([{ id: base.id, oid: base.headSha, method: 'REBASE' }]);
+    expect(bodies).toEqual([{ id: base.id, oid: base.headSha, method }]);
   });
 });

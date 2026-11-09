@@ -15,6 +15,7 @@ import { saveSettings } from '../state/settings';
 import { settings } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
 import { PRESET_DESCRIPTIONS } from './SettingsModel';
+import { TeamPicker } from './SettingsTeams';
 
 const FORM_ID = 'custom-section-form';
 
@@ -213,16 +214,17 @@ function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => vo
         label={sectionLabel(section)}
         description={section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]}
         checked={section.enabled}
-        onChange={(enabled) =>
+        onChange={(enabled) => {
           void saveSettings(
             (current) => ({
               ...current,
               sections: current.sections.map((s) => (s.id === section.id ? { ...s, enabled } : s)),
             }),
             { refresh: true },
-          )
-        }
+          );
+        }}
       />
+      {section.kind === 'team_review_requested' && section.enabled && <TeamPicker />}
       {section.kind === 'custom' && <CustomActions section={section} onEdit={onEdit} />}
     </li>
   );
@@ -235,7 +237,7 @@ export function ScopeSettings() {
   const [editing, setEditing] = useState<Section | null>();
 
   return (
-    <SettingsGroup title={t('pullRequests')} description={t('chooseWhichPullRequestsProwlFollows')}>
+    <SettingsGroup title={t('sections')} description={t('chooseWhichPullRequestsProwlFollows')}>
       <h4 class="settings-subtitle">{t('sections')}</h4>
       <ul class="settings-list">
         {sections.map((section) => (
@@ -255,7 +257,7 @@ export function ScopeSettings() {
       />
       <RepoFilter
         name={t('exclude')}
-        hint={t('hidePullRequestsInTheseEvenWhenTheyMatch')}
+        hint={t('excludePullRequestsInTheseEvenWhenTheyMatchAn')}
         patterns={repoExclude}
         onChange={(update) => changeRepos('repoExclude', update)}
       />

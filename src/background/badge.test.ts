@@ -10,8 +10,9 @@ import { fakeChrome } from '../test/chrome';
 import { BADGE_COLORS, clearBadge, updateBadge, watchBadge } from './badge';
 
 const failing = mapPullRequest(prNode({ number: 1, commits: headCommit({ FAILURE: 1 }) }));
-
-const ready = mapPullRequest(prNode({ number: 2, mergeStateStatus: 'CLEAN' }));
+const ready = mapPullRequest(
+  prNode({ number: 2, mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }),
+);
 
 function snapshot(...prs: PullRequest[]): Snapshot {
   return {
@@ -114,7 +115,7 @@ describe('watchBadge', () => {
     await repainted('1');
   });
 
-  it('repaints when the list starts to hide drafts or bots', async () => {
+  it('keeps counting drafts and bots when legacy preferences are saved', async () => {
     const draft = mapPullRequest(
       prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
     );
@@ -130,9 +131,9 @@ describe('watchBadge', () => {
     watchBadge();
     await repainted('3');
     await updateSettings({ hideDrafts: true });
-    await repainted('2');
+    await repainted('3');
     await updateSettings({ hideBots: true });
-    await repainted('1');
+    await repainted('3');
     await updateSettings({ hideDrafts: false, hideBots: false });
     await repainted('3');
   });

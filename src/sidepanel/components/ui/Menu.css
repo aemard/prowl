@@ -1,10 +1,15 @@
 .ui-menu {
   position: fixed;
+  inset: auto;
+  margin: 0;
+  color: var(--color-fg);
   top: 0;
   left: 0;
   z-index: var(--z-menu);
   display: flex;
   flex-direction: column;
+  width: auto;
+  height: auto;
   min-width: 180px;
   max-width: min(300px, calc(100vw - 2 * var(--space-2)));
   max-height: min(360px, calc(100vh - 2 * var(--space-2)));

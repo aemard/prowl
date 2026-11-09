@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { headCommit, prNode, viewerNode } from '../../../tests/fixtures/github';
+import { activityKey } from '../activity';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
 import { emptyPrLocal, markSeen, mute, snooze } from '../storage/prLocal';
@@ -17,7 +18,8 @@ const quiet = (number: number, overrides: Node = {}) =>
 const failing = (number: number) => quiet(number, { commits: headCommit({ FAILURE: 1 }) });
 const changes = (number: number) => quiet(number, { reviewDecision: 'CHANGES_REQUESTED' });
 const conflicting = (number: number) => quiet(number, { mergeable: 'CONFLICTING' });
-const ready = (number: number) => quiet(number, { mergeStateStatus: 'CLEAN' });
+const ready = (number: number) =>
+  quiet(number, { mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 
 function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) => id) }): Snapshot {
   return {
@@ -30,6 +32,21 @@ function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) =>
 
 const badge = (prs: PullRequest[], mode: BadgeMode = 'attention', local = emptyPrLocal()) =>
   computeBadge(snapshot(prs), local, mode, DEFAULT_SETTINGS, NOW);
+
+it('counts old PRs while honoring snooze', () => {
+  const pr = failing(1);
+  pr.lastCommitAt = '2020-01-01T00:00:00Z';
+  expect(badge([pr]).text).toBe('1');
+  expect(badge([pr], 'attention', snooze(emptyPrLocal(), pr.id, NOW + HOUR)).text).toBe('');
+});
+
+it('counts unseen CI changes even when updatedAt stays the same', () => {
+  const before = quiet(1);
+  const local = markSeen(emptyPrLocal(), before.id, before.updatedAt, activityKey(before));
+  expect(badge([before], 'unseen', local).text).toBe('');
+  const after = { ...before, checks: failing(1).checks };
+  expect(badge([after], 'unseen', local).text).toBe('1');
+});
 
 describe('computeBadge: attention', () => {
   it('counts failing CI, requested changes, conflicts and ready to merge, not quiet PRs', () => {
@@ -105,21 +122,21 @@ describe('computeBadge: attention', () => {
     ).toBe('2');
   });
 
-  it('leaves out PRs the list hides, under the same setting', () => {
+  it('counts PRs regardless of commit age', () => {
     const stale = quiet(1, { commits: headCommit({ FAILURE: 1 }, {}, '2026-09-10T12:00:00Z') });
     const [old, recent] = [stale, failing(2)] as [PullRequest, PullRequest];
     expect(badge([old, recent])).toMatchObject({
-      text: '1',
-      title: 'Prowl: 1 pull request needing attention (1 CI failing)',
+      text: '2',
+      title: 'Prowl: 2 pull requests needing attention (2 CI failing)',
     });
-    expect(badge([old], 'unseen')).toEqual(NO_BADGE);
+    expect(badge([old], 'unseen').text).toBe('1');
     const never = { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 };
     expect(
       computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', never, NOW).text,
     ).toBe('2');
   });
 
-  it('leaves out drafts and bots when the list does, and counts them otherwise', () => {
+  it('counts drafts and bots despite legacy hiding settings', () => {
     const draft = quiet(1, { isDraft: true, commits: headCommit({ FAILURE: 1 }) });
     const bot = quiet(2, {
       author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
@@ -130,10 +147,10 @@ describe('computeBadge: attention', () => {
       computeBadge(snapshot(prs), emptyPrLocal(), mode, { ...DEFAULT_SETTINGS, ...hide }, NOW).text;
 
     expect(count({})).toBe('3');
-    expect(count({ hideDrafts: true })).toBe('2');
-    expect(count({ hideBots: true })).toBe('2');
-    expect(count({ hideDrafts: true, hideBots: true })).toBe('1');
-    expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('1');
+    expect(count({ hideDrafts: true })).toBe('3');
+    expect(count({ hideBots: true })).toBe('3');
+    expect(count({ hideDrafts: true, hideBots: true })).toBe('3');
+    expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('3');
   });
 
   it('shows 99+ above 99', () => {

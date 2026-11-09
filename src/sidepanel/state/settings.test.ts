@@ -33,6 +33,13 @@ describe('saveSettings', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('does not start another poll when saving untouched defaults', async () => {
+    const send = polls();
+    await saveSettings((current) => current, { refresh: true });
+    await vi.advanceTimersByTimeAsync(REFRESH_DELAY_MS * 2);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('refreshes once, after the last of several changes', async () => {
     const send = polls();
     await saveSettings({ maxPerSection: 20 }, { refresh: true });
@@ -43,7 +50,7 @@ describe('saveSettings', () => {
 
     await vi.advanceTimersByTimeAsync(100);
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
   });
 
   it('says so, and does not refresh, when storage refuses the write', async () => {

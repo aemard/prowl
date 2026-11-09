@@ -113,7 +113,7 @@ function describePollError(
         title: t('yourGithubTokenWasRevokedOrExpired'),
         detail: t('prowlStoppedRefreshingSignInAgainToContinue'),
         age,
-        action: { type: 'reauthenticate', label: t('reAuthenticate') },
+        action: { type: 'reauthenticate', label: t('signInAgain') },
       };
     case 'rate_limited':
       return {
@@ -130,7 +130,7 @@ function describePollError(
       return {
         kind: 'offline',
         tone: 'warning',
-        title: t('offline', retrying),
+        title: t('couldNotReachGitHub', retrying),
         detail: error.message,
         age,
         action: RETRY,

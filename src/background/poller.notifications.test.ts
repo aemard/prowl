@@ -47,6 +47,32 @@ describe('poll', () => {
     expect(await types('failure')).toEqual(['ci_failed']);
   });
 
+  it('notifies each recovery once and stays silent after a worker module reload', async () => {
+    let checks: CheckState = 'failure';
+    github(() => searchWith(checks)());
+    await setItem('settings', {
+      ...defaultSettings(),
+      notifications: { ...defaultSettings().notifications, enabled: true },
+    });
+    await signIn();
+    await poll();
+    const ids: string[] = [];
+    for (const next of ['success', 'failure', 'pending', 'success'] as const) {
+      checks = next;
+      later(2 * MINUTE);
+      await poll();
+      ids.push(...fakeChrome().__state.notifications.keys());
+      fakeChrome().__state.notifications.clear();
+    }
+    expect(new Set(ids).size).toBe(3);
+    expect(ids.filter((id) => id.includes(':ci_passed:'))).toHaveLength(2);
+    vi.resetModules();
+    const restarted = await import('./poller');
+    later(2 * MINUTE);
+    await restarted.poll();
+    expect(fakeChrome().__state.notifications.size).toBe(0);
+  });
+
   it('updates the badge once the poll has stored its snapshot', async () => {
     let checks: CheckState = 'failure';
     github(() => searchWith(checks)());
@@ -90,17 +116,19 @@ describe('poll', () => {
     later(2 * MINUTE);
     await poll();
     const { notifications } = fakeChrome().__state;
-    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:1`]);
     expect([...notifications.values()][0]?.options).toMatchObject({ title: 'CI failed' });
 
-    // Back to pending and failing again on the same commit: the id is the same.
+    // A second observed failure on the same commit has its own notification.
     notifications.clear();
     for (const next of ['pending', 'failure'] as const) {
       checks = next;
       later(2 * MINUTE);
       await poll();
     }
-    expect(notifications.size).toBe(0);
+    expect(notifications.size).toBe(1);
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:2`]);
+    notifications.clear();
 
     // A muted PR is silent, and so is a type switched off.
     await setItem('prLocal', { snoozed: {}, muted: { [PR]: true }, seen: {} });
@@ -120,7 +148,7 @@ describe('poll', () => {
     expect(notifications.size).toBe(0);
   });
 
-  it('still notifies about a PR the list hides for its old last commit, kept off the badge', async () => {
+  it('notifies and counts a PR with an old last commit', async () => {
     let checks: CheckState = 'pending';
     const lastCommit = new Date(NOW - 35 * 24 * 60 * MINUTE).toISOString();
     github(() => searchResponse([prNode({ commits: headCommit(CHECKS[checks], {}, lastCommit) })]));
@@ -135,11 +163,11 @@ describe('poll', () => {
     later(2 * MINUTE);
     await poll();
     const { notifications, badge } = fakeChrome().__state;
-    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
-    expect(badge.text).toBe('');
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:1`]);
+    expect(badge.text).toBe('1');
   });
 
-  it('still notifies about a draft opened by a bot when the list hides both', async () => {
+  it('notifies and counts a draft opened by a bot despite legacy preferences', async () => {
     await setItem('settings', { ...defaultSettings(), hideDrafts: true, hideBots: true });
     let checks: CheckState = 'pending';
     const dependabot = { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' };
@@ -159,8 +187,8 @@ describe('poll', () => {
     later(2 * MINUTE);
     await poll();
     const { notifications, badge } = fakeChrome().__state;
-    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}`]);
-    expect(badge.text).toBe('');
+    expect([...notifications.keys()]).toEqual([`${PR}:ci_failed:${'a'.repeat(40)}:1`]);
+    expect(badge.text).toBe('1');
   });
 
   it('keeps the poll result when notifying fails', async () => {

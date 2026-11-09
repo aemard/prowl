@@ -10,6 +10,7 @@ import {
 import { jsonResponse } from '../../tests/fixtures/http';
 import type { SearchData } from '../lib/github/queries';
 import type { AuthState, CheckState, PollState } from '../lib/model';
+import { defaultSettings } from '../lib/storage/settings';
 import { getItem, setItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth } from '../test/panel';
@@ -80,7 +81,18 @@ export const fail =
 export const searchWith = (checks: CheckState) => () =>
   searchResponse([prNode({ commits: headCommit(CHECKS[checks]) })]);
 
-export const signIn = (auth: AuthState = buildAuth()) => setItem('auth', auth);
+/** Poll scenarios use one section unless explicitly configured otherwise. */
+export async function signIn(auth: AuthState = buildAuth()) {
+  if (!(await getItem('settings'))) {
+    const settings = defaultSettings();
+    settings.sections = settings.sections.map((section) => ({
+      ...section,
+      enabled: section.kind === 'authored',
+    }));
+    await setItem('settings', settings);
+  }
+  await setItem('auth', auth);
+}
 export const pollState = async () => (await getItem('pollState')) as PollState;
 export const alarm = () => fakeChrome().__state.alarms.get(POLL_ALARM);
 export const later = (ms: number) => vi.setSystemTime(Date.now() + ms);

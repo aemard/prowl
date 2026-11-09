@@ -45,19 +45,12 @@ describe('PullRequestDetails', () => {
   it('offers the actions at once, before the details have loaded', () => {
     stubDetailFetch(() => new Promise(() => {}));
     show();
-    expect(screen.getByText('Actions')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Actions for #1' })).toBeTruthy();
     expect(
       screen
         .getAllByRole('button', { name: /acme\/widgets#1$/ })
         .map((button) => button.textContent),
-    ).toEqual([
-      'Approve',
-      'Request changes',
-      'Comment',
-      'Merge',
-      'Re-run failed',
-      'Convert to draft',
-    ]);
+    ).toEqual(['Re-run failed', 'Approve', 'Request changes', 'Comment']);
   });
 
   it('says why it cannot be merged at once, then fills in checks and reviewers', async () => {
@@ -77,21 +70,21 @@ describe('PullRequestDetails', () => {
     const { container } = show();
 
     // Before the answer: the merge facts from the list, a status for assistive tech, no lists.
-    expect(rows('Merge')).toEqual([
-      'Blocked: review required',
-      'Conflicts with main',
-      'Blocked: 1 check failing',
-      'Waiting for 1 check to finish',
+    expect(rows('Merge status')).toEqual([
+      'Review required',
+      'Conflicts with main · Resolve on GitHub',
+      '1 check failed',
+      '1 check running',
     ]);
     expect(screen.getByRole('status').textContent).toBe('Loading checks and reviewers');
     expect(screen.queryByRole('list', { name: 'Checks' })).toBeNull();
 
     await screen.findByRole('list', { name: 'Checks' });
     expect(screen.queryByRole('status')).toBeNull();
-    expect(rows('Merge')).toEqual([
-      'Blocked: 1 approval required',
-      'Conflicts with main',
-      'Blocked: 1 required check failing',
+    expect(rows('Merge status')).toEqual([
+      '1 approval needed',
+      'Conflicts with main · Resolve on GitHub',
+      '1 required check failed',
     ]);
     // Failed first, then pending; what passed folds away, each state with a word, not color alone.
     expect(rows('Checks')).toEqual(['buildRequiredFailed', 'e2ePending']);
@@ -121,7 +114,10 @@ describe('PullRequestDetails', () => {
     expect(link.getAttribute('href')).toBe(
       'https://github.com/acme/widgets/actions/runs/1/job/build',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'View changes on GitHub' }).getAttribute('href')).toBe(
+      'https://github.com/acme/widgets/pull/1/files',
+    );
     expect(screen.getByText('ci/jenkins').getAttribute('href')).toBeNull();
     expect(screen.getByText('nolink').closest('a')).toBeNull();
 
@@ -157,20 +153,35 @@ describe('PullRequestDetails', () => {
   it('explains checks that GitHub did not return although the PR has some', async () => {
     stubDetailFetch(() => detailNode({ checks: [null] }));
     show();
-    await screen.findByText(/did not return the checks/);
+    const hint = await screen.findByText(/This token can't read checks/);
+    expect(within(hint).getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toBe(
+      `${pr.url}/checks`,
+    );
+    expect(screen.queryByText('No checks on the latest commit.')).toBeNull();
   });
 
   it('points to GitHub for checks beyond the ones it read', async () => {
-    stubDetailFetch(({ after }) =>
-      detailNode({
-        checks: Array.from({ length: 600 }, (_, i) => checkRunNode(`job-${i}`, 'FAILURE')),
-        after,
-      }),
-    );
-    show();
-    const more = await screen.findByRole('link', { name: 'on GitHub' });
+    const checks = Array.from({ length: 600 }, (_, i) => checkRunNode(`job-${i}`, 'FAILURE'));
+    const cursors: unknown[] = [];
+    stubDetailFetch(({ after }) => {
+      cursors.push(after);
+      return detailNode({ checks, after, pageSize: 100 });
+    });
+    const { container } = show();
+    // Scope the queries so they needn't inspect all 500 check links.
+    const text = await screen.findByText('on GitHub', {
+      selector: 'a[href="https://github.com/acme/widgets/pull/1/checks"]',
+    });
+    const more = within(text.parentElement as HTMLElement).getByRole('link', {
+      name: 'on GitHub',
+    });
     expect(more.parentElement?.textContent).toBe('100 more checks on GitHub');
     expect(more.getAttribute('href')).toBe('https://github.com/acme/widgets/pull/1/checks');
+    expect(cursors).toEqual([null, '100', '200', '300', '400']);
+    expect(details.value[pr.id]?.detail?.checks).toHaveLength(500);
+    expect(container.querySelectorAll('ul[aria-labelledby="detail-checks"] > li')).toHaveLength(
+      500,
+    );
   });
 
   it('reports a failure with GitHub’s words and loads again on Try again', async () => {
@@ -179,30 +190,30 @@ describe('PullRequestDetails', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Server error');
     // The merge facts and no skeleton stay: nothing more to wait for.
-    expect(rows('Merge')[0]).toBe('Blocked: review required');
+    expect(rows('Merge status')[0]).toBe('Review required');
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByText('Checks')).toBeNull();
 
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    await screen.findByText('Checks');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    await screen.findByText('lint');
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('loads again when the PR changes, keeping what it shows meanwhile', async () => {
+  it('loads details and branch rules again only when the PR changes', async () => {
     const fetch = stubDetailFetch(() => detailNode({ checks: [checkRunNode('lint')] }));
     const { rerender } = show();
     await waitFor(() => expect(details.value[pr.id]?.detail).toBeDefined());
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(<PullRequestDetails pr={{ ...pr, fetchedLater: true } as PullRequest} id="detail" />);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     rerender(
       <PullRequestDetails pr={{ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' }} id="detail" />,
     );
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
-    expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
+    expect(screen.getByRole('list', { name: 'Merge status' })).toBeTruthy();
   });
 });

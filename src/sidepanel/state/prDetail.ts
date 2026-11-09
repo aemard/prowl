@@ -10,8 +10,7 @@ import { GitHubError } from '../../lib/github/errors';
 import { fetchPullRequestDetail } from '../../lib/github/fetchPullRequestDetail';
 import { t } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
-import { sendToBackground } from './background';
-import { auth, snapshot } from './store';
+import { auth } from './store';
 
 export interface DetailEntry {
   /** What the entry was fetched for (`detailKey`); another key means the PR has changed since. */
@@ -28,19 +27,30 @@ export const expandedIds = signal<readonly string[]>([]);
 export const details = signal<Readonly<Record<string, DetailEntry>>>({});
 
 /**
- * Changes when anything the detail depends on does: activity, the check counts (a run finishing
- * does not always touch `updatedAt`), and the merge facts. A new key refetches an expanded card.
+ * Changes with the data the detail reads. Merge facts already update directly from the list;
+ * their unknown -> verified transition must not fetch the same checks and reviewers twice.
  */
 export const detailKey = (pr: PullRequest) =>
-  JSON.stringify([pr.updatedAt, pr.checks, pr.mergeable, pr.mergeStateStatus, pr.reviewDecision]);
+  JSON.stringify([
+    pr.headSha,
+    pr.baseRefName,
+    pr.allowedMergeMethods,
+    pr.updatedAt,
+    [
+      pr.checks.state,
+      pr.checks.total,
+      pr.checks.passed,
+      pr.checks.failed,
+      pr.checks.pending,
+      pr.checks.neutral,
+    ],
+    pr.reviews.map((review) => [review.id, review.state, review.submittedAt, review.author]),
+    pr.requestedReviewers,
+  ]);
 
 export function toggleExpanded(id: string): void {
   const open = expandedIds.value;
   expandedIds.value = open.includes(id) ? open.filter((other) => other !== id) : [...open, id];
-  const pr = snapshot.value?.pullRequests[id];
-  if (!open.includes(id) && pr) {
-    void sendToBackground({ type: 'refreshMergeState', prId: id, headSha: pr.headSha });
-  }
 }
 
 export function collapse(id: string): void {
@@ -62,8 +72,8 @@ const put = (id: string, entry: DetailEntry) => {
 
 /**
  * Fetches the detail of `pr` unless the entry already holds it (or is loading it) for its
- * current `detailKey`; a failed one is tried again. Keeps showing the previous detail while a
- * newer one loads, and drops an answer that a newer request has overtaken.
+ * current `detailKey`; a failed one is tried again. Retains the previous entry in memory while a
+ * newer one loads (the view only uses matching completed entries), and drops an answer that a newer request has overtaken.
  */
 export async function loadDetail(pr: PullRequest): Promise<void> {
   const token = signedInAs.value;
@@ -74,6 +84,7 @@ export async function loadDetail(pr: PullRequest): Promise<void> {
   const outcome: Partial<DetailEntry> = await fetchPullRequestDetail(
     createGitHubClient({ token, apiUrl: env.apiUrl }),
     pr.id,
+    pr,
   ).then(
     (detail) => ({ detail }),
     (error: unknown) => ({

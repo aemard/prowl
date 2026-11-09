@@ -1,0 +1,39 @@
+html body {
+  max-width: 520px;
+  min-height: 100vh;
+  margin: 0 auto;
+}
+
+aside[aria-label="Preview mode"] {
+  padding: 10px 16px;
+  text-align: center;
+  font:
+    12px system-ui,
+    sans-serif;
+  border-bottom: 1px solid currentColor;
+}
+
+.preview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.preview-controls__label {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.preview-controls__buttons {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+.ui-toast-region {
+  max-width: 496px;
+  margin-inline: auto;
+}

@@ -52,56 +52,60 @@ export function NotificationsSettings() {
         onChange={(next) => update((n) => ({ ...n, enabled: next }))}
       />
 
-      <h4 id={eventsId} class="settings-subtitle">
-        {t('notifyMeWhen')}
-      </h4>
-      <ul class="settings-list" aria-labelledby={eventsId}>
-        {PR_EVENT_TYPES.map((type) => (
-          <li key={type}>
-            <Switch
-              label={EVENT_LABELS[type].label}
-              description={EVENT_LABELS[type].description}
-              checked={events[type]}
-              disabled={!enabled}
-              onChange={(next) => update((n) => ({ ...n, events: { ...n.events, [type]: next } }))}
+      {enabled ? (
+        <>
+          <h4 id={eventsId} class="settings-subtitle">
+            {t('notifyMeWhen')}
+          </h4>
+          <ul class="settings-list" aria-labelledby={eventsId}>
+            {PR_EVENT_TYPES.map((type) => (
+              <li key={type}>
+                <Switch
+                  label={EVENT_LABELS[type].label}
+                  description={EVENT_LABELS[type].description}
+                  checked={events[type]}
+                  onChange={(next) =>
+                    update((n) => ({ ...n, events: { ...n.events, [type]: next } }))
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+
+          <Switch
+            label={t('quietHours')}
+            description={t('silenceNotificationsAtSetTimesEveryDayInYour')}
+            checked={quietHours.enabled}
+            onChange={(next) =>
+              update((n) => ({ ...n, quietHours: { ...n.quietHours, enabled: next } }))
+            }
+          />
+          <div class="settings-pair">
+            <TextField
+              label={t('from')}
+              type="time"
+              value={quietHours.start}
+              disabled={!quietHours.enabled}
+              onValueChange={(value) => setTime('start', value)}
             />
-          </li>
-        ))}
-      </ul>
+            <TextField
+              label={t('until')}
+              type="time"
+              value={quietHours.end}
+              disabled={!quietHours.enabled}
+              onValueChange={(value) => setTime('end', value)}
+            />
+          </div>
+          {note && <p class="settings-note">{note}</p>}
 
-      <Switch
-        label={t('quietHours')}
-        description={t('silenceNotificationsAtSetTimesEveryDayInYour')}
-        checked={quietHours.enabled}
-        disabled={!enabled}
-        onChange={(next) =>
-          update((n) => ({ ...n, quietHours: { ...n.quietHours, enabled: next } }))
-        }
-      />
-      <div class="settings-pair">
-        <TextField
-          label={t('from')}
-          type="time"
-          value={quietHours.start}
-          disabled={!enabled || !quietHours.enabled}
-          onValueChange={(value) => setTime('start', value)}
-        />
-        <TextField
-          label={t('until')}
-          type="time"
-          value={quietHours.end}
-          disabled={!enabled || !quietHours.enabled}
-          onValueChange={(value) => setTime('end', value)}
-        />
-      </div>
-      {note && <p class="settings-note">{note}</p>}
-
-      <div class="settings-test">
-        <Button icon={<BellIcon />} disabled={!enabled} onClick={() => void sendTestNotification()}>
-          {t('sendTestNotification')}
-        </Button>
-        <p class="settings-note">{t('nothingAppearsCheckThatYourSystemLetsChromeShow')}</p>
-      </div>
+          <div class="settings-test">
+            <Button icon={<BellIcon />} onClick={() => void sendTestNotification()}>
+              {t('sendTestNotification')}
+            </Button>
+            <p class="settings-note">{t('nothingAppearsCheckThatYourSystemLetsChromeShow')}</p>
+          </div>
+        </>
+      ) : null}
     </SettingsGroup>
   );
 }

@@ -74,6 +74,7 @@ export function AccountSettings() {
       <Button class="settings-add" icon={<SignOutIcon />} onClick={() => setConfirming(true)}>
         {t('signOut')}
       </Button>
+      <AboutContent />
       <SignOutDialog open={confirming} onClose={() => setConfirming(false)} />
     </SettingsGroup>
   );
@@ -90,10 +91,10 @@ function useOpenShortcut(): string | undefined {
   return shortcut;
 }
 
-export function AboutSettings() {
+function AboutContent() {
   const shortcut = useOpenShortcut();
   return (
-    <SettingsGroup title={t('about')}>
+    <>
       <p>{t('versionNumber', chrome.runtime.getManifest().version)}</p>
       {shortcut !== undefined && (
         <p class="settings-note">
@@ -115,6 +116,6 @@ export function AboutSettings() {
           </li>
         ))}
       </ul>
-    </SettingsGroup>
+    </>
   );
 }

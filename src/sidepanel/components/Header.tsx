@@ -33,7 +33,7 @@ function UpdatedAt() {
   return (
     <p class="header__updated">
       <time dateTime={fetchedAt} title={new Date(fetchedAt).toLocaleString(uiLocale())}>
-        {t('updatedAgo', formatRelativeTime(fetchedAt))}
+        {t('listUpdated2', formatRelativeTime(fetchedAt))}
       </time>
     </p>
   );
@@ -49,7 +49,7 @@ export function Header() {
     <header class="header">
       <ProwlMark size={20} />
       <div class="header__text">
-        <h1 class="header__title">Prowl</h1>
+        <h1 class="header__title">{t('prowl')}</h1>
         {viewer && <UpdatedAt />}
       </div>
       {viewer && (

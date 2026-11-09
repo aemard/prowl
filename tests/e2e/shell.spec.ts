@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
+import { buildPullRequest, buildSnapshotOf } from '../../src/test/panel';
 import { expect, test } from './fixtures';
+import { box } from './helpers/listAssertions';
 import { MOCK_ORIGIN } from './mock-github/server';
 
 const DARK_BG = 'rgb(18, 18, 21)';
@@ -48,7 +50,7 @@ test.describe('signed in', () => {
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('heading', { level: 1, name: 'Prowl' })).toBeVisible();
-    await expect(panel.getByText('Updated 2 min ago', { exact: true })).toBeVisible();
+    await expect(panel.getByText('List updated 2 min ago', { exact: true })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Refresh' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
@@ -58,6 +60,52 @@ test.describe('signed in', () => {
     await expectNoA11yViolations(panel);
     await panel.emulateMedia({ colorScheme: 'dark' });
     await expectNoA11yViolations(panel);
+  });
+
+  test('centers unseen dots beside the first row without moving card content', async ({
+    openPanel,
+    seedStorage,
+  }) => {
+    await seedStorage({
+      snapshot: buildSnapshotOf({
+        authored: [
+          buildPullRequest(),
+          buildPullRequest({ number: 2, title: 'A long '.repeat(30) }),
+        ],
+      }),
+    });
+    const panel = await openPanel();
+    await panel.clock.install();
+    await panel.clock.pauseAt(new Date());
+    for (const groupByRepo of [false, true]) {
+      for (const theme of ['light', 'dark']) {
+        await seedStorage({ settings: { groupByRepo, theme } });
+        for (const width of [320, 400, 600]) {
+          await panel.setViewportSize({ width, height: 760 });
+          const cards = panel.locator('.pr-card__summary');
+          await expect(cards).toHaveCount(2);
+          for (const card of await cards.all()) {
+            const dot = card.getByTitle('Unseen changes');
+            await expect(dot).toHaveCount(1);
+            const before = await box(card.locator('.pr-card__title'));
+            const row = await box(card.locator('.pr-card__head'));
+            const avatar = await box(card.locator('.ui-avatar'));
+            const bounds = await box(card);
+            const mark = await box(dot);
+            expect(mark.y + mark.height / 2).toBeCloseTo(row.y + row.height / 2, 1);
+            expect(mark.y + mark.height / 2).toBeCloseTo(avatar.y + avatar.height / 2, 1);
+            expect(mark.x).toBeGreaterThan(bounds.x);
+            expect(mark.x + mark.width).toBeLessThan(avatar.x);
+            await dot.evaluate((element) => {
+              element.remove();
+            });
+            expect(await box(card.locator('.pr-card__title'))).toEqual(before);
+          }
+          // Restore the indicators after checking that removing them cannot change layout.
+          await panel.reload();
+        }
+      }
+    }
   });
 
   test('applies the theme from settings, live', async ({ openPanel, seedStorage }) => {
@@ -75,9 +123,9 @@ test.describe('signed in', () => {
   test('keeps in sync with what the service worker stores', async ({ openPanel, seedStorage }) => {
     const panel = await openPanel();
     await seedStorage({ snapshot: snapshot(new Date().toISOString()) });
-    await expect(panel.getByText('Updated just now')).toBeVisible();
+    await expect(panel.getByText('List updated just now')).toBeVisible();
     await seedStorage({ snapshot: snapshot(minutesAgo(5)) });
-    await expect(panel.getByText('Updated 5 min ago')).toBeVisible();
+    await expect(panel.getByText('List updated 5 min ago')).toBeVisible();
 
     await seedStorage({ pollState: pollState(true) });
     await expect(panel.getByRole('button', { name: 'Refresh' })).toHaveAttribute(
@@ -122,14 +170,31 @@ test.describe('signed in', () => {
     await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeFocused();
 
     await serviceWorker.evaluate(() => chrome.storage.local.remove('auth'));
-    await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await seedStorage({ auth });
     await expect(panel.getByRole('main', { name: 'Pull requests' })).toBeVisible();
   });
 
-  test('opens the GitHub profile from the account menu', async ({ context, openPanel }) => {
+  test('opens the GitHub profile from the account menu', async ({
+    context,
+    openPanel,
+    seedStorage,
+  }) => {
+    await seedStorage({ snapshot: buildSnapshotOf({ authored: [buildPullRequest()] }) });
     const panel = await openPanel();
+    await expect(panel.getByRole('searchbox')).toBeVisible();
     await panel.getByRole('button', { name: 'Account: octocat' }).click();
+    const profile = panel.getByRole('menuitem', { name: 'View GitHub profile' });
+    // Poll through the menu entrance animation and test the overlapping first row.
+    await expect
+      .poll(() =>
+        profile.evaluate((item) => {
+          const box = item.getBoundingClientRect();
+          const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+          return hit?.closest('[role="menuitem"]') === item;
+        }),
+      )
+      .toBe(true);
     const opened = context.waitForEvent('page');
     await panel.getByRole('menuitem', { name: 'View GitHub profile' }).click();
     expect((await opened).url()).toBe(`${MOCK_ORIGIN}/octocat`);

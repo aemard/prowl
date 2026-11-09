@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../test/chrome';
+import { buildPullRequest } from '../../test/panel';
+import { activityKey } from '../activity';
 import type { PrLocalState } from '../model';
 import {
+  baselineSeenFacts,
   emptyPrLocal,
   isMuted,
   isSeen,
@@ -140,6 +143,39 @@ describe('markSeen / isSeen', () => {
     const empty = state();
     expect(markSeen(empty, 'PR_a', 'yesterday')).toBe(empty);
   });
+
+  it('detects useful changed facts on the same timestamp without inventing reload activity', () => {
+    const pr = buildPullRequest({ updatedAt });
+    const seen = markSeen(state(), pr.id, updatedAt, activityKey(pr));
+    const changed = { ...pr, checks: { ...pr.checks, state: 'failure' as const, failed: 1 } };
+    expect(isSeen(seen, pr.id, updatedAt, activityKey({ ...pr }))).toBe(true);
+    expect(isSeen(seen, pr.id, updatedAt, activityKey(changed))).toBe(false);
+    expect(
+      isSeen(
+        seen,
+        pr.id,
+        updatedAt,
+        activityKey({ ...pr, reviewDecision: 'unknown', mergeable: 'unknown' }),
+      ),
+    ).toBe(true);
+    const next = markSeen(seen, pr.id, updatedAt, activityKey(changed));
+    expect(isSeen(next, pr.id, updatedAt, activityKey(changed))).toBe(true);
+    expect(markSeen(next, pr.id, updatedAt, activityKey(changed))).toBe(next);
+    expect(baselineSeenFacts(markSeen(state(), pr.id, updatedAt), { [pr.id]: pr })).toEqual(seen);
+    expect(baselineSeenFacts(seen, { [pr.id]: changed })).toBe(seen);
+  });
+});
+
+it('drops legacy alwaysShown while retaining local choices and seen facts', () => {
+  const pr = buildPullRequest();
+  const local = markSeen(
+    mute(snooze(state(), pr.id, NOW + HOUR), pr.id),
+    pr.id,
+    pr.updatedAt,
+    activityKey(pr),
+  );
+  expect(normalizePrLocal({ ...local, alwaysShown: { [pr.id]: true } })).toEqual(local);
+  expect(pruneExpired(local, NOW, [])).toMatchObject({ seenFacts: {}, seen: {} });
 });
 
 describe('pruneExpired', () => {

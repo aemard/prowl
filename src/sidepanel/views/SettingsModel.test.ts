@@ -1,25 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  describePermissions,
-  estimatedPointsPerHour,
-  quietHoursNote,
-  tokenExpiry,
-} from './SettingsModel';
-
-describe('estimatedPointsPerHour', () => {
-  it.each([
-    // The figures in docs/architecture.md: the defaults, and its heaviest example.
-    [1, 50, 2, 120],
-    [4, 100, 1, 1920],
-    [1, 1, 60, 1],
-    [0, 50, 2, 0],
-  ])(
-    '%i sections of %i pull requests every %i minutes cost about %i points an hour',
-    (sections, perSection, minutes, points) => {
-      expect(estimatedPointsPerHour(sections, perSection, minutes)).toBe(points);
-    },
-  );
-});
+import { describePermissions, quietHoursNote, tokenExpiry } from './SettingsModel';
 
 describe('quietHoursNote', () => {
   it.each([

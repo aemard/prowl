@@ -28,6 +28,23 @@ beforeEach(setupMergeTest);
 afterEach(resetMergeTest);
 
 describe('when the button shows', () => {
+  it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
+    show({
+      viewerCanMergeAsAdmin: true,
+      reviewDecision: 'approved',
+      mergeStateStatus: 'blocked',
+      autoMergeAllowed: true,
+    });
+    expect(opener().getAttribute('data-variant')).toBe('secondary');
+    expect(opener().textContent).toBe('Merge without waiting');
+    fireEvent.click(opener());
+    expect(dialog().textContent).toContain(
+      'You can bypass the branch rules for this pull request.',
+    );
+    expect(within(dialog()).getByText(/Not ready: blocked by branch rules/)).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
+  });
+
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
@@ -40,6 +57,7 @@ describe('when the button shows', () => {
     expect(opener().getAttribute('data-variant')).toBe('primary');
     const blocked: PullRequest = {
       ...pr,
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       mergeStateStatus: 'blocked',
     };
@@ -52,7 +70,6 @@ describe('when the button shows', () => {
     ['it is merged', { state: 'merged' }],
     ['it is closed', { state: 'closed' }],
     ['it is a draft', { isDraft: true }],
-    ['the repository allows no method', { allowedMergeMethods: [] }],
   ])('is hidden when %s', (_name, overrides) => {
     const { container } = show(overrides);
     expect(container.textContent).toBe('');
@@ -80,6 +97,7 @@ describe('the confirmation', () => {
 
   it('repeats what still blocks the merge, which the dialog hides on the card', () => {
     show({
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       reviews: [
         { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },
@@ -113,8 +131,8 @@ describe('the confirmation', () => {
   it('falls back to the first allowed method when the default is not allowed', () => {
     show({ allowedMergeMethods: ['squash'], defaultMergeMethod: 'merge' });
     fireEvent.click(opener());
-    expect((method() as HTMLSelectElement).value).toBe('squash');
-    expect(within(method()).getAllByRole('option')).toHaveLength(1);
+    expect(within(dialog()).queryByRole('combobox')).toBeNull();
+    expect(within(dialog()).getByRole('button', { name: 'Squash and merge' })).toBeTruthy();
   });
 
   it('can be cancelled, sending nothing', () => {
@@ -137,7 +155,7 @@ describe('the confirmation', () => {
     expect(commitTitle()).toBeTruthy();
     choose('rebase');
     expect(within(dialog()).queryByRole('textbox')).toBeNull();
-    expect(dialog().textContent).toContain('Commits are kept as they are');
+    expect(dialog().textContent).not.toContain('Commits are kept as they are');
   });
 });
 

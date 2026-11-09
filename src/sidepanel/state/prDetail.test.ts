@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest, buildSnapshotOf } from '../../test/panel';
+import { buildAuth, buildPullRequest } from '../../test/panel';
 import { collapse, detailKey, details, expandedIds, loadDetail, toggleExpanded } from './prDetail';
 import { auth, snapshot } from './store';
 
@@ -29,19 +29,6 @@ describe('expanded cards', () => {
     expect(expandedIds.value).toEqual([]);
   });
 
-  it('requests only the opened PR merge state, without a full poll or a request on collapse', () => {
-    snapshot.value = buildSnapshotOf({ authored: [pr] });
-    const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    toggleExpanded(pr.id);
-    expect(send).toHaveBeenCalledExactlyOnceWith({
-      type: 'refreshMergeState',
-      prId: pr.id,
-      headSha: pr.headSha,
-    });
-    toggleExpanded(pr.id);
-    expect(send).toHaveBeenCalledTimes(1);
-  });
-
   it('are forgotten, with their details, when another account signs in or out', async () => {
     stubDetailFetch();
     toggleExpanded(pr.id);
@@ -62,14 +49,22 @@ describe('expanded cards', () => {
 });
 
 describe('detailKey', () => {
-  it('changes with activity, check counts and merge facts, not with the poll', () => {
+  it('changes with the head, activity, check counts and reviewers, not merge enrichment', () => {
     const key = detailKey(pr);
     expect(detailKey({ ...pr })).toBe(key);
+    expect(detailKey({ ...pr, headSha: 'b'.repeat(40) })).not.toBe(key);
+    expect(
+      detailKey({
+        ...pr,
+        checks: { ...Object.fromEntries(Object.entries(pr.checks).reverse()) } as typeof pr.checks,
+      }),
+    ).toBe(key);
     expect(detailKey({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' })).not.toBe(key);
     expect(detailKey({ ...pr, checks: { ...pr.checks, failed: 1 } })).not.toBe(key);
-    expect(detailKey({ ...pr, mergeStateStatus: 'clean' })).not.toBe(key);
-    expect(detailKey({ ...pr, reviewDecision: 'approved' })).not.toBe(key);
-    expect(detailKey({ ...pr, mergeable: 'conflicting' })).not.toBe(key);
+    expect(detailKey({ ...pr, requestedReviewers: ['alice'] })).not.toBe(key);
+    expect(detailKey({ ...pr, mergeStateStatus: 'clean' })).toBe(key);
+    expect(detailKey({ ...pr, reviewDecision: 'approved' })).toBe(key);
+    expect(detailKey({ ...pr, mergeable: 'conflicting' })).toBe(key);
   });
 });
 
@@ -81,7 +76,7 @@ describe('loadDetail', () => {
     await Promise.all([loading, loadDetail(pr)]);
     await loadDetail(pr);
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(JSON.parse(String(fetch.mock.calls[0]?.[1].body)).variables).toEqual({
       id: pr.id,
       after: null,
@@ -145,7 +140,7 @@ describe('loadDetail', () => {
 
     const fetch = stubDetailFetch();
     await loadDetail(pr);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(details.value[pr.id]?.error).toBeUndefined();
     expect(details.value[pr.id]?.detail).toBeDefined();
   });

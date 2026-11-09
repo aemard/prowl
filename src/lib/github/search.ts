@@ -30,7 +30,7 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
  * The search string for a section: `is:pr` is always enforced (AND / OR / NOT only combine
  * search words in GitHub's syntax, never qualifiers, so `is:pr` cannot be OR-ed away).
  * Presets follow the shape `is:pr is:open <who>:@me archived:false`, the team section
- * `team-review-requested:<team>` for one team key (`org/slug`); a custom query is used
+ * `team-review-requested-user:@me` for every viewer team; a custom query is used
  * as typed (callers skip it when `validateCustomQuery` reports errors).
  *
  * `repoInclude` adds positive scope qualifiers, which GitHub ORs together, unless the custom
@@ -38,7 +38,7 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
  * with the include list. `repoExclude` adds `-repo:` / `-user:`. GitHub ignores a scope that
  * the exclusions cancel out completely, so `filterByRepo` stays the source of truth.
  */
-export function buildSearchQuery(section: Section, filters: RepoFilters, team = ''): string {
+export function buildSearchQuery(section: Section, filters: RepoFilters): string {
   const parts = ['is:pr'];
   let scoped = false;
   if (section.kind === 'custom') {
@@ -48,7 +48,7 @@ export function buildSearchQuery(section: Section, filters: RepoFilters, team = 
   } else {
     const who =
       section.kind === 'team_review_requested'
-        ? `team-review-requested:${team}`
+        ? 'team-review-requested-user:@me'
         : PRESET_QUALIFIER[section.kind];
     parts.push('is:open', who, 'archived:false');
   }

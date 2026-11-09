@@ -1,10 +1,10 @@
 import type { RefObject } from 'preact';
 import { useState } from 'preact/hooks';
-import { describeHiddenReasons } from '../../lib/hidden';
+import { activityKey } from '../../lib/activity';
 import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
 import { sectionLabel } from '../../lib/sectionLabel';
-import { isMuted, isSeen } from '../../lib/storage/prLocal';
+import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import {
   AlertIcon,
   ClockIcon,
@@ -21,14 +21,15 @@ import {
 import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
+import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { pollState } from '../state/store';
 import {
   filterQuery,
   foldKey,
   type LoadedListData,
   pullRequestsOf,
-  showHidden,
   toggleFolded,
 } from './ListState';
 
@@ -50,7 +51,7 @@ export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; e
   team_review_requested: {
     icon: PeopleIcon,
     short: t('teams'),
-    empty: t('whenSomeoneAsksOneOfYourTeamsForA'),
+    empty: t('noReviewRequestsForYourTeams'),
   },
   mentioned: {
     icon: MentionIcon,
@@ -70,24 +71,22 @@ function ListCard({
   data,
   grouped = false,
   snoozed = false,
-  hiddenBecause,
 }: {
   pr: PullRequest;
   data: LoadedListData;
   grouped?: boolean;
   snoozed?: boolean;
-  hiddenBecause?: string;
 }) {
   return (
     <PullRequestCard
       pr={pr}
+      activity={data.activity[pr.id]}
       now={data.now}
-      unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt)}
+      unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr))}
       muted={isMuted(data.local, pr.id)}
       teams={data.snap.teamRequests?.[pr.id]}
       grouped={grouped}
       snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
-      hiddenBecause={hiddenBecause}
     />
   );
 }
@@ -116,8 +115,15 @@ function ShownRequests({ data }: { data: LoadedListData }) {
   );
 }
 
-function SnoozedRequests({ data }: { data: LoadedListData }) {
-  const [open, setOpen] = useState(false);
+function SnoozedRequests({
+  data,
+  open,
+  setOpen,
+}: {
+  data: LoadedListData;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
   const { snoozed, selected } = data;
   return (
     snoozed.length > 0 && (
@@ -144,40 +150,6 @@ function SnoozedRequests({ data }: { data: LoadedListData }) {
   );
 }
 
-function HiddenRequests({ data }: { data: LoadedListData }) {
-  const { hidden, selected } = data;
-  return (
-    hidden.length > 0 && (
-      <div class="list__aside">
-        <Button
-          class="list__aside-toggle"
-          size="sm"
-          variant="ghost"
-          icon={showHidden.value ? <EyeClosedIcon size={12} /> : <EyeIcon size={12} />}
-          aria-expanded={showHidden.value}
-          onClick={() => {
-            showHidden.value = !showHidden.value;
-          }}
-        >
-          {showHidden.value ? t('hideAgain') : t('showHidden', hidden.length)}
-        </Button>
-        {showHidden.value && (
-          <ul class="pr-list" aria-label={t('hiddenPullRequests', sectionLabel(selected))}>
-            {hidden.map(({ pr, reasons }) => (
-              <ListCard
-                key={pr.id}
-                pr={pr}
-                data={data}
-                hiddenBecause={describeHiddenReasons(reasons)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-    )
-  );
-}
-
 function EmptySection({
   data,
   filterInput,
@@ -185,10 +157,11 @@ function EmptySection({
   data: LoadedListData;
   filterInput: RefObject<HTMLElement>;
 }) {
-  const { shown, hidden, snoozed, snap, selected, query } = data;
+  const { shown, snoozed, snap, selected, query } = data;
   if (
-    shown.length + hidden.length + snoozed.length > 0 ||
-    snap.sectionErrors?.[selected.id] !== undefined
+    shown.length + snoozed.length > 0 ||
+    snap.sectionErrors?.[selected.id] !== undefined ||
+    searching(data)
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
@@ -199,7 +172,13 @@ function EmptySection({
       title={filteredOut ? t('noMatches') : t('noPullRequests')}
       description={
         filteredOut
-          ? t('nothingInMatches', sectionLabel(selected), query.trim())
+          ? t(
+              snap.sectionCoverage?.[selected.id]?.hasMore
+                ? 'nothingInLoadedMatches'
+                : 'nothingInMatches',
+              sectionLabel(selected),
+              query.trim(),
+            )
           : KINDS[selected.kind].empty
       }
       action={
@@ -225,19 +204,74 @@ export function SectionContent({
   data: LoadedListData;
   filterInput: RefObject<HTMLElement>;
 }) {
+  const [snoozedOpen, setSnoozedOpen] = useState(false);
+  const matches = data.shown.length + data.snoozed.length;
+  const setAside =
+    data.shown.length === 0 &&
+    matches > 0 &&
+    !snoozedOpen &&
+    pullRequestsOf(data.snap, data.selected.id).every((pr) =>
+      isSnoozed(data.local, pr.id, data.now),
+    );
   const error = data.snap.sectionErrors?.[data.selected.id];
+  const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
+      {searching(data) && (
+        <p class="list__notice" role="status">
+          {t('searchingSection', sectionLabel(data.selected))}
+        </p>
+      )}
       {error !== undefined && (
         <p class="list__notice">
           <AlertIcon size={16} />
-          <span>{t('sectionLoadError', sectionLabel(data.selected), error)}</span>
+          <span>
+            {t(
+              coverage?.partial ? 'sectionPartialResults' : 'sectionLoadError',
+              sectionLabel(data.selected),
+              error,
+            )}
+          </span>
         </p>
       )}
+      {coverage && (
+        <SectionCoverageNotice
+          coverage={coverage}
+          count={pullRequestsOf(data.snap, data.selected.id).length}
+        />
+      )}
+      {setAside && !searching(data) && (
+        <EmptyState
+          icon={<EyeClosedIcon size={24} />}
+          title={t('allLoadedPullRequestsAreSnoozed')}
+          description={t('theyReturnHereWhenTheSnoozeEnds')}
+          action={
+            <Button
+              onClick={() => {
+                setSnoozedOpen(true);
+                // Keep keyboard focus on the fold after the empty-state button disappears.
+                filterInput.current
+                  ?.closest('.list')
+                  ?.querySelector<HTMLElement>('.list__aside-toggle')
+                  ?.focus();
+              }}
+            >
+              {t('showSnoozed')}
+            </Button>
+          }
+        />
+      )}
       <ShownRequests data={data} />
-      <SnoozedRequests data={data} />
-      <HiddenRequests data={data} />
+      <SnoozedRequests data={data} open={snoozedOpen} setOpen={setSnoozedOpen} />
       <EmptySection data={data} filterInput={filterInput} />
     </>
+  );
+}
+
+function searching(data: LoadedListData) {
+  return (
+    pollState.value?.inFlight === true &&
+    (data.snap.sectionsPending?.includes(data.selected.id) ||
+      (!(data.selected.id in data.snap.sections) && !data.snap.sectionErrors?.[data.selected.id]))
   );
 }

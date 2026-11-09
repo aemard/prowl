@@ -9,6 +9,7 @@ import {
 } from '@playwright/test';
 import { saveCapture } from '../../scripts/capture';
 import type { AuthState } from '../../src/lib/model';
+import { defaultSettings } from '../../src/lib/storage/settings';
 import { PEOPLE } from './helpers/listData';
 import { MockGitHub } from './mock-github/server';
 
@@ -130,6 +131,14 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     await startup.goto(`chrome-extension://${new URL(worker.url()).host}/sidepanel/index.html`);
     await startup.evaluate(() => chrome.runtime.sendMessage({ type: 'poll' }));
     await startup.close();
+    const settings = defaultSettings();
+    settings.sections = settings.sections.map((section) => ({
+      ...section,
+      enabled: section.kind === 'authored',
+    }));
+    await worker.evaluate((stored) => chrome.storage.local.set(stored), {
+      settings,
+    });
     await use(worker);
   },
 
@@ -185,12 +194,20 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
       // A theme switch or a new dialog starts transitions and animations (colors, opacity), and
       // axe computes contrast from whatever it finds mid-flight, so a slow runner reports
       // violations that are gone 120 ms later. Scan the settled page. Endless animations (spinner,
-      // skeleton shimmer) never settle and do not change colors.
+      // skeleton shimmer) never settle and do not change colors. Chrome also suspends finite
+      // transitions inside closed details: their finished promise never resolves while hidden.
       await page.evaluate(() =>
         Promise.all(
           document
             .getAnimations()
-            .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+            .filter((animation) => {
+              const effect = animation.effect;
+              const target = effect instanceof KeyframeEffect ? effect.target : null;
+              return (
+                effect?.getComputedTiming().endTime !== Infinity &&
+                (!target || target.checkVisibility())
+              );
+            })
             .map((animation) => animation.finished.catch(() => undefined)),
         ),
       );

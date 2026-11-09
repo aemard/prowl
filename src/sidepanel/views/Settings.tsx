@@ -1,25 +1,23 @@
+import { useEffect } from 'preact/hooks';
 import { t } from '../../lib/i18n';
-import type { BadgeMode, Language, SortOrder, Theme } from '../../lib/model';
+import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
 import {
-  MAX_HIDE_STALE_DAYS,
   MAX_PER_SECTION,
   MAX_POLL_INTERVAL_MINUTES,
-  MIN_HIDE_STALE_DAYS,
   MIN_PER_SECTION,
   MIN_POLL_INTERVAL_MINUTES,
 } from '../../lib/storage/settings';
 import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
 import { Switch } from '../components/ui/Switch';
-import { saveSettings } from '../state/settings';
-import { settings, teams } from '../state/store';
-import { AboutSettings, AccountSettings } from './SettingsAccount';
+import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
+import { settings } from '../state/store';
+import { AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
-import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
+import { BADGE_HINTS } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
-import { TeamsSettings } from './SettingsTeams';
 
 const THEMES: SelectOption<Theme>[] = [
   { value: 'system', label: t('matchSystem') },
@@ -39,73 +37,36 @@ const BADGES: SelectOption<BadgeMode>[] = [
   { value: 'off', label: t('off') },
 ];
 
-const LANGUAGES: SelectOption<Language>[] = [
-  { value: 'system', label: t('matchChromeLanguage') },
-  { value: 'en', label: 'English' },
-  { value: 'ja', label: '日本語' },
-  { value: 'zh-CN', label: '简体中文' },
-  { value: 'zh-TW', label: '繁體中文' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'es', label: 'Español' },
-];
-
-function LanguageSettings() {
-  return (
-    <Select
-      label={t('language')}
-      name="language"
-      value={settings.value.language}
-      options={LANGUAGES}
-      hint={t('languageHint')}
-      onValueChange={(language) => void saveSettings({ language })}
-    />
-  );
-}
-
 /** How often Prowl asks GitHub, and what that costs of the hourly rate limit. */
 function PollingSettings() {
-  const { pollIntervalMinutes, maxPerSection, sections, unfollowedTeams } = settings.value;
-  const searches = sections
-    .filter((section) => section.enabled)
-    .reduce(
-      (total, section) =>
-        total +
-        (section.kind === 'team_review_requested'
-          ? teamSearches(teams.value?.teams ?? [], unfollowedTeams)
-          : 1),
-      0,
-    );
-  const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
+  const { pollIntervalMinutes, maxPerSection } = settings.value;
   return (
     <SettingsGroup title={t('refresh')}>
-      <div class="settings-pair">
-        <NumberField
-          label={t('checkEveryMinutes')}
-          value={pollIntervalMinutes}
-          min={MIN_POLL_INTERVAL_MINUTES}
-          max={MAX_POLL_INTERVAL_MINUTES}
-          onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
-        />
-        <NumberField
-          label={t('pullRequestsPerSection')}
-          value={maxPerSection}
-          min={MIN_PER_SECTION}
-          max={MAX_PER_SECTION}
-          onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
-        />
-      </div>
-      <p class="settings-note">{t('pollingBudget', HOURLY_POINTS, points)}</p>
+      <NumberField
+        id={PR_LIMIT_ID}
+        label={t('pullRequestsPerSection')}
+        value={maxPerSection}
+        min={MIN_PER_SECTION}
+        max={MAX_PER_SECTION}
+        hint={t('prowlOnlyWatchesThePullRequestsItLoads')}
+        onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
+      />
+      <NumberField
+        label={t('refreshEveryMinutes')}
+        value={pollIntervalMinutes}
+        min={MIN_POLL_INTERVAL_MINUTES}
+        max={MAX_POLL_INTERVAL_MINUTES}
+        onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
+      />
+      <p class="settings-note">{t('morePullRequestsAndShorterIntervalsUseMoreOfGitHub')}</p>
     </SettingsGroup>
   );
 }
 
 function AppearanceSettings() {
-  const { theme, sort, groupByRepo, badge, hideStaleAfterDays, hideDrafts, hideBots } =
-    settings.value;
+  const { theme, sort, groupByRepo, badge } = settings.value;
   return (
-    <SettingsGroup title={t('appearance')}>
-      <LanguageSettings />
+    <SettingsGroup title={t('list')}>
       <Select
         label={t('theme')}
         value={theme}
@@ -124,26 +85,6 @@ function AppearanceSettings() {
         checked={groupByRepo}
         onChange={(checked) => void saveSettings({ groupByRepo: checked })}
       />
-      <NumberField
-        label={t('hidePrsWithNoCommitForDays')}
-        value={hideStaleAfterDays}
-        min={MIN_HIDE_STALE_DAYS}
-        max={MAX_HIDE_STALE_DAYS}
-        hint={t('theyStayOutOfTheListTheCountsAnd')}
-        onCommit={(value) => void saveSettings({ hideStaleAfterDays: value })}
-      />
-      <Switch
-        label={t('hideDraftPrs')}
-        description={t('shownAgainWithShowHiddenTheyStillNotifyYou')}
-        checked={hideDrafts}
-        onChange={(checked) => void saveSettings({ hideDrafts: checked })}
-      />
-      <Switch
-        label={t('hidePrsOpenedByBots')}
-        description={t('dependabotRenovateAndOtherAppsShownAgainWithShow')}
-        checked={hideBots}
-        onChange={(checked) => void saveSettings({ hideBots: checked })}
-      />
       <Select
         label={t('toolbarBadge')}
         value={badge}
@@ -157,14 +98,12 @@ function AppearanceSettings() {
 
 /** The groups below, in order, as the section links name them. */
 const SECTIONS = [
-  [t('pullRequests'), t('pullRequests')],
-  [t('teams'), t('teams')],
+  [t('sections'), t('sections')],
   [t('refresh'), t('refresh')],
   [t('notifications'), t('notifications')],
-  [t('appearance'), t('appearance')],
+  [t('list'), t('list')],
   [t('account2'), t('account2')],
-  [t('privacyAndPermissions'), t('privacy')],
-  [t('about'), t('about')],
+  [t('privacyAndPermissions'), t('privacyAndPermissions')],
 ] as const;
 
 /**
@@ -199,18 +138,24 @@ function SectionLinks() {
 
 /** Everything the user can configure. Every control saves as soon as it changes. */
 export function SettingsView() {
+  useEffect(() => {
+    if (settingsFocus.peek() !== 'pr-limit') return;
+    settingsFocus.value = undefined;
+    const field = document.getElementById(PR_LIMIT_ID);
+    field?.scrollIntoView({ block: 'center' });
+    field?.focus({ preventScroll: true });
+  }, []);
+
   return (
     <div class="settings">
       <h2 class="settings__title">{t('settings')}</h2>
       <SectionLinks />
       <ScopeSettings />
-      <TeamsSettings />
       <PollingSettings />
       <NotificationsSettings />
       <AppearanceSettings />
       <AccountSettings />
       <PrivacySettings />
-      <AboutSettings />
     </div>
   );
 }

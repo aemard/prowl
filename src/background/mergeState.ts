@@ -2,17 +2,19 @@
 import { diffSnapshots } from '../lib/diff/diffSnapshots';
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
+import { GitHubError, isPollBudgetFailure } from '../lib/github/errors';
 import { mapMergeState } from '../lib/github/mapPullRequest';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import type { AuthState, PollState, Settings, Snapshot } from '../lib/model';
 import { normalizePrLocal } from '../lib/storage/prLocal';
+import { withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItem, getItems, setItem, withLock } from '../lib/storage/storage';
 import { isWaiting, LOW_RATE_LIMIT, rateLimitedUntil } from '../lib/time/backoff';
 import { updateBadge } from './badge';
 import { notifyEvents } from './notifier';
-import { IDLE, iso, recordPollFailure, stillSignedIn } from './pollState';
+import { IDLE, iso, recordPollFailure } from './pollState';
 
 const consulted = new Map<string, number>();
 const visibleCards = new Map<string, { ids: string[]; at: number }>();
@@ -77,7 +79,8 @@ async function refreshCard(id: string, headSha: string, requestedAuth: AuthState
     readAt &&
     now - Date.parse(readAt) < 60_000 &&
     pr.mergeable !== 'unknown' &&
-    pr.mergeStateStatus !== 'unknown'
+    pr.mergeStateStatus !== 'unknown' &&
+    pr.reviewDecision !== 'unknown'
   )
     return;
   await readMergeState(auth, id, headSha, state, normalizeSettings(stored.settings), now);
@@ -92,37 +95,40 @@ async function readMergeState(
   now: number,
 ): Promise<void> {
   try {
-    await setItem('pollState', { ...state, mergePending: [id] });
+    const active = await withSignedIn(auth, async () => {
+      await setItem('pollState', { ...state, mergePending: [id] });
+      return true;
+    });
+    if (!active) return;
     const client = createGitHubClient({ token: auth.token, apiUrl: env.apiUrl });
-    const data = await client.graphql<MergeStateData>(
-      MERGE_STATE_QUERY,
-      { ids: [id] },
-      { partial: true },
-    );
-    if (!(await stillSignedIn(auth))) return;
-    if (!(await publishMergeState(auth, id, headSha, data.nodes?.[0], settings))) return;
-    if (!(await stillSignedIn(auth))) return;
-    const rateLimit = parseRateLimit(data.rateLimit) ?? state.rateLimit;
-    await setItem('pollState', {
-      ...state,
-      rateLimit,
-      nextAllowedAt:
-        rateLimit && rateLimit.remaining < LOW_RATE_LIMIT
-          ? iso(rateLimitedUntil(now, { resetAt: rateLimit.resetAt, retryAfterSeconds: null }))
-          : state.nextAllowedAt,
+    const data = await client.graphql<MergeStateData>(MERGE_STATE_QUERY, { ids: [id] });
+    await withSignedIn(auth, async () => {
+      if (!(await publishMergeState(auth, id, headSha, data.nodes?.[0], settings))) return;
+      const rateLimit = parseRateLimit(data.rateLimit) ?? state.rateLimit;
+      await setItem('pollState', {
+        ...state,
+        rateLimit,
+        nextAllowedAt:
+          rateLimit && rateLimit.remaining < LOW_RATE_LIMIT
+            ? iso(rateLimitedUntil(now, { resetAt: rateLimit.resetAt, retryAfterSeconds: null }))
+            : state.nextAllowedAt,
+      });
     });
   } catch (error) {
-    if (!(await stillSignedIn(auth))) return;
-    await recordPollFailure(error, state, now, settings.pollIntervalMinutes);
+    // A card-level GitHub error stays on the card; account-wide and unexpected ones reach the poll.
+    if (error instanceof GitHubError && !isPollBudgetFailure(error.kind)) return;
+    await withSignedIn(auth, () =>
+      recordPollFailure(error, state, now, settings.pollIntervalMinutes),
+    );
   } finally {
     // Head changes, missing nodes and failures must also remove the card's indicator.
-    if (await stillSignedIn(auth)) {
+    await withSignedIn(auth, async () => {
       const latest = await getItem('pollState');
       if (latest?.mergePending) {
         const { mergePending: _pending, ...idle } = latest;
         await setItem('pollState', idle);
       }
-    }
+    });
   }
 }
 
@@ -144,11 +150,12 @@ async function publishMergeState(
     latestPr.headSha !== headSha
   )
     return false;
-  if (node && node.id === id) {
+  if (node && node.id === id && node.headRefOid === headSha) {
     const next: Snapshot = {
       ...latest,
       pullRequests: { ...latest.pullRequests, [id]: { ...latestPr, ...mapMergeState(node) } },
       mergeStateAt: { ...latest.mergeStateAt, [id]: new Date().toISOString() },
+      mergeStateDue: latest.mergeStateDue?.filter((other) => other !== id),
     };
     await setItem('snapshot', next);
     await updateBadge();

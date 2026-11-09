@@ -34,7 +34,7 @@ describe('describeStatus', () => {
       title: 'Your GitHub token was revoked or expired',
       detail: 'Prowl stopped refreshing. Sign in again to continue.',
       age: 'Last updated 14 min ago.',
-      action: { type: 'reauthenticate', label: 'Re-authenticate' },
+      action: { type: 'reauthenticate', label: 'Sign in again' },
     });
   });
 
@@ -68,14 +68,14 @@ describe('describeStatus', () => {
       );
     expect(offline(at(minutes(3) - 1000))).toMatchObject({
       kind: 'offline',
-      title: 'Offline — retrying in 3 min',
+      title: 'Could not reach GitHub — retrying in 3 min',
       detail: 'Could not reach GitHub.',
       action: { type: 'retry', label: 'Retry' },
     });
-    expect(offline(at(5000))?.title).toBe('Offline — retrying in 1 min');
+    expect(offline(at(5000))?.title).toBe('Could not reach GitHub — retrying in 1 min');
     // The wait is over (or there was none): the next alarm tries.
-    expect(offline(at(-minutes(1)))?.title).toBe('Offline — retrying soon');
-    expect(offline(null)?.title).toBe('Offline — retrying soon');
+    expect(offline(at(-minutes(1)))?.title).toBe('Could not reach GitHub — retrying soon');
+    expect(offline(null)?.title).toBe('Could not reach GitHub — retrying soon');
   });
 
   it.each<ErrorKind>(['server', 'graphql', 'forbidden', 'validation', 'not_found'])(

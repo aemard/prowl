@@ -92,9 +92,9 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
 
   const panel = await openPanel();
   const card = await expand(panel, 'Waiting on a review, acme/widgets#2');
-  await card.getByRole('button', { name: 'Merge acme/widgets#2' }).click();
+  await card.getByRole('button', { name: 'Enable auto-merge acme/widgets#2' }).click();
   const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
-  await expect(dialog).toContainText('or let GitHub merge it once its checks and reviews pass');
+  await expect(dialog).toContainText('once its checks and reviews pass');
   await dialog.getByRole('combobox', { name: 'Merge method' }).selectOption('squash');
   await expectNoA11yViolations(panel);
   await dialog.getByRole('button', { name: 'Enable auto-merge' }).click();
@@ -105,7 +105,7 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
 
   // The forced poll brings the new state: a chip that says so, and the way to turn it off.
   await expect(card.getByTitle('Auto-merge on (squash), by octocat')).toHaveText('Auto-merge');
-  await card.getByRole('button', { name: 'Disable auto-merge of acme/widgets#2' }).click();
+  await card.getByRole('button', { name: 'Turn off auto-merge of acme/widgets#2' }).click();
   await expect(toasts(panel)).toContainText('Auto-merge is off for acme/widgets#2');
   await expect(card.getByTitle(/^Auto-merge on/)).toHaveCount(0);
 });

@@ -34,6 +34,7 @@ export const comments = (commentCount: number, author?: string, createdAt = COMM
   lastComment: author ? { author, createdAt } : null,
 });
 export const ready = (overrides: Partial<PullRequest> = {}): Partial<PullRequest> => ({
+  reviewDecision: 'approved',
   mergeStateStatus: 'clean',
   ...overrides,
 });

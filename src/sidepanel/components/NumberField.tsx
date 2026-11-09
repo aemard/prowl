@@ -3,6 +3,7 @@ import { t } from '../../lib/i18n';
 import { TextField } from './ui/TextField';
 
 export interface NumberFieldProps {
+  id?: string;
   label: string;
   /** The saved value. */
   value: number;
@@ -19,6 +20,7 @@ export interface NumberFieldProps {
  * is not valid; leaving the field shows the saved value again.
  */
 export function NumberField({
+  id,
   label,
   value,
   min,
@@ -37,6 +39,7 @@ export function NumberField({
 
   return (
     <TextField
+      id={id}
       class={className}
       label={label}
       type="number"

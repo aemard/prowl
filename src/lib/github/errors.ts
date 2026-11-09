@@ -24,6 +24,11 @@ export class GitHubError extends Error {
   }
 }
 
+/** Account-wide failures that stop reads and consume the shared poll budget. */
+export function isPollBudgetFailure(kind: ErrorKind): boolean {
+  return kind === 'unauthorized' || kind === 'rate_limited';
+}
+
 const RATE_LIMIT_MESSAGE = /rate limit|abuse detection/i;
 
 /**
@@ -48,6 +53,8 @@ export function classifyHttpStatus(
 }
 
 const GRAPHQL_KINDS: Record<string, ErrorKind> = {
+  UNAUTHENTICATED: 'unauthorized',
+  UNAUTHORIZED: 'unauthorized',
   RATE_LIMITED: 'rate_limited',
   FORBIDDEN: 'forbidden',
   INSUFFICIENT_SCOPES: 'forbidden',

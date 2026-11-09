@@ -22,16 +22,8 @@ import {
   GitPullRequestIcon,
   KebabHorizontalIcon,
   LinkExternalIcon,
-  SyncIcon,
 } from './icons';
-import {
-  canRerun,
-  canToggleDraft,
-  draftActionName,
-  RERUN,
-  rerun,
-  toggleDraft,
-} from './MaintenanceActions';
+import { canToggleDraft, draftActionName, toggleDraft } from './MaintenanceActions';
 import { IconButton } from './ui/IconButton';
 import { Menu, type MenuEntry } from './ui/Menu';
 import { showToast } from './ui/Toast';
@@ -118,15 +110,6 @@ function githubEntries(pr: PullRequest): MenuEntry[] {
   const viewer = auth.value?.viewer.login ?? '';
   const busy = pendingActions.value[pr.id] !== undefined;
   const items: MenuEntry[] = [];
-  if (canRerun(pr)) {
-    items.push({
-      id: 'rerun',
-      label: RERUN,
-      icon: <SyncIcon />,
-      disabled: busy,
-      onSelect: () => void rerun(pr),
-    });
-  }
   if (canToggleDraft(pr, viewer)) {
     items.push({
       id: 'draft',

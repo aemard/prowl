@@ -41,9 +41,16 @@ describe('App', () => {
     expect(screen.getByRole('main', { name: 'Sign in' })).toBeTruthy();
   });
 
+  it('shows the list and full header even with an obsolete install marker', async () => {
+    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 1 } });
+    expect(screen.getByRole('main', { name: 'Pull requests' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull();
+  });
+
   it('lands signed-out users on onboarding', async () => {
     await open();
-    expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'See your pull requests here' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
   });
 
@@ -103,7 +110,7 @@ describe('App', () => {
     expect(screen.getByRole('alert').textContent).toContain('token was revoked or expired');
     expect(screen.getByRole('link', { name: /Still readable/ })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Re-authenticate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(await screen.findByRole('main', { name: 'Sign in' })).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });

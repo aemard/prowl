@@ -5,7 +5,7 @@ import { defaultSettings } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, filterQuery, foldedGroups, showHidden } from './List';
+import { activeSectionId, filterQuery, foldedGroups } from './List';
 
 export const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
@@ -25,9 +25,13 @@ class FakeObserver {
   disconnect() {
     FakeObserver.all = FakeObserver.all.filter((observer) => observer !== this);
   }
-  show(ids: string[]) {
+  show(ids: string[], ratio = 1, cardHeight = 100, rootHeight = 800) {
     const entries = this.targets.map((target) => ({
       target,
+      intersectionRatio: ids.includes((target as HTMLElement).dataset.prId ?? '') ? ratio : 0,
+      intersectionRect: { height: cardHeight * ratio },
+      boundingClientRect: { height: cardHeight },
+      rootBounds: { height: rootHeight },
       isIntersecting: ids.includes((target as HTMLElement).dataset.prId ?? ''),
     }));
     act(() => this.callback(entries as IntersectionObserverEntry[], this as never));
@@ -65,18 +69,19 @@ beforeEach(() => {
   });
   vi.stubGlobal('IntersectionObserver', FakeObserver);
   settings.value = defaultSettings();
+  withSections(['authored']);
 });
 
 afterEach(() => {
   vi.useRealTimers();
   FakeObserver.all = [];
   settings.value = defaultSettings();
+  withSections(['authored']);
   snapshot.value = undefined;
   pollState.value = undefined;
   prLocal.value = { snoozed: {}, muted: {}, seen: {} };
   activeSectionId.value = undefined;
   filterQuery.value = '';
-  showHidden.value = false;
   foldedGroups.value = [];
   location.hash = '';
   auth.value = undefined;

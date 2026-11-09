@@ -38,7 +38,7 @@ const show = (overrides: Partial<PullRequest> = {}) =>
   render(<ReviewActions pr={{ ...pr, ...overrides }} />);
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-const poll = { type: 'poll', force: true };
+const poll = { type: 'poll', force: true, afterCurrent: true };
 
 beforeEach(() => {
   auth.value = buildAuth('octocat');
@@ -164,9 +164,11 @@ describe('request changes', () => {
     expect(document.activeElement).toBe(message());
 
     type('   ');
+    submit().focus();
     fireEvent.click(submit());
     expect(within(dialog()).getByText('Write a message first.')).toBeTruthy();
     expect(message().getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(message());
     expect(sent).toEqual([]);
     type('Please add a test');
     expect(message().getAttribute('aria-invalid')).toBeNull();
@@ -226,7 +228,7 @@ describe('request changes', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('on failure closes the dialog, explains in a toast and keeps the message', async () => {
+  it('on failure keeps the dialog and message open with an inline error', async () => {
     stubGitHub(() =>
       jsonResponse(
         { message: 'Resource not accessible by personal access token' },
@@ -236,14 +238,18 @@ describe('request changes', () => {
     show();
     fireEvent.click(button('Request changes acme/widgets#1'));
     type('Please add a test');
+    submit().focus();
     fireEvent.click(submit());
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(toastTexts()).toEqual([
-      'danger: Request changes failed: Resource not accessible by personal access token',
-    ]);
-
-    fireEvent.click(button('Request changes acme/widgets#1'));
+    await waitFor(() =>
+      expect(
+        within(dialog()).getByText('Resource not accessible by personal access token'),
+      ).toBeTruthy(),
+    );
+    expect(toastTexts()).toEqual([]);
+    expect(message().getAttribute('aria-invalid')).toBe('true');
     expect((message() as HTMLTextAreaElement).value).toBe('Please add a test');
+    // The error is announced by focusing the field it describes.
+    expect(document.activeElement).toBe(message());
   });
 
   it('can be cancelled', () => {

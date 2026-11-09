@@ -3,7 +3,7 @@ import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { auth } from '../state/store';
-import { GitPullRequestDraftIcon, GitPullRequestIcon, SyncIcon } from './icons';
+import { GitPullRequestIcon, SyncIcon } from './icons';
 import { Button } from './ui/Button';
 import { Menu } from './ui/Menu';
 
@@ -54,6 +54,18 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
   const ref = prRef(pr);
   return (
     <>
+      {canRerun(pr) && (
+        <Button
+          size="sm"
+          icon={<SyncIcon size={12} />}
+          aria-label={t('of', RERUN, ref)}
+          loading={pending === RERUN}
+          disabled={pending !== undefined && pending !== RERUN}
+          onClick={() => void rerun(pr)}
+        >
+          {t('rerunFailed')}
+        </Button>
+      )}
       {canUpdateBranch(pr) && (
         <Menu
           label={t('of', UPDATE_BRANCH, ref)}
@@ -83,24 +95,10 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
           )}
         />
       )}
-      {canRerun(pr) && (
+      {pr.isDraft && canToggleDraft(pr, viewer) && (
         <Button
           size="sm"
-          icon={<SyncIcon size={12} />}
-          aria-label={t('of', RERUN, ref)}
-          loading={pending === RERUN}
-          disabled={pending !== undefined && pending !== RERUN}
-          onClick={() => void rerun(pr)}
-        >
-          {t('rerunFailed')}
-        </Button>
-      )}
-      {canToggleDraft(pr, viewer) && (
-        <Button
-          size="sm"
-          icon={
-            pr.isDraft ? <GitPullRequestIcon size={12} /> : <GitPullRequestDraftIcon size={12} />
-          }
+          icon={<GitPullRequestIcon size={12} />}
           aria-label={t('actionReference', draftName, ref)}
           loading={pending === draftName}
           disabled={pending !== undefined && pending !== draftName}

@@ -38,10 +38,10 @@ const CASES: Case[] = [
   ['merged by nobody known', { state: 'merged' }, undefined, ['Merged']],
   ['closed', { state: 'closed' }, undefined, ['Closed without merging']],
   [
-    'a draft says so and nothing about reviews',
+    'a draft also lists review blockers',
     { isDraft: true, reviewDecision: 'review_required', mergeStateStatus: 'draft' },
     buildDetail(),
-    ['Blocked: draft, mark it ready for review to merge'],
+    ['Draft', '1 approval needed'],
   ],
   [
     'conflicts name the base branch',
@@ -49,41 +49,36 @@ const CASES: Case[] = [
     undefined,
     ['Conflicts with develop'],
   ],
-  [
-    'behind the base branch',
-    { mergeStateStatus: 'behind' },
-    undefined,
-    ['Blocked: branch is behind main'],
-  ],
+  ['behind the base branch', { mergeStateStatus: 'behind' }, undefined, ['Behind main']],
   [
     'one approval required',
     { reviewDecision: 'review_required' },
     buildDetail({ requiredApprovals: 1 }),
-    ['Blocked: 1 approval required'],
+    ['1 approval needed'],
   ],
   [
     'two approvals required',
     { reviewDecision: 'review_required' },
     buildDetail({ requiredApprovals: 2 }),
-    ['Blocked: 2 approvals required'],
+    ['2 approvals needed'],
   ],
   [
     'one more approval after one',
     { reviewDecision: 'review_required', reviews: [review('bob', 'approved')] },
     buildDetail({ requiredApprovals: 2 }),
-    ['Blocked: 1 more approval required'],
+    ['1 approval needed'],
   ],
   [
     'a rule that is not visible: just review required',
     { reviewDecision: 'review_required' },
     buildDetail({ requiredApprovals: null }),
-    ['Blocked: review required'],
+    ['Review required'],
   ],
   [
     'review required before the detail loads',
     { reviewDecision: 'review_required' },
     undefined,
-    ['Blocked: review required'],
+    ['Review required'],
   ],
   [
     'changes requested name who asked',
@@ -96,13 +91,13 @@ const CASES: Case[] = [
       ],
     },
     undefined,
-    ['Blocked: changes requested by alice, carol'],
+    ['Changes requested by alice, carol'],
   ],
   [
     'changes requested by someone unknown',
     { reviewDecision: 'changes_requested' },
     undefined,
-    ['Blocked: changes requested'],
+    ['Changes requested'],
   ],
   [
     'required failing checks, counted from the detail',
@@ -110,31 +105,31 @@ const CASES: Case[] = [
     buildDetail({
       checks: [check('a', 'failed', true), check('b', 'failed'), check('c', 'failed', true)],
     }),
-    ['Blocked: 2 required checks failing'],
+    ['2 required checks failed'],
   ],
   [
     'failing checks that are not required do not block',
     { checks: counts(1), mergeStateStatus: 'unstable' },
     buildDetail({ checks: [check('a', 'failed')] }),
-    ['1 check failing, but not required', 'Ready to merge'],
+    ['Ready to merge', '1 optional check failed'],
   ],
   [
     'failing checks before the detail loads block unless GitHub says unstable',
     { checks: counts(2), mergeStateStatus: 'blocked' },
     undefined,
-    ['Blocked: 2 checks failing'],
+    ['2 checks failed'],
   ],
   [
     'unstable without a detail: not required',
     { checks: counts(2), mergeStateStatus: 'unstable' },
     undefined,
-    ['2 checks failing, but not required', 'Ready to merge'],
+    ['Ready to merge', '2 optional checks failed'],
   ],
   [
     'a detail with no checks (unreadable) falls back to the counts',
     { checks: counts(1), mergeStateStatus: 'blocked' },
     buildDetail({ checks: [] }),
-    ['Blocked: 1 check failing'],
+    ['1 check failed'],
   ],
   [
     'waiting for required checks',
@@ -142,13 +137,13 @@ const CASES: Case[] = [
     buildDetail({
       checks: [check('a', 'pending', true), check('b', 'pending'), check('c', 'pending', true)],
     }),
-    ['Waiting for 2 required checks to finish'],
+    ['2 required checks running'],
   ],
   [
     'pending checks while blocked, before the detail loads',
     { checks: counts(0, 1), mergeStateStatus: 'blocked' },
     undefined,
-    ['Waiting for 1 check to finish'],
+    ['1 check running'],
   ],
   [
     'pending checks that block nothing',
@@ -160,7 +155,7 @@ const CASES: Case[] = [
     'unresolved conversations when the branch requires them resolved',
     { unresolvedThreads: 2 },
     buildDetail({ requiresConversationResolution: true }),
-    ['Blocked: 2 conversations to resolve'],
+    ['2 conversations to resolve'],
   ],
   [
     'unresolved conversations that nothing requires resolved',
@@ -177,19 +172,31 @@ const CASES: Case[] = [
       mergeStateStatus: 'dirty',
     },
     buildDetail({ checks: [check('a', 'failed', true)] }),
-    ['Blocked: 1 approval required', 'Conflicts with main', 'Blocked: 1 required check failing'],
+    ['1 approval needed', 'Conflicts with main', '1 required check failed'],
   ],
   [
     'blocked for a reason GitHub does not tell',
     { mergeStateStatus: 'blocked' },
     buildDetail(),
-    ["Blocked by the base branch's rules"],
+    ['Blocked by branch rules'],
   ],
   [
     'mergeability still being computed',
     { mergeable: 'unknown', mergeStateStatus: 'unknown' },
     undefined,
-    ['GitHub is still checking whether it can be merged'],
+    ['Checking merge status…'],
+  ],
+  [
+    'review requirement not read for this commit',
+    { reviewDecision: 'unknown' },
+    undefined,
+    ['Checking merge status…'],
+  ],
+  [
+    'a verdict that cannot merge without a reason to list',
+    { mergeStateStatus: 'dirty' },
+    undefined,
+    ['Blocked by branch rules'],
   ],
 ];
 
@@ -210,4 +217,45 @@ describe('mergeReadiness', () => {
     expect(tones({ reviewDecision: 'changes_requested' })).toEqual(['danger']);
     expect(tones({ reviewDecision: 'review_required' })).toEqual(['attention']);
   });
+});
+
+it('shows unknown status alongside draft and review blockers, then offers GitHub', () => {
+  const pr = buildPullRequest({
+    isDraft: true,
+    reviewDecision: 'changes_requested',
+    mergeable: 'unknown',
+  });
+  expect(mergeReadiness(pr).map(({ text }) => text)).toEqual([
+    'Draft',
+    'Changes requested',
+    'Checking merge status…',
+  ]);
+  expect(mergeReadiness(pr, undefined, true).at(-1)).toMatchObject({
+    text: 'Merge status unknown',
+    link: 'Open on GitHub',
+  });
+});
+
+it('does not count missing approvals from incomplete reviews', () => {
+  const pr = buildPullRequest({ reviewDecision: 'review_required', incomplete: ['reviews'] });
+  expect(mergeReadiness(pr, buildDetail({ requiredApprovals: 2 }))[0]?.text).toBe(
+    'Review required',
+  );
+  expect(
+    mergeReadiness(
+      { ...pr, incomplete: [] },
+      buildDetail({ requiredApprovals: 2, warnings: ['Some reviews are not loaded.'] }),
+    )[0]?.text,
+  ).toBe('Review required');
+});
+
+it('keeps blockers when auto-merge is on', () => {
+  const pr = buildPullRequest({
+    reviewDecision: 'review_required',
+    autoMerge: { method: 'squash', enabledBy: 'octocat' },
+  });
+  expect(mergeReadiness(pr).map(({ text }) => text)).toEqual([
+    'Auto-merge on, merges when ready',
+    'Review required',
+  ]);
 });

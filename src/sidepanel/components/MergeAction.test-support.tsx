@@ -7,7 +7,11 @@ import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
 import { toasts } from './ui/Toast';
 
-export const pr = buildPullRequest({ title: 'Improve the widgets', baseRefName: 'release' });
+export const pr = buildPullRequest({
+  title: 'Improve the widgets',
+  baseRefName: 'release',
+  mergeStateStatus: 'clean',
+});
 export const merged = { mergePullRequest: { pullRequest: { merged: true } } };
 
 interface Sent {
@@ -32,14 +36,15 @@ export function stubGitHub(answer: (sent: Sent) => Response | Promise<Response>)
 
 export const show = (overrides: Partial<PullRequest> = {}) =>
   render(<MergeAction pr={{ ...pr, ...overrides }} />);
-export const opener = () => screen.getByRole('button', { name: 'Merge acme/widgets#1' });
+export const opener = () =>
+  screen.getByRole('button', { name: /^(Merge|Merge without waiting) acme\/widgets#1$/ });
 export const dialog = () => screen.getByRole('dialog', { name: 'Merge pull request' });
 export const method = () => within(dialog()).getByRole('combobox', { name: 'Merge method' });
 export const commitTitle = () => within(dialog()).getByRole('textbox', { name: /Commit title/ });
 export const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
 export const choose = (value: string) => fireEvent.change(method(), { target: { value } });
 export const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-export const poll = { type: 'poll', force: true };
+export const poll = { type: 'poll', force: true, afterCurrent: true };
 
 export function setupMergeTest() {
   auth.value = buildAuth('octocat');

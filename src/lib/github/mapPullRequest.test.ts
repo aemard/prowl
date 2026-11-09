@@ -77,6 +77,9 @@ describe('mapPullRequest', () => {
       allowedMergeMethods: ['merge', 'squash'],
       defaultMergeMethod: 'merge',
       viewerCanUpdate: true,
+      viewerCanMergeAsAdmin: false,
+      viewerCanEnableAutoMerge: true,
+      viewerCanDisableAutoMerge: true,
       viewerCanMerge: true,
       autoMergeAllowed: false,
       autoMerge: null,
@@ -129,7 +132,7 @@ describe('mapPullRequest', () => {
     ['CHANGES_REQUESTED', 'changes_requested'],
     ['REVIEW_REQUIRED', 'review_required'],
     [null, 'none'],
-    ['SOMETHING_NEW', 'none'],
+    ['SOMETHING_NEW', 'unknown'],
   ] as const)('maps reviewDecision %s to %s', (reviewDecision, expected) => {
     expect(mapPullRequest(prNode({ reviewDecision })).reviewDecision).toBe(expected);
   });
@@ -283,4 +286,15 @@ describe('mapPullRequest', () => {
     const pr = mapPullRequest(prNode({ state: 'MERGED', mergedBy: { login: 'hubot' } }));
     expect(pr).toMatchObject({ state: 'merged', closedBy: 'hubot' });
   });
+});
+
+it('reports nested connection limits instead of treating a bounded slice as complete', () => {
+  const pr = mapPullRequest(
+    prNode({
+      latestReviews: { nodes: [], totalCount: 21, pageInfo: { hasNextPage: true } },
+      reviewRequests: { nodes: [], totalCount: 22 },
+      reviewThreads: { nodes: [], totalCount: 101 },
+    }),
+  );
+  expect(pr.incomplete).toEqual(['reviews', 'review requests', 'conversations']);
 });

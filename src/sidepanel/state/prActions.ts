@@ -22,8 +22,10 @@ export const prRef = ({ repo, number }: PullRequest) => `${repo.nameWithOwner}#$
 
 /**
  * Runs `run` with a client for the signed-in account and reports the outcome in a toast: `done`
- * on success (and a forced poll), `<name> failed: <GitHub's message>` otherwise. Resolves to
- * whether it worked; it never rejects, and does nothing while another action of the PR runs.
+ * on success (and a forced poll), `<name> failed: <GitHub's message>` otherwise, or that message
+ * to `onError` when the caller shows it itself (a dialog's field). Resolves to whether it worked;
+ * it never rejects, does nothing while another action of the PR runs, and drops the outcome (no
+ * toast, no poll, `false`) when another account signed in meanwhile.
  * `name` is the button's wording ("Approve", "Request changes") and names the pending action.
  */
 export async function runPrAction(
@@ -31,18 +33,23 @@ export async function runPrAction(
   name: string,
   done: string,
   run: (client: GitHubClient) => Promise<void>,
+  onError?: (message: string) => void,
 ): Promise<boolean> {
-  const token = auth.value?.token;
+  const session = auth.value;
+  const token = session?.token;
   if (!token || pendingActions.value[pr.id]) return false;
   pendingActions.value = { ...pendingActions.value, [pr.id]: name };
   try {
     await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
-    showToast({ message: `${done} ${prRef(pr)}`, tone: 'success' });
-    void sendToBackground({ type: 'poll', force: true });
+    if (auth.value !== session) return false;
+    showToast({ message: t('message2', done, prRef(pr)), tone: 'success' });
+    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
     return true;
   } catch (error) {
+    if (auth.value !== session) return false;
     const reason = error instanceof GitHubError ? error.message : t('somethingWentWrong');
-    showToast({ message: t('failed3', name, reason), tone: 'danger' });
+    if (onError) onError(reason);
+    else showToast({ message: t('failed3', name, reason), tone: 'danger' });
     return false;
   } finally {
     const { [pr.id]: _finished, ...others } = pendingActions.value;

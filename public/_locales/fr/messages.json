@@ -168,20 +168,6 @@
   "thisPullRequestIsNotAvailable": {
     "message": "Cette PR n’est pas disponible."
   },
-  "youFollowNoneOfYourTeamsFollowOneIn": {
-    "message": "Vous ne suivez aucune équipe. Choisissez-en une dans les paramètres."
-  },
-  "githubRefusedTheSearchFor": {
-    "message": "GitHub a refusé la recherche pour $P1$ : $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "enterAGithubSearchQueryForExampleAuthorMe": {
     "message": "Saisissez une recherche GitHub, par exemple : author:@me label:bug"
   },
@@ -209,14 +195,6 @@
   },
   "bot": {
     "message": "Bot"
-  },
-  "noCommitForD": {
-    "message": "Aucun commit depuis $P1$ j",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
   },
   "someone": {
     "message": "Quelqu’un"
@@ -404,9 +382,6 @@
   "enableAutoMerge": {
     "message": "Activer la fusion automatique"
   },
-  "disableAutoMerge": {
-    "message": "Désactiver la fusion automatique"
-  },
   "autoMergeIsOnFor": {
     "message": "Fusion automatique activée pour"
   },
@@ -448,9 +423,6 @@
         "content": "$2"
       }
     }
-  },
-  "commitsAreKeptAsTheyAreSoThereIs": {
-    "message": "Les commits sont conservés tels quels, sans titre de commit supplémentaire."
   },
   "commitTitleOptional": {
     "message": "Titre du commit (facultatif)"
@@ -566,12 +538,6 @@
   "updatingMergeStatus": {
     "message": "Actualisation de l’état de fusion"
   },
-  "whyItIsHiddenFromTheList": {
-    "message": "Raison du masquage dans la liste"
-  },
-  "unresolved": {
-    "message": "non résolus"
-  },
   "openedBy": {
     "message": "Ouverte par $P1$",
     "placeholders": {
@@ -590,14 +556,6 @@
   },
   "by2": {
     "message": " par $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "hiddenFromTheList": {
-    "message": ". Masquée dans la liste : $P1$",
     "placeholders": {
       "p1": {
         "content": "$1"
@@ -652,9 +610,6 @@
         "content": "$1"
       }
     }
-  },
-  "githubDidNotReturnTheChecksAFineGrained": {
-    "message": "GitHub n’a pas renvoyé les contrôles. Un jeton à granularité fine ne peut pas les lire."
   },
   "noChecksOnTheLatestCommit": {
     "message": "Aucun contrôle sur le dernier commit."
@@ -868,9 +823,6 @@
   "prowlStoppedRefreshingSignInAgainToContinue": {
     "message": "Prowl a arrêté l’actualisation. Reconnectez-vous pour continuer."
   },
-  "reAuthenticate": {
-    "message": "Se reconnecter"
-  },
   "rateLimitedUntil": {
     "message": "Limite atteinte jusqu’à $P1$",
     "placeholders": {
@@ -921,33 +873,6 @@
   "renewToken": {
     "message": "Renouveler le jeton"
   },
-  "blockedReviewRequired": {
-    "message": "Bloquée : revue requise"
-  },
-  "blockedFailing": {
-    "message": "Bloquée : $P1$ en échec",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "failingButNotRequired": {
-    "message": "Échec de $P1$ ; réussite non obligatoire",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "waitingForToFinish": {
-    "message": "En attente de la fin de $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
   "mergedBy": {
     "message": "Fusionnée par $P1$",
     "placeholders": {
@@ -959,9 +884,6 @@
   "closedWithoutMerging": {
     "message": "Fermée sans fusion"
   },
-  "blockedDraftMarkItReadyForReviewToMerge": {
-    "message": "Bloquée : brouillon, marquez-la prête pour la revue"
-  },
   "conflictsWith": {
     "message": "Conflits avec $P1$",
     "placeholders": {
@@ -969,20 +891,6 @@
         "content": "$1"
       }
     }
-  },
-  "blockedBranchIsBehind": {
-    "message": "Bloquée : branche en retard sur $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "githubIsStillCheckingWhetherItCanBeMerged": {
-    "message": "GitHub vérifie encore si la fusion est possible"
-  },
-  "blockedByTheBaseBranchSRules": {
-    "message": "Bloquée par les règles de la branche de base"
   },
   "mergeCommit": {
     "message": "commit de fusion"
@@ -1174,9 +1082,6 @@
   "teams": {
     "message": "Équipes"
   },
-  "whenSomeoneAsksOneOfYourTeamsForA": {
-    "message": "Les demandes de revue adressées à vos équipes apparaîtront ici."
-  },
   "mentions": {
     "message": "Mentions"
   },
@@ -1221,25 +1126,6 @@
       }
     }
   },
-  "hideAgain": {
-    "message": "Masquer à nouveau"
-  },
-  "showHidden": {
-    "message": "Afficher $P1$ masquées",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "hiddenPullRequests": {
-    "message": "PR masquées : $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
   "noMatches": {
     "message": "Aucun résultat"
   },
@@ -1259,12 +1145,6 @@
   },
   "clearFilter": {
     "message": "Effacer le filtre"
-  },
-  "signInWithGithub": {
-    "message": "Se connecter avec GitHub"
-  },
-  "orPasteAToken": {
-    "message": "ou collez un jeton"
   },
   "signingInFromTheBrowserIsNotAvailableIn": {
     "message": "La connexion via le navigateur n’est pas disponible dans cette version."
@@ -1323,9 +1203,6 @@
   "off": {
     "message": "Désactivé"
   },
-  "checkEveryMinutes": {
-    "message": "Vérifier toutes les (minutes)"
-  },
   "pullRequestsPerSection": {
     "message": "PR par section"
   },
@@ -1343,24 +1220,6 @@
   },
   "listsEachRepositorySPullRequestsUnderAHeader": {
     "message": "Affiche les PR de chaque dépôt sous un en-tête repliable, dans l’ordre choisi ci-dessus."
-  },
-  "hidePrsWithNoCommitForDays": {
-    "message": "Masquer les PR sans commit depuis (jours)"
-  },
-  "theyStayOutOfTheListTheCountsAnd": {
-    "message": "Elles restent hors de la liste, des compteurs et du badge jusqu’à « Afficher les masquées », mais vous notifient toujours. 0 ne masque rien."
-  },
-  "hideDraftPrs": {
-    "message": "Masquer les PR en brouillon"
-  },
-  "shownAgainWithShowHiddenTheyStillNotifyYou": {
-    "message": "Réapparaissent avec « Afficher les masquées ». Les notifications restent actives."
-  },
-  "hidePrsOpenedByBots": {
-    "message": "Masquer les PR ouvertes par des bots"
-  },
-  "dependabotRenovateAndOtherAppsShownAgainWithShow": {
-    "message": "Dependabot, Renovate et autres apps. Réapparaissent avec « Afficher les masquées ». Les notifications restent actives."
   },
   "toolbarBadge": {
     "message": "Badge de la barre d’outils"
@@ -1418,9 +1277,6 @@
   },
   "pullRequestsThatAskYouForAReviewYour": {
     "message": "PR dont la revue vous est demandée (vos équipes ont leur propre section)"
-  },
-  "pullRequestsThatAskOneOfYourTeamsFor": {
-    "message": "PR dont la revue est demandée à vos équipes"
   },
   "pullRequestsThatMentionYou": {
     "message": "PR qui vous mentionnent"
@@ -1629,15 +1485,6 @@
   "onlyFollowPullRequestsInTheseLeaveEmptyTo": {
     "message": "Suivre uniquement les PR de ces dépôts. Laissez vide pour tous les suivre."
   },
-  "hidePullRequestsInTheseEvenWhenTheyMatch": {
-    "message": "Masquer les PR de ces dépôts, même si elles correspondent à une inclusion."
-  },
-  "teamReviewsListsThePullRequestsThatAskOne": {
-    "message": "Les revues d’équipe affichent les PR demandant une revue à l’une de ces équipes."
-  },
-  "turnOnTeamReviewsUnderSectionsToSeeThem": {
-    "message": "Activez les revues d’équipe dans Sections pour les voir dans la liste."
-  },
   "signInAgain": {
     "message": "Se reconnecter"
   },
@@ -1646,45 +1493,6 @@
   },
   "refreshTeams": {
     "message": "Actualiser les équipes"
-  },
-  "checked": {
-    "message": "Vérifiées $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "notCheckedYet": {
-    "message": "Pas encore vérifiées"
-  },
-  "pollingBudget": {
-    "message": "GitHub accorde $P1$ points par heure à chaque jeton. Chaque vérification de section en consomme : plus de PR et des intervalles courts coûtent davantage. Prowl utilise actuellement environ $P2$ points par heure et attend la réinitialisation si le solde devient faible.",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
-  "teamSearchBudget": {
-    "message": "Vous suivez $P1$ équipes ; Prowl recherche dans les $P2$ premières pour respecter la limite GitHub. Ne suivez plus celles dont vous n’avez pas besoin.",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
-  "onboardingDeviceIntro": {
-    "message": "Autorisez Prowl sur GitHub ou collez un jeton d’accès personnel. Il reste dans ce navigateur et n’est envoyé qu’à GitHub."
-  },
-  "onboardingTokenIntro": {
-    "message": "Collez un jeton d’accès personnel. Il reste dans ce navigateur et n’est envoyé qu’à GitHub."
   },
   "classicTokenHelp": {
     "message": "Accède à tous vos dépôts, avec l’état CI complet. Nécessite la portée $P1$ et la portée $P2$ pour trouver les demandes de revue de vos équipes ; le lien sélectionne les deux.",
@@ -1715,22 +1523,6 @@
   },
   "versionNumber": {
     "message": "Version $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "openedAge": {
-    "message": "Ouverte $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "updatedAgo": {
-    "message": "Actualisé $P1$",
     "placeholders": {
       "p1": {
         "content": "$1"
@@ -1779,17 +1571,6 @@
         "content": "$1"
       }
     }
-  },
-  "reviewChangesBy": {
-    "message": "Bloquée : modifications demandées par $P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedChanges": {
-    "message": "Bloquée : modifications demandées"
   },
   "pullCountOne": {
     "message": "$P1$ pull request",
@@ -1855,22 +1636,6 @@
       }
     }
   },
-  "requiredCheckCountOne": {
-    "message": "$P1$ contrôle obligatoire",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "requiredCheckCountOther": {
-    "message": "$P1$ contrôles obligatoires",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
   "moreCheckCountOne": {
     "message": "$P1$ contrôle supplémentaire",
     "placeholders": {
@@ -1881,54 +1646,6 @@
   },
   "moreCheckCountOther": {
     "message": "$P1$ contrôles supplémentaires",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedApprovalOne": {
-    "message": "Bloquée : $P1$ approbation requise",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedApprovalOther": {
-    "message": "Bloquée : $P1$ approbations requises",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedMoreApprovalOne": {
-    "message": "Bloquée : encore $P1$ approbation requise",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedMoreApprovalOther": {
-    "message": "Bloquée : encore $P1$ approbations requises",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedConversationOne": {
-    "message": "Bloquée : $P1$ discussion à résoudre",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "blockedConversationOther": {
-    "message": "Bloquée : $P1$ discussions à résoudre",
     "placeholders": {
       "p1": {
         "content": "$1"
@@ -2026,23 +1743,6 @@
   },
   "openProwl": {
     "message": "Ouvrir Prowl"
-  },
-  "noTeamsHelp": {
-    "message": "GitHub ne liste aucune équipe pour votre compte. Les organisations imposant le SSO ou restreignant les apps OAuth n’affichent leurs équipes qu’après avoir approuvé votre jeton ou Prowl."
-  },
-  "samlHelp": {
-    "message": "Une organisation exige le SSO (SAML) pour lequel ce jeton n’est pas autorisé : ses PR sont absentes. Autorisez le jeton pour cette organisation sur GitHub."
-  },
-  "skippedTeams": {
-    "message": "Prowl recherche dans $P1$ équipes au maximum ; $P2$ autres ont été ignorées. Choisissez lesquelles suivre dans les paramètres.",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "searchOperatorsHelp": {
     "message": "AND, OR et NOT fonctionnent entre mots, pas entre qualificateurs : GitHub rejette « author:a OR author:b ». Utilisez une section par qualificateur."
@@ -2240,10 +1940,393 @@
   "language": {
     "message": "Langue"
   },
-  "matchChromeLanguage": {
-    "message": "Utiliser la langue de Chrome"
+  "headCommitChangedRefreshAndTryAgain": {
+    "message": "The head commit changed. Refresh and try again.",
+    "description": "Check restart error when the pull request head changes while loading suites."
   },
-  "languageHint": {
-    "message": "Les changements s’appliquent immédiatement. L’anglais est utilisé si une traduction manque."
+  "notAllCheckSuitesCouldBeLoaded": {
+    "message": "Not all check suites could be loaded. Re-run checks on GitHub.",
+    "description": "Check restart error when check suite pagination is incomplete."
+  },
+  "prowl": {
+    "message": "Prowl",
+    "description": "Extension text: Prowl"
+  },
+  "turnOffAutoMerge": {
+    "message": "Turn off auto-merge",
+    "description": "Extension text: Turn off auto-merge"
+  },
+  "mergeOnGitHub": {
+    "message": "Merge on GitHub",
+    "description": "Extension text: Merge on GitHub"
+  },
+  "mergeWithoutWaiting": {
+    "message": "Merge without waiting",
+    "description": "Extension text: Merge without waiting"
+  },
+  "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
+    "message": "Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "youCanBypassTheBranchRulesForThisPullRequest": {
+    "message": "You can bypass the branch rules for this pull request.",
+    "description": "Extension text: You can bypass the branch rules for this pull request."
+  },
+  "justOpened": {
+    "message": "Just opened",
+    "description": "Extension text: Just opened"
+  },
+  "mergeStatus": {
+    "message": "Merge status",
+    "description": "Extension text: Merge status"
+  },
+  "checkingMergeStatus": {
+    "message": "Checking merge status…",
+    "description": "Extension text: Checking merge status…"
+  },
+  "thisTokenCanTReadChecks": {
+    "message": "This token can't read checks ·",
+    "description": "Extension text: This token can't read checks ·"
+  },
+  "viewOnGitHub": {
+    "message": "View on GitHub",
+    "description": "Extension text: View on GitHub"
+  },
+  "someDetailsAreOnlyOnGitHub": {
+    "message": "Some details are only on GitHub ·",
+    "description": "Extension text: Some details are only on GitHub ·"
+  },
+  "actionsFor2": {
+    "message": "Actions for #$P1$",
+    "description": "Extension text: Actions for #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "viewChangesOnGitHub": {
+    "message": "View changes on GitHub",
+    "description": "Extension text: View changes on GitHub"
+  },
+  "couldNotReachGitHub": {
+    "message": "Could not reach GitHub — $P1$",
+    "description": "Extension text: Could not reach GitHub — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveOnGitHub": {
+    "message": "Resolve on GitHub",
+    "description": "Extension text: Resolve on GitHub"
+  },
+  "behind": {
+    "message": "Behind $P1$",
+    "description": "Extension text: Behind $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergeStatusUnknown": {
+    "message": "Merge status unknown",
+    "description": "Extension text: Merge status unknown"
+  },
+  "openOnGitHub": {
+    "message": "Open on GitHub",
+    "description": "Extension text: Open on GitHub"
+  },
+  "blockedByBranchRules": {
+    "message": "Blocked by branch rules",
+    "description": "Extension text: Blocked by branch rules"
+  },
+  "detailsOnGitHub": {
+    "message": "Details on GitHub",
+    "description": "Extension text: Details on GitHub"
+  },
+  "autoMergeOnMergesWhenReady": {
+    "message": "Auto-merge on, merges when ready",
+    "description": "Extension text: Auto-merge on, merges when ready"
+  },
+  "listUpdated2": {
+    "message": "List updated $P1$",
+    "description": "Extension text: List updated $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "changesRequestedBy": {
+    "message": "Changes requested by $P1$",
+    "description": "Extension text: Changes requested by $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalNeeded": {
+    "message": "$P1$ approval needed",
+    "description": "Extension text: $P1$ approval needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalsNeeded": {
+    "message": "$P1$ approvals needed",
+    "description": "Extension text: $P1$ approvals needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckFailed": {
+    "message": "$P1$ required check failed",
+    "description": "Extension text: $P1$ required check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksFailed": {
+    "message": "$P1$ required checks failed",
+    "description": "Extension text: $P1$ required checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkFailed": {
+    "message": "$P1$ check failed",
+    "description": "Extension text: $P1$ check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailed": {
+    "message": "$P1$ checks failed",
+    "description": "Extension text: $P1$ checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalCheckFailed": {
+    "message": "$P1$ optional check failed",
+    "description": "Extension text: $P1$ optional check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalChecksFailed": {
+    "message": "$P1$ optional checks failed",
+    "description": "Extension text: $P1$ optional checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckRunning": {
+    "message": "$P1$ required check running",
+    "description": "Extension text: $P1$ required check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksRunning": {
+    "message": "$P1$ required checks running",
+    "description": "Extension text: $P1$ required checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkRunning": {
+    "message": "$P1$ check running",
+    "description": "Extension text: $P1$ check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning2": {
+    "message": "$P1$ checks running",
+    "description": "Extension text: $P1$ checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationToResolve": {
+    "message": "$P1$ conversation to resolve",
+    "description": "Extension text: $P1$ conversation to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationsToResolve": {
+    "message": "$P1$ conversations to resolve",
+    "description": "Extension text: $P1$ conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolved2": {
+    "message": "$P1$ unresolved",
+    "description": "Extension text: $P1$ unresolved",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updatingMergeStatus2": {
+    "message": ". Updating merge status",
+    "description": "Extension text: . Updating merge status"
+  },
+  "noReviewRequestsForYourTeams": {
+    "message": "No review requests for your teams.",
+    "description": "Text in ListSections.tsx"
+  },
+  "allLoadedPullRequestsAreSnoozed": {
+    "message": "All loaded pull requests are snoozed",
+    "description": "Text in ListSections.tsx"
+  },
+  "theyReturnHereWhenTheSnoozeEnds": {
+    "message": "They return here when the snooze ends.",
+    "description": "Text in ListSections.tsx"
+  },
+  "showSnoozed": {
+    "message": "Show snoozed",
+    "description": "Text in ListSections.tsx"
+  },
+  "seeYourPullRequestsHere": {
+    "message": "See your pull requests here",
+    "description": "Text in Onboarding.tsx"
+  },
+  "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
+    "message": "Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub.",
+    "description": "Text in Onboarding.tsx"
+  },
+  "useAPersonalAccessToken": {
+    "message": "Use a personal access token",
+    "description": "Text in Onboarding.tsx"
+  },
+  "prowlOnlyWatchesThePullRequestsItLoads": {
+    "message": "Prowl only watches the pull requests it loads.",
+    "description": "Text in Settings.tsx"
+  },
+  "refreshEveryMinutes": {
+    "message": "Refresh every (minutes)",
+    "description": "Text in Settings.tsx"
+  },
+  "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
+    "message": "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+    "description": "Text in Settings.tsx"
+  },
+  "list": {
+    "message": "List",
+    "description": "Text in Settings.tsx"
+  },
+  "reviewRequestsSentToYourTeams": {
+    "message": "Review requests sent to your teams",
+    "description": "Text in SettingsModel.ts"
+  },
+  "whatProwlCanAccess": {
+    "message": "What Prowl can access",
+    "description": "Text in SettingsPrivacy.tsx"
+  },
+  "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
+    "message": "Exclude pull requests in these, even when they match an include.",
+    "description": "Text in SettingsScope.tsx"
+  },
+  "useAFineGrainedTokenOwnedByTheOrganizationWith": {
+    "message": "Use a fine-grained token owned by the organization with the Members: read permission.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "prowlCanTSeeYourTeams": {
+    "message": "Prowl can't see your teams.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "couldnTLoadYourTeams": {
+    "message": "Couldn't load your teams.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "thisTokenCanTTellWhichTeamAskedSoSwitched": {
+    "message": "This token can't tell which team asked, so switched-off teams still show.",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "loadingYourTeams": {
+    "message": "Loading your teams…",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "missingATeam": {
+    "message": "Missing a team?",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "sectionPartialResults": {
+    "message": "Partial results for “$P1$”: $P2$",
+    "description": "Section load error when only partial results were returned.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "searchingSection": {
+    "message": "Searching “$P1$”…",
+    "description": "Status while a section search is running.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "nothingInLoadedMatches": {
+    "message": "Nothing in “$P1$” matches “$P2$”. This search only covers the loaded PRs.",
+    "description": "Empty filter result when the section has more pull requests on GitHub.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

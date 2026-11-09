@@ -144,18 +144,18 @@ async function readGraphQL<T>(
   const { status, headers } = response;
   if (!isRecord(payload)) throw fail('server', unexpected(), status, headers);
   const { data, errors } = payload;
-  const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
-  if (first !== undefined && partial && isRecord(data) && Array.isArray(errors)) {
-    onPartialErrors?.(
-      errors.flatMap((error) =>
-        isRecord(error) && typeof error.message === 'string'
-          ? [clean(error.message, client.token)]
-          : [],
-      ),
-    );
-  }
-  if (first !== undefined && !(partial && isRecord(data))) {
-    const { type, message } = isRecord(first) ? first : ({} as Record<string, unknown>);
+  const list: unknown[] = Array.isArray(errors) ? errors : [];
+  const partialData = partial && isRecord(data) && list.length > 0;
+  // Partial data never hides a refusal about the token or the budget.
+  const refusal = partialData
+    ? list.find(
+        (error) =>
+          isRecord(error) &&
+          ['unauthorized', 'rate_limited'].includes(classifyGraphQLType(error.type)),
+      )
+    : list[0];
+  if (refusal !== undefined) {
+    const { type, message } = isRecord(refusal) ? refusal : ({} as Record<string, unknown>);
     throw fail(
       classifyGraphQLType(type),
       typeof message === 'string' && message
@@ -163,6 +163,20 @@ async function readGraphQL<T>(
         : t('githubReturnedAnError'),
       status,
       headers,
+    );
+  }
+  if (partialData) {
+    onPartialErrors?.(
+      list.flatMap((error) =>
+        isRecord(error) && typeof error.message === 'string'
+          ? [
+              clean(error.message, client.token) +
+                (Array.isArray(error.path)
+                  ? ` (${clean(error.path.join('.'), client.token)})`
+                  : ''),
+            ]
+          : [],
+      ),
     );
   }
   if (!isRecord(data)) throw fail('server', t('githubReturnedNoData'), status, headers);

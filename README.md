@@ -82,7 +82,7 @@ Details: [sign-in guide](docs/auth.md).
 - **Everywhere you work**: Ctrl+Shift+P (⌘⇧P on Mac) opens the panel (change it at
   chrome://extensions/shortcuts). Turn on settings sync to find your settings in Chrome on your
   other computers; the token and your local PR state never leave the device.
-- **Polite polling**: every 5 minutes by default (2 minutes minimum), rate-limit aware, with
+- **Polite polling**: every 2 minutes by default (2 minutes minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
 
 ## Privacy
@@ -112,7 +112,8 @@ sites' requests or cookies, or be driven by a web page: it has none of the permi
 pnpm install
 pnpm verify        # Biome, types, unit tests + coverage gates, build, site, size budget, E2E
 pnpm build         # production build in dist/ (load it unpacked)
-pnpm dev           # rebuild dist/ on change
+pnpm dev           # Vite + CRXJS hot reload; load dist-dev/ unpacked
+pnpm dev:watch     # rebuild dist/ on change, with manual extension reload
 pnpm e2e           # Playwright against the real extension and a mock GitHub
 pnpm screenshots   # same, and refresh docs/screenshots/ (at 2x)
 pnpm zip           # prowl-v<version>.zip from dist/
@@ -121,6 +122,23 @@ pnpm zip           # prowl-v<version>.zip from dist/
 Node 24+ (`.nvmrc`) and pnpm 12 (`packageManager`; pnpm downloads that exact version). E2E tests
 never touch the real GitHub: they load `dist-e2e/` into Chromium and point it at a local mock
 server (`tests/e2e/mock-github`).
+
+For live development, run `nvm use && pnpm dev`, then open `chrome://extensions`, enable
+Developer mode, and load `dist-dev/` with **Load unpacked**. Open Prowl's side panel:
+UI edits update through Vite HMR, and background edits reload the extension. Keep the
+dev server running on localhost:5173. The development manifest allows localhost and
+Vite's injected styles; production builds in `dist/` retain the strict production CSP.
+
+To try the UI as a regular website, run `pnpm dev:web` and open http://localhost:5174.
+This preview starts signed in with five sample PRs, mocks Chrome APIs and GitHub responses
+in memory, and supports simulated actions, settings and Vite hot reload. Reload to reset
+the sample data. It needs no extension installation or GitHub token. Run `pnpm test:web`
+for its browser smoke test (install Playwright Chromium first). Chrome-specific permissions,
+notifications and side-panel behavior still need the real-extension E2E tests.
+
+The **New PR**, **Merge PR** and **Close PR** preview buttons simulate incoming updates
+and replay their card entrance and exit animations. They change only mock data. Live snapshots
+use the same detection, skip initial loading, and respect reduced-motion preferences.
 
 | Path | What |
 |---|---|

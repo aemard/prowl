@@ -16,7 +16,6 @@ import type {
   StateCount,
   StatusContextNode,
 } from '../../src/lib/github/queries';
-import type { Viewer } from '../../src/lib/model';
 import { graphqlRateLimit } from './http';
 
 const WEB = 'https://github.com';
@@ -27,10 +26,7 @@ const AVATAR = 'https://avatars.githubusercontent.com/u/583231?s=64&v=4';
  */
 export const RECENT_COMMIT = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
-/** `viewer { login avatarUrl name }`. */
-export function viewerNode(overrides: Partial<Viewer> = {}): Viewer {
-  return { login: 'octocat', avatarUrl: AVATAR, name: 'The Octocat', ...overrides };
-}
+export { viewerNode } from './viewer';
 
 /** The node id GitHub would give PR `number` of `nameWithOwner` (stable per pair). */
 export const prId = (number: number, nameWithOwner = 'acme/widgets') =>
@@ -124,6 +120,9 @@ export function prNode(
     mergeable: 'MERGEABLE',
     mergeStateStatus: 'BLOCKED',
     viewerCanUpdate: true,
+    viewerCanMergeAsAdmin: false,
+    viewerCanEnableAutoMerge: true,
+    viewerCanDisableAutoMerge: true,
     autoMergeRequest: null,
     totalCommentsCount: 0,
     labels: { nodes: [] },
@@ -150,6 +149,7 @@ export function searchResponse(
   const end = start + Number(first);
   return {
     search: {
+      issueCount: all.length,
       pageInfo: { hasNextPage: end < all.length, endCursor: all.length ? String(end) : null },
       nodes: all.slice(start, end),
     },
@@ -170,10 +170,14 @@ export function mergeStateResponse(
       return node
         ? {
             id: node.id,
+            headRefOid: node.headRefOid,
             reviewDecision: node.reviewDecision,
             mergeable: node.mergeable,
             mergeStateStatus: node.mergeStateStatus,
             viewerCanUpdate: node.viewerCanUpdate,
+            viewerCanMergeAsAdmin: node.viewerCanMergeAsAdmin,
+            viewerCanEnableAutoMerge: node.viewerCanEnableAutoMerge,
+            viewerCanDisableAutoMerge: node.viewerCanDisableAutoMerge,
           }
         : null;
     }),
@@ -257,6 +261,12 @@ export function detailReview(login: string | null, state = 'APPROVED') {
 }
 
 /** `reviewRequests` entry for a user (`{}` instead for a team, which is not selected). */
+/** A review requested from a team, for the permission-safe team search variant. */
+export const requestedTeam = (key: string) => {
+  const [org = '', slug = ''] = key.split('/');
+  return { requestedReviewer: { slug, organization: { login: org } } };
+};
+
 export function requestedReviewer(login: string | null) {
   return { requestedReviewer: login === null ? {} : { login, avatarUrl: AVATAR } };
 }
@@ -314,43 +324,4 @@ export function detailResponse(
   return { node, rateLimit };
 }
 
-/** One item of REST `GET /user/teams` (GitHub's "Full Team"), for `org/slug`. */
-export function teamJson(key = 'acme/core', name = 'Core') {
-  const [org = '', slug = ''] = key.split('/');
-  return {
-    id: 4_200_001,
-    node_id: 'T_kwDOAAAB0c4AQBIx',
-    url: `https://api.github.com/organizations/1001/team/4200001`,
-    html_url: `${WEB}/orgs/${org}/teams/${slug}`,
-    name,
-    slug,
-    description: null,
-    privacy: 'closed',
-    notification_setting: 'notifications_enabled',
-    permission: 'pull',
-    parent: null as { slug: string; name: string } | null,
-    members_count: 4,
-    repos_count: 2,
-    created_at: '2024-02-01T09:00:00Z',
-    updated_at: '2026-09-30T09:00:00Z',
-    organization: {
-      login: org,
-      id: 1001,
-      node_id: 'O_kgDOAAAD6Q',
-      url: `https://api.github.com/orgs/${org}`,
-      avatar_url: AVATAR,
-      description: null,
-    },
-  };
-}
-
-/**
- * A REST answer for `GET /user/teams?per_page&page`, paged like GitHub (`teams` is every team,
- * `path` the request path with its query).
- */
-export function userTeamsPage(teams: ReturnType<typeof teamJson>[], path: string) {
-  const params = new URL(path, 'https://api.github.com').searchParams;
-  const perPage = Number(params.get('per_page') ?? 30);
-  const page = Number(params.get('page') ?? 1);
-  return teams.slice((page - 1) * perPage, page * perPage);
-}
+export { teamJson, userTeamsPage } from './teams';

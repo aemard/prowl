@@ -1,7 +1,8 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { countMessage, t } from '../../lib/i18n';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
+import { sendToBackground } from '../state/background';
 import { detailKey, details, loadDetail } from '../state/prDetail';
 import { GitHubLink } from './GitHubLink';
 import {
@@ -14,6 +15,7 @@ import {
   GitMergeIcon,
   InfoIcon,
   SkipIcon,
+  SyncIcon,
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
@@ -77,17 +79,26 @@ function Group({
   );
 }
 
-function MergeLines({ lines, labelledBy }: { lines: MergeLine[]; labelledBy: string }) {
+function MergeLines({ lines, pr }: { lines: MergeLine[]; pr: PullRequest }) {
   return (
-    <ul class="pr-detail__list" aria-labelledby={labelledBy}>
-      {lines.map(({ tone, text }) => {
-        const Icon = LINE_ICONS[tone] ?? InfoIcon;
+    <ul class="pr-detail__list" aria-label={t('mergeStatus')}>
+      {lines.map(({ tone, text, link }) => {
+        const Icon =
+          text === t('autoMergeOnMergesWhenReady') ? SyncIcon : (LINE_ICONS[tone] ?? InfoIcon);
         return (
           <li class="pr-detail__row" key={text}>
             <span class="pr-detail__icon" data-tone={tone}>
               <Icon size={12} />
             </span>
-            <span class="pr-detail__text">{text}</span>
+            <span class="pr-detail__text">
+              {text === t('checkingMergeStatus') ? <span role="status">{text}</span> : text}
+              {link && (
+                <>
+                  {' '}
+                  · <GitHubLink href={pr.url}>{link}</GitHubLink>
+                </>
+              )}
+            </span>
           </li>
         );
       })}
@@ -131,8 +142,8 @@ function Checks({
   const done = checks.filter(({ state }) => state === 'passed' || state === 'neutral');
   const passed = done.filter(({ state }) => state === 'passed').length;
   const summary = [
-    passed > 0 && countMessage(passed, 'passed2One', 'passed2'),
-    done.length > passed && countMessage(done.length - passed, 'skipped2One', 'skipped2'),
+    passed > 0 && t('passed2', passed),
+    done.length > passed && t('skipped2', done.length - passed),
   ];
   return (
     <>
@@ -155,9 +166,14 @@ function Checks({
       )}
       {checks.length === 0 && (
         <p class="pr-detail__hint">
-          {pr.checks.total > 0
-            ? t('githubDidNotReturnTheChecksAFineGrained')
-            : t('noChecksOnTheLatestCommit')}
+          {pr.checks.total > 0 ? (
+            <>
+              {t('thisTokenCanTReadChecks')}{' '}
+              <GitHubLink href={`${pr.url}/checks`}>{t('viewOnGitHub')}</GitHubLink>
+            </>
+          ) : (
+            t('noChecksOnTheLatestCommit')
+          )}
         </p>
       )}
       {checks.length > 0 && checks.length < total && (
@@ -211,29 +227,46 @@ export interface PullRequestDetailsProps {
  * What an expanded card shows: why the PR can or cannot be merged (at once, from the list's own
  * data), the actions on it (review, comment, merge), then, once `ProwlPullRequestDetail` has
  * loaded, its checks (failed first, with links) and reviewers. Loads on mount and again when the
- * PR changes; the last detail stays on screen while a newer one loads.
+ * PR changes; a changed head or changed evidence shows a loading state until its detail is read.
  */
 export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
+  const [refreshed, setRefreshed] = useState(false);
   const key = detailKey(pr);
   useEffect(() => {
     void loadDetail(pr);
+    setRefreshed(false);
+    let active = true;
+    void sendToBackground({ type: 'refreshMergeState', prId: pr.id, headSha: pr.headSha }).finally(
+      () => {
+        if (active) setRefreshed(true);
+      },
+    );
+    return () => {
+      active = false;
+    };
   }, [key]);
 
   const entry = details.value[pr.id];
-  const detail = entry?.detail;
+  const detail = entry?.key === key && !entry.loading && !entry.error ? entry.detail : undefined;
   const waiting = !detail && !entry?.error;
   return (
     <div id={id} class="pr-detail">
-      <Group id={`${id}-merge`} label={t('merge')}>
-        <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
-      </Group>
-      <Group id={`${id}-actions`} label={t('actions')}>
-        <div class="pr-actions">
-          <ReviewActions pr={pr} />
-          <MergeAction pr={pr} />
-          <MaintenanceActions pr={pr} />
-        </div>
-      </Group>
+      <MergeLines lines={mergeReadiness(pr, detail, refreshed)} pr={pr} />
+      {pr.incomplete?.length || detail?.warnings?.length ? (
+        <p class="pr-detail__freshness" role="note">
+          {t('someDetailsAreOnlyOnGitHub')}{' '}
+          <GitHubLink href={pr.url}>{t('viewOnGitHub')}</GitHubLink>
+        </p>
+      ) : null}
+      <fieldset class="pr-actions" aria-label={t('actionsFor2', String(pr.number))}>
+        <MergeAction pr={pr} placement="merge" />
+        <MaintenanceActions pr={pr} />
+        <ReviewActions pr={pr} />
+        <MergeAction pr={pr} placement="auto" />
+        <GitHubLink class="pr-actions__link" href={`${pr.url}/files`}>
+          {t('viewChangesOnGitHub')}
+        </GitHubLink>
+      </fieldset>
       {entry?.error && (
         <p class="pr-detail__error" role="alert">
           <AlertIcon size={16} />
