@@ -95,6 +95,7 @@ test('re-runs failed Actions jobs and other failed check suites', async ({
 test('marks a draft ready for review and converts a ready PR to draft', async ({
   github,
   openPanel,
+  expectNoA11yViolations,
 }) => {
   github.onGraphQL('ProwlMarkReady', () => ({
     markPullRequestReadyForReview: { pullRequest: { isDraft: false } },
@@ -104,15 +105,21 @@ test('marks a draft ready for review and converts a ready PR to draft', async ({
   }));
   const panel = await openPanel();
   const draft = await expand(panel, DRAFT.title);
+  await expectNoA11yViolations(panel);
   await draft.getByRole('button', { name: `Ready for review: ${DRAFT.ref}` }).click();
   await expect(toasts(panel)).toContainText(`Marked ready for review: ${DRAFT.ref}`);
   expect(github.requestsFor('ProwlMarkReady')[0]?.body).toMatchObject({
     variables: { id: DRAFT.id },
   });
 
-  await expand(panel, READY.title);
-  await panel.getByRole('button', { name: `More actions for ${READY.title}` }).click();
+  const ready = await expand(panel, READY.title);
+  await expect(ready.getByRole('button', { name: /^Convert to draft/ })).toHaveCount(0);
+  await ready.getByRole('button', { name: /^More actions for / }).click();
+  await expectNoA11yViolations(panel);
   await panel.getByRole('menuitem', { name: 'Convert to draft' }).click();
   await expect(toasts(panel)).toContainText(`Converted to draft: ${READY.ref}`);
   expect(github.requestsFor('ProwlConvertToDraft')).toHaveLength(1);
+  expect(github.requestsFor('ProwlConvertToDraft')[0]?.body).toMatchObject({
+    variables: { id: READY.id },
+  });
 });

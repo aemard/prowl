@@ -110,12 +110,20 @@ test('finds the teams and lists what they are asked to review in Team reviews', 
     'is:pr is:open user-review-requested:@me archived:false sort:updated-desc',
     'is:pr is:open team-review-requested-user:@me archived:false sort:updated-desc',
   ]);
+  const teamSearch = github
+    .requestsFor('ProwlSearch')
+    .find((request) =>
+      (request.body as { variables: { query: string } }).variables.query.includes(
+        'team-review-requested-user:@me',
+      ),
+    );
+  expect(teamSearch?.body).toMatchObject({ query: expect.stringContaining('... on Team') });
   const { teams, snapshot } = await stored(serviceWorker);
   expect(teams).toMatchObject({
     login: 'octocat',
     teams: [
-      { org: 'acme', slug: 'core', name: '@acme/core' },
-      { org: 'acme', slug: 'web', name: '@acme/web' },
+      { org: 'acme', slug: 'core', name: 'Core' },
+      { org: 'acme', slug: 'web', name: 'Web' },
     ],
     error: null,
   });
@@ -153,6 +161,7 @@ test('follows and unfollows teams from Settings, which filters the results', asy
   signIn,
   poll,
   openPanel,
+  serviceWorker,
   expectNoA11yViolations,
 }) => {
   serveTeams(github);
@@ -162,9 +171,15 @@ test('follows and unfollows teams from Settings, which filters the results', asy
   await poll();
 
   const panel = await openPanel('#/settings');
-  const teams = panel.locator('.team-picker');
+  const sections = panel.locator('section').filter({
+    has: panel.getByRole('heading', { name: 'Sections', level: 3 }),
+  });
+  const teams = sections.locator('.team-picker');
+  const teamReviews = sections.getByRole('switch', { name: 'Team reviews', exact: true });
+  await expect(teamReviews).toBeChecked();
   await expect(teams.getByRole('group', { name: 'acme' })).toBeVisible();
   await expect(teams.getByRole('switch', { name: '@acme/core' })).toBeChecked();
+  await expect(teams.getByRole('switch', { name: '@acme/web' })).toBeChecked();
   await expect(teams.getByText(/Checked just now/)).toHaveCount(0);
   await panel.emulateMedia({ colorScheme: 'dark' });
   await expectNoA11yViolations(panel);
@@ -183,14 +198,34 @@ test('follows and unfollows teams from Settings, which filters the results', asy
     )
     .toEqual(['is:pr is:open team-review-requested-user:@me archived:false sort:updated-desc']);
 
+  // Complete team nodes prove that only web-only PRs should be excluded; shared stays.
+  await expect
+    .poll(async () => (await stored(serviceWorker)).snapshot?.sections.team_review_requested)
+    .toEqual([failing.id, shared.id]);
+  expect((await stored(serviceWorker)).snapshot?.sections.review_requested).toEqual([direct.id]);
+
   const discoveries = () => github.requests.filter((r) => r.path.startsWith('/user/teams')).length;
   await panel.getByRole('button', { name: 'Back to pull requests' }).click();
   await panel.getByRole('tab', { name: /^Teams/ }).click();
   await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id]);
+  await expect(panel.locator('.team-picker')).toHaveCount(0);
+  await expectNoA11yViolations(panel);
   await panel.getByRole('button', { name: 'Settings', exact: true }).click();
   const listed = discoveries();
   await teams.getByRole('button', { name: 'Refresh' }).click();
   await expect.poll(discoveries).toBeGreaterThan(listed);
+
+  await teamReviews.click();
+  await expect(teamReviews).not.toBeChecked();
+  await expect(teams).toHaveCount(0);
+  await expectNoA11yViolations(panel);
+  await teamReviews.click();
+  await expect(teams.getByRole('switch', { name: '@acme/web' })).not.toBeChecked();
+  await teams.getByRole('switch', { name: '@acme/web' }).click();
+  await expect(teams.getByRole('switch', { name: '@acme/web' })).toBeChecked();
+  await panel.getByRole('button', { name: 'Back to pull requests' }).click();
+  await panel.getByRole('tab', { name: /^Teams/ }).click();
+  await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id, draft.id]);
 });
 
 test('explains a missing read:org scope only in Settings, then finds the teams on request', async ({

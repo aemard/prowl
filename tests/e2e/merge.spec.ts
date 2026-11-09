@@ -142,6 +142,7 @@ test.describe('merge', () => {
   test('offers only the methods the repository allows, starting on its default', async ({
     github,
     openPanel,
+    expectNoA11yViolations,
   }) => {
     github.onGraphQL(MERGE, () => merged);
     const panel = await openPanel();
@@ -149,15 +150,26 @@ test.describe('merge', () => {
     await docs.getByRole('button', { name: `Merge ${DOCS.ref}` }).click();
     const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
     const method = dialog.getByRole('combobox', { name: 'Merge method' });
-    await expect(method.getByRole('option')).toHaveText(['Squash and merge']);
-    await expect(method).toHaveValue('squash');
+    await expect(method).toHaveCount(0);
+    await expect(
+      dialog.getByRole('button', { name: 'Squash and merge', exact: true }),
+    ).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: 'Commit title (optional)' })).toBeVisible();
+    await expectNoA11yViolations(panel);
 
     // A rebase has no commit title to ask for.
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     const api = await expand(panel, API.title);
     await api.getByRole('button', { name: `Merge ${API.ref}` }).click();
-    await dialog.getByRole('combobox', { name: 'Merge method' }).selectOption('rebase');
+    await expect(method.getByRole('option')).toHaveText([
+      'Create a merge commit',
+      'Squash and merge',
+      'Rebase and merge',
+    ]);
+    await expect(method).toHaveValue('merge');
+    await method.selectOption('rebase');
     await expect(dialog.getByRole('textbox')).toHaveCount(0);
+    await expectNoA11yViolations(panel);
     await dialog.getByRole('button', { name: 'Merge', exact: true }).click();
     await expect(toasts(panel)).toContainText(`Merged ${API.ref}`);
     expect(github.requestsFor(MERGE).map((r) => r.body)).toMatchObject([
