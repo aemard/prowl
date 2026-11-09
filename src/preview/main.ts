@@ -35,6 +35,10 @@ async function start() {
   registerBackground();
   await poll({ force: true });
   await import('../sidepanel/main');
+  const { render, h } = await import('preact');
+  const { AnimationControls } = await import('./AnimationControls');
+  const controls = document.getElementById('preview-controls');
+  if (controls) render(h(AnimationControls, {}), controls);
 }
 
 void start();
