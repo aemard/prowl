@@ -18,6 +18,20 @@ function manifestPlugin(mode: BuildMode): Plugin {
   };
 }
 
+/** The bundled English catalog keeps only each message: descriptions are for translators. */
+function englishMessagesOnly(): Plugin {
+  return {
+    name: 'prowl-english-messages-only',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.endsWith('/_locales/en/messages.json')) return;
+      const catalog = JSON.parse(code) as Record<string, { message: string }>;
+      const messages = Object.entries(catalog).map(([key, { message }]) => [key, { message }]);
+      return { code: JSON.stringify(Object.fromEntries(messages)), map: null };
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const buildMode: BuildMode = mode === 'e2e' || mode === 'development' ? mode : 'production';
   const e2e = buildMode === 'e2e';
@@ -33,7 +47,7 @@ export default defineConfig(({ mode }) => {
     publicDir: resolve(root, 'public'),
     envDir: root,
     base: '/',
-    plugins: [preact(), manifestPlugin(buildMode)],
+    plugins: [englishMessagesOnly(), preact(), manifestPlugin(buildMode)],
     resolve: {
       alias: { '@': resolve(root, 'src') },
     },
