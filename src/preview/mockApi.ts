@@ -11,6 +11,7 @@ import {
 } from '../../tests/fixtures/github';
 
 const now = new Date().toISOString();
+let sequence = 105;
 const nodes = [
   prNode({
     number: 101,
@@ -52,6 +53,31 @@ const nodes = [
   updatedAt: now,
   author: { __typename: 'User', login: 'octocat', avatarUrl: '' },
 }));
+
+/** Mutate the mock API, then let the real poller publish the resulting snapshot. */
+export function simulatePullRequest(kind: 'new' | 'merged' | 'closed'): boolean {
+  if (kind === 'new') {
+    const createdAt = new Date().toISOString();
+    nodes.push({
+      ...prNode({
+        number: ++sequence,
+        repository: 'acme/web',
+        title: `Polish the little details #${sequence}`,
+      }),
+      createdAt,
+      updatedAt: createdAt,
+      author: { __typename: 'User', login: 'octocat', avatarUrl: '' },
+    });
+    return true;
+  }
+  const node = nodes.find((item) => item.state === 'OPEN');
+  if (node) {
+    node.state = kind.toUpperCase();
+    node.updatedAt = new Date().toISOString();
+    node.mergedBy = kind === 'merged' ? { login: 'alice' } : null;
+  }
+  return node !== undefined;
+}
 
 function operation(name: string, variables: Record<string, unknown>): object {
   if (name === 'ProwlViewer')

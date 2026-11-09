@@ -132,6 +132,10 @@ the sample data. It needs no extension installation or GitHub token. Run `pnpm t
 for its browser smoke test (install Playwright Chromium first). Chrome-specific permissions,
 notifications and side-panel behavior still need the real-extension E2E tests.
 
+The **New PR**, **Merge PR** and **Close PR** preview buttons simulate incoming updates
+and replay their card entrance and exit animations. They change only mock data. Live snapshots
+use the same detection, skip initial loading, and respect reduced-motion preferences.
+
 | Path | What |
 |---|---|
 | `src/background/` | Service worker: polling, notifications, badge |
