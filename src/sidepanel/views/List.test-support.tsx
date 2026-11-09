@@ -5,7 +5,7 @@ import { defaultSettings } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
 import { details, expandedIds } from '../state/prDetail';
 import { auth, pollState, prLocal, settings, snapshot } from '../state/store';
-import { activeSectionId, filterQuery, foldedGroups, showHidden } from './List';
+import { activeSectionId, filterQuery, foldedGroups } from './List';
 
 export const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 
@@ -65,18 +65,19 @@ beforeEach(() => {
   });
   vi.stubGlobal('IntersectionObserver', FakeObserver);
   settings.value = defaultSettings();
+  withSections(['authored']);
 });
 
 afterEach(() => {
   vi.useRealTimers();
   FakeObserver.all = [];
   settings.value = defaultSettings();
+  withSections(['authored']);
   snapshot.value = undefined;
   pollState.value = undefined;
   prLocal.value = { snoozed: {}, muted: {}, seen: {} };
   activeSectionId.value = undefined;
   filterQuery.value = '';
-  showHidden.value = false;
   foldedGroups.value = [];
   location.hash = '';
   auth.value = undefined;

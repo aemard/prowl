@@ -61,9 +61,6 @@ export const settings = (overrides: Partial<FetchSettings> = {}): FetchSettings 
   repoExclude: [],
   maxPerSection: 50,
   unfollowedTeams: [],
-  hideDrafts: false,
-  hideBots: false,
-  hideStaleAfterDays: 0,
   ...overrides,
 });
 

@@ -6,6 +6,8 @@
  */
 import type {
   AuthState,
+  OnboardingState,
+  PanelState,
   PollState,
   PrLocalState,
   Settings,
@@ -18,6 +20,7 @@ import { jsonEqual } from './guards';
 
 /** The value stored under each key of `STORAGE_KEYS`. */
 export interface StorageSchema {
+  onboarding: OnboardingState;
   settings: Settings;
   auth: AuthState;
   snapshot: Snapshot;
@@ -25,6 +28,7 @@ export interface StorageSchema {
   prLocal: PrLocalState;
   teams: TeamsState;
   sync: SyncState;
+  panelState: PanelState;
 }
 
 /** Called with the new and previous value; `undefined` means the key is absent. */

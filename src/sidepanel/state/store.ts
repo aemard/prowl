@@ -7,6 +7,8 @@
 import { batch, computed, signal } from '@preact/signals';
 import {
   type AuthState,
+  type OnboardingState,
+  type PanelState,
   type PollState,
   type PrLocalState,
   type Settings,
@@ -16,6 +18,8 @@ import {
   type SyncState,
   type TeamsState,
 } from '../../lib/model';
+import { normalizeOnboarding } from '../../lib/storage/onboarding';
+import { normalizePanelState } from '../../lib/storage/panelState';
 import { emptyPrLocal, normalizePrLocal } from '../../lib/storage/prLocal';
 import { defaultSettings, normalizeSettings } from '../../lib/storage/settings';
 import { getItems, subscribe } from '../../lib/storage/storage';
@@ -23,6 +27,7 @@ import { getItems, subscribe } from '../../lib/storage/storage';
 export const settings = signal<Settings>(defaultSettings());
 /** Undefined = signed out. */
 export const auth = signal<AuthState | undefined>(undefined);
+export const onboarding = signal<OnboardingState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
 /** The global loader covers searching only; merge batches carry their own card indicators. */
@@ -34,6 +39,7 @@ export const prLocal = signal<PrLocalState>(emptyPrLocal());
 export const teams = signal<TeamsState | undefined>(undefined);
 /** Whether this device syncs its settings through Chrome, and the last sync error. */
 export const sync = signal<SyncState | undefined>(undefined);
+export const panelState = signal<PanelState | undefined>(undefined);
 /** False until the first read of storage has been applied: show a skeleton, not a guess. */
 export const hydrated = signal(false);
 
@@ -45,6 +51,9 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   },
   [STORAGE_KEYS.auth]: (raw) => {
     auth.value = raw as AuthState | undefined;
+  },
+  [STORAGE_KEYS.onboarding]: (raw) => {
+    onboarding.value = normalizeOnboarding(raw as OnboardingState | undefined);
   },
   [STORAGE_KEYS.snapshot]: (raw) => {
     snapshot.value = raw as Snapshot | undefined;
@@ -60,6 +69,9 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
   },
   [STORAGE_KEYS.sync]: (raw) => {
     sync.value = raw as SyncState | undefined;
+  },
+  [STORAGE_KEYS.panelState]: (raw) => {
+    panelState.value = normalizePanelState(raw);
   },
 };
 const KEYS = Object.keys(BINDINGS) as StorageKey[];

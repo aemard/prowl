@@ -17,6 +17,8 @@ export interface MenuItem {
   danger?: boolean;
   /** Makes the item a `menuitemradio` with this checked state (single-choice groups). */
   checked?: boolean;
+  /** Independent toggle; other checked items use radio semantics. */
+  checkRole?: 'menuitemcheckbox';
 }
 
 export type MenuEntry = MenuItem | 'separator';
@@ -106,6 +108,8 @@ function useMenuPlacement(state: ReturnType<typeof useMenuState>, align: 'start'
   useLayoutEffect(() => {
     const menu = menuRef.current;
     if (!open || !menu) return;
+    // The effect reruns as the active item moves; show the popover only once.
+    if (!menu.matches(':popover-open')) menu.showPopover();
     if (triggerRef.current) place(menu, triggerRef.current, align);
     menu.querySelector<HTMLElement>(`[data-index="${active}"]`)?.focus();
   }, [open, active, align]);
@@ -213,6 +217,10 @@ function menuEntry(item: MenuEntry, index: number, state: ReturnType<typeof useM
     <button role="menuitem" {...common}>
       {content}
     </button>
+  ) : item.checkRole === 'menuitemcheckbox' ? (
+    <button role="menuitemcheckbox" aria-checked={item.checked} {...common}>
+      {content}
+    </button>
   ) : (
     <button role="menuitemradio" aria-checked={item.checked} {...common}>
       {content}
@@ -238,6 +246,7 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
           ref={state.menuRef}
           id={`${id}-menu`}
           role="menu"
+          popover="manual"
           class="ui-menu"
           aria-labelledby={label ? undefined : `${id}-trigger`}
           aria-label={label}

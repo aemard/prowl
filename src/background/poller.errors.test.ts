@@ -32,7 +32,11 @@ describe('poll', () => {
   it('backs off exponentially after errors; a forced poll skips the backoff', async () => {
     const requests = github(fail(502, 'Bad gateway'));
     await signIn();
-    await setItem('settings', { ...defaultSettings(), pollIntervalMinutes: 2 });
+    await setItem('settings', {
+      ...defaultSettings(),
+      ...(await getItem('settings')),
+      pollIntervalMinutes: 2,
+    });
     await poll();
     expect(await pollState()).toMatchObject({
       consecutiveFailures: 1,

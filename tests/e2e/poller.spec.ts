@@ -52,7 +52,7 @@ test('a forced poll fetches from GitHub, stores a snapshot and schedules the nex
     inFlight: false,
     rateLimit: { remaining: 4990 },
   });
-  expect(await pollAlarm(serviceWorker)).toMatchObject({ periodInMinutes: 5 });
+  expect(await pollAlarm(serviceWorker)).toMatchObject({ periodInMinutes: 2 });
 });
 
 test('waits for the rate limit to reset, even for a forced poll', async ({

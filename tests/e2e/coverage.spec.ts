@@ -17,7 +17,7 @@ for (const count of [50, 51]) {
       }),
     );
     github.onGraphQL('ProwlSearch', (variables) => searchResponse(nodes, variables));
-    await seedStorage({ settings: { hideDrafts: true } });
+    await seedStorage({ settings: { maxPerSection: 50 } });
     await signIn();
     await poll();
     const panel = await openPanel();
@@ -30,6 +30,8 @@ for (const count of [50, 51]) {
       await expect(coverage.getByRole('button', { name: 'Change limit' })).toBeVisible();
       await panel.getByRole('searchbox').fill('unloaded-result');
       await expect(panel.getByText(/This search only covers the loaded PRs/)).toBeVisible();
+      await coverage.getByRole('button', { name: 'Change limit' }).click();
+      await expect(panel.getByLabel('Maximum pull requests loaded per section')).toBeFocused();
     }
     await expectNoA11yViolations(panel);
   });

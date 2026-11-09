@@ -41,9 +41,16 @@ describe('App', () => {
     expect(screen.getByRole('main', { name: 'Sign in' })).toBeTruthy();
   });
 
+  it('shows the first-run note with the list and full header', async () => {
+    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 1 } });
+    expect(screen.getByRole('main', { name: 'Pull requests' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Got it' })).toBeTruthy();
+  });
+
   it('lands signed-out users on onboarding', async () => {
     await open();
-    expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'See your pull requests here' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
   });
 

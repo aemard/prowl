@@ -1,4 +1,5 @@
 import type { AuthState } from '../lib/model';
+import { PENDING_NOTICE } from '../lib/storage/onboarding';
 import { installFakeChrome } from '../test/chrome';
 import { installMockApi } from './mockApi';
 import './preview.css';
@@ -26,12 +27,18 @@ async function start() {
     viewer: { login: 'octocat', name: 'Demo User', avatarUrl: '' },
     createdAt: new Date().toISOString(),
   };
-  await fake.storage.local.set({ auth });
+  await fake.storage.local.set(
+    location.hash === '#onboarding' ? { onboarding: PENDING_NOTICE } : { auth },
+  );
   const { registerBackground } = await import('../background/register');
   const { poll } = await import('../background/poller');
   registerBackground();
   await poll({ force: true });
   await import('../sidepanel/main');
+  const { render, h } = await import('preact');
+  const { AnimationControls } = await import('./AnimationControls');
+  const controls = document.getElementById('preview-controls');
+  if (controls) render(h(AnimationControls, {}), controls);
 }
 
 void start();

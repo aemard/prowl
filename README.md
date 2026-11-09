@@ -78,7 +78,7 @@ Details: [sign-in guide](docs/auth.md).
 - **Everywhere you work**: Ctrl+Shift+P (⌘⇧P on Mac) opens the panel (change it at
   chrome://extensions/shortcuts). Turn on settings sync to find your settings in Chrome on your
   other computers; the token and your local PR state never leave the device.
-- **Polite polling**: every 5 minutes by default (2 minutes minimum), rate-limit aware, with
+- **Polite polling**: every 2 minutes by default (2 minutes minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
 
 ## Privacy
@@ -131,6 +131,10 @@ in memory, and supports simulated actions, settings and Vite hot reload. Reload 
 the sample data. It needs no extension installation or GitHub token. Run `pnpm test:web`
 for its browser smoke test (install Playwright Chromium first). Chrome-specific permissions,
 notifications and side-panel behavior still need the real-extension E2E tests.
+
+The **New PR**, **Merge PR** and **Close PR** preview buttons simulate incoming updates
+and replay their card entrance and exit animations. They change only mock data. Live snapshots
+use the same detection, skip initial loading, and respect reduced-motion preferences.
 
 | Path | What |
 |---|---|
