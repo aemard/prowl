@@ -168,7 +168,7 @@ function Checks({
         <p class="pr-detail__hint">
           {pr.checks.total > 0 ? (
             <>
-              Checks aren't available with this token ·{' '}
+              This token can't read checks ·{' '}
               <GitHubLink href={`${pr.url}/checks`}>View on GitHub</GitHubLink>
             </>
           ) : (
