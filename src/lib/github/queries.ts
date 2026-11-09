@@ -98,6 +98,9 @@ query ProwlMergeState($ids: [ID!]!) {
       mergeable
       mergeStateStatus
       viewerCanUpdate
+      viewerCanMergeAsAdmin
+      viewerCanEnableAutoMerge
+      viewerCanDisableAutoMerge
     }
   }
   ${RATE_LIMIT}
@@ -244,6 +247,9 @@ export interface MergeStateNode {
   mergeable: string;
   mergeStateStatus: string;
   viewerCanUpdate: boolean;
+  viewerCanMergeAsAdmin: boolean;
+  viewerCanEnableAutoMerge: boolean;
+  viewerCanDisableAutoMerge: boolean;
 }
 
 export interface MergeStateData {

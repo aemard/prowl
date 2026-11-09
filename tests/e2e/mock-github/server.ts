@@ -90,7 +90,7 @@ export class MockGitHub {
   /**
    * Forget handlers and the request log. Called before every test. What every poll asks for
    * besides the searches keeps a default answer: `GET /user/teams` lists no team, and
-   * `ProwlMergeState` gives the facts of the PRs as the searches last returned them.
+   * `ProwlMergeState` gives the facts and viewer merge permissions of the PRs as the searches last returned them.
    */
   reset(): void {
     this.graphql.clear();

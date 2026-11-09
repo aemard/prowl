@@ -178,8 +178,7 @@ test.describe('expanding a card', () => {
     await expect(checkout.getByRole('link', { name: /^Refactor checkout flow/ })).toBeFocused();
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('button', { name: /^Comment on / })).toBeFocused();
-    await panel.keyboard.press('Tab');
-    await expect(checkout.getByRole('button', { name: /^Merge / })).toBeFocused();
+    // Failing CI and no right to bypass the rules: no merge button (it could only fail).
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('button', { name: /^Re-run failed checks of / })).toBeFocused();
     await panel.keyboard.press('Tab');

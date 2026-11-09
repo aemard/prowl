@@ -32,12 +32,15 @@ const PAGE_SIZE = 25;
  */
 const POLL_LEVEL: readonly ErrorKind[] = ['unauthorized', 'rate_limited', 'network'];
 
-const mergeFacts = ({
-  reviewDecision,
-  mergeable,
-  mergeStateStatus,
-  viewerCanUpdate,
-}: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
+const mergeFacts = (pr: PullRequest): MergeFacts => ({
+  reviewDecision: pr.reviewDecision,
+  mergeable: pr.mergeable,
+  mergeStateStatus: pr.mergeStateStatus,
+  viewerCanUpdate: pr.viewerCanUpdate,
+  viewerCanMergeAsAdmin: pr.viewerCanMergeAsAdmin === true,
+  viewerCanEnableAutoMerge: pr.viewerCanEnableAutoMerge === true,
+  viewerCanDisableAutoMerge: pr.viewerCanDisableAutoMerge === true,
+});
 
 export type PreviousSnapshot = Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
   Partial<Pick<Snapshot, 'sections' | 'sectionCoverage'>>;
