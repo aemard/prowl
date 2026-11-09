@@ -88,6 +88,28 @@ describe('MaintenanceActions', () => {
     );
   });
 
+  it('explains how to re-run failures reported only as commit statuses', async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse({
+        data: {
+          node: {
+            repository: { owner: { login: 'acme' }, name: 'web' },
+            commits: { nodes: [{ commit: { checkSuites: { nodes: [] } } }] },
+          },
+        },
+      }),
+    );
+    vi.stubGlobal('fetch', fetch);
+    show({ checks: failing, viewerCanMerge: true });
+    fireEvent.click(screen.getByRole('button', { name: /^Re-run failed checks of / }));
+    await waitFor(() =>
+      expect(toastTexts()[0]).toBe(
+        'danger: Re-run failed checks failed: No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.',
+      ),
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('offers to update a branch that is behind, to whoever may push to it', () => {
     show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
     expect(screen.getByRole('button', { name: /^Update branch of / })).toBeTruthy();

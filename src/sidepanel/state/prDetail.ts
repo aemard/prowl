@@ -27,11 +27,26 @@ export const expandedIds = signal<readonly string[]>([]);
 export const details = signal<Readonly<Record<string, DetailEntry>>>({});
 
 /**
- * Changes when anything the detail depends on does: activity, the check counts (a run finishing
- * does not always touch `updatedAt`), and the merge facts. A new key refetches an expanded card.
+ * Changes with the data the detail reads. Merge facts already update directly from the list;
+ * their unknown -> verified transition must not fetch the same checks and reviewers twice.
  */
 export const detailKey = (pr: PullRequest) =>
-  JSON.stringify([pr.updatedAt, pr.checks, pr.mergeable, pr.mergeStateStatus, pr.reviewDecision]);
+  JSON.stringify([
+    pr.headSha,
+    pr.baseRefName,
+    pr.allowedMergeMethods,
+    pr.updatedAt,
+    [
+      pr.checks.state,
+      pr.checks.total,
+      pr.checks.passed,
+      pr.checks.failed,
+      pr.checks.pending,
+      pr.checks.neutral,
+    ],
+    pr.reviews.map((review) => [review.id, review.state, review.submittedAt, review.author]),
+    pr.requestedReviewers,
+  ]);
 
 export function toggleExpanded(id: string): void {
   const open = expandedIds.value;
@@ -61,25 +76,29 @@ const put = (id: string, entry: DetailEntry) => {
 
 /**
  * Fetches the detail of `pr` unless the entry already holds it (or is loading it) for its
- * current `detailKey`; a failed one is tried again. Keeps showing the previous detail while a
- * newer one loads, and drops an answer that a newer request has overtaken.
+ * current `detailKey`; a failed one is tried again. Retains the previous entry in memory while a
+ * newer one loads (the view only uses matching completed entries). Publishes only while the
+ * loading entry and auth session still belong to this request.
  */
 export async function loadDetail(pr: PullRequest): Promise<void> {
-  const token = signedInAs.value;
+  const session = auth.value;
+  const token = session?.token;
   const key = detailKey(pr);
   const current = details.value[pr.id];
   if (!token || (current?.key === key && (current.loading || !current.error))) return;
-  put(pr.id, { key, detail: current?.detail, loading: true });
+  const request: DetailEntry = { key, detail: current?.detail, loading: true };
+  put(pr.id, request);
   const outcome: Partial<DetailEntry> = await fetchPullRequestDetail(
     createGitHubClient({ token, apiUrl: env.apiUrl }),
     pr.id,
+    pr,
   ).then(
     (detail) => ({ detail }),
     (error: unknown) => ({
       error: error instanceof GitHubError ? error.message : 'Could not load the details.',
     }),
   );
-  if (details.value[pr.id]?.key === key) {
+  if (auth.value === session && details.value[pr.id] === request) {
     put(pr.id, { key, detail: current?.detail, ...outcome, loading: false });
   }
 }

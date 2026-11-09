@@ -25,7 +25,7 @@ const suites = (nodes: unknown[]) => ({
 /** Routes GraphQL to `graph` and REST POSTs to `rest(path)`; records REST paths. */
 function route(
   graph: object,
-  rest: (path: string) => Response = () => new Response(null, { status: 201 }),
+  rest: (path: string) => Response | Promise<Response> = () => new Response(null, { status: 201 }),
 ) {
   const posted: string[] = [];
   const fetch = vi.fn<FetchLike>(async (url) => {
@@ -62,13 +62,43 @@ describe('rerunFailedChecks', () => {
     ]);
   });
 
+  it.each([false, true])('waits for each POST to settle (first fails: %s)', async (fails) => {
+    let settleFirst!: (response: Response) => void;
+    const first = new Promise<Response>((resolve) => {
+      settleFirst = resolve;
+    });
+    const { client, posted } = route(
+      suites([
+        { databaseId: 1, conclusion: 'FAILURE', workflowRun: null },
+        { databaseId: 2, conclusion: 'FAILURE', workflowRun: null },
+      ]),
+      (path) => (path.includes('/1/') ? first : new Response(null, { status: 201 })),
+    );
+    const running = rerunFailedChecks(client, 'PR_1');
+    const outcome = fails
+      ? expect(running).rejects.toMatchObject({ message: 'Re-ran 1 of 2. Refused' })
+      : expect(running).resolves.toBe(2);
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    // Give an incorrectly concurrent sender time to start its second request.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(posted).toEqual(['/repos/acme/web/check-suites/1/rerequest']);
+    settleFirst(
+      fails
+        ? jsonResponse({ message: 'Refused' }, { status: 403 })
+        : new Response(null, { status: 201 }),
+    );
+    await outcome;
+    expect(posted).toHaveLength(2);
+  });
+
   it('says so when nothing failed', async () => {
     const { client, posted } = route(
       suites([{ databaseId: 1, conclusion: 'SUCCESS', workflowRun: null }]),
     );
     await expect(rerunFailedChecks(client, 'PR_1')).rejects.toMatchObject({
       kind: 'validation',
-      message: 'No failed checks to re-run.',
+      message:
+        'No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.',
     });
     expect(posted).toEqual([]);
   });

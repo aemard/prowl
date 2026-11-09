@@ -43,7 +43,7 @@ export const commitTitle = () => within(dialog()).getByRole('textbox', { name: /
 export const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
 export const choose = (value: string) => fireEvent.change(method(), { target: { value } });
 export const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-export const poll = { type: 'poll', force: true };
+export const poll = { type: 'poll', force: true, afterCurrent: true };
 
 export function setupMergeTest() {
   auth.value = buildAuth('octocat');

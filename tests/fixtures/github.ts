@@ -150,6 +150,7 @@ export function searchResponse(
   const end = start + Number(first);
   return {
     search: {
+      issueCount: all.length,
       pageInfo: { hasNextPage: end < all.length, endCursor: all.length ? String(end) : null },
       nodes: all.slice(start, end),
     },

@@ -157,7 +157,7 @@ describe('SettingsView', () => {
       await act(async () => {
         fireEvent.click(dialog.getByRole('button', { name: 'Sign out' }));
       });
-      expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
+      await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'signedOut' }));
       expect(Object.keys(await chrome.storage.local.get(null))).toEqual(['settings']);
       expect(screen.queryByRole('dialog')).toBeNull();
     });

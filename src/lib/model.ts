@@ -30,7 +30,7 @@ export interface CheckItem {
   /** The check's own page; null when GitHub has none. Not yet checked against the allowlist. */
   url: string | null;
   /** The base branch's protection requires it to pass before merging. */
-  required: boolean;
+  required: boolean | null;
 }
 
 /** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
@@ -129,6 +129,8 @@ export interface PullRequest {
   labels: Label[];
   /** Unresolved review threads. */
   unresolvedThreads: number;
+  /** Nested connections whose remaining results are available only on GitHub. */
+  incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
   lastComment: { author: string; createdAt: string } | null;
@@ -162,6 +164,9 @@ export interface PullRequestDetail {
   requiredApprovals: number | null;
   /** The base branch needs every review conversation resolved before merging. */
   requiresConversationResolution: boolean;
+  /** Effective methods from readable branch rules; absent means not verified. */
+  allowedMergeMethods?: MergeMethod[];
+  warnings?: string[];
 }
 
 /**
@@ -214,6 +219,15 @@ export interface Viewer {
   name: string | null;
 }
 
+/** Coverage of a bounded section search; an absent total never means zero. */
+export interface SectionCoverage {
+  hasMore: boolean;
+  partial?: boolean;
+  stale?: boolean;
+  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  queries: { query: string; cursor: string | null; total?: number }[];
+}
+
 /** Everything one successful poll produced. Persisted by the service worker. */
 export interface Snapshot {
   fetchedAt: string;
@@ -221,6 +235,9 @@ export interface Snapshot {
   pullRequests: Record<string, PullRequest>;
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
+  sectionCoverage?: Record<string, SectionCoverage>;
+  /** Sections not yet searched in a progressive publication. */
+  sectionsPending?: string[];
   /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
@@ -239,11 +256,18 @@ export interface Snapshot {
    */
   settledChecks?: Record<string, SettledCheckState>;
   /**
+   * PR node id -> observed CI outcome count, ordered by last increment (oldest first).
+   * Includes all current PRs and at most 200 absent PRs. Missing counters start at zero.
+   */
+  ciOutcomes?: Record<string, number>;
+  /**
    * PR id -> when its merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`,
    * `viewerCanUpdate`) were read; they are carried from poll to poll while the PR is unchanged.
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
+  /** PR ids whose merge facts are aged, deferred, dropped or unread; those with a date keep it. */
+  mergeStateDue?: string[];
 }
 
 export type PrEventType =
@@ -413,7 +437,7 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
-  | { type: 'poll'; force?: boolean }
+  | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
   | { type: 'markSeen'; prIds: string[] }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }

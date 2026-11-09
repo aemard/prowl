@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { prId, prNode } from '../../../tests/fixtures/github';
-import { jsonResponse } from '../../../tests/fixtures/http';
+import { mergeStateResponse, prId, prNode } from '../../../tests/fixtures/github';
+import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
 import { fetchPullRequests } from './fetchPullRequests';
 import { bySearch, mapped, settings, setup } from './fetchPullRequests.test-support';
 import type { PullRequestNode } from './queries';
@@ -64,7 +64,26 @@ describe('fetchPullRequests', () => {
       expect(Object.keys(next.mergeStateAt)).toHaveLength(35);
     });
 
-    it('keeps changed deferred facts due until they are actually read', async () => {
+    it('keeps the facts and date of a deferred PR, due until it is actually read', async () => {
+      const nodes = Array.from({ length: 21 }, (_, i) => prNode({ number: i + 1 }));
+      const previous = {
+        pullRequests: Object.fromEntries(nodes.map((node) => [node.id, mapped(node)])),
+        mergeStateAt: Object.fromEntries(
+          nodes.map((node) => [node.id, new Date(Date.now() - 20 * MINUTE).toISOString()]),
+        ),
+      };
+      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const first = await fetchPullRequests(client, settings(), previous);
+      expect(first.pullRequests[prId(21)]).toEqual(previous.pullRequests[prId(21)]);
+      expect(first.mergeStateAt[prId(21)]).toBe(previous.mergeStateAt[prId(21)]);
+      expect(first.mergeStateDue).toEqual([prId(21)]);
+      calls.length = 0;
+      const next = await fetchPullRequests(client, settings(), first);
+      expect(merge(calls).flat()).toEqual([prId(21)]);
+      expect(next.mergeStateDue).toBeUndefined();
+    });
+
+    it('drops the facts and the date of a PR whose search facts changed, read or not', async () => {
       const nodes = Array.from({ length: 21 }, (_, i) => prNode({ number: i + 1 }));
       const previous = {
         pullRequests: Object.fromEntries(
@@ -72,15 +91,11 @@ describe('fetchPullRequests', () => {
         ),
         mergeStateAt: Object.fromEntries(nodes.map((node) => [node.id, new Date().toISOString()])),
       };
-      const { client, calls } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
+      const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
       const first = await fetchPullRequests(client, settings(), previous);
-      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe(
-        previous.pullRequests[prId(21)]?.mergeStateStatus,
-      );
+      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe('unknown');
       expect(first.mergeStateAt[prId(21)]).toBeUndefined();
-      calls.length = 0;
-      await fetchPullRequests(client, settings(), first);
-      expect(merge(calls).flat()).toEqual([prId(21)]);
+      expect(first.mergeStateDue).toEqual([prId(21)]);
     });
 
     it('prioritizes visible PRs and reuses hidden and snoozed facts for an hour', async () => {
@@ -118,9 +133,14 @@ describe('fetchPullRequests', () => {
         ...mapped(node),
         mergeStateStatus: 'behind' as const,
       });
+      const reordered = JSON.parse(JSON.stringify(behind(one)), (_key: string, value: unknown) =>
+        typeof value === 'object' && value !== null && !Array.isArray(value)
+          ? Object.fromEntries(Object.entries(value).reverse())
+          : value,
+      );
       const previous = {
         pullRequests: {
-          [prId(1)]: behind(one),
+          [prId(1)]: reordered,
           [prId(2)]: { ...behind(two), title: 'Renamed since' },
           [prId(3)]: { ...behind(three), mergeable: 'unknown' as const },
           [prId(4)]: behind(four),
@@ -144,7 +164,7 @@ describe('fetchPullRequests', () => {
       const node = prNode({ number: 1, mergeStateStatus: 'CLEAN' });
       const previous = {
         pullRequests: {
-          [node.id]: { ...mapped(node), title: 'Old', mergeStateStatus: 'behind' as const },
+          [node.id]: { ...mapped(node), mergeStateStatus: 'behind' as const },
         },
       };
       const { client } = setup({
@@ -165,5 +185,37 @@ describe('fetchPullRequests', () => {
         kind: 'unauthorized',
       });
     });
+  });
+});
+
+describe('partial merge reads', () => {
+  it('reads nothing from the nodes of a partial response, and says the section is incomplete', async () => {
+    const [read, hole] = [prNode({ number: 1 }), prNode({ number: 2 })];
+    const previous = {
+      pullRequests: { [hole.id]: { ...mapped(hole), mergeStateStatus: 'behind' as const } },
+    };
+    const { client } = setup({
+      ProwlSearch: bySearch({ 'author:@me': [read, hole] }),
+      ProwlMergeState: ({ ids }) =>
+        jsonResponse({
+          // A null `reviewDecision` here is an error, not "no review required".
+          data: mergeStateResponse(ids, [{ ...read, reviewDecision: null }]),
+          errors: [
+            graphqlError('FORBIDDEN', 'Cannot read reviews', ['nodes', 0, 'reviewDecision']),
+            graphqlError('NOT_FOUND', 'Could not resolve to a node', ['nodes', 1]),
+          ],
+        }),
+    });
+    const result = await fetchPullRequests(client, settings(), previous);
+    expect(result.pullRequests[read.id]).toMatchObject({
+      reviewDecision: 'unknown',
+      mergeStateStatus: 'unknown',
+    });
+    // The hole keeps what it had.
+    expect(result.pullRequests[hole.id]?.mergeStateStatus).toBe('behind');
+    expect(result.mergeStateAt).toEqual({});
+    expect(result.sectionErrors.authored).toContain('Some merge requirements could not be read');
+    expect(result.sectionErrors.authored).toContain('nodes.0.reviewDecision');
+    expect(result.sectionCoverage?.authored?.partial).toBe(true);
   });
 });
