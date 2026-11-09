@@ -43,7 +43,7 @@ const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
 
 type CardHeadProps = Pick<
   PullRequestCardProps,
-  'pr' | 'now' | 'muted' | 'snoozedUntil' | 'grouped' | 'activity'
+  'pr' | 'now' | 'muted' | 'snoozedUntil' | 'grouped' | 'activity' | 'unseen'
 > & { expanded: boolean; detailId: string };
 type Statuses = ReturnType<typeof pullRequestStatuses>;
 /** Labels shown on a card; the rest collapse into "+N". */
@@ -57,11 +57,13 @@ export function CardHead({
   muted,
   snoozedUntil,
   grouped,
+  unseen,
   expanded,
   detailId,
 }: CardHeadProps) {
   return (
     <span class="pr-card__head">
+      {unseen && <span class="pr-card__dot" title="Unseen changes" />}
       <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
       <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
         {!grouped && <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>}

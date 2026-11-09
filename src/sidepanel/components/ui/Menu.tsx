@@ -108,6 +108,8 @@ function useMenuPlacement(state: ReturnType<typeof useMenuState>, align: 'start'
   useLayoutEffect(() => {
     const menu = menuRef.current;
     if (!open || !menu) return;
+    // The effect reruns as the active item moves; show the popover only once.
+    if (!menu.matches(':popover-open')) menu.showPopover();
     if (triggerRef.current) place(menu, triggerRef.current, align);
     menu.querySelector<HTMLElement>(`[data-index="${active}"]`)?.focus();
   }, [open, active, align]);
@@ -244,6 +246,7 @@ export function Menu({ trigger, items, align = 'start', label }: MenuProps) {
           ref={state.menuRef}
           id={`${id}-menu`}
           role="menu"
+          popover="manual"
           class="ui-menu"
           aria-labelledby={label ? undefined : `${id}-trigger`}
           aria-label={label}

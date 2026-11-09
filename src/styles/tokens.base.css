@@ -72,11 +72,6 @@
   --duration-shimmer: 1400ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Layers */
-  --z-sticky: 10;
-  --z-menu: 40;
-  --z-toast: 50;
 }
 
 @media (prefers-reduced-motion: reduce) {
