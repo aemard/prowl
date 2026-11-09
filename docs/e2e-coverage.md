@@ -43,3 +43,17 @@ Pure logic behind each row is also unit-tested (`src/**/*.test.ts`).
 | Sharp docs screenshots | `pnpm screenshots` saves every `saveScreenshot` at 2x (800 px wide); `tests/unit/images.test.ts` checks the committed sizes |
 
 Flake check for v1.0.0: the full suite (93 tests) ran three times in a row, 93/93 each time.
+
+## Settings simplification (2026-11-08)
+
+`auth.spec.ts` covers GitHub-first sign-in, token/help disclosure and 320px layout;
+`device-flow.spec.ts` covers denied web permission and device flow recovery. Fixtures wait
+only for visible finite animations before axe (closed disclosures cannot block scans).
+`settings.spec.ts` covers the always-visible refresh interval, cost estimate, loaded limit and notification
+choices surviving the master switch. `coverage.spec.ts` checks Change limit focuses that field.
+`settings.preferences.spec.ts` finds version/shortcut/documentation under Account.
+`teams.spec.ts` reaches the same Team reviews dialog from the section header and Settings →
+Sections, checks organization switches, refresh, missing-scope recovery and focus restoration.
+The cap is information, with no section error (unit coverage in `fetchPullRequests.teams.test.ts`
+and `Settings.teams.test.tsx`). No glass spec is included. The base has no setup wizard;
+that flow remains outside this PR. E2E updated here but not run in this environment.

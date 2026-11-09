@@ -392,7 +392,7 @@ export interface Settings {
   repoInclude: string[];
   /** `owner/name` or `owner`. Applied after include. */
   repoExclude: string[];
-  /** Integer minutes, minimum 1, default 2. */
+  /** Integer minutes, minimum 2, default 2. */
   pollIntervalMinutes: number;
   /** Results fetched per section, 1-100, default 50. */
   maxPerSection: number;

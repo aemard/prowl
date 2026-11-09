@@ -30,6 +30,7 @@ import {
   pullRequestsOf,
   toggleFolded,
 } from './ListState';
+import { TeamReviewsHeader } from './SettingsTeams';
 
 /**
  * Per section kind: its icon and short name in the section bar (a custom section shows its own
@@ -208,6 +209,7 @@ export function SectionContent({
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
+      {data.selected.kind === 'team_review_requested' && <TeamReviewsHeader />}
       {searching(data) && (
         <p class="list__notice" role="status">
           Searching “{data.selected.label}”…

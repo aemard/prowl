@@ -87,6 +87,7 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   await panel.getByRole('button', { name: 'Re-authenticate' }).click();
   await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Use a personal access token' }).click();
   await panel.getByLabel('Personal access token').fill(TOKEN);
   await panel.getByRole('button', { name: 'Sign in' }).click();
 
@@ -154,7 +155,7 @@ test('a GitHub error: banner with its message, and Retry now recovers', async ({
   await poll();
 
   const status = panel.getByRole('status').filter({ hasText: 'GitHub error' });
-  await expect(status).toContainText(/GitHub error — retrying in ([89]|10) min/);
+  await expect(status).toContainText(/GitHub error — retrying in [34] min/);
   await expect(status).toContainText('Bad gateway');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);
@@ -185,7 +186,7 @@ test('offline: banner counts down to the retry, the list stays readable', async 
   }
 
   const status = panel.getByRole('status').filter({ hasText: 'Could not reach GitHub' });
-  await expect(status).toContainText(/Could not reach GitHub — retrying in ([89]|10) min/);
+  await expect(status).toContainText(/Could not reach GitHub — retrying in [34] min/);
   await expect(status).toContainText('Could not reach GitHub.');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);

@@ -10,21 +10,19 @@ describe('SettingsView', () => {
     await open();
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings');
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
-      'Pull requests',
-      'Teams',
+      'Sections',
       'Refresh',
       'Notifications',
-      'Appearance',
+      'List',
       'Account',
       'Privacy and permissions',
-      'About',
     ]);
   });
 
   describe('sections', () => {
     it('shows each preset with what it follows, and turns it on or off', async () => {
       await open();
-      const scope = group('Pull requests');
+      const scope = group('Sections');
       expect(toggle('Created by me', scope).getAttribute('aria-checked')).toBe('true');
       expect(toggle('Review requested', scope).getAttribute('aria-checked')).toBe('false');
       expect(
@@ -107,9 +105,11 @@ describe('SettingsView', () => {
 
   describe('refresh', () => {
     it('saves a new interval and explains what polling costs', async () => {
-      await open();
+      await open({ pollIntervalMinutes: 5 });
       const refresh = group('Refresh');
       expect(refresh.getByText(/about 48 points an hour/)).toBeTruthy();
+      expect(refresh.getByLabelText('Check every (minutes)').closest('details')).toBeNull();
+      expect(refresh.queryByText('Refresh options')).toBeNull();
       expect(refresh.getByText(/5,000 points an hour/)).toBeTruthy();
 
       fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '2' } });
@@ -122,12 +122,12 @@ describe('SettingsView', () => {
       const field = group('Refresh').getByLabelText('Check every (minutes)');
       fireEvent.input(field, { target: { value: '1' } });
       expect(screen.getByText('Enter a whole number from 2 to 60.')).toBeTruthy();
-      expect((await saved()).pollIntervalMinutes).toBe(5);
+      expect((await saved()).pollIntervalMinutes).toBe(2);
     });
 
     it('saves how many pull requests to fetch per section', async () => {
       await open();
-      fireEvent.input(group('Refresh').getByLabelText('Maximum PRs loaded per section'), {
+      fireEvent.input(group('Refresh').getByLabelText('Maximum pull requests loaded per section'), {
         target: { value: '100' },
       });
       await waitFor(async () => expect((await saved()).maxPerSection).toBe(100));
@@ -161,7 +161,8 @@ describe('SettingsView', () => {
   describe('teams', () => {
     it('lists the teams by organization and follows or unfollows each one', async () => {
       await open({}, buildAuth(), { teams: teamsState() });
-      const teams = group('Teams');
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
       expect(
         teams.getAllByRole('group').map((g) => g.querySelector('legend')?.textContent),
       ).toEqual(['acme', 'octo']);
@@ -172,11 +173,12 @@ describe('SettingsView', () => {
       await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual([]));
     });
 
-    it('says when Team reviews is off, and refreshes the list on demand', async () => {
+    it('opens even while Team reviews is off and refreshes the teams on demand', async () => {
       const send = vi.spyOn(chrome.runtime, 'sendMessage');
       await open({}, buildAuth(), { teams: teamsState() });
-      const teams = group('Teams');
-      expect(teams.getByText(/Turn on Team reviews under Sections/)).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
+
       fireEvent.click(teams.getByRole('button', { name: 'Refresh teams' }));
       await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' }));
     });
@@ -188,7 +190,8 @@ describe('SettingsView', () => {
           error: { kind: 'missing_scope', message: 'GitHub would not list your teams.' },
         }),
       });
-      const teams = group('Teams');
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      const teams = within(screen.getByRole('dialog', { name: 'Team reviews' }));
       expect(teams.getByText('GitHub would not list your teams.')).toBeTruthy();
       fireEvent.click(teams.getByRole('button', { name: 'Sign in again' }));
       expect(location.hash).toBe('#/onboarding');
@@ -196,24 +199,25 @@ describe('SettingsView', () => {
 
     it('says when GitHub lists no team, and when it has not looked yet', async () => {
       await open({}, buildAuth(), { teams: teamsState({ teams: [] }) });
-      expect(group('Teams').getByText('GitHub lists no team for your account.')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      expect(screen.getByText('GitHub lists no team for your account.')).toBeTruthy();
       cleanup();
       stop?.();
       await chrome.storage.local.remove('teams');
       await open();
-      expect(group('Teams').getByText('Not checked yet')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      expect(screen.getByText('Not checked yet')).toBeTruthy();
     });
 
-    it('warns when more teams are followed than Prowl searches', async () => {
+    it('explains the cap when more teams are followed than Prowl searches', async () => {
       const many = Array.from({ length: 12 }, (_, i) => ({
         org: 'acme',
         slug: `t${i}`,
         name: `T${i}`,
       }));
       await open({}, buildAuth(), { teams: teamsState({ teams: many }) });
-      expect(
-        group('Teams').getByText(/You follow 12 teams; Prowl searches the first 10/),
-      ).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose teams' }));
+      expect(screen.getByText(/You follow 12 teams; Prowl searches the first 10/)).toBeTruthy();
     });
   });
 

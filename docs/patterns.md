@@ -57,3 +57,14 @@ working knowledge. Keep it short and current: newest knowledge wins.
 - `fetchPullRequests`: every PR a search finds goes through `put` (merge facts carry over while `sameSearchFacts` holds, with their `mergeStateAt` date, so a publication before the merge reads does not flap them); `preserve` restores a section's cached members only after a cut scan or a refused search, never over a PR this poll loaded. `sectionsPending` is stored with the snapshot: read it only while `pollState.inFlight`.
 
 - List context: use `selectSection` / `toggleFolded` in `state/listContext.ts` to persist account-local organization under the session lock; it is read from `panelState` once per account after hydration, never again (storage events are the panel's own writes coming back, and replaying them flashes older choices). Search and temporary reveals stay in memory. Seen changes compare `activityKey(pr)` as well as timestamps; UI messages include observed versions and workers reject obsolete versions. Use `jsonEqual` for storage comparisons, since Chrome reorders object keys.
+
+- Sign-in disclosures: `OnboardingView` owns token/help state; `DeviceFlow.onTokenFallback`
+  opens the token form for missing permission, unsupported OAuth or GitHub denial. Keep help
+  separately requested. Notification details unmount when off without modifying saved choices.
+- Settings has six groups, in order: Sections, Refresh, Notifications, List, Account, Privacy
+  and permissions. About content is in Account. Use `changePrLimit()` for Change limit; its
+  signal survives the lazy mount and the shell must preserve the field's focus.
+- Team UI: reuse `TeamPicker`/`ChooseTeams` from `views/SettingsTeams.tsx`. The dialog is reachable
+  from Team reviews and its Settings → Sections row; never add a Settings → Teams group.
+  The cap is informational in `TeamReviewsHeader`, not a `sectionErrors` entry. Keep the
+  existing design system and base CSS; only token-based spacing for new markup is needed.

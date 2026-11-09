@@ -54,7 +54,7 @@ in-memory updates that the next snapshot replaces.
 
 ## Data flow of a poll
 
-1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 5). The
+1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 2). The
    worker also polls on `runtime.onInstalled` / `onStartup`, and a forced poll on the panel's
    `{ type: 'poll', force: true }`.
 2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
@@ -210,10 +210,9 @@ The search and closure phases follow these rules:
 - The `team_review_requested` section runs one search per followed team (`teams.teams` minus
   `settings.unfollowedTeams`, the first `MAX_TEAM_SEARCHES` = 10 in key order), merges them,
   dedupes by id, sorts by `updatedAt` (newest first) and keeps `maxPerSection`.
-  `teamRequests` maps each kept PR to the keys of the teams whose search returned it. No team
-  to search (none discovered, every one unfollowed, or the discovery failed with no earlier
-  list: its message, e.g. the missing `read:org`), a team search GitHub refuses, and teams
-  past the cap are reported in `sectionErrors` (the section keeps the PRs of the teams that
+  `teamRequests` maps each kept PR to the keys of the teams whose search returned it.
+  A discovery failure (e.g. missing `read:org`) or a team search GitHub refuses is reported
+  in `sectionErrors` (the section keeps the PRs of the teams that
   loaded); only the failures that fail any search (`unauthorized`, `rate_limited`,
   `network`) are thrown immediately; a server failure backs off when no search succeeded.
 - Nodes are mapped (`mapPullRequest.ts`), filtered with `filterByRepo` and deduped:
@@ -258,7 +257,7 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 
 Team reviews run one `ProwlSearch` per followed team (at most 10), so each team costs what a
 section does; `GET /user/teams` is REST (the core budget, not GraphQL points), once a day.
-The default settings (one section, 50 PRs, every 5 minutes) cost about 48 points an hour of
+The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour (2.4%) of
 the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
 about a point per 10 changed PRs.
 
@@ -726,8 +725,8 @@ signal (`state/store.ts`).
   nothing blocks; `blocked` without a known reason says "Blocked by the base branch's rules". It
   works from the list's data alone (generic counts) and sharpens once the detail has loaded, so
   the Merge group shows at once.
-- Settings (`views/Settings.tsx`, one scrolling screen of six groups: Pull requests, Refresh,
-  Notifications, Appearance, Account, About; `SettingsScope`, `SettingsNotifications` and
+- Settings (`views/Settings.tsx`, one scrolling screen of six groups: Sections, Refresh,
+  Notifications, List, Account, Privacy and permissions; `SettingsScope`, `SettingsNotifications` and
   `SettingsAccount` hold the bigger ones, `SettingsModel.ts` the pure copy and the cost estimate).
   Every control saves at once through `saveSettings(patch | updater, { refresh })`
   (`state/settings.ts`, a thin `updateSettings` that toasts when the write fails); the panel
@@ -744,31 +743,33 @@ signal (`state/store.ts`).
     after the last change, so the list does not wait for the next alarm. An interval change
     sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`
     recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
-  - `NumberField` saves valid whole numbers as typed (interval 2-60, results 1-100, and in
-    Appearance "Hide PRs with no commit for (days)" 0-365) and shows an error for the rest; blur
-    shows the saved value again. The Refresh note shows the estimated
-    cost in points an hour (`estimatedPointsPerHour`, the formula of the cost table above).
-    Appearance also has the "Hide draft PRs" and "Hide PRs opened by bots" switches (the list,
-    counts and badge follow at once; nothing is fetched again).
-  - Notifications: master switch (greys out the event switches, quiet hours and the test button),
+  - `NumberField` saves valid whole numbers as typed (interval 2–60, loaded PRs 1–100).
+    The maximum loaded PRs stays visible. “Change limit” records a one-shot focus request
+    consumed after lazy Settings mount; the shell preserves that focus on later visits too.
+    Refresh also shows the interval and a baseline API-cost estimate directly, qualified for
+    extra pages, merge reads and actions. List contains theme, sort, repository grouping and badge.
+  - Notifications: master switch (reveals the event switches, quiet hours and the test button only while on; saved choices survive switching off),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
     which calls `chrome.notifications.create` from the panel with id `test:<ms>` and
     `icons/icon-128.png`; the worker's click handler finds no URL for that id and just clears it.
   - Account: avatar, login, name, token type, scopes (a fine-grained token says why it has none)
-    and Sign out; the token itself is never rendered. About: `chrome.runtime.getManifest().version`
+    and Sign out; the token itself is never rendered. The former About content follows inside Account: `chrome.runtime.getManifest().version`
     and three links opened through `openGitHubUrl` (docs folder, `docs/privacy.md`, repository).
   - Privacy and permissions (`SettingsPrivacy.tsx`): the sentence that Prowl cannot see or change
     the pages you visit, one row per entry of `chrome.permissions.getAll()` in plain language
     (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
     no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
     a link to the permission table in `docs/privacy.md`.
-  - Teams (`SettingsTeams.tsx`, after Pull requests): the `teams` signal grouped by organization,
-    one switch per team (unfollowing writes `unfollowedTeams` with an updater and asks for a
-    refresh), "Refresh teams" (`{ type: 'refreshTeams' }`), when the list was checked, a note when
-    Team reviews is off or more than `MAX_TEAM_SEARCHES` teams are followed, and the stored error
-    with "Sign in again" (`navigate('onboarding')`) for `missing_scope`. The Refresh cost counts
-    the team section as one search per followed team (`teamSearches`).
+  - Team choice lives in Team reviews: “Following N teams · Choose teams”, or
+    “Checking 10 of 12 teams · Choose teams” above the cap (information, never a section error).
+    `SettingsTeams.tsx` exports the reusable `TeamPicker`, `ChooseTeams` dialog and
+    `TeamReviewsHeader`. Settings → Sections has the same dialog entry beside Team reviews;
+    there is no Settings → Teams group. Switches are grouped by organization, write
+    `unfollowedTeams`, and refresh searches; Refresh teams requests rediscovery and shows
+    “Checked <time> ago”. No teams is information; missing read:org offers Sign in again
+    in the section and picker. Dialog uses the design system's focus trap and restoration.
+    The Refresh cost counts one search per followed team, capped at 10.
   - Cards get `teams` (`snapshot.teamRequests[pr.id]`): a people chip "@org/slug, ..." whose title
     and the card's description say "Review requested from @org/slug".
 - Settings sync (US-041, `src/background/sync.ts`, off by default): the device-local `sync` key
@@ -959,3 +960,12 @@ but their wording does not claim the browser is necessarily offline.
 
 Observed `seenFacts` may include PR metadata: sign-in, sign-out and signed-out worker cleanup
 clear them under the session lock, retaining the existing timestamps and local choices.
+
+### Sign-in disclosure (2026-11-08)
+
+Continue with GitHub is primary. “Use a personal access token” opens the token form;
+“Help choosing a token” separately opens its help. The form opens automatically without an
+OAuth client id, after refusing github.com permission, when device flow is unsupported, or
+when authorization is denied on GitHub. Token help stays on request. The base visual style
+is unchanged; no glass styles or reflection code are included. This base has no setup wizard;
+its future two-step flow and “Run setup again” entry remain for the wizard PR.

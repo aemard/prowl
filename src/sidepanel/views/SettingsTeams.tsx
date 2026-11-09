@@ -4,13 +4,14 @@ import type { Team, TeamsState } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { SyncIcon } from '../components/icons';
 import { Button } from '../components/ui/Button';
+import { Dialog } from '../components/ui/Dialog';
 import { Switch } from '../components/ui/Switch';
 import { useNow } from '../components/useNow';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { saveSettings } from '../state/settings';
 import { settings, teams } from '../state/store';
-import { SettingsGroup } from './SettingsGroup';
+import './Settings.css';
 
 /** Teams by organization, organizations in the order the worker sorted them (by key). */
 function byOrg(list: readonly Team[]): [string, Team[]][] {
@@ -79,13 +80,12 @@ function TeamGroups({ list, unfollowed }: { list: readonly Team[]; unfollowed: S
  * The teams the worker discovered for "Team reviews", each followed unless unfollowed here, with
  * a refresh and the way out when the token cannot list them (no read:org).
  */
-export function TeamsSettings() {
+export function TeamPicker() {
   useNow(60_000);
   const [refreshing, setRefreshing] = useState(false);
   const state = teams.value;
-  const { unfollowedTeams, sections } = settings.value;
+  const { unfollowedTeams } = settings.value;
   const unfollowed = new Set(unfollowedTeams);
-  const sectionOn = sections.some((s) => s.kind === 'team_review_requested' && s.enabled);
   const followed = (state?.teams ?? []).filter((team) => !unfollowed.has(teamKey(team))).length;
   const refresh = async () => {
     setRefreshing(true);
@@ -93,13 +93,7 @@ export function TeamsSettings() {
     setRefreshing(false);
   };
   return (
-    <SettingsGroup
-      title="Teams"
-      description="Team reviews lists the pull requests that ask one of these teams for a review."
-    >
-      {!sectionOn && (
-        <p class="settings-note">Turn on Team reviews under Sections to see them in the list.</p>
-      )}
+    <div class="team-picker">
       <TeamNotice state={state} />
       <TeamGroups list={state?.teams ?? []} unfollowed={unfollowed} />
       {followed > MAX_TEAM_SEARCHES && (
@@ -122,6 +116,45 @@ export function TeamsSettings() {
           {state ? `Checked ${formatRelativeTime(state.fetchedAt, Date.now())}` : 'Not checked yet'}
         </span>
       </div>
-    </SettingsGroup>
+    </div>
+  );
+}
+
+/** Shared entry point: Dialog supplies focus trapping and restoration. */
+export function ChooseTeams() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+        Choose teams
+      </Button>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Team reviews"
+        description="These teams' review requests appear in this section. Prowl checks at most 10 teams each refresh."
+        footer={<Button onClick={() => setOpen(false)}>Done</Button>}
+      >
+        <TeamPicker />
+      </Dialog>
+    </>
+  );
+}
+
+export function TeamReviewsHeader() {
+  const state = teams.value;
+  const followed = (state?.teams ?? []).filter(
+    (team) => !settings.value.unfollowedTeams.includes(teamKey(team)),
+  ).length;
+  return (
+    <div>
+      <div class="settings-note">
+        {followed > MAX_TEAM_SEARCHES
+          ? `Checking 10 of ${followed} teams`
+          : `Following ${followed} teams`}{' '}
+        · <ChooseTeams />
+      </div>
+      <TeamNotice state={state} />
+    </div>
   );
 }
