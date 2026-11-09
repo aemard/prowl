@@ -1,8 +1,6 @@
 import { env } from '../../lib/env';
 import type { SectionCoverage } from '../../lib/model';
-import { changePrLimit } from '../state/settings';
 import { GitHubLink } from './GitHubLink';
-import { Button } from './ui/Button';
 
 /** A proven limit, not a guess based on the number of cards currently visible. */
 export function SectionCoverageNotice({
@@ -14,23 +12,15 @@ export function SectionCoverageNotice({
 }) {
   if (!coverage.hasMore) return null;
   // One link, one search: joined queries would only match PRs that satisfy all of them.
-  const queries = coverage.queries.filter(({ cursor }) => cursor);
+  const query = coverage.queries.find(({ cursor }) => cursor)?.query ?? coverage.queries[0]?.query;
   return (
     <aside class="list__coverage" aria-label="List coverage">
-      <p>
-        {count} {count === 1 ? 'PR' : 'PRs'} loaded. More results are available on GitHub.
-      </p>
-      <p class="list__coverage-help">Only loaded PRs are monitored in this section.</p>
-      <div class="list__coverage-actions">
-        <Button size="sm" variant="ghost" onClick={changePrLimit}>
-          Change limit
-        </Button>
-        {queries.map(({ query }) => (
-          <GitHubLink key={query} href={`${env.webUrl}/pulls?q=${encodeURIComponent(query)}`}>
-            View on GitHub
-          </GitHubLink>
-        ))}
-      </div>
+      <span>{count} loaded · </span>
+      {query && (
+        <GitHubLink href={`${env.webUrl}/pulls?q=${encodeURIComponent(query)}`}>
+          View on GitHub
+        </GitHubLink>
+      )}
     </aside>
   );
 }

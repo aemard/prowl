@@ -10,10 +10,10 @@ import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
 import { Switch } from '../components/ui/Switch';
 import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
-import { settings, teams } from '../state/store';
+import { settings } from '../state/store';
 import { AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
-import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
+import { BADGE_HINTS } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
@@ -38,41 +38,27 @@ const BADGES: SelectOption<BadgeMode>[] = [
 
 /** How often Prowl asks GitHub, and what that costs of the hourly rate limit. */
 function PollingSettings() {
-  const { pollIntervalMinutes, maxPerSection, sections, unfollowedTeams } = settings.value;
-  const searches = sections
-    .filter((section) => section.enabled)
-    .reduce(
-      (total, section) =>
-        total +
-        (section.kind === 'team_review_requested'
-          ? teamSearches(teams.value?.teams ?? [], unfollowedTeams)
-          : 1),
-      0,
-    );
-  const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
+  const { pollIntervalMinutes, maxPerSection } = settings.value;
   return (
     <SettingsGroup title="Refresh">
       <NumberField
         id={PR_LIMIT_ID}
-        label="Maximum pull requests loaded per section"
+        label="Pull requests per section"
         value={maxPerSection}
         min={MIN_PER_SECTION}
         max={MAX_PER_SECTION}
-        hint="Loaded before snooze. PRs outside every loaded section are not monitored."
+        hint="Prowl only watches the pull requests it loads."
         onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
       />
       <NumberField
-        label="Check every (minutes)"
+        label="Refresh every (minutes)"
         value={pollIntervalMinutes}
         min={MIN_POLL_INTERVAL_MINUTES}
         max={MAX_POLL_INTERVAL_MINUTES}
         onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
       />
       <p class="settings-note">
-        GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
-        check of every section spends some: more pull requests and shorter intervals cost more. A
-        baseline estimate is about {points.toLocaleString('en-US')} points an hour; extra pages,
-        merge reads and actions can cost more. Prowl waits for the limit to reset if you run low.
+        More pull requests and shorter intervals use more of GitHub's hourly limit.
       </p>
     </SettingsGroup>
   );

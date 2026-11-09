@@ -99,6 +99,13 @@
   text-decoration: underline;
 }
 
+/* A link inside a sentence is underlined, so color is not the only thing marking it. */
+.pr-detail__hint a,
+.pr-detail__text a,
+.pr-detail__freshness a {
+  text-decoration: underline;
+}
+
 /* Names are clipped to one line, which would cut an outside ring: draw it inside the link. */
 .pr-detail a:focus-visible {
   outline-offset: calc(var(--focus-width) * -1);
@@ -156,4 +163,11 @@
   margin: var(--space-2) 0;
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
+}
+
+fieldset.pr-actions {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  margin: var(--space-2) 0;
 }

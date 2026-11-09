@@ -135,6 +135,12 @@ test.describe('privacy and permissions', () => {
       'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',
     );
 
+    const disclosure = privacy.locator('details');
+    await expect(disclosure).not.toHaveAttribute('open');
+    await expectNoA11yViolations(panel);
+    await privacy.getByText('What Prowl can access', { exact: true }).click();
+    await expect(disclosure).toHaveAttribute('open', '');
+
     // The rows are what Chrome reports for the loaded extension, not a copy of the docs.
     const granted = await serviceWorker.evaluate(() => chrome.permissions.getAll());
     const rows = privacy.getByRole('list', { name: 'What Prowl may do' }).getByRole('listitem');

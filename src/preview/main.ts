@@ -1,5 +1,4 @@
 import type { AuthState } from '../lib/model';
-import { PENDING_NOTICE } from '../lib/storage/onboarding';
 import { installFakeChrome } from '../test/chrome';
 import { installMockApi } from './mockApi';
 import './preview.css';
@@ -27,9 +26,7 @@ async function start() {
     viewer: { login: 'octocat', name: 'Demo User', avatarUrl: '' },
     createdAt: new Date().toISOString(),
   };
-  await fake.storage.local.set(
-    location.hash === '#onboarding' ? { onboarding: PENDING_NOTICE } : { auth },
-  );
+  await fake.storage.local.set(location.hash === '#onboarding' ? {} : { auth });
   const { registerBackground } = await import('../background/register');
   const { poll } = await import('../background/poller');
   registerBackground();

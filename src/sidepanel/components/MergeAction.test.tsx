@@ -41,7 +41,7 @@ describe('when the button shows', () => {
     expect(dialog().textContent).toContain(
       'You can bypass the branch rules for this pull request.',
     );
-    expect(within(dialog()).getByText(/Not ready: blocked by the base branch/)).toBeTruthy();
+    expect(within(dialog()).getByText(/Not ready: blocked by branch rules/)).toBeTruthy();
     expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
   });
 
@@ -70,7 +70,6 @@ describe('when the button shows', () => {
     ['it is merged', { state: 'merged' }],
     ['it is closed', { state: 'closed' }],
     ['it is a draft', { isDraft: true }],
-    ['the repository allows no method', { allowedMergeMethods: [] }],
   ])('is hidden when %s', (_name, overrides) => {
     const { container } = show(overrides);
     expect(container.textContent).toBe('');
@@ -132,8 +131,8 @@ describe('the confirmation', () => {
   it('falls back to the first allowed method when the default is not allowed', () => {
     show({ allowedMergeMethods: ['squash'], defaultMergeMethod: 'merge' });
     fireEvent.click(opener());
-    expect((method() as HTMLSelectElement).value).toBe('squash');
-    expect(within(method()).getAllByRole('option')).toHaveLength(1);
+    expect(within(dialog()).queryByRole('combobox')).toBeNull();
+    expect(within(dialog()).getByRole('button', { name: 'Squash and merge' })).toBeTruthy();
   });
 
   it('can be cancelled, sending nothing', () => {
@@ -156,7 +155,7 @@ describe('the confirmation', () => {
     expect(commitTitle()).toBeTruthy();
     choose('rebase');
     expect(within(dialog()).queryByRole('textbox')).toBeNull();
-    expect(dialog().textContent).toContain('Commits are kept as they are');
+    expect(dialog().textContent).not.toContain('Commits are kept as they are');
   });
 });
 

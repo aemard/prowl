@@ -105,7 +105,7 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
 
   // The forced poll brings the new state: a chip that says so, and the way to turn it off.
   await expect(card.getByTitle('Auto-merge on (squash), by octocat')).toHaveText('Auto-merge');
-  await card.getByRole('button', { name: 'Disable auto-merge of acme/widgets#2' }).click();
+  await card.getByRole('button', { name: 'Turn off auto-merge of acme/widgets#2' }).click();
   await expect(toasts(panel)).toContainText('Auto-merge is off for acme/widgets#2');
   await expect(card.getByTitle(/^Auto-merge on/)).toHaveCount(0);
 });

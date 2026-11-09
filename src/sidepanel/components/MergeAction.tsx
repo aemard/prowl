@@ -6,6 +6,7 @@ import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
+import { GitHubLink } from './GitHubLink';
 import { AlertIcon, GitMergeIcon } from './icons';
 import { mergeReadiness } from './mergeReadiness';
 import { Button } from './ui/Button';
@@ -22,7 +23,7 @@ const METHODS: Record<MergeMethod, string> = {
 
 const MERGE = 'Merge';
 const ENABLE_AUTO_MERGE = 'Enable auto-merge';
-const DISABLE_AUTO_MERGE = 'Disable auto-merge';
+const DISABLE_AUTO_MERGE = 'Turn off auto-merge';
 
 function useMergeControls(pr: PullRequest) {
   const [confirming, setConfirming] = useState(false);
@@ -62,7 +63,13 @@ function useMergeControls(pr: PullRequest) {
 }
 
 type MergeControls = ReturnType<typeof useMergeControls>;
-type MergeDialogProps = { pr: PullRequest; method: MergeMethod; controls: MergeControls };
+type Placement = 'merge' | 'auto' | 'all';
+type MergeDialogProps = {
+  pr: PullRequest;
+  method: MergeMethod;
+  controls: MergeControls;
+  placement?: Placement;
+};
 
 function currentDetail(pr: PullRequest) {
   const entry = details.value[pr.id];
@@ -76,7 +83,7 @@ function currentDetail(pr: PullRequest) {
  * allow it, or nothing. Unverified merge facts offer nothing until a refresh fills them in.
  * GitHub still has the last word; a refusal shows its reason in a toast and requests a refresh.
  */
-function mergeOptions(pr: PullRequest) {
+function mergeOptions(pr: PullRequest, placement: Placement = 'all') {
   const ready = isReadyToMerge(pr);
   const known =
     pr.mergeable !== 'unknown' &&
@@ -84,8 +91,9 @@ function mergeOptions(pr: PullRequest) {
     pr.reviewDecision !== 'unknown';
   return {
     ready,
-    canMerge: known && (ready || pr.viewerCanMergeAsAdmin === true),
+    canMerge: placement !== 'auto' && known && (ready || pr.viewerCanMergeAsAdmin === true),
     offerAutoMerge:
+      placement !== 'merge' &&
       known &&
       !ready &&
       pr.autoMergeAllowed &&
@@ -94,27 +102,37 @@ function mergeOptions(pr: PullRequest) {
   };
 }
 
-export function MergeAction({ pr }: { pr: PullRequest }) {
+export function MergeAction({ pr, placement = 'all' }: { pr: PullRequest; placement?: Placement }) {
   const controls = useMergeControls(pr);
   const methods = currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods;
   const method =
     [controls.picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
-  if (!method || !auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft)
-    return null;
+  if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
+  if (!method)
+    return placement === 'auto' ? null : <GitHubLink href={pr.url}>Merge on GitHub</GitHubLink>;
   return (
     <>
-      <MergeButtons pr={pr} controls={controls} />
-      {controls.confirming && (mergeOptions(pr).canMerge || mergeOptions(pr).offerAutoMerge) && (
-        <MergeDialog pr={pr} method={method} controls={controls} />
-      )}
+      <MergeButtons pr={pr} controls={controls} placement={placement} />
+      {controls.confirming &&
+        (mergeOptions(pr, placement).canMerge || mergeOptions(pr, placement).offerAutoMerge) && (
+          <MergeDialog pr={pr} method={method} controls={controls} placement={placement} />
+        )}
     </>
   );
 }
 
-function MergeButtons({ pr, controls }: { pr: PullRequest; controls: MergeControls }) {
+function MergeButtons({
+  pr,
+  controls,
+  placement,
+}: {
+  pr: PullRequest;
+  controls: MergeControls;
+  placement: Placement;
+}) {
   const { pending, setConfirming } = controls;
   const ref = prRef(pr);
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr);
+  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
   const label = canMerge ? (ready ? MERGE : 'Merge without waiting') : ENABLE_AUTO_MERGE;
   return (
     <>
@@ -131,7 +149,7 @@ function MergeButtons({ pr, controls }: { pr: PullRequest; controls: MergeContro
           {label}
         </Button>
       )}
-      {pr.autoMerge && pr.viewerCanDisableAutoMerge === true && (
+      {placement !== 'merge' && pr.autoMerge && pr.viewerCanDisableAutoMerge === true && (
         <Button
           size="sm"
           aria-label={`${DISABLE_AUTO_MERGE} of ${ref}`}
@@ -150,10 +168,10 @@ function MergeButtons({ pr, controls }: { pr: PullRequest; controls: MergeContro
   );
 }
 
-function MergeDialog({ pr, method, controls }: MergeDialogProps) {
+function MergeDialog({ pr, method, controls, placement = 'all' }: MergeDialogProps) {
   const { pending, close, merge, enableAutoMerge } = controls;
   const ref = prRef(pr);
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr);
+  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
   // The modal hides the blockers listed above the button: the dialog repeats them.
   const blockers = ready
     ? []
@@ -175,6 +193,11 @@ function MergeDialog({ pr, method, controls }: MergeDialogProps) {
       }
       footer={
         <MergeFooter
+          methodLabel={
+            (currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods).length === 1
+              ? METHODS[method]
+              : MERGE
+          }
           pending={pending}
           offerAutoMerge={offerAutoMerge}
           canMerge={canMerge}
@@ -191,6 +214,7 @@ function MergeDialog({ pr, method, controls }: MergeDialogProps) {
 }
 
 function MergeFooter({
+  methodLabel,
   pending,
   offerAutoMerge,
   canMerge,
@@ -198,6 +222,7 @@ function MergeFooter({
   merge,
   enableAutoMerge,
 }: {
+  methodLabel: string;
   pending: string | undefined;
   offerAutoMerge: boolean;
   canMerge: boolean;
@@ -227,7 +252,7 @@ function MergeFooter({
           disabled={pending !== undefined && pending !== MERGE}
           onClick={() => void merge()}
         >
-          {MERGE}
+          {methodLabel}
         </Button>
       )}
     </>
@@ -252,20 +277,15 @@ function MergeFields({
           <span>Not ready: {blockers.join('; ')}.</span>
         </p>
       )}
-      <Select
-        label="Merge method"
-        value={method}
-        options={methods.map((value) => ({ value, label: METHODS[value] }))}
-        disabled={pending !== undefined}
-        hint={
-          method === 'rebase'
-            ? 'Commits are kept as they are, so there is no commit title. GitHub checks all applicable branch rules.'
-            : detail?.allowedMergeMethods
-              ? 'Methods allowed by the repository and readable branch rules. GitHub checks remaining requirements.'
-              : 'Methods follow repository settings. GitHub may apply additional branch restrictions.'
-        }
-        onValueChange={setPicked}
-      />
+      {methods.length > 1 && (
+        <Select
+          label="Merge method"
+          value={method}
+          options={methods.map((value) => ({ value, label: METHODS[value] }))}
+          disabled={pending !== undefined}
+          onValueChange={setPicked}
+        />
+      )}
       {method !== 'rebase' && (
         <TextField
           label="Commit title (optional)"

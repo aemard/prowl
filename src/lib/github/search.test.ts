@@ -29,8 +29,8 @@ describe('buildSearchQuery', () => {
 
   it('builds one team search with the repo filters', () => {
     const settings = { repoInclude: ['acme'], repoExclude: ['acme/old'] };
-    expect(buildSearchQuery(preset('team_review_requested'), settings, 'acme/core')).toBe(
-      'is:pr is:open team-review-requested:acme/core archived:false user:acme -repo:acme/old',
+    expect(buildSearchQuery(preset('team_review_requested'), settings)).toBe(
+      'is:pr is:open team-review-requested-user:@me archived:false user:acme -repo:acme/old',
     );
   });
 

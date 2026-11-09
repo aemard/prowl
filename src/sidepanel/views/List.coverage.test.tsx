@@ -17,8 +17,7 @@ it('keeps proven coverage visible even when all loaded cards are hidden', () => 
     },
   );
   render(<ListView />);
-  expect(screen.getByLabelText('List coverage').textContent).toContain('1 PR loaded. More results');
-  expect(screen.getByRole('button', { name: 'Change limit' })).toBeTruthy();
+  expect(screen.getByLabelText('List coverage').textContent).toContain('1 loaded · ');
   expect(screen.getByRole('link', { name: 'View on GitHub' }).getAttribute('href')).toContain(
     'author%3A%40me',
   );
@@ -114,6 +113,5 @@ it('links separately to every unfinished team search without joining queries', (
   const links = screen.getAllByRole('link', { name: 'View on GitHub' });
   expect(links.map((link) => link.getAttribute('href')?.split('?q=')[1])).toEqual([
     'team%3Asecond',
-    'team%3Athird',
   ]);
 });

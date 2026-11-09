@@ -10,17 +10,6 @@ afterEach(() => {
 });
 
 describe('completeSignIn', () => {
-  it('opens the list after sign-in and retains progress on sign-out', async () => {
-    await chrome.storage.local.set({ onboarding: { status: 'pending', nextStep: 1 } });
-    await completeSignIn(buildAuth());
-    expect(location.hash).toBe('#/');
-    await signOut();
-    expect((await chrome.storage.local.get('onboarding')).onboarding).toEqual({
-      status: 'pending',
-      nextStep: 1,
-    });
-  });
-
   it('stores the auth, asks for the first poll and shows the list', async () => {
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
     location.hash = '#/onboarding';

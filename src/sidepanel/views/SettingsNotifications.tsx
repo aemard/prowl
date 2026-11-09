@@ -106,11 +106,7 @@ export function NotificationsSettings() {
             </p>
           </div>
         </>
-      ) : (
-        <p class="settings-note">
-          Notifications are off. Your event and quiet-hours choices are kept.
-        </p>
-      )}
+      ) : null}
     </SettingsGroup>
   );
 }

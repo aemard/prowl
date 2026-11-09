@@ -1,181 +1,236 @@
 import { describe, expect, it } from 'vitest';
-import { prNode, searchResponse } from '../../../tests/fixtures/github';
-import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
-import type { Team, TeamsState } from '../model';
+import { prNode, requestedTeam, searchResponse } from '../../../tests/fixtures/github';
+import { jsonResponse } from '../../../tests/fixtures/http';
+import { diffSnapshots } from '../diff/diffSnapshots';
+import { snapshot } from '../diff/diffSnapshots.test-support';
 import { fetchPullRequests } from './fetchPullRequests';
-import { bySearch, section, settings, setup } from './fetchPullRequests.test-support';
-import { MAX_TEAM_SEARCHES } from './teams';
+import { bySearch, mapped, section, settings, setup } from './fetchPullRequests.test-support';
+import { SEARCH_QUERY, TEAM_SEARCH_QUERY } from './queries';
 
 const teamSection = section('team_review_requested');
-const team = (key: string): Team => {
-  const [org = '', slug = ''] = key.split('/');
-  return { org, slug, name: slug };
-};
-const discovered = (...keys: string[]) => ({ teams: keys.map(team), error: null });
-const at = (number: number, updatedAt: string) => prNode({ number, updatedAt });
+const discovered = (...keys: string[]) => ({
+  teams: keys.map((key) => {
+    const [org = '', slug = ''] = key.split('/');
+    return { org, slug, name: slug };
+  }),
+  error: null,
+});
+const requested = (number: number, ...keys: string[]) =>
+  prNode({
+    number,
+    reviewRequests: {
+      totalCount: keys.length,
+      pageInfo: { hasNextPage: false },
+      nodes: keys.map(requestedTeam),
+    },
+  });
+const opts = (extra = {}) => settings({ sections: [teamSection], ...extra });
 
-describe('fetchPullRequests', () => {
-  describe('team reviews', () => {
-    it('searches each followed team and merges the results newest first, capped', async () => {
-      const [old, mid, recent, newest] = [
-        at(1, '2026-10-01T00:00:00Z'),
-        at(2, '2026-10-02T00:00:00Z'),
-        at(3, '2026-10-03T00:00:00Z'),
-        at(4, '2026-10-04T00:00:00Z'),
-      ];
-      const { client, queries } = setup({
-        ProwlSearch: bySearch({
-          'team-review-requested:acme/core ': [recent, old],
-          'team-review-requested:acme/web ': [newest, recent, mid],
-        }),
-      });
-      const result = await fetchPullRequests(
-        client,
-        settings({
-          sections: [teamSection],
-          maxPerSection: 3,
-          repoExclude: ['acme/old'],
-          unfollowedTeams: ['acme/docs'],
-        }),
-        null,
-        discovered('Acme/Core', 'acme/docs', 'acme/web'),
-      );
+describe('team search', () => {
+  it('isolates Team fields from shared searches', () => {
+    expect(SEARCH_QUERY).not.toContain('... on Team');
+    expect(TEAM_SEARCH_QUERY).toContain('... on Team { slug organization { login } }');
+  });
 
-      expect(queries().map(({ query }) => query)).toEqual([
-        'is:pr is:open team-review-requested:acme/core archived:false -repo:acme/old sort:updated-desc',
-        'is:pr is:open team-review-requested:acme/web archived:false -repo:acme/old sort:updated-desc',
-      ]);
-      expect(result.sections).toEqual({
-        team_review_requested: [newest.id, recent.id, mid.id],
-      });
-      expect(Object.keys(result.pullRequests)).toEqual([newest.id, recent.id, mid.id]);
-      expect(result.teamRequests).toEqual({
-        [newest.id]: ['acme/web'],
-        [recent.id]: ['acme/core', 'acme/web'],
-        [mid.id]: ['acme/web'],
-      });
-      expect(result.sectionErrors).toEqual({});
+  it('uses one query for more than ten teams, with repository filters', async () => {
+    const keys = Array.from({ length: 15 }, (_, i) => `acme/t${i}`);
+    const pr = requested(1, keys[14] ?? '');
+    const { client, queries } = setup({ ProwlSearch: bySearch({ '@me': [pr] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ repoExclude: ['acme/old'] }),
+      null,
+      discovered(...keys),
+    );
+    expect(queries().map(({ query }) => query)).toEqual([
+      'is:pr is:open team-review-requested-user:@me archived:false -repo:acme/old sort:updated-desc',
+    ]);
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.teamRequests[pr.id]).toEqual(['acme/t14']);
+  });
+
+  it('filters off teams before the cap and keeps mixed and other-section memberships', async () => {
+    const off = requested(1, 'ACME/Off');
+    const mixed = requested(2, 'acme/off', 'acme/on', 'other/foreign');
+    const on = requested(3, 'acme/on');
+    const { client, queries } = setup({
+      ProwlSearch: bySearch({
+        'author:@me': [off],
+        'team-review-requested-user': [off, mixed, on],
+      }),
     });
+    const result = await fetchPullRequests(
+      client,
+      opts({
+        sections: [section('authored'), teamSection],
+        maxPerSection: 2,
+        unfollowedTeams: ['acme/off'],
+      }),
+      null,
+      discovered('acme/off', 'acme/on'),
+    );
+    expect(result.sections.authored).toEqual([off.id]);
+    expect(result.sections.team_review_requested).toEqual([mixed.id, on.id]);
+    expect(result.pullRequests[off.id]).toBeDefined();
+    expect(result.teamRequests[mixed.id]).toEqual(['acme/off', 'acme/on']);
+    expect(queries()).toHaveLength(3);
+  });
 
-    const missingScope: Pick<TeamsState, 'teams' | 'error'> = {
-      teams: [],
-      error: { kind: 'missing_scope', message: 'Needs read:org.' },
-    };
-    it.each([
-      ['no team list', null, undefined],
-      ['no team', discovered(), undefined],
-      ['a failed discovery', missingScope, /^Needs read:org\.$/],
-    ])('reports %s without searching', async (_, teams, message) => {
-      const { client, calls } = setup({});
-      const result = await fetchPullRequests(
-        client,
-        settings({ sections: [teamSection] }),
-        null,
-        teams,
-      );
-      expect(calls).toEqual([]);
-      if (message) expect(result.sectionErrors.team_review_requested).toMatch(message);
-      else expect(result.sectionErrors).toEqual({});
-      expect(result.sections).toEqual(message ? {} : { team_review_requested: [] });
-    });
+  it.each([
+    'truncated',
+    'null team',
+    'unreadable team',
+    'unknown membership',
+    'incomplete membership',
+  ])('keeps results with %s evidence', async (kind) => {
+    const pr = requested(1, 'acme/off');
+    if (kind === 'truncated')
+      pr.reviewRequests = {
+        nodes: pr.reviewRequests?.nodes ?? [],
+        totalCount: 2,
+        pageInfo: { hasNextPage: true },
+      };
+    if (kind === 'null team')
+      pr.reviewRequests = {
+        nodes: [{ requestedReviewer: null }],
+        totalCount: 1,
+        pageInfo: { hasNextPage: false },
+      };
+    if (kind === 'unreadable team')
+      pr.reviewRequests = {
+        nodes: [{ requestedReviewer: {} }],
+        totalCount: 1,
+        pageInfo: { hasNextPage: false },
+      };
+    const membership =
+      kind === 'unknown membership'
+        ? null
+        : { ...discovered('acme/off'), incomplete: kind === 'incomplete membership' };
+    const { client } = setup({ ProwlSearch: bySearch({ '@me': [pr] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ unfollowedTeams: ['acme/off'] }),
+      null,
+      membership,
+    );
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    if (kind !== 'truncated') expect(result.teamRequests).toEqual({});
+  });
 
-    it('reports a discovery error when every team is unfollowed', async () => {
-      const { client, calls } = setup({});
-      const result = await fetchPullRequests(
-        client,
-        settings({ sections: [teamSection], unfollowedTeams: ['acme/core'] }),
-        null,
-        { teams: [team('acme/core')], error: { kind: 'server', message: 'Down.' } },
-      );
-      expect(calls).toEqual([]);
-      expect(result.sectionErrors).toEqual({
-        team_review_requested: 'Down.',
-      });
+  it('retries without Team fields on a permission refusal and keeps results without chips', async () => {
+    const pr = requested(1, 'acme/off');
+    let attempts = 0;
+    const { client } = setup({
+      ProwlSearch: (v) =>
+        ++attempts === 1
+          ? jsonResponse({ message: 'Resource not accessible' }, { status: 403 })
+          : searchResponse([pr], v),
     });
+    const result = await fetchPullRequests(
+      client,
+      opts({ unfollowedTeams: ['acme/off'] }),
+      null,
+      discovered('acme/off'),
+    );
+    expect(attempts).toBe(2);
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.teamRequests).toEqual({});
+  });
 
-    it('searches a stale list when the last discovery failed', async () => {
-      const pr = prNode();
-      const { client } = setup({ ProwlSearch: bySearch({ 'acme/core': [pr] }) });
-      const result = await fetchPullRequests(client, settings({ sections: [teamSection] }), null, {
-        teams: [team('acme/core')],
-        error: { kind: 'server', message: 'Down.' },
-      });
-      expect(result.sections).toEqual({ team_review_requested: [pr.id] });
-      expect(result.sectionErrors).toEqual({});
+  it('does not restore an explicitly excluded PR during a cut scan', async () => {
+    const off = requested(1, 'acme/off');
+    const { client } = setup({
+      ProwlSearch: (v) => {
+        const response = searchResponse([off], { ...v, first: 1 });
+        response.search.pageInfo = { hasNextPage: true, endCursor: null };
+        return response;
+      },
+      ProwlNodes: () => ({ nodes: [null], rateLimit: null }),
     });
+    const result = await fetchPullRequests(
+      client,
+      opts({ unfollowedTeams: ['acme/off'] }),
+      {
+        pullRequests: { [off.id]: mapped(off) },
+        sections: { team_review_requested: [off.id] },
+      },
+      discovered('acme/off'),
+    );
+    expect(result.sections.team_review_requested).toEqual([]);
+    expect(result.sectionCoverage?.team_review_requested?.stale).toBe(true);
+  });
 
-    it('reports a refused team search and keeps the teams that loaded', async () => {
-      const pr = prNode();
-      const { client } = setup({
-        ProwlSearch: (variables) =>
-          String(variables.query).includes('acme/gone')
-            ? jsonResponse({ message: 'Validation Failed' }, { status: 422 })
-            : searchResponse([pr], variables),
-      });
-      const result = await fetchPullRequests(
-        client,
-        settings({ sections: [teamSection] }),
-        null,
-        discovered('acme/core', 'acme/gone'),
-      );
-      expect(result.sections).toEqual({ team_review_requested: [pr.id] });
-      expect(result.teamRequests).toEqual({ [pr.id]: ['acme/core'] });
-      expect(result.sectionErrors).toEqual({
-        team_review_requested: 'GitHub refused the search for acme/gone: Validation Failed',
-      });
-    });
+  it('drops switched-off open PRs without a gone lookup or closure events', async () => {
+    const off = requested(1, 'acme/off');
+    const before = snapshot([mapped(off)]);
+    before.sections = { team_review_requested: [off.id] };
+    const { client, calls } = setup({ ProwlSearch: bySearch({ '@me': [off] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ unfollowedTeams: ['acme/off'] }),
+      before,
+      discovered('acme/off'),
+    );
+    expect(result.sections.team_review_requested).toEqual([]);
+    expect(result.pullRequests).toEqual({});
+    expect(calls.some(({ operation }) => operation === 'ProwlNodes')).toBe(false);
+    expect(diffSnapshots(before, { ...before, ...result }, 'octocat')).toEqual([]);
+  });
 
-    it("says when an organization's SAML enforcement left holes in a team search", async () => {
-      const pr = prNode();
-      const { client } = setup({
-        ProwlSearch: (variables) =>
-          jsonResponse({
-            data: searchResponse([pr], variables),
-            ...(String(variables.query).includes('acme/sso')
-              ? {
-                  errors: [
-                    graphqlError(
-                      'FORBIDDEN',
-                      'Resource protected by organization SAML enforcement.',
-                    ),
-                  ],
-                }
-              : {}),
-          }),
-      });
-      const result = await fetchPullRequests(
-        client,
-        settings({ sections: [teamSection] }),
-        null,
-        discovered('acme/core', 'acme/sso'),
-      );
-      expect(result.sections).toEqual({ team_review_requested: [pr.id] });
-      expect(result.sectionErrors.team_review_requested).toMatch(
-        /^An organization requires single sign-on \(SAML\)/,
-      );
-    });
+  it('pages past filtered PRs until the surviving cap is reached', async () => {
+    const off = requested(1, 'acme/off');
+    const on = requested(2, 'acme/on');
+    const { client, queries } = setup({ ProwlSearch: bySearch({ '@me': [off, off, on] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ maxPerSection: 1, unfollowedTeams: ['acme/off'] }),
+      null,
+      discovered('acme/off', 'acme/on'),
+    );
+    expect(queries()).toHaveLength(3);
+    expect(result.sections.team_review_requested).toEqual([on.id]);
+    expect(result.sectionCoverage).toBeUndefined();
+  });
 
-    it('throws what fails the whole poll', async () => {
-      const { client } = setup({
-        ProwlSearch: () => jsonResponse({ message: 'Bad credentials' }, { status: 401 }),
-      });
-      await expect(
-        fetchPullRequests(client, settings({ sections: [teamSection] }), null, discovered('a/b')),
-      ).rejects.toMatchObject({ kind: 'unauthorized' });
+  it('searches despite discovery errors and keeps unidentified results', async () => {
+    const pr = requested(1, 'acme/off');
+    const { client, queries } = setup({ ProwlSearch: bySearch({ '@me': [pr] }) });
+    const result = await fetchPullRequests(client, opts({ unfollowedTeams: ['acme/off'] }), null, {
+      ...discovered('acme/off'),
+      error: { kind: 'server', message: 'Discovery failed' },
     });
+    expect(queries()).toHaveLength(1);
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.teamRequests).toEqual({});
+    expect(result.sectionErrors).toEqual({});
+  });
 
-    it(`searches the first ${MAX_TEAM_SEARCHES} followed teams without treating the cap as an error`, async () => {
-      const keys = Array.from({ length: MAX_TEAM_SEARCHES + 2 }, (_, i) => `acme/t${i + 10}`);
-      const { client, queries } = setup({ ProwlSearch: bySearch({}) });
-      const result = await fetchPullRequests(
-        client,
-        settings({ sections: [teamSection] }),
-        null,
-        discovered(...keys),
-      );
-      expect(queries()).toHaveLength(MAX_TEAM_SEARCHES);
-      expect(result.sections).toEqual({ team_review_requested: [] });
-      expect(result.sectionErrors).toEqual({});
+  it('preserves cached membership and section errors when team search fails', async () => {
+    const pr = requested(1, 'acme/off');
+    const { client } = setup({
+      ProwlSearch: () => jsonResponse({ message: 'No access' }, { status: 403 }),
     });
+    const result = await fetchPullRequests(
+      client,
+      opts(),
+      { pullRequests: { [pr.id]: mapped(pr) }, sections: { team_review_requested: [pr.id] } },
+      { teams: [], error: { kind: 'server', message: 'Discovery failed' } },
+    );
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.sectionErrors.team_review_requested).toContain('No access');
+    expect(result.sectionCoverage?.team_review_requested?.stale).toBe(true);
+  });
+
+  it('reports incomplete coverage when switched-off results consume the scan budget', async () => {
+    const nodes = Array.from({ length: 110 }, (_, i) => requested(i, 'acme/off'));
+    const { client } = setup({ ProwlSearch: bySearch({ '@me': nodes }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ maxPerSection: 1, unfollowedTeams: ['acme/off'] }),
+      null,
+      discovered('acme/off'),
+    );
+    expect(result.sections.team_review_requested).toEqual([]);
+    expect(result.sectionCoverage?.team_review_requested?.hasMore).toBe(true);
   });
 });

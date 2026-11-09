@@ -174,7 +174,7 @@ export interface PullRequestDetail {
 
 /**
  * `review_requested`: review asked of the viewer directly; `team_review_requested`: asked of a
- * team the viewer belongs to (one search per followed team, see `Settings.unfollowedTeams`).
+ * team the viewer belongs to (one viewer-team search, filtered by `Settings.unfollowedTeams`).
  */
 export type SectionKind =
   | 'authored'
@@ -206,6 +206,8 @@ export type TeamsErrorKind = ErrorKind | 'missing_scope';
 
 /** The viewer's teams, stored under `teams` by the service worker. */
 export interface TeamsState {
+  /** Discovery hit its page bound; never exclude requests from incomplete membership. */
+  incomplete?: boolean;
   /** Whose teams these are: another account's are discovered again. */
   login: string;
   /** Last discovery attempt; the poller retries after 24 h (1 h after a failure). */
@@ -418,11 +420,6 @@ export interface Settings {
   unfollowedTeams: string[];
 }
 
-/** Install-local first-run notice status, retained on sign-out and never synced. */
-export interface OnboardingState {
-  status: 'pending' | 'completed' | 'skipped';
-}
-
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 /**
  * Whether this device mirrors its settings through Chrome sync, and why the last write there
@@ -446,7 +443,6 @@ export const STORAGE_KEYS = {
   prLocal: 'prLocal',
   teams: 'teams',
   panelState: 'panelState',
-  onboarding: 'onboarding',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

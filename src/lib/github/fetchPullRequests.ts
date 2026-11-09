@@ -52,9 +52,9 @@ export async function fetchPullRequests(
   settings: FetchSettings,
   previous:
     | (Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
-        Partial<Pick<Snapshot, 'sections' | 'sectionCoverage'>>)
+        Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests'>>)
     | null = null,
-  teams: Pick<TeamsState, 'teams' | 'error'> | null = null,
+  teams: Pick<TeamsState, 'teams' | 'error' | 'incomplete'> | null = null,
   local: PrLocalState = { snoozed: {}, muted: {}, seen: {} },
   onProgress?: (result: FetchResult, mergePending: string[]) => Promise<void>,
   priorityIds: () => readonly string[] = () => [],
@@ -135,6 +135,7 @@ function pendingPublication(context: SearchContext, pending: Set<string>): Fetch
     ...result,
     pullRequests: { ...result.pullRequests },
     sections: { ...result.sections },
+    teamRequests: { ...result.teamRequests },
     sectionsPending: [...pending],
   };
   for (const id of pending) {
@@ -143,6 +144,8 @@ function pendingPublication(context: SearchContext, pending: Set<string>): Fetch
     for (const prId of ids) {
       const pr = previous?.pullRequests[prId];
       if (pr && !publishing.pullRequests[prId]) publishing.pullRequests[prId] = pr;
+      const keys = previous?.teamRequests?.[prId];
+      if (keys) publishing.teamRequests[prId] ??= keys;
     }
   }
   return publishing;
@@ -170,7 +173,8 @@ async function readGone(context: SearchContext) {
   const { settings, result, previous } = context;
   const gone = filterByRepo(
     Object.values(previous?.pullRequests ?? {}).filter(
-      ({ id, state }) => state === 'open' && !(id in result.pullRequests),
+      ({ id, state }) =>
+        state === 'open' && !(id in result.pullRequests) && !context.excludedPrs.has(id),
     ),
     settings,
   );

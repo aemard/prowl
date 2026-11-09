@@ -2,11 +2,10 @@ import { act } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildAuth } from '../../test/panel';
 import { navigate, resolveRoute, route } from './router';
-import { auth, onboarding } from './store';
+import { auth } from './store';
 
 afterEach(() => {
   auth.value = undefined;
-  onboarding.value = undefined;
   location.hash = '';
 });
 
@@ -32,7 +31,6 @@ describe('resolveRoute', () => {
 describe('route', () => {
   it('does not gate old third-step progress', () => {
     auth.value = buildAuth();
-    onboarding.value = { status: 'pending' };
     navigate('list');
     expect(route.value).toBe('list');
   });

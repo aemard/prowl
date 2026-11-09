@@ -13,7 +13,7 @@ import { saveSettings } from '../state/settings';
 import { settings } from '../state/store';
 import { SettingsGroup } from './SettingsGroup';
 import { PRESET_DESCRIPTIONS } from './SettingsModel';
-import { EditTeams } from './SettingsTeams';
+import { TeamPicker } from './SettingsTeams';
 
 const FORM_ID = 'custom-section-form';
 
@@ -206,7 +206,6 @@ function changeRepos(
 }
 
 function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => void }) {
-  const [teamsOpened, setTeamsOpened] = useState(false);
   return (
     <li class="settings-row">
       <Switch
@@ -214,7 +213,6 @@ function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => vo
         description={section.kind === 'custom' ? section.query : PRESET_DESCRIPTIONS[section.kind]}
         checked={section.enabled}
         onChange={(enabled) => {
-          setTeamsOpened(enabled);
           void saveSettings(
             (current) => ({
               ...current,
@@ -224,9 +222,7 @@ function SectionSwitch({ section, onEdit }: { section: Section; onEdit: () => vo
           );
         }}
       />
-      {section.kind === 'team_review_requested' && section.enabled && (
-        <EditTeams initiallyOpen={teamsOpened} />
-      )}
+      {section.kind === 'team_review_requested' && section.enabled && <TeamPicker />}
       {section.kind === 'custom' && <CustomActions section={section} onEdit={onEdit} />}
     </li>
   );

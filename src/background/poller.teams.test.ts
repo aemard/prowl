@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { prNode, searchResponse, teamJson } from '../../tests/fixtures/github';
+import { prNode, requestedTeam, searchResponse, teamJson } from '../../tests/fixtures/github';
 import { jsonResponse, rateLimitHeaders } from '../../tests/fixtures/http';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, setItem } from '../lib/storage/storage';
@@ -40,7 +40,16 @@ describe('poll', () => {
 
     it('discovers them on the first poll, searches them, and refreshes them a day later', async () => {
       const requests = github(
-        () => searchResponse([prNode()]),
+        () =>
+          searchResponse([
+            prNode({
+              reviewRequests: {
+                nodes: [requestedTeam('acme/core')],
+                totalCount: 1,
+                pageInfo: { hasNextPage: false },
+              },
+            }),
+          ]),
         () => jsonResponse([teamJson('acme/core', 'Core')]),
       );
       await followTeams();
@@ -55,7 +64,7 @@ describe('poll', () => {
         error: null,
       });
       expect(requests.map(({ query }) => query)).toEqual([
-        'is:pr is:open team-review-requested:acme/core archived:false sort:updated-desc',
+        'is:pr is:open team-review-requested-user:@me archived:false sort:updated-desc',
       ]);
       expect(await getItem('snapshot')).toMatchObject({
         sections: { team_review_requested: [PR] },
@@ -79,7 +88,7 @@ describe('poll', () => {
 
       expect(await pollState()).toMatchObject({ lastError: null, consecutiveFailures: 0 });
       expect((await getItem('teams'))?.error?.kind).toBe('missing_scope');
-      expect((await getItem('snapshot'))?.sectionErrors?.team_review_requested).toMatch(/read:org/);
+      expect((await getItem('snapshot'))?.sectionErrors?.team_review_requested).toBeUndefined();
       later(59 * MINUTE);
       await poll();
       expect(teamCalls).toBe(1);

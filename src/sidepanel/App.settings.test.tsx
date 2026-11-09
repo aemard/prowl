@@ -25,10 +25,10 @@ async function open(stored: Record<string, unknown> = {}) {
 describe('App, after "Change limit"', () => {
   it('focuses the PR limit when asked, the first time and once the settings view is loaded', async () => {
     await open({ auth: buildAuth() });
-    const limit = () => screen.getByLabelText('Maximum pull requests loaded per section');
+    const limit = () => screen.getByLabelText('Pull requests per section');
 
     act(() => changePrLimit());
-    await screen.findByLabelText('Maximum pull requests loaded per section');
+    await screen.findByLabelText('Pull requests per section');
     await waitFor(() => expect(document.activeElement).toBe(limit()));
 
     await act(() => navigate('list'));

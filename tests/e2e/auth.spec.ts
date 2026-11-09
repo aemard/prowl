@@ -63,8 +63,6 @@ test.describe('onboarding', () => {
     await expectNoA11yViolations(panel);
     await panel.getByRole('button', { name: 'Use a personal access token' }).click();
     await expect(tokenField(panel)).toBeVisible();
-    await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
-    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toBeVisible();
     const overflow = await panel.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -80,8 +78,6 @@ test.describe('onboarding', () => {
     const panel = await openTokenPanel(openPanel);
     await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
     await expect(tokenField(panel)).toHaveAttribute('type', 'password');
-    await expect(panel.getByRole('heading', { name: 'Classic token' })).toHaveCount(0);
-    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
     await expect(panel.getByRole('heading', { name: 'Classic token' })).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'Fine-grained token' })).toBeVisible();
     await expect(panel.getByText(/does not offer the Checks permission/)).toBeVisible();
@@ -98,7 +94,6 @@ test.describe('onboarding', () => {
     openPanel,
   }) => {
     const panel = await openTokenPanel(openPanel);
-    await panel.getByRole('button', { name: 'Help choosing a token' }).click();
 
     const classic = context.waitForEvent('page');
     await panel.getByRole('link', { name: 'Create a classic token' }).click();

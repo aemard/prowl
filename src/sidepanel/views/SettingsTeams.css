@@ -1,27 +1,3 @@
-.team-picker-disclosure {
-  interpolate-size: allow-keywords;
-  height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition:
-    height var(--duration-normal) var(--ease-out),
-    opacity var(--duration-normal) var(--ease-out);
-}
-
-.team-picker-disclosure[data-open="true"] {
-  height: auto;
-  opacity: 1;
-}
-
-@starting-style {
-  .team-picker-disclosure[data-open="true"] {
-    height: 0;
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .team-picker-disclosure {
-    transition: none;
-  }
+.team-picker {
+  padding-inline-start: var(--space-3);
 }

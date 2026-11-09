@@ -153,7 +153,7 @@ describe('expanded cards', () => {
   it('stay open through a background refresh, a tab switch and a visit to Settings', async () => {
     const { unmount } = render(<ListView />);
     fireEvent.click(toggle(2));
-    await screen.findByRole('list', { name: 'Merge' });
+    await screen.findByRole('list', { name: 'Merge status' });
 
     // A new poll: same PRs in new objects, one of them updated.
     act(() => {
@@ -167,7 +167,7 @@ describe('expanded cards', () => {
     });
     expect(toggle(2).getAttribute('aria-expanded')).toBe('true');
     expect(toggle(1).getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getAllByRole('list', { name: 'Merge' })).toHaveLength(1);
+    expect(screen.getAllByRole('list', { name: 'Merge status' })).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('tab', { name: /^Review/ }));
     fireEvent.click(screen.getByRole('tab', { name: /^Mine/ }));
@@ -181,8 +181,8 @@ describe('expanded cards', () => {
   it('collapses on Escape without losing the place in the list', async () => {
     render(<ListView />);
     fireEvent.click(toggle(1));
-    await screen.findByRole('list', { name: 'Merge' });
-    fireEvent.keyDown(screen.getByRole('list', { name: 'Merge' }), { key: 'Escape' });
+    await screen.findByRole('list', { name: 'Merge status' });
+    fireEvent.keyDown(screen.getByRole('list', { name: 'Merge status' }), { key: 'Escape' });
     expect(toggle(1).getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(toggle(1));
     expect(cardTitles()).toEqual(['PR number 1', 'PR number 2']);

@@ -170,14 +170,14 @@ never qualifiers.
 |---|---|
 | `authored` | `is:pr is:open author:@me archived:false` |
 | `review_requested` | `is:pr is:open user-review-requested:@me archived:false` (asked of you directly; your teams' requests are in `team_review_requested`) |
-| `team_review_requested` | `is:pr is:open team-review-requested:<org>/<slug> archived:false`, one search per followed team (see [Teams](#teams)) |
+| `team_review_requested` | `is:pr is:open team-review-requested-user:@me archived:false`, one search for all viewer teams (see [Teams](#teams)) |
 | `mentioned` | `is:pr is:open mentions:@me archived:false` |
 | `assigned` | `is:pr is:open assignee:@me archived:false` |
 | `custom` | `is:pr <the user's query>` (open or closed as the query says) |
 
 `fetchPullRequests` appends `sort:updated-desc` unless a custom query has its own `sort:`.
 
-- `buildSearchQuery(section, settings, team?)` appends the repo filters: `repoInclude` becomes
+- `buildSearchQuery(section, settings)` appends the repo filters: `repoInclude` becomes
   `repo:owner/name` or `user:owner` (`user:` also matches organizations), `repoExclude` becomes
   `-repo:owner/name` or `-user:owner`. Positive scopes are OR-ed by GitHub; a custom query that
   brings its own `repo:` / `org:` / `user:` keeps it and the include list is applied client-side
@@ -207,14 +207,15 @@ The search and closure phases follow these rules:
   sent, and one GitHub refuses (`validation`, `not_found`, `forbidden`, `graphql`) is reported
   in `sectionErrors` (section id -> message) while the other sections load. Token, quota and network failures throw for the poller; a server failure does too when no
   search succeeded.
-- The `team_review_requested` section runs one search per followed team (`teams.teams` minus
-  `settings.unfollowedTeams`, the first `MAX_TEAM_SEARCHES` = 10 in key order), merges them,
-  dedupes by id, sorts by `updatedAt` (newest first) and keeps `maxPerSection`.
-  `teamRequests` maps each kept PR to the keys of the teams whose search returned it.
-  A discovery failure (e.g. missing `read:org`) or a team search GitHub refuses is reported
-  in `sectionErrors` (the section keeps the PRs of the teams that
-  loaded); only the failures that fail any search (`unauthorized`, `rate_limited`,
-  `network`) are thrown immediately; a server failure backs off when no search succeeded.
+- Team reviews runs one `team-review-requested-user:@me` search, even without discovery.
+  Its `TEAM_SEARCH_QUERY` variant adds Team slug and organization fields; shared `SEARCH_QUERY`
+  never selects Team fields. Permission refusal retries the shared query; unreadable Team nodes
+  keep results without chips. `teamEvidence` intersects normalized requested teams with discovered
+  membership (including parents). It drops a PR only when membership and reviewRequests are complete,
+  at least one requested team belongs to the viewer, and every such team is in `unfollowedTeams`.
+  Filtering runs while scanning, before `maxPerSection`; existing scan bounds report coverage.
+  Exclusions affect only this section. `put` still dedupes PRs shared with other sections.
+  `teamRequests` contains only the viewer's requested teams; missing evidence never excludes a PR.
 - Nodes are mapped (`mapPullRequest.ts`), filtered with `filterByRepo` and deduped:
   `pullRequests` by id, `sections` as ordered ids (a PR may be in several).
 - Open PRs of `previous` that are in no section now (and pass the repo filters) go through
@@ -256,8 +257,8 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
 | `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
 
-Team reviews run one `ProwlSearch` per followed team (at most 10), so each team costs what a
-section does; `GET /user/teams` is REST (the core budget, not GraphQL points), once a day.
+Team reviews runs one `ProwlSearch`, like any section; `/user/teams` uses the REST core budget,
+refreshed once a day, independent of the GraphQL search.
 The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour (2.4%) of
 the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
 about a point per 10 changed PRs.
@@ -511,7 +512,7 @@ and why the last attempt failed (`{ kind: ErrorKind | 'missing_scope', message }
 can be shown as is) or null. `src/lib/github/teams.ts`:
 
 - `fetchViewerTeams(client)`: REST `GET /user/teams?per_page=100&page=N`, pages until a short
-  page or `MAX_TEAMS` (200). Classic and OAuth tokens need `read:org` (GitHub's docs also accept
+  page or 100 pages (`MAX_TEAMS` = 10,000 direct memberships); hitting the bound marks membership incomplete. Classic and OAuth tokens need `read:org` (GitHub's docs also accept
   `repo` or `user`); a fine-grained token must be owned by an organization, with the
   organization permission Members: read, and lists that organization's teams only.
 - `teamsDue(stored, login, now)`: true for no list or another account's, a list older than 24 h,
@@ -652,7 +653,7 @@ signal (`state/store.ts`).
 
   | `pollState` | Banner | Action |
   |---|---|---|
-  | `unauthorized` | "Your GitHub token was revoked or expired" (`role="alert"`, danger) | Re-authenticate: `navigate('onboarding')`; settings and snapshot stay, a new token signs in and forces a poll |
+  | `unauthorized` | "Your GitHub token was revoked or expired" (`role="alert"`, danger) | Sign in again: `navigate('onboarding')`; settings and snapshot stay, a new token signs in and forces a poll |
   | `rate_limited`, wait pending | "Rate limited until 3:37 PM" (`nextAllowedAt`; warning) | none: a forced poll respects the wait. Once it has passed: "GitHub rate limit has reset" and Retry |
   | no error, `nextAllowedAt` pending, under 100 points left | "GitHub rate limit almost used up", "Refreshing resumes at ..." | none |
   | `network` | "Could not reach GitHub — retrying in N min" (`nextAllowedAt`, else "retrying soon"; warning) | Retry (forced poll, which skips a backoff) |
@@ -697,18 +698,19 @@ signal (`state/store.ts`).
   that are not open; Comment is always there. While one action of a PR runs its other buttons are
   disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
   contains it (the card folds on Esc).
-- Merge (`components/MergeAction.tsx`, last in the `.pr-actions` row): on an open, non-draft
+- Merge (`components/MergeAction.tsx`, first in the `.pr-actions` row): on an open, non-draft
   PR with write access and an allowed merge method, ready PRs offer a primary "Merge" button.
   Verified, unready PRs offer secondary "Merge without waiting" only when
   `viewerCanMergeAsAdmin` is true; its dialog repeats the blockers and explains that the viewer
   can bypass the branch rules. Otherwise, when the repository allows auto-merge and
   `viewerCanEnableAutoMerge` is true, "Enable auto-merge" opens the method picker and optional
   commit title with no immediate Merge action. Bypass dialogs also offer auto-merge when allowed.
-  Unknown readiness offers neither action. Auto-merge already on offers "Disable auto-merge"
+  Unknown readiness offers neither action. Auto-merge already on offers "Turn off auto-merge"
   only with `viewerCanDisableAutoMerge`. Missing cached permission values mean false.
   These permissions are fetched by `ProwlMergeState`, cached with the merge facts and cleared
   when the head OID changes. Dialogs use only allowed methods, default to `defaultMergeMethod`
-  (else the first allowed), and omit the commit title for rebase. Focus starts on the method.
+  (else the first allowed), and omit the commit title for rebase. Multiple methods show a select;
+  one method is named in confirmation, with focus on the first available field.
   Mutations use the last polled `headSha`; GitHub refusals close the dialog, toast the reason,
   preserve the choices and force a refresh. Successful merges toast and refresh as well.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
@@ -718,18 +720,16 @@ signal (`state/store.ts`).
   check does not always touch `updatedAt`); a poll that changes none of them costs nothing. The
   previous detail stays on screen while a newer one loads, an answer overtaken by a newer request
   is dropped, and a failure shows GitHub's message with "Try again" above whatever is cached.
-- Merge readiness (`components/mergeReadiness.ts`, pure, table-tested) turns `PullRequest` plus
-  the optional `PullRequestDetail` into one line per blocker: draft, "Conflicts with main",
-  "Blocked: branch is behind main", "Blocked: changes requested by alice", "Blocked: 1 approval
-  required" (or "1 more", or "review required" when the rule is not visible), "Blocked: 2
-  required checks failing" (failing checks that are not required only inform), "Waiting for 1
-  required check to finish", "Blocked: 3 conversations to resolve", and "Ready to merge" when
-  nothing blocks; `blocked` without a known reason says "Blocked by the base branch's rules". It
-  works from the list's data alone (generic counts) and sharpens once the detail has loaded, so
-  the Merge group shows at once.
+- Merge readiness (`components/mergeReadiness.ts`, pure, table-tested) names independent blockers:
+  “Draft”, “Conflicts with main · Resolve on GitHub”, “Behind main”, “Changes requested by alice”,
+  “1 approval needed” (or “Review required” when reviews/rules are incomplete), required checks
+  failed/running, and conversations to resolve. Unknown status remains visible alongside blockers.
+  “Ready to merge” follows `isReadyToMerge`; known optional failures only inform. Unknown check
+  requirements say “1 check failed”, never “optional”. Generic branch rules appear only without
+  a specific reason, with a GitHub details link. Status lines appear before details load.
 - Settings (`views/Settings.tsx`, one scrolling screen of six groups: Sections, Refresh,
   Notifications, List, Account, Privacy and permissions; `SettingsScope`, `SettingsNotifications` and
-  `SettingsAccount` hold the bigger ones, `SettingsModel.ts` the pure copy and the cost estimate).
+  `SettingsAccount` hold the bigger ones, `SettingsModel.ts` the pure helpers and copy).
   Every control saves at once through `saveSettings(patch | updater, { refresh })`
   (`state/settings.ts`, a thin `updateSettings` that toasts when the write fails); the panel
   signals follow through the storage subscription, so a control shows what was stored, not what
@@ -748,8 +748,7 @@ signal (`state/store.ts`).
   - `NumberField` saves valid whole numbers as typed (interval 2–60, loaded PRs 1–100).
     The maximum loaded PRs stays visible. “Change limit” records a one-shot focus request
     consumed after lazy Settings mount; the shell preserves that focus on later visits too.
-    Refresh also shows the interval and a baseline API-cost estimate directly, qualified for
-    extra pages, merge reads and actions. List contains theme, sort, repository grouping and badge.
+    Refresh shows the interval and one line: more pull requests and shorter intervals use more of GitHub's hourly limit. List contains theme, sort, repository grouping and badge.
   - Notifications: master switch (reveals the event switches, quiet hours and the test button only while on; saved choices survive switching off),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
@@ -759,20 +758,15 @@ signal (`state/store.ts`).
     and Sign out; the token itself is never rendered. The former About content follows inside Account: `chrome.runtime.getManifest().version`
     and three links opened through `openGitHubUrl` (docs folder, `docs/privacy.md`, repository).
   - Privacy and permissions (`SettingsPrivacy.tsx`): the sentence that Prowl cannot see or change
-    the pages you visit, one row per entry of `chrome.permissions.getAll()` in plain language
+    the pages you visit stays visible; “What Prowl can access” discloses one row per entry of `chrome.permissions.getAll()` in plain language
     (`describePermissions`, `SettingsModel.ts`; github.com only while granted; a permission it has
     no wording for shows under its own name), re-read on `permissions.onAdded` / `onRemoved`, and
     a link to the permission table in `docs/privacy.md`.
-  - Team choice lives above Team reviews cards: “Following N teams” (singular for one), or
-    “Checking the first 10 of 12 teams, by name” above the cap (information, never an error).
-    `SettingsTeams.tsx` shares `TeamPicker` and the `EditTeams` inline disclosure between
-    the section and Settings → Sections. Settings shows it only while Team reviews is on;
-    enabling the section opens it. Switches grouped by organization save immediately and
-    refresh searches. Teams beyond the first ten followed keys carry a “Not checked” label.
-    Missing teams trigger discovery with “Loading your teams…”. No teams replaces the
-    generic empty state; missing read:org offers Sign in again once on the section, outside
-    the disclosure. Refresh teams requests rediscovery and shows “Checked <relative time>”.
-    The Refresh cost counts one search per followed team, capped at 10.
+  - Team choice mounts only beneath the enabled Team reviews switch in Settings → Sections.
+    `TeamPicker` groups switches by organization, saving immediately to `unfollowedTeams`.
+    Loading is a status; empty membership, missing permissions and errors have local notices
+    and recovery controls. “Missing a team? Refresh” requests rediscovery. There is no cap,
+    count or freshness copy. The list section shows cards only; empty copy is “No review requests for your teams.”
   - Cards get `teams` (`snapshot.teamRequests[pr.id]`): a people chip "@org/slug, ..." whose title
     and the card's description say "Review requested from @org/slug".
 - Settings sync (US-041, `src/background/sync.ts`, off by default): the device-local `sync` key
@@ -870,11 +864,10 @@ left by a terminated worker.
 
 `Snapshot.sectionCoverage` records proven `hasMore`, per-query cursors and available totals,
 plus `partial` (nodes or merge facts could not be read) and `stale` (the scan was cut short and
-cached members were kept) flags. Team queries have independent cursors: overlapping totals are
-never summed, and "View on GitHub" follows the first query with more results. Missing metadata
+cached members were kept) flags. Each section has one search and one “View on GitHub” link. Missing metadata
 on an older snapshot is unknown, not proof of additional results.
 The section limit counts loaded PRs before hide/snooze; the list warns only when GitHub reports
-more results or a merged team union exceeds the cap. Local filtering searches only loaded PRs.
+more results. Coverage copy is “N loaded · View on GitHub”. Local filtering searches only loaded PRs.
 Only loaded PRs are monitored in a section; another section can also load the same PR.
 
 Repository filters apply on each fetched page. A query scans at most
@@ -928,8 +921,7 @@ without inventing a date; it labels cards, while facts and dates alone decide wh
 A read (poll or card) clears its due id; neither facts nor date cross a change of the search data,
 the head included. Two of the 20 merge-read slots are reserved for the oldest pending facts so
 continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
-The header names list freshness; expanded details state merge verification age and cached/due
-or unverified status. Detail cache keys include the head and base, and old-head details are
+The header names list freshness; expanded details omit routine merge verification age and cached/due narration. Detail cache keys include the head and base, and old-head details are
 not presented as the current checks while a replacement loads or fails. Search-cache comparisons
 are independent of object-key order after Chrome storage serialization. Detail keys use only
 the head, scope and evidence their read depends on; merge enrichment does not refetch them.
@@ -938,7 +930,7 @@ Nested reviews/requests/threads expose connection limits rather than claiming co
 Check requirement flags remain unknown when inaccessible, distinct from false. Expanded-card
 branch rules use the applied-rulesets REST endpoint (classic branch protection is not in it);
 known method restrictions intersect repo methods, unreadable rules (including a full page of
-100) produce an explicit warning, and GitHub always decides final merge permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
+100) retain repository methods without routine narration, and GitHub always decides final merge permission. The rule read is on demand, not a per-PR polling cost. Failed-suite reruns collect
 up to five pages of 50 before any restart, reject changed heads or unusable cursors, and direct
 the user to GitHub if the result remains incomplete. Detail checks retain their 500-context cap.
 Section scans also stop after 20 requests per query, independently of the examined-node bound.
@@ -967,20 +959,24 @@ clear them under the session lock, retaining the existing timestamps and local c
 ### Sign-in disclosure (2026-11-08)
 
 Continue with GitHub is primary. “Use a personal access token” opens the token form;
-“Help choosing a token” separately opens its help. The form opens automatically without an
-OAuth client id, after refusing github.com permission, when device flow is unsupported, or
-when authorization is denied on GitHub. Token help stays on request. The base visual style
+the two token cards (classic, fine-grained) show under it, as before. The form opens
+automatically without an OAuth client id, after refusing github.com permission, when device
+flow is unsupported, or when authorization is denied on GitHub. The base visual style
 is unchanged; no glass styles or reflection code are included.
 
 ### First run (2026-11-09)
 
-Sign-in always opens the list with its full header; there is no setup route or Account rerun.
-The skeleton remains visible during loading. Only a fresh install creates a pending local
-`onboarding` marker; updates without a marker are completed. All legacy pending steps show
-`FirstRunNote` above the list, without gating it. Old progress fields are ignored on read.
-The notice explains the authored/review defaults and offers notifications, Settings and Got it.
-Disabling the notice is install-local and survives sign-out. Turn on notifications saves the
-master switch and dismisses the notice; discovered teams add a pluralized count and Show Team
-reviews. Existing preferences are unchanged; unchanged saves do not request another poll.
-The preview hash `#onboarding` starts signed out with the fresh-install marker and mocks
-ProwlViewer so a pasted token can sign in. The extension has no rerun entry point.
+Sign-in always opens the list with its full header and no note. There is no setup route,
+install-local onboarding marker or Account rerun. Defaults remain Created by me and Review
+requested on, notifications off, two-minute refresh. The skeleton remains visible during
+loading. The preview hash `#onboarding` starts signed out and mocks ProwlViewer for sign-in.
+
+Expanded cards name the status list “Merge status”, then show one “Actions for #N” fieldset,
+Checks and Reviewers. Independent blockers stay visible even on drafts or with unknown status.
+Unknown requirements never become optional checks; incomplete reviews never imply approval counts.
+Unknown status announces “Checking merge status…” once, then “Merge status unknown · Open on GitHub”
+after refresh. Auto-merge status leaves blockers visible. Only incomplete detail coverage retains
+“Some details are only on GitHub · View on GitHub”; branch-method narration is removed.
+Single-method dialogs name the method in confirmation without a select; empty methods offer
+“Merge on GitHub”. Cancel guards and head SHA checks remain. Privacy keeps the no-site-access
+promise visible and puts permission rows under “What Prowl can access”.

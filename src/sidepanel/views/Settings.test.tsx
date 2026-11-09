@@ -31,7 +31,7 @@ describe('SettingsView', () => {
         ),
       ).toBeTruthy();
       expect(toggle('Team reviews', scope).getAttribute('aria-checked')).toBe('false');
-      expect(scope.getByText('Pull requests that ask one of your teams for a review')).toBeTruthy();
+      expect(scope.getByText('Review requests sent to your teams')).toBeTruthy();
 
       fireEvent.click(toggle('Review requested', scope));
       await waitFor(() =>
@@ -107,19 +107,33 @@ describe('SettingsView', () => {
     it('saves a new interval and explains what polling costs', async () => {
       await open({ pollIntervalMinutes: 5 });
       const refresh = group('Refresh');
-      expect(refresh.getByText(/about 96 points an hour/)).toBeTruthy();
-      expect(refresh.getByLabelText('Check every (minutes)').closest('details')).toBeNull();
+      expect(
+        refresh.getByText(
+          "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+        ),
+      ).toBeTruthy();
+      expect(refresh.getByLabelText('Refresh every (minutes)').closest('details')).toBeNull();
       expect(refresh.queryByText('Refresh options')).toBeNull();
-      expect(refresh.getByText(/5,000 points an hour/)).toBeTruthy();
+      expect(
+        refresh.getByText(
+          "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+        ),
+      ).toBeTruthy();
 
-      fireEvent.input(refresh.getByLabelText('Check every (minutes)'), { target: { value: '2' } });
+      fireEvent.input(refresh.getByLabelText('Refresh every (minutes)'), {
+        target: { value: '2' },
+      });
       await waitFor(async () => expect((await saved()).pollIntervalMinutes).toBe(2));
-      expect(refresh.getByText(/about 240 points an hour/)).toBeTruthy();
+      expect(
+        refresh.getByText(
+          "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+        ),
+      ).toBeTruthy();
     });
 
     it('does not accept less than two minutes', async () => {
       await open();
-      const field = group('Refresh').getByLabelText('Check every (minutes)');
+      const field = group('Refresh').getByLabelText('Refresh every (minutes)');
       fireEvent.input(field, { target: { value: '1' } });
       expect(screen.getByText('Enter a whole number from 2 to 60.')).toBeTruthy();
       expect((await saved()).pollIntervalMinutes).toBe(2);
@@ -127,7 +141,7 @@ describe('SettingsView', () => {
 
     it('saves how many pull requests to fetch per section', async () => {
       await open();
-      fireEvent.input(group('Refresh').getByLabelText('Maximum pull requests loaded per section'), {
+      fireEvent.input(group('Refresh').getByLabelText('Pull requests per section'), {
         target: { value: '100' },
       });
       await waitFor(async () => expect((await saved()).maxPerSection).toBe(100));
@@ -140,7 +154,11 @@ describe('SettingsView', () => {
         pollIntervalMinutes: 2,
       });
       // Four presets at 240 points an hour; Team reviews searches nothing without a team.
-      expect(group('Refresh').getByText(/about 960 points an hour/)).toBeTruthy();
+      expect(
+        group('Refresh').getByText(
+          "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+        ),
+      ).toBeTruthy();
     });
 
     it('counts a search per followed team', async () => {
@@ -154,7 +172,11 @@ describe('SettingsView', () => {
         buildAuth(),
         { teams: teamsState() },
       );
-      expect(group('Refresh').getByText(/about 1,440 points an hour/)).toBeTruthy();
+      expect(
+        group('Refresh').getByText(
+          "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+        ),
+      ).toBeTruthy();
     });
   });
 
@@ -162,7 +184,7 @@ describe('SettingsView', () => {
     it('lists the teams by organization and follows or unfollows each one', async () => {
       await open({}, buildAuth(), { teams: teamsState() });
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
+      await screen.findByRole('button', { name: 'Refresh' });
       const teams = group('Sections');
       expect(
         teams
@@ -170,10 +192,10 @@ describe('SettingsView', () => {
           .map((g) => g.querySelector('legend')?.textContent)
           .filter((name) => name !== 'Include' && name !== 'Exclude'),
       ).toEqual(['acme', 'octo']);
-      expect(toggle('Web', teams).getAttribute('aria-checked')).toBe('true');
-      fireEvent.click(toggle('Ops', teams));
+      expect(toggle('@acme/web', teams).getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(toggle('@acme/ops', teams));
       await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual(['acme/ops']));
-      fireEvent.click(toggle('Ops', teams));
+      fireEvent.click(toggle('@acme/ops', teams));
       await waitFor(async () => expect((await saved()).unfollowedTeams).toEqual([]));
     });
 
@@ -181,10 +203,10 @@ describe('SettingsView', () => {
       const send = vi.spyOn(chrome.runtime, 'sendMessage');
       await open({}, buildAuth(), { teams: teamsState() });
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
+      await screen.findByRole('button', { name: 'Refresh' });
       const teams = group('Sections');
 
-      fireEvent.click(teams.getByRole('button', { name: 'Refresh teams' }));
+      fireEvent.click(teams.getByRole('button', { name: 'Refresh' }));
       await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'refreshTeams' }));
     });
 
@@ -196,9 +218,9 @@ describe('SettingsView', () => {
         }),
       });
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
+      await screen.findByRole('button', { name: 'Refresh' });
       const teams = group('Sections');
-      expect(teams.getByText('GitHub would not list your teams.')).toBeTruthy();
+      expect(teams.getByText("Prowl can't see your teams.")).toBeTruthy();
       fireEvent.click(teams.getByRole('button', { name: 'Sign in again' }));
       expect(location.hash).toBe('#/onboarding');
     });
@@ -206,15 +228,15 @@ describe('SettingsView', () => {
     it('says when GitHub lists no team, and when it has not looked yet', async () => {
       await open({}, buildAuth(), { teams: teamsState({ teams: [] }) });
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
+      await screen.findByRole('button', { name: 'Refresh' });
       expect(screen.getByText('GitHub lists no team for your account.')).toBeTruthy();
       cleanup();
       stop?.();
       await chrome.storage.local.remove('teams');
       await open();
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
-      expect(screen.getByText('Not checked yet')).toBeTruthy();
+      await screen.findByRole('button', { name: 'Refresh' });
+      expect(screen.getByText('Loading your teams…').getAttribute('role')).toBe('status');
     });
 
     it('explains the cap when more teams are followed than Prowl searches', async () => {
@@ -225,8 +247,8 @@ describe('SettingsView', () => {
       }));
       await open({}, buildAuth(), { teams: teamsState({ teams: many }) });
       fireEvent.click(toggle('Team reviews'));
-      await screen.findByRole('button', { name: 'Refresh teams' });
-      expect(screen.getByText(/Prowl checks at most 10 teams each refresh/)).toBeTruthy();
+      await screen.findByRole('button', { name: 'Refresh' });
+      expect(screen.getAllByRole('switch', { name: /^@acme\/t/ })).toHaveLength(12);
     });
   });
 

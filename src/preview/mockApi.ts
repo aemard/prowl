@@ -8,6 +8,7 @@ import {
   nodesResponse,
   prNode,
   searchResponse,
+  teamJson,
 } from '../../tests/fixtures/github';
 
 const now = new Date().toISOString();
@@ -202,7 +203,15 @@ export function installMockApi(): void {
     } else if (url.pathname === '/user') {
       body = { login: 'octocat', name: 'Demo User', avatar_url: '' };
     } else if (url.pathname === '/user/teams') {
-      body = [];
+      // More teams than the old 10-team limit, in two organizations, to preview the team list.
+      body = [
+        ...['api', 'backend', 'core', 'design', 'docs', 'frontend', 'mobile'].map((slug) =>
+          teamJson(`acme/${slug}`, slug),
+        ),
+        ...['infra', 'platform', 'release', 'security', 'sre'].map((slug) =>
+          teamJson(`globex/${slug}`, slug),
+        ),
+      ];
     } else if (url.pathname.endsWith('/rerun-failed-jobs')) {
       for (const node of nodes) node.commits = headCommit({ PENDING: 5 });
       return new Response(null, { status: 204 });

@@ -138,6 +138,9 @@ describe('SettingsView', () => {
     it('promises that Prowl cannot see the pages, and lists what Chrome lets it do', async () => {
       await open();
       const privacy = group('Privacy and permissions');
+      const disclosure = privacy.getByText('What Prowl can access').closest('details');
+      expect(disclosure?.open).toBe(false);
+      fireEvent.click(privacy.getByText('What Prowl can access'));
       expect(
         privacy.getByText(
           'Prowl cannot see or change the pages you visit: it has no access to your tabs or their content.',

@@ -119,15 +119,12 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     await startup.goto(`chrome-extension://${new URL(worker.url()).host}/sidepanel/index.html`);
     await startup.evaluate(() => chrome.runtime.sendMessage({ type: 'poll' }));
     await startup.close();
-    // Existing E2E tests inject auth directly, bypassing first-run sign-in. Opt out unless a
-    // first-run spec explicitly seeds pending, so their existing expectations still apply.
     const settings = defaultSettings();
     settings.sections = settings.sections.map((section) => ({
       ...section,
       enabled: section.kind === 'authored',
     }));
     await worker.evaluate((stored) => chrome.storage.local.set(stored), {
-      onboarding: { status: 'completed' },
       settings,
     });
     await use(worker);
