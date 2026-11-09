@@ -60,6 +60,8 @@ test('first-run team action enables Team reviews and Got it persists', async ({
   await page.getByRole('button', { name: 'Show Team reviews' }).click();
   await expect(page.getByRole('tab', { name: /^Teams/ })).toBeVisible();
   await page.getByRole('button', { name: 'Got it' }).click();
+  // The dismissal is stored asynchronously; reload only once it took effect.
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0);
 });
