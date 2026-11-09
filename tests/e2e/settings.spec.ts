@@ -45,7 +45,8 @@ test('shows the six settings groups in order', async ({ openPanel }) => {
     'Privacy and permissions',
   ]);
   await expect(panel.getByLabel('Maximum pull requests loaded per section')).toBeVisible();
-  await expect(panel.getByLabel('Check every (minutes)')).not.toBeVisible();
+  // Refresh options are always shown, without a disclosure.
+  await expect(panel.getByLabel('Check every (minutes)')).toBeVisible();
   await expect(panel.getByRole('switch', { name: 'CI fails' })).toHaveCount(0);
 });
 
