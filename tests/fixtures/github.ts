@@ -16,7 +16,6 @@ import type {
   StateCount,
   StatusContextNode,
 } from '../../src/lib/github/queries';
-import type { Viewer } from '../../src/lib/model';
 import { graphqlRateLimit } from './http';
 
 const WEB = 'https://github.com';
@@ -27,10 +26,7 @@ const AVATAR = 'https://avatars.githubusercontent.com/u/583231?s=64&v=4';
  */
 export const RECENT_COMMIT = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
-/** `viewer { login avatarUrl name }`. */
-export function viewerNode(overrides: Partial<Viewer> = {}): Viewer {
-  return { login: 'octocat', avatarUrl: AVATAR, name: 'The Octocat', ...overrides };
-}
+export { viewerNode } from './viewer';
 
 /** The node id GitHub would give PR `number` of `nameWithOwner` (stable per pair). */
 export const prId = (number: number, nameWithOwner = 'acme/widgets') =>
@@ -124,6 +120,9 @@ export function prNode(
     mergeable: 'MERGEABLE',
     mergeStateStatus: 'BLOCKED',
     viewerCanUpdate: true,
+    viewerCanMergeAsAdmin: false,
+    viewerCanEnableAutoMerge: true,
+    viewerCanDisableAutoMerge: true,
     autoMergeRequest: null,
     totalCommentsCount: 0,
     labels: { nodes: [] },
@@ -176,6 +175,9 @@ export function mergeStateResponse(
             mergeable: node.mergeable,
             mergeStateStatus: node.mergeStateStatus,
             viewerCanUpdate: node.viewerCanUpdate,
+            viewerCanMergeAsAdmin: node.viewerCanMergeAsAdmin,
+            viewerCanEnableAutoMerge: node.viewerCanEnableAutoMerge,
+            viewerCanDisableAutoMerge: node.viewerCanDisableAutoMerge,
           }
         : null;
     }),

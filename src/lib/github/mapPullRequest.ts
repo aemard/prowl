@@ -143,7 +143,13 @@ const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
 /** The fields `ProwlMergeState` reads (see `MERGE_STATE_QUERY`). */
 export type MergeFacts = Pick<
   PullRequest,
-  'reviewDecision' | 'mergeable' | 'mergeStateStatus' | 'viewerCanUpdate'
+  | 'reviewDecision'
+  | 'mergeable'
+  | 'mergeStateStatus'
+  | 'viewerCanUpdate'
+  | 'viewerCanMergeAsAdmin'
+  | 'viewerCanEnableAutoMerge'
+  | 'viewerCanDisableAutoMerge'
 >;
 
 /** Merge facts of a node; what it does not carry is unknown (none, unknown, false). */
@@ -156,6 +162,9 @@ export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
     mergeable: pick(MERGEABLE, node.mergeable ?? null, 'unknown'),
     mergeStateStatus: pick(MERGE_STATE_STATUSES, node.mergeStateStatus ?? null, 'unknown'),
     viewerCanUpdate: node.viewerCanUpdate === true,
+    viewerCanMergeAsAdmin: node.viewerCanMergeAsAdmin === true,
+    viewerCanEnableAutoMerge: node.viewerCanEnableAutoMerge === true,
+    viewerCanDisableAutoMerge: node.viewerCanDisableAutoMerge === true,
   };
 }
 

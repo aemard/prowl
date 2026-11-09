@@ -29,9 +29,18 @@ afterEach(resetMergeTest);
 
 describe('when the button shows', () => {
   it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
-    show({ reviewDecision: 'approved', mergeStateStatus: 'blocked', autoMergeAllowed: true });
+    show({
+      viewerCanMergeAsAdmin: true,
+      reviewDecision: 'approved',
+      mergeStateStatus: 'blocked',
+      autoMergeAllowed: true,
+    });
     expect(opener().getAttribute('data-variant')).toBe('secondary');
+    expect(opener().textContent).toBe('Merge without waiting');
     fireEvent.click(opener());
+    expect(dialog().textContent).toContain(
+      'You can bypass the branch rules for this pull request.',
+    );
     expect(within(dialog()).getByText(/Not ready: blocked by the base branch/)).toBeTruthy();
     expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
   });
@@ -48,6 +57,7 @@ describe('when the button shows', () => {
     expect(opener().getAttribute('data-variant')).toBe('primary');
     const blocked: PullRequest = {
       ...pr,
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       mergeStateStatus: 'blocked',
     };
@@ -88,6 +98,7 @@ describe('the confirmation', () => {
 
   it('repeats what still blocks the merge, which the dialog hides on the card', () => {
     show({
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       reviews: [
         { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },

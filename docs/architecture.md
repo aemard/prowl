@@ -244,6 +244,7 @@ Mapping (`mapPullRequest`):
 | `lastCommitAt` | Head commit (`commits(last: 1)`) `committedDate`: the committer date, which a rebase, an amend or "Update branch" renews and comments do not. `updatedAt` when the commit did not load (a hole in a partial read). |
 | `allowedMergeMethods` | Repository `mergeCommitAllowed`, `squashMergeAllowed`, `rebaseMergeAllowed`. |
 | `defaultMergeMethod` | Repository `viewerDefaultMergeMethod`: the method the viewer used last there, else the repository's own. `merge` for a value the model does not know. |
+| `viewerCanMergeAsAdmin`, `viewerCanEnableAutoMerge`, `viewerCanDisableAutoMerge` | Explicit GraphQL merge permissions; missing values default to false. Cached and invalidated with the head-specific merge facts. |
 | `viewerCanMerge` | Repository `viewerPermission` is `WRITE`, `MAINTAIN` or `ADMIN` (GraphQL has no `viewerCanMerge`; `viewerCanUpdate` is also true for an author without write access). False for `TRIAGE`, `READ`, unknown levels and a GitHub App (null). |
 
 Estimated cost (GitHub counts the requests every connection could need, divides by 100 and
@@ -696,19 +697,20 @@ signal (`state/store.ts`).
   that are not open; Comment is always there. While one action of a PR runs its other buttons are
   disabled, and its dialog cannot be closed or edited. `Dialog` stops Esc from reaching what
   contains it (the card folds on Esc).
-- Merge (`components/MergeAction.tsx`, last in the `.pr-actions` row): a "Merge acme/web#12"
-  button (primary once `isReadyToMerge`, else secondary) for someone with write access (`viewerCanMerge`) on an open, non-draft PR whose
-  repository allows at least one method; it opens a confirmation naming the PR, its title and
-  target branch, a `Select` of `allowedMergeMethods` only (starting on `defaultMergeMethod`, else
-  the first allowed) and an optional commit title (not offered for a rebase). Focus starts on the
-  method, never on the button that merges. It sends `ProwlMerge` with `headSha` of the PR as the
-  panel last polled it. Readiness is not enforced by the panel (an admin may bypass rules, and
-  GitHub knows better): the Merge group above lists the blockers, the dialog (which covers them)
-  repeats them in one line ("Not ready: changes requested by alice; …"), and GitHub's refusal comes back
-  in a toast after the dialog closed, with the method and title kept for the next try, plus a
-  forced poll because a refusal usually means the PR changed (a moved head, new conflicts). On
-  success the toast and forced poll follow the usual route: the merged PR is in no search result
-  any more, so `ProwlNodes` marks it merged and it leaves the list.
+- Merge (`components/MergeAction.tsx`, last in the `.pr-actions` row): on an open, non-draft
+  PR with write access and an allowed merge method, ready PRs offer a primary "Merge" button.
+  Verified, unready PRs offer secondary "Merge without waiting" only when
+  `viewerCanMergeAsAdmin` is true; its dialog repeats the blockers and explains that the viewer
+  can bypass the branch rules. Otherwise, when the repository allows auto-merge and
+  `viewerCanEnableAutoMerge` is true, "Enable auto-merge" opens the method picker and optional
+  commit title with no immediate Merge action. Bypass dialogs also offer auto-merge when allowed.
+  Unknown readiness offers neither action. Auto-merge already on offers "Disable auto-merge"
+  only with `viewerCanDisableAutoMerge`. Missing cached permission values mean false.
+  These permissions are fetched by `ProwlMergeState`, cached with the merge facts and cleared
+  when the head OID changes. Dialogs use only allowed methods, default to `defaultMergeMethod`
+  (else the first allowed), and omit the commit title for rebase. Focus starts on the method.
+  Mutations use the last polled `headSha`; GitHub refusals close the dialog, toast the reason,
+  preserve the choices and force a refresh. Successful merges toast and refresh as well.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
   reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`
