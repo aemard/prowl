@@ -7,7 +7,7 @@
  * `github.onGraphQL('ProwlSearch', (vars) => searchResponse([prNode()], vars))`.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import type { SearchData } from '../../../src/lib/github/queries';
+import type { PullRequestNode, SearchData } from '../../../src/lib/github/queries';
 import { type FullPullRequestNode, mergeStateResponse } from '../../fixtures/github';
 
 export const MOCK_PORT = Number(process.env.PROWL_E2E_PORT ?? 4010);
@@ -118,10 +118,25 @@ export class MockGitHub {
     return this;
   }
 
-  private remember(body: unknown): void {
+  private remember(body: unknown, query: string): void {
     const nodes = (body as { data?: SearchData } | undefined)?.data?.search?.nodes ?? [];
-    for (const node of nodes) {
-      if (node && 'id' in node) this.searched.set(node.id, node as FullPullRequestNode);
+    for (const [index, original] of nodes.entries()) {
+      if (!original || !('id' in original)) continue;
+      let node = original as PullRequestNode;
+      // Match GraphQL projection: shared searches leave a Team reviewer as an empty object.
+      if (!query.includes('... on Team') && node.reviewRequests?.nodes) {
+        node = {
+          ...node,
+          reviewRequests: {
+            ...node.reviewRequests,
+            nodes: node.reviewRequests.nodes.map((entry) =>
+              entry?.requestedReviewer?.slug ? { requestedReviewer: {} } : entry,
+            ),
+          },
+        };
+        nodes[index] = node;
+      }
+      this.searched.set(node.id, node as FullPullRequestNode);
     }
   }
 
@@ -173,7 +188,8 @@ export class MockGitHub {
       } else {
         const out = await handler(variables, logged);
         result = isMockResponse(out) ? out : { body: { data: out } };
-        if (name === 'ProwlSearch') this.remember(result.body);
+        // Both variants share this operation; preserve team requests in remembered nodes.
+        if (name === 'ProwlSearch') this.remember(result.body, query);
       }
     } else {
       this.requests.push(logged);

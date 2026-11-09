@@ -22,7 +22,7 @@ import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
-import { pollState, teams } from '../state/store';
+import { pollState } from '../state/store';
 import {
   filterQuery,
   foldKey,
@@ -30,7 +30,6 @@ import {
   pullRequestsOf,
   toggleFolded,
 } from './ListState';
-import { TeamReviewsHeader } from './SettingsTeams';
 
 /**
  * Per section kind: its icon and short name in the section bar (a custom section shows its own
@@ -50,7 +49,7 @@ export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; e
   team_review_requested: {
     icon: PeopleIcon,
     short: 'Teams',
-    empty: 'When someone asks one of your teams for a review, it will show up here.',
+    empty: 'No review requests for your teams.',
   },
   mentioned: {
     icon: MentionIcon,
@@ -160,9 +159,7 @@ function EmptySection({
   if (
     shown.length + snoozed.length > 0 ||
     snap.sectionErrors?.[selected.id] !== undefined ||
-    searching(data) ||
-    (selected.kind === 'team_review_requested' &&
-      (!teams.value || teams.value.error || teams.value.teams.length === 0))
+    searching(data)
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
@@ -208,14 +205,10 @@ export function SectionContent({
     pullRequestsOf(data.snap, data.selected.id).every((pr) =>
       isSnoozed(data.local, pr.id, data.now),
     );
-  const error =
-    data.selected.kind === 'team_review_requested' && teams.value?.error
-      ? undefined
-      : data.snap.sectionErrors?.[data.selected.id];
+  const error = data.snap.sectionErrors?.[data.selected.id];
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
     <>
-      {data.selected.kind === 'team_review_requested' && <TeamReviewsHeader />}
       {searching(data) && (
         <p class="list__notice" role="status">
           Searching “{data.selected.label}”…

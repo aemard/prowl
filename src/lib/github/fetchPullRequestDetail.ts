@@ -104,24 +104,10 @@ async function applyBranchRules(
       allowedMergeMethods: methods,
       requiredApprovals,
       requiresConversationResolution: conversations,
-      ...(methods.length === 0
-        ? {
-            warnings: [
-              ...(detail.warnings ?? []),
-              'No supported merge method is allowed by the readable repository and branch rules. Use GitHub to inspect the available options.',
-            ],
-          }
-        : {}),
     };
   } catch (error) {
     if (error instanceof GitHubError && ['unauthorized', 'rate_limited'].includes(error.kind))
       throw error;
-    return {
-      ...detail,
-      warnings: [
-        ...(detail.warnings ?? []),
-        'Branch rules could not be verified. Merge methods follow repository settings; GitHub may restrict them further.',
-      ],
-    };
+    return detail;
   }
 }

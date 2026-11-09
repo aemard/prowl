@@ -1,45 +1,11 @@
 /** Pure helpers and copy for the settings screen. */
 import { env } from '../../lib/env';
-import { MAX_TEAM_SEARCHES, teamKey } from '../../lib/github/teams';
-import type {
-  AuthState,
-  BadgeMode,
-  PrEventType,
-  QuietHours,
-  SectionKind,
-  Team,
-} from '../../lib/model';
-
-/** GitHub's GraphQL budget per hour for one token. */
-export const HOURLY_POINTS = 5000;
-
-/** Nested connections `ProwlSearch` asks for per pull request (see docs/architecture.md). */
-const CONNECTIONS_PER_PR = 7;
-
-/**
- * About what the polling costs, in GraphQL points an hour: GitHub counts the requests every
- * connection could need, divides by 100 and rounds up, per search. Matches the cost table in
- * docs/architecture.md (one section of 50 pull requests every 2 minutes is about 120).
- */
-export function estimatedPointsPerHour(
-  sections: number,
-  perSection: number,
-  intervalMinutes: number,
-): number {
-  const perSearch = Math.ceil((1 + perSection * CONNECTIONS_PER_PR) / 100);
-  return Math.round((sections * perSearch * 60) / intervalMinutes);
-}
-
-/** Searches the team section runs per poll: one per followed team, capped like the worker. */
-export function teamSearches(list: readonly Team[], unfollowed: readonly string[]): number {
-  const skip = new Set(unfollowed);
-  return Math.min(list.filter((team) => !skip.has(teamKey(team))).length, MAX_TEAM_SEARCHES);
-}
+import type { AuthState, BadgeMode, PrEventType, QuietHours, SectionKind } from '../../lib/model';
 
 export const PRESET_DESCRIPTIONS: Record<Exclude<SectionKind, 'custom'>, string> = {
   authored: 'Pull requests you opened',
   review_requested: 'Pull requests that ask you for a review (your teams have their own section)',
-  team_review_requested: 'Pull requests that ask one of your teams for a review',
+  team_review_requested: 'Review requests sent to your teams',
   mentioned: 'Pull requests that mention you',
   assigned: 'Pull requests assigned to you',
 };

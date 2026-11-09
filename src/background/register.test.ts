@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { prNode, viewerNode } from '../../tests/fixtures/github';
 import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
-import { getItem, setItem, updateItem } from '../lib/storage/storage';
+import { setItem, updateItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { POLL_ALARM, scheduleAlarm } from './poller';
 import { registerBackground } from './register';
@@ -22,7 +22,6 @@ describe('registerBackground', () => {
     expect(spy).toHaveBeenCalledTimes(2);
     expect(spy).toHaveBeenCalledWith({ openPanelOnActionClick: true });
     await settle();
-    expect(await getItem('onboarding')).toEqual({ status: 'pending' });
     // Signed out, a poll unschedules the alarm.
     expect(alarm()).toBeUndefined();
   });

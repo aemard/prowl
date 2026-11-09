@@ -9,10 +9,8 @@ import type { GitHubClient } from './client';
 import { GitHubError, isPollBudgetFailure } from './errors';
 
 const PER_PAGE = 100;
-/** Two pages. Each followed team also costs a search per poll (see `MAX_TEAM_SEARCHES`). */
-export const MAX_TEAMS = 200;
-/** Teams searched per poll, about 4 GraphQL points each with 50 PRs per section. */
-export const MAX_TEAM_SEARCHES = 10;
+/** At most 100 pages, enough for large accounts while bounding discovery. */
+export const MAX_TEAMS = 10_000;
 
 const HOUR_MS = 60 * 60 * 1000;
 /** A list is refreshed after a day; a failed discovery is retried after an hour. */
@@ -63,9 +61,12 @@ function toTeams(json: unknown): Team[] {
  * fine-grained token must be owned by an organization, with Members: read, and only sees that
  * organization's teams. Throws `GitHubError`.
  */
-export async function fetchViewerTeams(client: GitHubClient): Promise<Team[]> {
+export async function fetchViewerTeams(
+  client: GitHubClient,
+  onIncomplete?: () => void,
+): Promise<Team[]> {
   const teams: Team[] = [];
-  for (let page = 1; teams.length < MAX_TEAMS; page += 1) {
+  for (let page = 1; page <= MAX_TEAMS / PER_PAGE; page += 1) {
     const batch = await client.rest<unknown>(
       'GET',
       `/user/teams?per_page=${PER_PAGE}&page=${page}`,
@@ -75,9 +76,10 @@ export async function fetchViewerTeams(client: GitHubClient): Promise<Team[]> {
     }
     teams.push(...batch.flatMap(toTeams));
     if (batch.length < PER_PAGE) break;
+    if (page === MAX_TEAMS / PER_PAGE) onIncomplete?.();
   }
   const unique = [...new Map(teams.map((team) => [teamKey(team), team])).values()];
-  return unique.slice(0, MAX_TEAMS).sort((a, b) => teamKey(a).localeCompare(teamKey(b)));
+  return unique.sort((a, b) => teamKey(a).localeCompare(teamKey(b)));
 }
 
 /** Discovery has to run: never for this account, a day after a success, an hour after a failure. */
@@ -101,7 +103,11 @@ export async function discoverTeams(
   const login = auth.viewer.login;
   const base = { login, fetchedAt: new Date(now).toISOString() };
   try {
-    return { ...base, teams: await fetchViewerTeams(client), error: null };
+    let incomplete = false;
+    const teams = await fetchViewerTeams(client, () => {
+      incomplete = true;
+    });
+    return { ...base, teams, error: null, ...(incomplete ? { incomplete } : {}) };
   } catch (error) {
     if (
       !(error instanceof GitHubError) ||

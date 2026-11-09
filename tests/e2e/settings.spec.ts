@@ -44,9 +44,9 @@ test('shows the six settings groups in order', async ({ openPanel }) => {
     'Account',
     'Privacy and permissions',
   ]);
-  await expect(panel.getByLabel('Maximum pull requests loaded per section')).toBeVisible();
+  await expect(panel.getByLabel('Pull requests per section')).toBeVisible();
   // Refresh options are always shown, without a disclosure.
-  await expect(panel.getByLabel('Check every (minutes)')).toBeVisible();
+  await expect(panel.getByLabel('Refresh every (minutes)')).toBeVisible();
   await expect(panel.getByRole('switch', { name: 'CI fails' })).toHaveCount(0);
 });
 
@@ -164,12 +164,15 @@ test.describe('refresh', () => {
   }) => {
     expect(await pollPeriod(serviceWorker)).toBe(2);
     const panel = await openPanel('#/settings');
-    const interval = panel.getByLabel('Check every (minutes)');
+    const interval = panel.getByLabel('Refresh every (minutes)');
     await expect(interval).toHaveValue('2');
     await expect(interval).toBeVisible();
     await expect(panel.getByText('Refresh options', { exact: true })).toHaveCount(0);
-    await expect(panel.getByText(/about 120 points an hour/)).toBeVisible();
-    await expect(panel.getByText(/5,000 points an hour/)).toBeVisible();
+    await expect(
+      panel.getByText(
+        "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+      ),
+    ).toBeVisible();
 
     await interval.fill('7');
     await expect.poll(() => pollPeriod(serviceWorker)).toBe(7);
@@ -189,7 +192,7 @@ test.describe('refresh', () => {
     github,
   }) => {
     const panel = await openPanel('#/settings');
-    await panel.getByLabel('Maximum pull requests loaded per section').fill('20');
+    await panel.getByLabel('Pull requests per section').fill('20');
     await expect.poll(async () => (await savedSettings(serviceWorker))?.maxPerSection).toBe(20);
     await expect
       .poll(() =>

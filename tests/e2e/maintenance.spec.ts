@@ -110,8 +110,9 @@ test('marks a draft ready for review and converts a ready PR to draft', async ({
     variables: { id: DRAFT.id },
   });
 
-  const ready = await expand(panel, READY.title);
-  await ready.getByRole('button', { name: `Convert to draft: ${READY.ref}` }).click();
+  await expand(panel, READY.title);
+  await panel.getByRole('button', { name: `More actions for ${READY.title}` }).click();
+  await panel.getByRole('menuitem', { name: 'Convert to draft' }).click();
   await expect(toasts(panel)).toContainText(`Converted to draft: ${READY.ref}`);
   expect(github.requestsFor('ProwlConvertToDraft')).toHaveLength(1);
 });

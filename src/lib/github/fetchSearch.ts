@@ -12,10 +12,10 @@ import { GitHubError } from './errors';
 import { isNode, sameSearchFacts } from './fetchMergeState';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
 import { type MergeFacts, mapMergeState, mapPullRequest } from './mapPullRequest';
-import { SEARCH_QUERY, type SearchData } from './queries';
+import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY } from './queries';
 import { parseRateLimit } from './rateLimit';
 import { buildSearchQuery, filterByRepo } from './search';
-import { MAX_TEAM_SEARCHES, teamKey } from './teams';
+import { teamEvidence } from './teamEvidence';
 
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
 const SSO_REQUIRED =
@@ -43,7 +43,7 @@ const mergeFacts = (pr: PullRequest): MergeFacts => ({
 });
 
 export type PreviousSnapshot = Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
-  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage'>>;
+  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests'>>;
 
 type SearchResult = { prs: PullRequest[]; coverage: SectionCoverage; problems: string[] };
 
@@ -52,7 +52,7 @@ export class SearchContext {
     readonly client: GitHubClient,
     readonly settings: FetchSettings,
     readonly previous: PreviousSnapshot | null,
-    readonly teams: Pick<TeamsState, 'teams' | 'error'> | null,
+    readonly teams: Pick<TeamsState, 'teams' | 'error' | 'incomplete'> | null,
     readonly result: FetchResult,
   ) {}
   private searched = false;
@@ -74,7 +74,7 @@ export class SearchContext {
     return data;
   }
 
-  async search(query: string): Promise<SearchResult> {
+  async search(query: string, teamSearch = false): Promise<SearchResult> {
     const found = new Map<string, PullRequest>();
     const problems: string[] = [];
     let after: string | null = null;
@@ -93,12 +93,11 @@ export class SearchContext {
         scanBudget - examined,
       );
       try {
-        const data: SearchData = await this.read<SearchData>(SEARCH_QUERY, { query, first, after });
-        const page: SearchData['search'] = data.search;
+        const { search: page } = await this.searchPage({ query, first, after }, teamSearch);
         this.searched = true;
         examined += first;
         total = page.issueCount;
-        for (const pr of this.pagePrs(page)) found.set(pr.id, pr);
+        for (const pr of this.pagePrs(page, teamSearch)) found.set(pr.id, pr);
         hasMore = page.pageInfo.hasNextPage;
         if (this.partialMessages.length) problems.push(...this.partialMessages);
         const cursor: string | null = page.pageInfo.endCursor;
@@ -134,8 +133,49 @@ export class SearchContext {
     };
   }
 
-  private pagePrs(page: SearchData['search']): PullRequest[] {
-    return filterByRepo((page.nodes ?? []).filter(isNode).map(mapPullRequest), this.settings);
+  private async searchPage(
+    variables: Record<string, unknown>,
+    teams: boolean,
+  ): Promise<SearchData> {
+    try {
+      const data = await this.read<SearchData>(
+        teams && !this.teamFallback ? TEAM_SEARCH_QUERY : SEARCH_QUERY,
+        variables,
+      );
+      if (teams && !data.search && this.partialMessages.length) {
+        this.teamFallback = true;
+        return this.read<SearchData>(SEARCH_QUERY, variables);
+      }
+      return data;
+    } catch (error) {
+      if (
+        !teams ||
+        this.teamFallback ||
+        !(error instanceof GitHubError) ||
+        !['forbidden', 'graphql'].includes(error.kind)
+      )
+        throw error;
+      this.teamFallback = true;
+      return this.read<SearchData>(SEARCH_QUERY, variables);
+    }
+  }
+
+  private teamFallback = false;
+  private excludedTeams = new Set<string>();
+  private pagePrs(page: SearchData['search'], teamSearch: boolean): PullRequest[] {
+    const nodes = (page.nodes ?? []).filter(isNode).filter((node) => {
+      if (!teamSearch) return true;
+      const evidence = teamEvidence(
+        node,
+        this.teams,
+        this.settings.unfollowedTeams,
+        !this.teamFallback && this.partialMessages.length === 0,
+      );
+      if (evidence.drop) this.excludedTeams.add(node.id);
+      else if (evidence.keys.length) this.result.teamRequests[node.id] = evidence.keys;
+      return !evidence.drop;
+    });
+    return filterByRepo(nodes.map(mapPullRequest), this.settings);
   }
 
   coverageFor = (id: string, coverage: SectionCoverage) => {
@@ -160,6 +200,7 @@ export class SearchContext {
       (id) => this.previous?.pullRequests[id] ?? [],
     );
     for (const pr of filterByRepo(cached, this.settings)) {
+      if (section.kind === 'team_review_requested' && this.excludedTeams.has(pr.id)) continue;
       if (members.size >= this.settings.maxPerSection) break;
       members.add(pr.id);
       this.result.pullRequests[pr.id] ??= pr;
@@ -178,60 +219,28 @@ export class SearchContext {
     return true;
   }
 
-  /**
-   * One search per followed team (the first `MAX_TEAM_SEARCHES`), merged newest first and cut
-   * to `maxPerSection`. A refused team search is reported; the other teams still load.
-   */
+  /** One search even without team discovery; exclusions require complete evidence. */
   async searchTeams(section: Section): Promise<void> {
-    const all = this.teams?.teams ?? [];
-    const followed = all.filter((team) => !this.settings.unfollowedTeams.includes(teamKey(team)));
-    if (followed.length === 0) {
-      if (this.teams?.error) this.result.sectionErrors[section.id] = this.teams.error.message;
-      else this.result.sections[section.id] = [];
-      return;
+    const query = `${buildSearchQuery(section, this.settings)} sort:updated-desc`;
+    try {
+      const page = await this.search(query, true);
+      for (const pr of page.prs) this.put(pr);
+      this.result.sections[section.id] = page.prs.map(({ id }) => id);
+      if (page.problems.length)
+        this.result.sectionErrors[section.id] = this.problemText(page.problems);
+      if (page.coverage.stale) this.preserve(section);
+      this.coverageFor(section.id, page.coverage);
+    } catch (error) {
+      if (!this.sectionLevel(error)) throw error;
+      this.result.sectionErrors[section.id] = error.message;
+      this.preserve(section);
+      this.coverageFor(section.id, {
+        hasMore: false,
+        partial: true,
+        stale: true,
+        queries: [{ query, cursor: null }],
+      });
     }
-    const problems: string[] = [];
-    const queries: SectionCoverage['queries'] = [];
-    let hasMore = false;
-    let stale = false;
-    const found = new Map<string, { pr: PullRequest; keys: string[] }>();
-    for (const team of followed.slice(0, MAX_TEAM_SEARCHES)) {
-      const key = teamKey(team);
-      try {
-        const query = buildSearchQuery(section, this.settings, key);
-        const page = await this.search(`${query} sort:updated-desc`);
-        queries.push(...page.coverage.queries);
-        hasMore ||= page.coverage.hasMore;
-        stale ||= page.coverage.stale === true;
-        problems.push(...page.problems);
-        for (const pr of page.prs) {
-          const entry = found.get(pr.id) ?? { pr, keys: [] };
-          entry.keys.push(key);
-          found.set(pr.id, entry);
-        }
-      } catch (error) {
-        if (!this.sectionLevel(error)) throw error;
-        problems.push(`GitHub refused the search for ${key}: ${error.message}`);
-        stale = true;
-      }
-    }
-    hasMore ||= found.size > this.settings.maxPerSection;
-    const kept = [...found.values()]
-      .sort((a, b) => Date.parse(b.pr.updatedAt) - Date.parse(a.pr.updatedAt))
-      .slice(0, this.settings.maxPerSection);
-    for (const { pr, keys } of kept) {
-      this.put(pr);
-      this.result.teamRequests[pr.id] = keys;
-    }
-    this.result.sections[section.id] = kept.map(({ pr }) => pr.id);
-    if (problems.length > 0) this.result.sectionErrors[section.id] = this.problemText(problems);
-    if (stale) this.preserve(section);
-    this.coverageFor(section.id, {
-      hasMore,
-      queries,
-      ...(problems.length ? { partial: true } : {}),
-      ...(stale ? { stale: true } : {}),
-    });
   }
 
   partialErrors = () => this.partialMessages;

@@ -25,13 +25,10 @@ for (const count of [50, 51]) {
     if (count === 50) {
       await expect(coverage).toHaveCount(0);
     } else {
-      await expect(coverage).toContainText('50 PRs loaded. More results are available on GitHub.');
+      await expect(coverage).toContainText('50 loaded ·');
       await expect(coverage.getByRole('link', { name: 'View on GitHub' })).toBeVisible();
-      await expect(coverage.getByRole('button', { name: 'Change limit' })).toBeVisible();
       await panel.getByRole('searchbox').fill('unloaded-result');
       await expect(panel.getByText(/This search only covers the loaded PRs/)).toBeVisible();
-      await coverage.getByRole('button', { name: 'Change limit' }).click();
-      await expect(panel.getByLabel('Maximum pull requests loaded per section')).toBeFocused();
     }
     await expectNoA11yViolations(panel);
   });

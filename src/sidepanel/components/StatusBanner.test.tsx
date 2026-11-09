@@ -64,7 +64,7 @@ describe('StatusBanner', () => {
     );
     expect(screen.getByText('Last updated 14 min ago.')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Re-authenticate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(location.hash).toBe('#/onboarding');
     expect(route.value).toBe('onboarding');
   });

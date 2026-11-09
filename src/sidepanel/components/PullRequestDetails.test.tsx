@@ -45,12 +45,12 @@ describe('PullRequestDetails', () => {
   it('offers the actions at once, before the details have loaded', () => {
     stubDetailFetch(() => new Promise(() => {}));
     show();
-    expect(screen.getByText('Actions')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Actions for #1' })).toBeTruthy();
     expect(
       screen
         .getAllByRole('button', { name: /acme\/widgets#1$/ })
         .map((button) => button.textContent),
-    ).toEqual(['Approve', 'Request changes', 'Comment', 'Re-run failed', 'Convert to draft']);
+    ).toEqual(['Re-run failed', 'Approve', 'Request changes', 'Comment']);
   });
 
   it('says why it cannot be merged at once, then fills in checks and reviewers', async () => {
@@ -70,21 +70,21 @@ describe('PullRequestDetails', () => {
     const { container } = show();
 
     // Before the answer: the merge facts from the list, a status for assistive tech, no lists.
-    expect(rows('Merge')).toEqual([
-      'Blocked: review required',
-      'Conflicts with main',
-      'Blocked: 1 check failing',
-      'Waiting for 1 check to finish',
+    expect(rows('Merge status')).toEqual([
+      'Review required',
+      'Conflicts with main · Resolve on GitHub',
+      '1 check failed',
+      '1 check running',
     ]);
     expect(screen.getByRole('status').textContent).toBe('Loading checks and reviewers');
     expect(screen.queryByRole('list', { name: 'Checks' })).toBeNull();
 
     await screen.findByRole('list', { name: 'Checks' });
     expect(screen.queryByRole('status')).toBeNull();
-    expect(rows('Merge')).toEqual([
-      'Blocked: 1 approval required',
-      'Conflicts with main',
-      'Blocked: 1 required check failing',
+    expect(rows('Merge status')).toEqual([
+      '1 approval needed',
+      'Conflicts with main · Resolve on GitHub',
+      '1 required check failed',
     ]);
     // Failed first, then pending; what passed folds away, each state with a word, not color alone.
     expect(rows('Checks')).toEqual(['buildRequiredFailed', 'e2ePending']);
@@ -114,7 +114,7 @@ describe('PullRequestDetails', () => {
     expect(link.getAttribute('href')).toBe(
       'https://github.com/acme/widgets/actions/runs/1/job/build',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(screen.getAllByRole('link')).toHaveLength(3);
     expect(screen.getByRole('link', { name: 'View changes on GitHub' }).getAttribute('href')).toBe(
       'https://github.com/acme/widgets/pull/1/files',
     );
@@ -153,7 +153,7 @@ describe('PullRequestDetails', () => {
   it('explains checks that GitHub did not return although the PR has some', async () => {
     stubDetailFetch(() => detailNode({ checks: [null] }));
     show();
-    await screen.findByText(/did not return the checks/);
+    await screen.findByText(/Checks aren't available with this token/);
   });
 
   it('points to GitHub for checks beyond the ones it read', async () => {
@@ -186,7 +186,7 @@ describe('PullRequestDetails', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Server error');
     // The merge facts and no skeleton stay: nothing more to wait for.
-    expect(rows('Merge')[0]).toBe('Blocked: review required');
+    expect(rows('Merge status')[0]).toBe('Review required');
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByText('Checks')).toBeNull();
 
@@ -210,6 +210,6 @@ describe('PullRequestDetails', () => {
       <PullRequestDetails pr={{ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' }} id="detail" />,
     );
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
-    expect(screen.getByRole('list', { name: 'Merge' })).toBeTruthy();
+    expect(screen.getByRole('list', { name: 'Merge status' })).toBeTruthy();
   });
 });

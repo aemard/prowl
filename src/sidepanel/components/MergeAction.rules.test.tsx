@@ -39,7 +39,8 @@ describe('the methods the branch rules allow', () => {
     read({});
     show({ allowedMergeMethods: all });
     fireEvent.click(opener());
-    expect(offered()).toEqual(['Squash and merge']);
+    expect(within(document.body).queryByRole('combobox')).toBeNull();
+    expect(within(document.body).getByRole('button', { name: 'Squash and merge' })).toBeTruthy();
   });
 
   it('are not taken from a read made for another head', () => {
@@ -48,4 +49,12 @@ describe('the methods the branch rules allow', () => {
     fireEvent.click(opener());
     expect(offered()).toEqual(['Create a merge commit', 'Squash and merge', 'Rebase and merge']);
   });
+});
+
+it('offers GitHub when readable rules leave no method', () => {
+  show({ allowedMergeMethods: [] });
+  expect(within(document.body).queryByRole('button')).toBeNull();
+  expect(
+    within(document.body).getByRole('link', { name: 'Merge on GitHub' }).getAttribute('href'),
+  ).toBe(pr.url);
 });

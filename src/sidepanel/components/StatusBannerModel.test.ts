@@ -34,7 +34,7 @@ describe('describeStatus', () => {
       title: 'Your GitHub token was revoked or expired',
       detail: 'Prowl stopped refreshing. Sign in again to continue.',
       age: 'Last updated 14 min ago.',
-      action: { type: 'reauthenticate', label: 'Re-authenticate' },
+      action: { type: 'reauthenticate', label: 'Sign in again' },
     });
   });
 

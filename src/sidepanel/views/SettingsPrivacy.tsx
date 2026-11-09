@@ -51,16 +51,19 @@ export function PrivacySettings() {
           {sync.value.error}
         </p>
       )}
-      {granted && (
-        <ul class="settings-permissions" aria-label="What Prowl may do">
-          {describePermissions(granted).map(({ title, detail }) => (
-            <li key={title}>
-              <span class="settings-permissions__name">{title}</span>
-              <span class="settings-note">{detail}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <details>
+        <summary>What Prowl can access</summary>
+        {granted && (
+          <ul class="settings-permissions" aria-label="What Prowl may do">
+            {describePermissions(granted).map(({ title, detail }) => (
+              <li key={title}>
+                <span class="settings-permissions__name">{title}</span>
+                <span class="settings-note">{detail}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
       <GitHubLink class="settings-link" href={PRIVACY_URL}>
         Read the privacy policy
         <LinkExternalIcon size={12} />

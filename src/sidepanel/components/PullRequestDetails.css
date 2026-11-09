@@ -157,3 +157,10 @@
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
 }
+
+fieldset.pr-actions {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  margin: var(--space-2) 0;
+}

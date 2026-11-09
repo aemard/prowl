@@ -86,7 +86,9 @@ describe('fetchViewerTeams', () => {
     expect(paths).toEqual(['/user/teams?per_page=100&page=1', '/user/teams?per_page=100&page=2']);
 
     const capped = setup(many(MAX_TEAMS + 50));
-    expect(await fetchViewerTeams(capped.client)).toHaveLength(MAX_TEAMS);
+    const incomplete = vi.fn();
+    expect(await fetchViewerTeams(capped.client, incomplete)).toHaveLength(MAX_TEAMS);
+    expect(incomplete).toHaveBeenCalledOnce();
     expect(capped.paths).toHaveLength(MAX_TEAMS / 100);
   });
 

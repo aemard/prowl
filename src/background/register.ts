@@ -1,5 +1,4 @@
 import { OPEN_PANEL_COMMAND } from '../lib/model';
-import { initializeOnboarding } from '../lib/storage/onboarding';
 import { subscribeSettings } from '../lib/storage/settings';
 import { updateBadge, watchBadge } from './badge';
 import { handleMessage } from './messages';
@@ -15,13 +14,7 @@ export function registerBackground(): void {
     void updateBadge();
     void poll();
   };
-  chrome.runtime.onInstalled.addListener((details) => {
-    // Mark existing installations complete on update; only fresh installs see setup.
-    void initializeOnboarding(details.reason).catch((error) =>
-      console.error('Prowl: could not initialize first-run setup', error),
-    );
-    start();
-  });
+  chrome.runtime.onInstalled.addListener(start);
   chrome.runtime.onStartup.addListener(start);
   chrome.alarms.onAlarm.addListener(({ name }) => {
     if (name === POLL_ALARM) void poll();

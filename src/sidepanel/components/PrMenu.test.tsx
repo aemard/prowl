@@ -44,7 +44,6 @@ describe('PrMenu', () => {
       'Snooze until tomorrow',
       'Snooze until Monday',
       'Mute notifications',
-      'Re-run failed checks',
       'Convert to draft',
     ]);
   });

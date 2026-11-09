@@ -87,6 +87,12 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
   ${RATE_LIMIT}
 }`;
 
+/** Team fields are isolated: repo-only tokens must still load all other sections. */
+export const TEAM_SEARCH_QUERY = SEARCH_QUERY.replace(
+  '... on User { login }',
+  '... on User { login } ... on Team { slug organization { login } }',
+);
+
 /** The merge facts of open PRs: what GitHub computes per PR on every read (see the top). */
 export const MERGE_STATE_QUERY = /* GraphQL */ `
 query ProwlMergeState($ids: [ID!]!) {
@@ -223,7 +229,9 @@ export interface PullRequestNode {
     author: Login | null;
   }> | null;
   /** `{}` for a team (not selected, see `SEARCH_QUERY`). */
-  reviewRequests: Nodes<{ requestedReviewer: Partial<Login> | null }> | null;
+  reviewRequests: Nodes<{
+    requestedReviewer: (Partial<Login> & { slug?: string; organization?: Login | null }) | null;
+  }> | null;
   reviewThreads: Nodes<{ isResolved: boolean }>;
   comments: Nodes<{ createdAt: string; author: Login | null }>;
   commits: Nodes<{

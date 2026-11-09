@@ -84,7 +84,7 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   // Re-authenticating keeps the settings and the snapshot, and the banner goes with the problem.
   await serviceWorker.evaluate(() => chrome.storage.local.set({ settings: { maxPerSection: 30 } }));
   failWith(null);
-  await panel.getByRole('button', { name: 'Re-authenticate' }).click();
+  await panel.getByRole('button', { name: 'Sign in again' }).click();
   await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Use a personal access token' }).click();
@@ -114,7 +114,7 @@ test('a rejected token before the first list loads says so instead of a skeleton
   const panel = await openPanel();
   await expect(panel.getByRole('alert')).toContainText('token was revoked or expired');
   await expect(panel.getByRole('heading', { name: 'Could not load pull requests' })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Re-authenticate' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Sign in again' })).toBeVisible();
 });
 
 test('rate limited: banner with the reset time, no retry, the list stays readable', async ({

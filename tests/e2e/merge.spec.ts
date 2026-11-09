@@ -257,8 +257,8 @@ test.describe('merge', () => {
     await api.getByRole('button', { name: `Merge ${API.ref}`, exact: true }).click();
     const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
     const method = dialog.getByRole('combobox', { name: 'Merge method' });
-    await expect(method.locator('option')).toHaveText(['Squash and merge']);
-    await expect(method).toHaveValue('squash');
+    await expect(method).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: 'Squash and merge' })).toBeVisible();
     await expectNoA11yViolations(panel);
     expect(github.requestsFor(MERGE)).toHaveLength(0);
   });

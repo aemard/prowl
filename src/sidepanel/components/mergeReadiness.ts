@@ -11,6 +11,7 @@ import type { Tone } from './ui/cx';
 export interface MergeLine {
   tone: Tone;
   text: string;
+  link?: string;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -20,18 +21,23 @@ function reviewLine(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
     const by = pr.reviews.filter(({ state }) => state === 'changes_requested');
     return {
       tone: 'danger',
-      text: `Blocked: changes requested${by.length > 0 ? ` by ${by.map((r) => r.author).join(', ')}` : ''}`,
+      text: `Changes requested${by.length > 0 ? ` by ${by.map((r) => r.author).join(', ')}` : ''}`,
     };
   }
   if (pr.reviewDecision !== 'review_required') return null;
   const approvals = pr.reviews.filter(({ state }) => state === 'approved').length;
-  const missing = detail?.requiredApprovals ? Math.max(detail.requiredApprovals - approvals, 1) : 0;
+  const missing =
+    detail?.requiredApprovals &&
+    !pr.incomplete?.includes('reviews') &&
+    !detail.warnings?.some((warning) => warning.includes('reviews'))
+      ? Math.max(detail.requiredApprovals - approvals, 1)
+      : 0;
   return {
     tone: 'attention',
     text:
       missing > 0
-        ? `Blocked: ${missing} ${approvals > 0 ? 'more ' : ''}${missing === 1 ? 'approval' : 'approvals'} required`
-        : 'Blocked: review required',
+        ? `${missing} ${missing === 1 ? 'approval' : 'approvals'} needed`
+        : 'Review required',
   };
 }
 
@@ -48,16 +54,14 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   if (failed > 0) {
     const required = listed
       ? listed.filter((check) => check.required && check.state === 'failed').length
-      : pr.mergeStateStatus === 'unstable'
-        ? 0
-        : failed;
+      : failed;
     lines.push(
       required > 0
         ? {
-            tone: 'danger',
-            text: `Blocked: ${plural(required, listed ? 'required check' : 'check')} failing`,
+            tone: !listed && pr.mergeStateStatus === 'unstable' ? 'neutral' : 'danger',
+            text: `${plural(required, listed ? 'required check' : 'check')} failed`,
           }
-        : { tone: 'neutral', text: `${plural(failed, 'check')} failing, but not required` },
+        : { tone: 'neutral', text: `${plural(failed, 'optional check')} failed` },
     );
   }
   const waiting = listed
@@ -68,14 +72,18 @@ function checkLines(pr: PullRequest, detail: PullRequestDetail | undefined): Mer
   if (waiting > 0) {
     lines.push({
       tone: 'attention',
-      text: `Waiting for ${plural(waiting, listed ? 'required check' : 'check')} to finish`,
+      text: `${plural(waiting, listed ? 'required check' : 'check')} running`,
     });
   }
   return lines;
 }
 
 /** At least one line. A `neutral` line informs; any other tone is a blocker or the verdict. */
-export function mergeReadiness(pr: PullRequest, detail?: PullRequestDetail): MergeLine[] {
+export function mergeReadiness(
+  pr: PullRequest,
+  detail?: PullRequestDetail,
+  refreshed = false,
+): MergeLine[] {
   if (pr.state === 'merged') {
     return [{ tone: 'done', text: pr.closedBy ? `Merged by ${pr.closedBy}` : 'Merged' }];
   }
@@ -83,42 +91,41 @@ export function mergeReadiness(pr: PullRequest, detail?: PullRequestDetail): Mer
     return [{ tone: 'neutral', text: 'Closed without merging' }];
   }
   const lines: MergeLine[] = [];
-  if (pr.isDraft) {
-    lines.push({ tone: 'attention', text: 'Blocked: draft, mark it ready for review to merge' });
-  } else {
-    const review = reviewLine(pr, detail);
-    if (review) lines.push(review);
-  }
+  if (pr.isDraft) lines.push({ tone: 'attention', text: 'Draft' });
+  const review = reviewLine(pr, detail);
+  if (review) lines.push(review);
   if (pr.mergeable === 'conflicting') {
-    lines.push({ tone: 'warning', text: `Conflicts with ${pr.baseRefName}` });
+    lines.push({
+      tone: 'warning',
+      text: `Conflicts with ${pr.baseRefName}`,
+      link: 'Resolve on GitHub',
+    });
   }
   if (pr.mergeStateStatus === 'behind') {
-    lines.push({ tone: 'warning', text: `Blocked: branch is behind ${pr.baseRefName}` });
+    lines.push({ tone: 'warning', text: `Behind ${pr.baseRefName}` });
   }
   lines.push(...checkLines(pr, detail));
   if (detail?.requiresConversationResolution && pr.unresolvedThreads > 0) {
     lines.push({
       tone: 'attention',
-      text: `Blocked: ${plural(pr.unresolvedThreads, 'conversation')} to resolve`,
+      text: `${plural(pr.unresolvedThreads, 'conversation')} to resolve`,
     });
   }
-  if (lines.every(({ tone }) => tone === 'neutral')) {
-    if (
-      pr.mergeable === 'unknown' ||
-      pr.mergeStateStatus === 'unknown' ||
-      pr.reviewDecision === 'unknown'
-    ) {
-      lines.push({
-        tone: 'neutral',
-        text: 'Merge requirements have not been verified for this commit',
-      });
-    } else if (pr.mergeStateStatus === 'blocked') {
-      lines.push({ tone: 'attention', text: "Blocked by the base branch's rules" });
-    } else if (isReadyToMerge(pr)) {
-      lines.push({ tone: 'success', text: 'Ready to merge' });
-    } else {
-      lines.push({ tone: 'attention', text: 'Merge requirements are not satisfied' });
-    }
+  const unknown =
+    pr.mergeable === 'unknown' ||
+    pr.mergeStateStatus === 'unknown' ||
+    pr.reviewDecision === 'unknown';
+  if (unknown) {
+    lines.push({
+      tone: 'attention',
+      text: refreshed ? 'Merge status unknown' : 'Checking merge status…',
+      ...(refreshed ? { link: 'Open on GitHub' } : {}),
+    });
+  } else if (isReadyToMerge(pr) && lines.every(({ tone }) => tone === 'neutral')) {
+    lines.unshift({ tone: 'success', text: 'Ready to merge' });
+  } else if (lines.every(({ tone }) => tone === 'neutral')) {
+    lines.push({ tone: 'attention', text: 'Blocked by branch rules', link: 'Details on GitHub' });
   }
+  if (pr.autoMerge) lines.unshift({ tone: 'neutral', text: 'Auto-merge on, merges when ready' });
   return lines;
 }

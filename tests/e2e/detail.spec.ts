@@ -51,10 +51,10 @@ test.describe('expanding a card', () => {
     expect(github.requestsFor(DETAIL)).toHaveLength(1);
     expect(github.requestsFor(DETAIL)[0]?.body).toMatchObject({ variables: { id: CHECKOUT } });
 
-    expect(await texts(checkout.getByRole('list', { name: 'Merge' }))).toEqual([
-      'Blocked: changes requested by alice',
-      'Blocked: 1 required check failing',
-      'Blocked: 4 conversations to resolve',
+    expect(await texts(checkout.getByRole('list', { name: 'Merge status' }))).toEqual([
+      'Changes requested by alice',
+      '1 required check failed',
+      '4 conversations to resolve',
     ]);
     // What failed is in view, first, with its link; what passed is folded away.
     expect(await texts(checks)).toEqual(['buildRequiredFailed', 'e2e (chromium)Failed']);
@@ -90,16 +90,16 @@ test.describe('expanding a card', () => {
     await panel.screenshot({ path: test.info().outputPath('detail-dark.png') });
   });
 
-  test('says "Blocked: 1 approval required" and "Conflicts with main", or "Ready to merge"', async ({
+  test('says "1 approval needed" and "Conflicts with main", or "Ready to merge"', async ({
     openPanel,
   }) => {
     const panel = await openPanel();
     const conflicts = card(panel, /^Fix crash when rotating/);
     await toggle(conflicts).click();
     await expect(conflicts.getByRole('list', { name: 'Reviewers' })).toBeVisible();
-    expect(await texts(conflicts.getByRole('list', { name: 'Merge' }))).toEqual([
-      'Blocked: 1 approval required',
-      'Conflicts with main',
+    expect(await texts(conflicts.getByRole('list', { name: 'Merge status' }))).toEqual([
+      '1 approval needed',
+      'Conflicts with main · Resolve on GitHub',
     ]);
     expect(await texts(conflicts.getByRole('list', { name: 'Reviewers' }))).toEqual([
       'aliceReview requested',
@@ -109,7 +109,9 @@ test.describe('expanding a card', () => {
     const ready = card(panel, /^Add rate limiting/);
     await toggle(ready).click();
     await expect(ready.getByRole('list', { name: 'Reviewers' })).toBeVisible();
-    expect(await texts(ready.getByRole('list', { name: 'Merge' }))).toEqual(['Ready to merge']);
+    expect(await texts(ready.getByRole('list', { name: 'Merge status' }))).toEqual([
+      'Ready to merge',
+    ]);
     // The two stay open side by side.
     await expect(panel.locator('.pr-detail')).toHaveCount(2);
   });
@@ -173,16 +175,13 @@ test.describe('expanding a card', () => {
     await expect(checkout.getByRole('list', { name: 'Checks' })).toBeVisible();
     await expect(button).toBeFocused();
 
-    // Tab: the title link, then into the details (the actions, then the first failed check).
+    // The maintenance action precedes review actions; all links stay keyboard reachable.
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: /^Refactor checkout flow/ })).toBeFocused();
     await panel.keyboard.press('Tab');
-    await expect(checkout.getByRole('button', { name: /^Comment on / })).toBeFocused();
-    // Failing CI and no right to bypass the rules: no merge button (it could only fail).
-    await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('button', { name: /^Re-run failed checks of / })).toBeFocused();
     await panel.keyboard.press('Tab');
-    await expect(checkout.getByRole('button', { name: /^Convert to draft: / })).toBeFocused();
+    await expect(checkout.getByRole('button', { name: /^Comment on / })).toBeFocused();
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: 'View changes on GitHub' })).toBeFocused();
     await panel.keyboard.press('Tab');
@@ -211,7 +210,7 @@ test.describe('expanding a card', () => {
     await toggle(checkout).click();
     await expect(checkout.getByRole('alert')).toContainText('GitHub is having a bad day');
     // The merge facts from the list are there regardless.
-    await expect(checkout.getByRole('list', { name: 'Merge' })).toBeVisible();
+    await expect(checkout.getByRole('list', { name: 'Merge status' })).toBeVisible();
     await expectNoA11yViolations(panel);
 
     mockDetail(github);

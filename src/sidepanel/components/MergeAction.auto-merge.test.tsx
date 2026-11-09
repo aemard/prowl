@@ -65,7 +65,7 @@ describe('auto-merge', () => {
       }),
     );
     show({ ...blocked, autoMerge: { method: 'merge', enabledBy: 'octocat' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Disable auto-merge of acme/widgets#1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Turn off auto-merge of acme/widgets#1' }));
     await waitFor(() =>
       expect(toastTexts()).toEqual(['success: Auto-merge is off for acme/widgets#1']),
     );

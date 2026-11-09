@@ -1,9 +1,8 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
-import { formatRelativeTime } from '../../lib/time/relative';
+import { sendToBackground } from '../state/background';
 import { detailKey, details, loadDetail } from '../state/prDetail';
-import { snapshot } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -15,6 +14,7 @@ import {
   GitMergeIcon,
   InfoIcon,
   SkipIcon,
+  SyncIcon,
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
@@ -27,7 +27,6 @@ import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import type { Tone } from './ui/cx';
 import { Skeleton } from './ui/Skeleton';
-import { useNow } from './useNow';
 import './PullRequestDetails.css';
 
 interface Look {
@@ -81,17 +80,25 @@ function Group({
   );
 }
 
-function MergeLines({ lines, labelledBy }: { lines: MergeLine[]; labelledBy: string }) {
+function MergeLines({ lines, pr }: { lines: MergeLine[]; pr: PullRequest }) {
   return (
-    <ul class="pr-detail__list" aria-labelledby={labelledBy}>
-      {lines.map(({ tone, text }) => {
-        const Icon = LINE_ICONS[tone] ?? InfoIcon;
+    <ul class="pr-detail__list" aria-label="Merge status">
+      {lines.map(({ tone, text, link }) => {
+        const Icon = text.startsWith('Auto-merge on') ? SyncIcon : (LINE_ICONS[tone] ?? InfoIcon);
         return (
           <li class="pr-detail__row" key={text}>
             <span class="pr-detail__icon" data-tone={tone}>
               <Icon size={12} />
             </span>
-            <span class="pr-detail__text">{text}</span>
+            <span class="pr-detail__text">
+              {text === 'Checking merge status…' ? <span role="status">{text}</span> : text}
+              {link && (
+                <>
+                  {' '}
+                  · <GitHubLink href={pr.url}>{link}</GitHubLink>
+                </>
+              )}
+            </span>
           </li>
         );
       })}
@@ -112,11 +119,6 @@ function CheckRow({ check }: { check: CheckItem }) {
       {check.required && (
         <Badge size="sm" tone="neutral" title="The base branch requires this check to pass">
           Required
-        </Badge>
-      )}
-      {check.required === null && (
-        <Badge size="sm" tone="neutral">
-          Requirement unknown
         </Badge>
       )}
       <span class="pr-detail__state">{label}</span>
@@ -164,9 +166,14 @@ function Checks({
       )}
       {checks.length === 0 && (
         <p class="pr-detail__hint">
-          {pr.checks.total > 0
-            ? 'GitHub did not return the checks. A fine-grained token cannot read them.'
-            : 'No checks on the latest commit.'}
+          {pr.checks.total > 0 ? (
+            <>
+              Checks aren't available with this token ·{' '}
+              <GitHubLink href={`${pr.url}/checks`}>View on GitHub</GitHubLink>
+            </>
+          ) : (
+            'No checks on the latest commit.'
+          )}
         </p>
       )}
       {checks.length > 0 && checks.length < total && (
@@ -223,49 +230,42 @@ export interface PullRequestDetailsProps {
  * PR changes; a changed head or changed evidence shows a loading state until its detail is read.
  */
 export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
-  const now = useNow(30_000);
+  const [refreshed, setRefreshed] = useState(false);
   const key = detailKey(pr);
   useEffect(() => {
     void loadDetail(pr);
+    setRefreshed(false);
+    let active = true;
+    void sendToBackground({ type: 'refreshMergeState', prId: pr.id, headSha: pr.headSha }).finally(
+      () => {
+        if (active) setRefreshed(true);
+      },
+    );
+    return () => {
+      active = false;
+    };
   }, [key]);
 
   const entry = details.value[pr.id];
   const detail = entry?.key === key && !entry.loading && !entry.error ? entry.detail : undefined;
-  const checkedAt = snapshot.value?.mergeStateAt?.[pr.id];
-  const due = snapshot.value?.mergeStateDue?.includes(pr.id);
   const waiting = !detail && !entry?.error;
   return (
     <div id={id} class="pr-detail">
-      <Group id={`${id}-merge`} label="Merge">
-        <MergeLines lines={mergeReadiness(pr, detail)} labelledBy={`${id}-merge`} />
-        <p class="pr-detail__freshness">
-          {checkedAt ? (
-            <time dateTime={checkedAt} title={new Date(checkedAt).toLocaleString()}>
-              Merge facts verified {formatRelativeTime(checkedAt, now)}
-              {due ? ' · cached, verification due' : ''}.
-            </time>
-          ) : (
-            'Merge facts have not been verified for this commit.'
-          )}
-        </p>
-      </Group>
+      <MergeLines lines={mergeReadiness(pr, detail, refreshed)} pr={pr} />
       {pr.incomplete?.length || detail?.warnings?.length ? (
         <p class="pr-detail__freshness" role="note">
-          {pr.incomplete?.length ? `Some ${pr.incomplete.join(', ')} are not loaded. ` : ''}
-          {detail?.warnings?.join(' ')}{' '}
-          <GitHubLink href={pr.url}>View full details on GitHub</GitHubLink>
+          Some details are only on GitHub · <GitHubLink href={pr.url}>View on GitHub</GitHubLink>
         </p>
       ) : null}
-      <Group id={`${id}-actions`} label="Actions">
-        <div class="pr-actions">
-          <ReviewActions pr={pr} />
-          <MergeAction pr={pr} />
-          <MaintenanceActions pr={pr} />
-          <GitHubLink class="pr-actions__link" href={`${pr.url}/files`}>
-            View changes on GitHub
-          </GitHubLink>
-        </div>
-      </Group>
+      <fieldset class="pr-actions" aria-label={`Actions for #${pr.number}`}>
+        <MergeAction pr={pr} placement="merge" />
+        <MaintenanceActions pr={pr} />
+        <ReviewActions pr={pr} />
+        <MergeAction pr={pr} placement="auto" />
+        <GitHubLink class="pr-actions__link" href={`${pr.url}/files`}>
+          View changes on GitHub
+        </GitHubLink>
+      </fieldset>
       {entry?.error && (
         <p class="pr-detail__error" role="alert">
           <AlertIcon size={16} />
