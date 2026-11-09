@@ -2,10 +2,9 @@ import { useEffect, useState } from 'preact/hooks';
 import type { PollState, Snapshot } from '../../lib/model';
 import { type ActivityKind, pullRequestActivity } from './prActivity';
 
-// Exit fade (240ms) followed by row collapse (240ms); see PullRequestCardMotion.css.
-export const CARD_TRANSITION_MS = 480;
-// Entry (320ms) followed by the accent highlight fading out (1200ms).
-export const CARD_ENTER_MS = 1520;
+// Every card animation (arrive, merge, close, fade) lasts 1100ms; see PullRequestCardMotion.css.
+export const CARD_TRANSITION_MS = 1100;
+export const CARD_ENTER_MS = CARD_TRANSITION_MS;
 export type CardActivities = Record<string, ActivityKind>;
 
 /** Keep departing cards in their original sections until their exit animation finishes. */
