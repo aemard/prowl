@@ -7,7 +7,7 @@ import { Switch } from '../components/ui/Switch';
 import { sendToBackground } from '../state/background';
 import { navigate } from '../state/router';
 import { saveSettings } from '../state/settings';
-import { auth, pollState, settings, teams } from '../state/store';
+import { auth, pollState, settings, snapshot, teams } from '../state/store';
 import './Settings.css';
 import './SettingsTeams.css';
 
@@ -31,21 +31,33 @@ function followTeam(key: string, on: boolean) {
 }
 
 function TeamNotice({ state }: { state: TeamsState | undefined }) {
+  const fineGrained = auth.value?.tokenType === 'fine_grained';
+  const snap = snapshot.value;
+  const unidentified = settings.value.sections
+    .filter((section) => section.enabled && section.kind === 'team_review_requested')
+    .some((section) => snap?.sections[section.id]?.some((id) => !snap.teamRequests?.[id]?.length));
   return (
     <>
       {state?.error && (
         <div class="settings-teams__error" role="status">
           <p class="settings-note">
             {state.error.kind === 'missing_scope'
-              ? "Prowl can't see your teams."
+              ? fineGrained
+                ? 'Use a fine-grained token owned by the organization with the Members: read permission.'
+                : "Prowl can't see your teams."
               : "Couldn't load your teams."}
           </p>
-          {state.error.kind === 'missing_scope' && (
+          {state.error.kind === 'missing_scope' && !fineGrained && (
             <Button size="sm" variant="secondary" onClick={() => navigate('onboarding')}>
               Sign in again
             </Button>
           )}
         </div>
+      )}
+      {settings.value.unfollowedTeams.length > 0 && (!state || state.error || unidentified) && (
+        <p class="settings-note">
+          This token can't tell which team asked, so switched-off teams still show.
+        </p>
       )}
       {state && !state.error && state.teams.length === 0 && (
         <p class="settings-note">GitHub lists no team for your account.</p>

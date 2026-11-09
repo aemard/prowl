@@ -161,7 +161,7 @@ export class SearchContext {
   }
 
   private teamFallback = false;
-  private excludedTeams = new Set<string>();
+  readonly excludedPrs = new Set<string>();
   private pagePrs(page: SearchData['search'], teamSearch: boolean): PullRequest[] {
     const nodes = (page.nodes ?? []).filter(isNode).filter((node) => {
       if (!teamSearch) return true;
@@ -171,7 +171,7 @@ export class SearchContext {
         this.settings.unfollowedTeams,
         !this.teamFallback && this.partialMessages.length === 0,
       );
-      if (evidence.drop) this.excludedTeams.add(node.id);
+      if (evidence.drop) this.excludedPrs.add(node.id);
       else if (evidence.keys.length) this.result.teamRequests[node.id] = evidence.keys;
       return !evidence.drop;
     });
@@ -200,7 +200,7 @@ export class SearchContext {
       (id) => this.previous?.pullRequests[id] ?? [],
     );
     for (const pr of filterByRepo(cached, this.settings)) {
-      if (section.kind === 'team_review_requested' && this.excludedTeams.has(pr.id)) continue;
+      if (section.kind === 'team_review_requested' && this.excludedPrs.has(pr.id)) continue;
       if (members.size >= this.settings.maxPerSection) break;
       members.add(pr.id);
       this.result.pullRequests[pr.id] ??= pr;

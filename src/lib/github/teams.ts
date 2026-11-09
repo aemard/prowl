@@ -9,8 +9,8 @@ import type { GitHubClient } from './client';
 import { GitHubError, isPollBudgetFailure } from './errors';
 
 const PER_PAGE = 100;
-/** At most 100 pages, enough for large accounts while bounding discovery. */
-export const MAX_TEAMS = 10_000;
+/** Bound discovery to two pages. */
+export const MAX_TEAMS = 200;
 
 const HOUR_MS = 60 * 60 * 1000;
 /** A list is refreshed after a day; a failed discovery is retried after an hour. */

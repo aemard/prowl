@@ -173,7 +173,8 @@ async function readGone(context: SearchContext) {
   const { settings, result, previous } = context;
   const gone = filterByRepo(
     Object.values(previous?.pullRequests ?? {}).filter(
-      ({ id, state }) => state === 'open' && !(id in result.pullRequests),
+      ({ id, state }) =>
+        state === 'open' && !(id in result.pullRequests) && !context.excludedPrs.has(id),
     ),
     settings,
   );

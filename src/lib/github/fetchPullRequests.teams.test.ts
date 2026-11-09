@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { prNode, requestedTeam, searchResponse } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
+import { diffSnapshots } from '../diff/diffSnapshots';
+import { snapshot } from '../diff/diffSnapshots.test-support';
 import { fetchPullRequests } from './fetchPullRequests';
 import { bySearch, mapped, section, settings, setup } from './fetchPullRequests.test-support';
 import { SEARCH_QUERY, TEAM_SEARCH_QUERY } from './queries';
@@ -155,6 +157,67 @@ describe('team search', () => {
       discovered('acme/off'),
     );
     expect(result.sections.team_review_requested).toEqual([]);
+    expect(result.sectionCoverage?.team_review_requested?.stale).toBe(true);
+  });
+
+  it('drops switched-off open PRs without a gone lookup or closure events', async () => {
+    const off = requested(1, 'acme/off');
+    const before = snapshot([mapped(off)]);
+    before.sections = { team_review_requested: [off.id] };
+    const { client, calls } = setup({ ProwlSearch: bySearch({ '@me': [off] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ unfollowedTeams: ['acme/off'] }),
+      before,
+      discovered('acme/off'),
+    );
+    expect(result.sections.team_review_requested).toEqual([]);
+    expect(result.pullRequests).toEqual({});
+    expect(calls.some(({ operation }) => operation === 'ProwlNodes')).toBe(false);
+    expect(diffSnapshots(before, { ...before, ...result }, 'octocat')).toEqual([]);
+  });
+
+  it('pages past filtered PRs until the surviving cap is reached', async () => {
+    const off = requested(1, 'acme/off');
+    const on = requested(2, 'acme/on');
+    const { client, queries } = setup({ ProwlSearch: bySearch({ '@me': [off, off, on] }) });
+    const result = await fetchPullRequests(
+      client,
+      opts({ maxPerSection: 1, unfollowedTeams: ['acme/off'] }),
+      null,
+      discovered('acme/off', 'acme/on'),
+    );
+    expect(queries()).toHaveLength(3);
+    expect(result.sections.team_review_requested).toEqual([on.id]);
+    expect(result.sectionCoverage).toBeUndefined();
+  });
+
+  it('searches despite discovery errors and keeps unidentified results', async () => {
+    const pr = requested(1, 'acme/off');
+    const { client, queries } = setup({ ProwlSearch: bySearch({ '@me': [pr] }) });
+    const result = await fetchPullRequests(client, opts({ unfollowedTeams: ['acme/off'] }), null, {
+      ...discovered('acme/off'),
+      error: { kind: 'server', message: 'Discovery failed' },
+    });
+    expect(queries()).toHaveLength(1);
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.teamRequests).toEqual({});
+    expect(result.sectionErrors).toEqual({});
+  });
+
+  it('preserves cached membership and section errors when team search fails', async () => {
+    const pr = requested(1, 'acme/off');
+    const { client } = setup({
+      ProwlSearch: () => jsonResponse({ message: 'No access' }, { status: 403 }),
+    });
+    const result = await fetchPullRequests(
+      client,
+      opts(),
+      { pullRequests: { [pr.id]: mapped(pr) }, sections: { team_review_requested: [pr.id] } },
+      { teams: [], error: { kind: 'server', message: 'Discovery failed' } },
+    );
+    expect(result.sections.team_review_requested).toEqual([pr.id]);
+    expect(result.sectionErrors.team_review_requested).toContain('No access');
     expect(result.sectionCoverage?.team_review_requested?.stale).toBe(true);
   });
 

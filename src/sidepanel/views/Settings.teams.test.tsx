@@ -1,14 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultSettings } from '../../lib/storage/settings';
-import { buildAuth } from '../../test/panel';
-import { auth, settings, teams } from '../state/store';
+import { buildAuth, buildPullRequest, buildSnapshotOf } from '../../test/panel';
+import { auth, settings, snapshot, teams } from '../state/store';
 import { group, open, teamsState, toggle } from './Settings.test-support';
 import { TeamPicker } from './SettingsTeams';
 
 afterEach(() => {
   auth.value = undefined;
   teams.value = undefined;
+  snapshot.value = undefined;
   settings.value = defaultSettings();
 });
 
@@ -54,6 +55,39 @@ describe('inline team picker', () => {
     });
     expect(screen.getAllByText("Prowl can't see your teams.")).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: 'Sign in again' })).toHaveLength(1);
+  });
+
+  it('explains unidentified requests once when teams are switched off', () => {
+    auth.value = buildAuth();
+    teams.value = teamsState();
+    settings.value = {
+      ...defaultSettings(),
+      sections: [
+        { id: 'teams', kind: 'team_review_requested', label: 'Team reviews', enabled: true },
+      ],
+      unfollowedTeams: ['acme/ops'],
+    };
+    snapshot.value = buildSnapshotOf({ teams: [buildPullRequest()] });
+    render(<TeamPicker />);
+    expect(
+      screen.getAllByText(
+        "This token can't tell which team asked, so switched-off teams still show.",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('explains fine-grained team permissions without offering sign-in', () => {
+    auth.value = { ...buildAuth(), tokenType: 'fine_grained' };
+    teams.value = teamsState({
+      error: { kind: 'missing_scope', message: 'Needs permissions' },
+    });
+    render(<TeamPicker />);
+    expect(
+      screen.getByText(
+        'Use a fine-grained token owned by the organization with the Members: read permission.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Sign in again' })).toBeNull();
   });
 
   it('discovers automatically and shows loading without a cache', async () => {
