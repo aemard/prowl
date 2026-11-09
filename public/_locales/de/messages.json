@@ -1941,11 +1941,11 @@
     "message": "Sprache"
   },
   "headCommitChangedRefreshAndTryAgain": {
-    "message": "The head commit changed. Refresh and try again.",
+    "message": "Der Head-Commit hat sich geändert. Aktualisiere und versuche es erneut.",
     "description": "Check restart error when the pull request head changes while loading suites."
   },
   "notAllCheckSuitesCouldBeLoaded": {
-    "message": "Not all check suites could be loaded. Re-run checks on GitHub.",
+    "message": "Nicht alle Prüfsuiten konnten geladen werden. Führe die Prüfungen auf GitHub erneut aus.",
     "description": "Check restart error when check suite pagination is incomplete."
   },
   "prowl": {
@@ -1953,19 +1953,19 @@
     "description": "Extension text: Prowl"
   },
   "turnOffAutoMerge": {
-    "message": "Turn off auto-merge",
+    "message": "Automatisches Mergen deaktivieren",
     "description": "Extension text: Turn off auto-merge"
   },
   "mergeOnGitHub": {
-    "message": "Merge on GitHub",
+    "message": "Auf GitHub mergen",
     "description": "Extension text: Merge on GitHub"
   },
   "mergeWithoutWaiting": {
-    "message": "Merge without waiting",
+    "message": "Ohne Warten mergen",
     "description": "Extension text: Merge without waiting"
   },
   "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
-    "message": "Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "message": "Lass GitHub $P1$ in $P2$ mergen, sobald die Prüfungen und Reviews bestanden sind.",
     "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
     "placeholders": {
       "p1": {
@@ -1977,35 +1977,35 @@
     }
   },
   "youCanBypassTheBranchRulesForThisPullRequest": {
-    "message": "You can bypass the branch rules for this pull request.",
+    "message": "Du kannst die Branch-Regeln für diesen PR umgehen.",
     "description": "Extension text: You can bypass the branch rules for this pull request."
   },
   "justOpened": {
-    "message": "Just opened",
+    "message": "Gerade geöffnet",
     "description": "Extension text: Just opened"
   },
   "mergeStatus": {
-    "message": "Merge status",
+    "message": "Merge-Status",
     "description": "Extension text: Merge status"
   },
   "checkingMergeStatus": {
-    "message": "Checking merge status…",
+    "message": "Merge-Status wird geprüft…",
     "description": "Extension text: Checking merge status…"
   },
   "thisTokenCanTReadChecks": {
-    "message": "This token can't read checks ·",
+    "message": "Dieses Token kann keine Prüfungen lesen ·",
     "description": "Extension text: This token can't read checks ·"
   },
   "viewOnGitHub": {
-    "message": "View on GitHub",
+    "message": "Auf GitHub ansehen",
     "description": "Extension text: View on GitHub"
   },
   "someDetailsAreOnlyOnGitHub": {
-    "message": "Some details are only on GitHub ·",
+    "message": "Einige Details sind nur auf GitHub verfügbar ·",
     "description": "Extension text: Some details are only on GitHub ·"
   },
   "actionsFor2": {
-    "message": "Actions for #$P1$",
+    "message": "Aktionen für #$P1$",
     "description": "Extension text: Actions for #$P1$",
     "placeholders": {
       "p1": {
@@ -2014,11 +2014,11 @@
     }
   },
   "viewChangesOnGitHub": {
-    "message": "View changes on GitHub",
+    "message": "Änderungen auf GitHub ansehen",
     "description": "Extension text: View changes on GitHub"
   },
   "couldNotReachGitHub": {
-    "message": "Could not reach GitHub — $P1$",
+    "message": "GitHub ist nicht erreichbar — $P1$",
     "description": "Extension text: Could not reach GitHub — $P1$",
     "placeholders": {
       "p1": {
@@ -2027,11 +2027,11 @@
     }
   },
   "resolveOnGitHub": {
-    "message": "Resolve on GitHub",
+    "message": "Auf GitHub lösen",
     "description": "Extension text: Resolve on GitHub"
   },
   "behind": {
-    "message": "Behind $P1$",
+    "message": "Hinter $P1$",
     "description": "Extension text: Behind $P1$",
     "placeholders": {
       "p1": {
@@ -2040,27 +2040,27 @@
     }
   },
   "mergeStatusUnknown": {
-    "message": "Merge status unknown",
+    "message": "Merge-Status unbekannt",
     "description": "Extension text: Merge status unknown"
   },
   "openOnGitHub": {
-    "message": "Open on GitHub",
+    "message": "Auf GitHub öffnen",
     "description": "Extension text: Open on GitHub"
   },
   "blockedByBranchRules": {
-    "message": "Blocked by branch rules",
+    "message": "Durch Branch-Regeln blockiert",
     "description": "Extension text: Blocked by branch rules"
   },
   "detailsOnGitHub": {
-    "message": "Details on GitHub",
+    "message": "Details auf GitHub",
     "description": "Extension text: Details on GitHub"
   },
   "autoMergeOnMergesWhenReady": {
-    "message": "Auto-merge on, merges when ready",
+    "message": "Automatisches Mergen aktiv, wird gemergt, sobald bereit",
     "description": "Extension text: Auto-merge on, merges when ready"
   },
   "listUpdated2": {
-    "message": "List updated $P1$",
+    "message": "Liste aktualisiert $P1$",
     "description": "Extension text: List updated $P1$",
     "placeholders": {
       "p1": {
@@ -2069,7 +2069,7 @@
     }
   },
   "changesRequestedBy": {
-    "message": "Changes requested by $P1$",
+    "message": "Änderungen von $P1$ angefordert",
     "description": "Extension text: Changes requested by $P1$",
     "placeholders": {
       "p1": {
@@ -2078,7 +2078,7 @@
     }
   },
   "approvalNeeded": {
-    "message": "$P1$ approval needed",
+    "message": "$P1$ Genehmigung erforderlich",
     "description": "Extension text: $P1$ approval needed",
     "placeholders": {
       "p1": {
@@ -2087,7 +2087,7 @@
     }
   },
   "approvalsNeeded": {
-    "message": "$P1$ approvals needed",
+    "message": "$P1$ Genehmigungen erforderlich",
     "description": "Extension text: $P1$ approvals needed",
     "placeholders": {
       "p1": {
@@ -2096,7 +2096,7 @@
     }
   },
   "requiredCheckFailed": {
-    "message": "$P1$ required check failed",
+    "message": "$P1$ erforderliche Prüfung fehlgeschlagen",
     "description": "Extension text: $P1$ required check failed",
     "placeholders": {
       "p1": {
@@ -2105,7 +2105,7 @@
     }
   },
   "requiredChecksFailed": {
-    "message": "$P1$ required checks failed",
+    "message": "$P1$ erforderliche Prüfungen fehlgeschlagen",
     "description": "Extension text: $P1$ required checks failed",
     "placeholders": {
       "p1": {
@@ -2114,7 +2114,7 @@
     }
   },
   "checkFailed": {
-    "message": "$P1$ check failed",
+    "message": "$P1$ Prüfung fehlgeschlagen",
     "description": "Extension text: $P1$ check failed",
     "placeholders": {
       "p1": {
@@ -2123,7 +2123,7 @@
     }
   },
   "checksFailed": {
-    "message": "$P1$ checks failed",
+    "message": "$P1$ Prüfungen fehlgeschlagen",
     "description": "Extension text: $P1$ checks failed",
     "placeholders": {
       "p1": {
@@ -2132,7 +2132,7 @@
     }
   },
   "optionalCheckFailed": {
-    "message": "$P1$ optional check failed",
+    "message": "$P1$ optionale Prüfung fehlgeschlagen",
     "description": "Extension text: $P1$ optional check failed",
     "placeholders": {
       "p1": {
@@ -2141,7 +2141,7 @@
     }
   },
   "optionalChecksFailed": {
-    "message": "$P1$ optional checks failed",
+    "message": "$P1$ optionale Prüfungen fehlgeschlagen",
     "description": "Extension text: $P1$ optional checks failed",
     "placeholders": {
       "p1": {
@@ -2150,7 +2150,7 @@
     }
   },
   "requiredCheckRunning": {
-    "message": "$P1$ required check running",
+    "message": "$P1$ erforderliche Prüfung läuft",
     "description": "Extension text: $P1$ required check running",
     "placeholders": {
       "p1": {
@@ -2159,7 +2159,7 @@
     }
   },
   "requiredChecksRunning": {
-    "message": "$P1$ required checks running",
+    "message": "$P1$ erforderliche Prüfungen laufen",
     "description": "Extension text: $P1$ required checks running",
     "placeholders": {
       "p1": {
@@ -2168,7 +2168,7 @@
     }
   },
   "checkRunning": {
-    "message": "$P1$ check running",
+    "message": "$P1$ Prüfung läuft",
     "description": "Extension text: $P1$ check running",
     "placeholders": {
       "p1": {
@@ -2177,7 +2177,7 @@
     }
   },
   "checksRunning2": {
-    "message": "$P1$ checks running",
+    "message": "$P1$ Prüfungen laufen",
     "description": "Extension text: $P1$ checks running",
     "placeholders": {
       "p1": {
@@ -2186,7 +2186,7 @@
     }
   },
   "conversationToResolve": {
-    "message": "$P1$ conversation to resolve",
+    "message": "$P1$ Diskussion zu lösen",
     "description": "Extension text: $P1$ conversation to resolve",
     "placeholders": {
       "p1": {
@@ -2195,7 +2195,7 @@
     }
   },
   "conversationsToResolve": {
-    "message": "$P1$ conversations to resolve",
+    "message": "$P1$ Diskussionen zu lösen",
     "description": "Extension text: $P1$ conversations to resolve",
     "placeholders": {
       "p1": {
@@ -2204,7 +2204,7 @@
     }
   },
   "unresolved2": {
-    "message": "$P1$ unresolved",
+    "message": "$P1$ ungelöst",
     "description": "Extension text: $P1$ unresolved",
     "placeholders": {
       "p1": {
@@ -2213,91 +2213,91 @@
     }
   },
   "updatingMergeStatus2": {
-    "message": ". Updating merge status",
+    "message": ". Merge-Status wird aktualisiert",
     "description": "Extension text: . Updating merge status"
   },
   "noReviewRequestsForYourTeams": {
-    "message": "No review requests for your teams.",
+    "message": "Keine Review-Anfragen für deine Teams.",
     "description": "Text in ListSections.tsx"
   },
   "allLoadedPullRequestsAreSnoozed": {
-    "message": "All loaded pull requests are snoozed",
+    "message": "Alle geladenen PRs sind pausiert",
     "description": "Text in ListSections.tsx"
   },
   "theyReturnHereWhenTheSnoozeEnds": {
-    "message": "They return here when the snooze ends.",
+    "message": "Sie erscheinen hier wieder, wenn die Pause endet.",
     "description": "Text in ListSections.tsx"
   },
   "showSnoozed": {
-    "message": "Show snoozed",
+    "message": "Pausierte anzeigen",
     "description": "Text in ListSections.tsx"
   },
   "seeYourPullRequestsHere": {
-    "message": "See your pull requests here",
+    "message": "Sieh deine PRs hier",
     "description": "Text in Onboarding.tsx"
   },
   "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
-    "message": "Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub.",
+    "message": "Autorisiere Prowl auf GitHub. Dein Token bleibt in diesem Browser und wird nur an GitHub gesendet.",
     "description": "Text in Onboarding.tsx"
   },
   "useAPersonalAccessToken": {
-    "message": "Use a personal access token",
+    "message": "Persönliches Zugriffstoken verwenden",
     "description": "Text in Onboarding.tsx"
   },
   "prowlOnlyWatchesThePullRequestsItLoads": {
-    "message": "Prowl only watches the pull requests it loads.",
+    "message": "Prowl verfolgt nur die PRs, die es lädt.",
     "description": "Text in Settings.tsx"
   },
   "refreshEveryMinutes": {
-    "message": "Refresh every (minutes)",
+    "message": "Aktualisieren alle (Minuten)",
     "description": "Text in Settings.tsx"
   },
   "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
-    "message": "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+    "message": "Mehr PRs und kürzere Intervalle verbrauchen mehr vom stündlichen GitHub-Limit.",
     "description": "Text in Settings.tsx"
   },
   "list": {
-    "message": "List",
+    "message": "Liste",
     "description": "Text in Settings.tsx"
   },
   "reviewRequestsSentToYourTeams": {
-    "message": "Review requests sent to your teams",
+    "message": "Review-Anfragen an deine Teams",
     "description": "Text in SettingsModel.ts"
   },
   "whatProwlCanAccess": {
-    "message": "What Prowl can access",
+    "message": "Worauf Prowl zugreifen kann",
     "description": "Text in SettingsPrivacy.tsx"
   },
   "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
-    "message": "Exclude pull requests in these, even when they match an include.",
+    "message": "PRs in diesen Repositorys ausschließen, auch wenn sie einer Einschlussregel entsprechen.",
     "description": "Text in SettingsScope.tsx"
   },
   "useAFineGrainedTokenOwnedByTheOrganizationWith": {
-    "message": "Use a fine-grained token owned by the organization with the Members: read permission.",
+    "message": "Verwende ein fein abgestuftes Token der Organisation mit Members-Leseberechtigung.",
     "description": "Text in SettingsTeams.tsx"
   },
   "prowlCanTSeeYourTeams": {
-    "message": "Prowl can't see your teams.",
+    "message": "Prowl kann deine Teams nicht sehen.",
     "description": "Text in SettingsTeams.tsx"
   },
   "couldnTLoadYourTeams": {
-    "message": "Couldn't load your teams.",
+    "message": "Deine Teams konnten nicht geladen werden.",
     "description": "Text in SettingsTeams.tsx"
   },
   "thisTokenCanTTellWhichTeamAskedSoSwitched": {
-    "message": "This token can't tell which team asked, so switched-off teams still show.",
+    "message": "Dieses Token erkennt nicht, welches Team angefragt hat. Daher werden auch deaktivierte Teams angezeigt.",
     "description": "Text in SettingsTeams.tsx"
   },
   "loadingYourTeams": {
-    "message": "Loading your teams…",
+    "message": "Deine Teams werden geladen…",
     "description": "Text in SettingsTeams.tsx"
   },
   "missingATeam": {
-    "message": "Missing a team?",
+    "message": "Fehlt ein Team?",
     "description": "Text in SettingsTeams.tsx"
   },
   "sectionPartialResults": {
-    "message": "Partial results for “$P1$”: $P2$",
+    "message": "Teilergebnisse für „$P1$“: $P2$",
     "description": "Section load error when only partial results were returned.",
     "placeholders": {
       "p1": {
@@ -2309,7 +2309,7 @@
     }
   },
   "searchingSection": {
-    "message": "Searching “$P1$”…",
+    "message": "„$P1$“ wird durchsucht…",
     "description": "Status while a section search is running.",
     "placeholders": {
       "p1": {
@@ -2318,7 +2318,7 @@
     }
   },
   "nothingInLoadedMatches": {
-    "message": "Nothing in “$P1$” matches “$P2$”. This search only covers the loaded PRs.",
+    "message": "In „$P1$“ passt nichts zu „$P2$“. Diese Suche umfasst nur die geladenen PRs.",
     "description": "Empty filter result when the section has more pull requests on GitHub.",
     "placeholders": {
       "p1": {
@@ -2330,11 +2330,11 @@
     }
   },
   "listCoverage": {
-    "message": "List coverage",
+    "message": "Umfang der Liste",
     "description": "Accessible label for the section search coverage notice."
   },
   "loadedCount": {
-    "message": "$P1$ loaded · ",
+    "message": "$P1$ geladen · ",
     "description": "Number of pull requests loaded before the GitHub search link.",
     "placeholders": {
       "p1": {
@@ -2343,15 +2343,15 @@
     }
   },
   "searchSsoRequired": {
-    "message": "An organization requires single sign-on (SAML) that this token is not authorized for, so its pull requests are missing. Authorize the token for that organization on GitHub.",
+    "message": "Eine Organisation erfordert Single Sign-on (SAML), für das dieses Token nicht autorisiert ist. Daher fehlen ihre PRs. Autorisiere das Token für diese Organisation auf GitHub.",
     "description": "Warning when organization SAML authorization hides search results."
   },
   "searchCursorUnavailable": {
-    "message": "GitHub did not provide a usable next-page cursor.",
+    "message": "GitHub hat keinen nutzbaren Cursor für die nächste Seite bereitgestellt.",
     "description": "Warning when search pagination cannot continue."
   },
   "mergeRequirementsUnreadable": {
-    "message": "Some merge requirements could not be read: $P1$",
+    "message": "Einige Merge-Anforderungen konnten nicht gelesen werden: $P1$",
     "description": "Warning with GitHub errors explaining incomplete merge requirements.",
     "placeholders": {
       "p1": {
@@ -2360,7 +2360,7 @@
     }
   },
   "detailsUnreadable": {
-    "message": "Some details could not be read: $P1$",
+    "message": "Einige Details konnten nicht gelesen werden: $P1$",
     "description": "Warning with GitHub errors explaining incomplete pull request details.",
     "placeholders": {
       "p1": {
@@ -2369,47 +2369,47 @@
     }
   },
   "reviewsNotLoaded": {
-    "message": "Some reviews are not loaded. View the full conversation on GitHub.",
+    "message": "Einige Reviews sind nicht geladen. Sieh dir die vollständige Diskussion auf GitHub an.",
     "description": "Warning when reviews were truncated by the API."
   },
   "reviewRequestsNotLoaded": {
-    "message": "Some review requests are not loaded. View the full conversation on GitHub.",
+    "message": "Einige Review-Anfragen sind nicht geladen. Sieh dir die vollständige Diskussion auf GitHub an.",
     "description": "Warning when requested reviewers were truncated by the API."
   },
   "previewNewPr": {
-    "message": "New PR",
+    "message": "Neuer PR",
     "description": "Preview button to simulate a new pull request."
   },
   "previewMergePr": {
-    "message": "Merge PR",
+    "message": "PR mergen",
     "description": "Preview button to simulate a merged pull request."
   },
   "previewClosePr": {
-    "message": "Close PR",
+    "message": "PR schließen",
     "description": "Preview button to simulate a closed pull request."
   },
   "previewUpdateFailed": {
-    "message": "Could not simulate the update. Reload to try again.",
+    "message": "Die Aktualisierung konnte nicht simuliert werden. Lade die Seite neu und versuche es erneut.",
     "description": "Preview simulation error."
   },
   "previewTestAnimations": {
-    "message": "Test PR animations",
+    "message": "PR-Animationen testen",
     "description": "Accessible label for preview animation controls."
   },
   "previewTryUpdate": {
-    "message": "Try an update",
+    "message": "Aktualisierung ausprobieren",
     "description": "Heading for preview simulation controls."
   },
   "previewTitle": {
-    "message": "Prowl — mock preview",
+    "message": "Prowl — Demo-Vorschau",
     "description": "Browser title for the mock preview."
   },
   "previewMode": {
-    "message": "Preview mode",
+    "message": "Vorschaumodus",
     "description": "Accessible label for the preview information banner."
   },
   "previewBanner": {
-    "message": "Mock preview · Sample data · Reload to reset",
+    "message": "Demo-Vorschau · Beispieldaten · Zum Zurücksetzen neu laden",
     "description": "Information banner on the mock preview page."
   },
   "matchChromeLanguage": {

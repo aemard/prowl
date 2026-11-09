@@ -1843,7 +1843,7 @@
     }
   },
   "actionReference": {
-    "message": "$P1$: $P2$",
+    "message": "$P1$：$P2$",
     "placeholders": {
       "p1": {
         "content": "$1"
@@ -1941,11 +1941,11 @@
     "message": "言語"
   },
   "headCommitChangedRefreshAndTryAgain": {
-    "message": "The head commit changed. Refresh and try again.",
+    "message": "最新のコミットが変更されました。更新して再試行してください。",
     "description": "Check restart error when the pull request head changes while loading suites."
   },
   "notAllCheckSuitesCouldBeLoaded": {
-    "message": "Not all check suites could be loaded. Re-run checks on GitHub.",
+    "message": "一部のチェックスイートを読み込めませんでした。GitHub でチェックを再実行してください。",
     "description": "Check restart error when check suite pagination is incomplete."
   },
   "prowl": {
@@ -1953,19 +1953,19 @@
     "description": "Extension text: Prowl"
   },
   "turnOffAutoMerge": {
-    "message": "Turn off auto-merge",
+    "message": "自動マージを無効化",
     "description": "Extension text: Turn off auto-merge"
   },
   "mergeOnGitHub": {
-    "message": "Merge on GitHub",
+    "message": "GitHub でマージ",
     "description": "Extension text: Merge on GitHub"
   },
   "mergeWithoutWaiting": {
-    "message": "Merge without waiting",
+    "message": "待たずにマージ",
     "description": "Extension text: Merge without waiting"
   },
   "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
-    "message": "Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "message": "チェックとレビューの通過後、GitHub が $P1$ を $P2$ にマージします。",
     "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
     "placeholders": {
       "p1": {
@@ -1977,35 +1977,35 @@
     }
   },
   "youCanBypassTheBranchRulesForThisPullRequest": {
-    "message": "You can bypass the branch rules for this pull request.",
+    "message": "この PR のブランチルールをバイパスできます。",
     "description": "Extension text: You can bypass the branch rules for this pull request."
   },
   "justOpened": {
-    "message": "Just opened",
+    "message": "作成したばかり",
     "description": "Extension text: Just opened"
   },
   "mergeStatus": {
-    "message": "Merge status",
+    "message": "マージステータス",
     "description": "Extension text: Merge status"
   },
   "checkingMergeStatus": {
-    "message": "Checking merge status…",
+    "message": "マージステータスを確認中…",
     "description": "Extension text: Checking merge status…"
   },
   "thisTokenCanTReadChecks": {
-    "message": "This token can't read checks ·",
+    "message": "このトークンではチェックを読み取れません ·",
     "description": "Extension text: This token can't read checks ·"
   },
   "viewOnGitHub": {
-    "message": "View on GitHub",
+    "message": "GitHub で表示",
     "description": "Extension text: View on GitHub"
   },
   "someDetailsAreOnlyOnGitHub": {
-    "message": "Some details are only on GitHub ·",
+    "message": "一部の詳細は GitHub でのみ表示できます ·",
     "description": "Extension text: Some details are only on GitHub ·"
   },
   "actionsFor2": {
-    "message": "Actions for #$P1$",
+    "message": "#$P1$ の操作",
     "description": "Extension text: Actions for #$P1$",
     "placeholders": {
       "p1": {
@@ -2014,11 +2014,11 @@
     }
   },
   "viewChangesOnGitHub": {
-    "message": "View changes on GitHub",
+    "message": "GitHub で変更を表示",
     "description": "Extension text: View changes on GitHub"
   },
   "couldNotReachGitHub": {
-    "message": "Could not reach GitHub — $P1$",
+    "message": "GitHub に接続できませんでした：$P1$",
     "description": "Extension text: Could not reach GitHub — $P1$",
     "placeholders": {
       "p1": {
@@ -2027,11 +2027,11 @@
     }
   },
   "resolveOnGitHub": {
-    "message": "Resolve on GitHub",
+    "message": "GitHub で解決",
     "description": "Extension text: Resolve on GitHub"
   },
   "behind": {
-    "message": "Behind $P1$",
+    "message": "$P1$ より遅れています",
     "description": "Extension text: Behind $P1$",
     "placeholders": {
       "p1": {
@@ -2040,27 +2040,27 @@
     }
   },
   "mergeStatusUnknown": {
-    "message": "Merge status unknown",
+    "message": "マージステータス不明",
     "description": "Extension text: Merge status unknown"
   },
   "openOnGitHub": {
-    "message": "Open on GitHub",
+    "message": "GitHub で開く",
     "description": "Extension text: Open on GitHub"
   },
   "blockedByBranchRules": {
-    "message": "Blocked by branch rules",
+    "message": "ブランチルールによりブロック中",
     "description": "Extension text: Blocked by branch rules"
   },
   "detailsOnGitHub": {
-    "message": "Details on GitHub",
+    "message": "GitHub で詳細を表示",
     "description": "Extension text: Details on GitHub"
   },
   "autoMergeOnMergesWhenReady": {
-    "message": "Auto-merge on, merges when ready",
+    "message": "自動マージ有効、準備が整うとマージします",
     "description": "Extension text: Auto-merge on, merges when ready"
   },
   "listUpdated2": {
-    "message": "List updated $P1$",
+    "message": "リスト更新：$P1$",
     "description": "Extension text: List updated $P1$",
     "placeholders": {
       "p1": {
@@ -2069,7 +2069,7 @@
     }
   },
   "changesRequestedBy": {
-    "message": "Changes requested by $P1$",
+    "message": "$P1$ が変更を要求",
     "description": "Extension text: Changes requested by $P1$",
     "placeholders": {
       "p1": {
@@ -2078,7 +2078,7 @@
     }
   },
   "approvalNeeded": {
-    "message": "$P1$ approval needed",
+    "message": "承認が $P1$ 件必要",
     "description": "Extension text: $P1$ approval needed",
     "placeholders": {
       "p1": {
@@ -2087,7 +2087,7 @@
     }
   },
   "approvalsNeeded": {
-    "message": "$P1$ approvals needed",
+    "message": "承認が $P1$ 件必要",
     "description": "Extension text: $P1$ approvals needed",
     "placeholders": {
       "p1": {
@@ -2096,7 +2096,7 @@
     }
   },
   "requiredCheckFailed": {
-    "message": "$P1$ required check failed",
+    "message": "必須チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ required check failed",
     "placeholders": {
       "p1": {
@@ -2105,7 +2105,7 @@
     }
   },
   "requiredChecksFailed": {
-    "message": "$P1$ required checks failed",
+    "message": "必須チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ required checks failed",
     "placeholders": {
       "p1": {
@@ -2114,7 +2114,7 @@
     }
   },
   "checkFailed": {
-    "message": "$P1$ check failed",
+    "message": "チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ check failed",
     "placeholders": {
       "p1": {
@@ -2123,7 +2123,7 @@
     }
   },
   "checksFailed": {
-    "message": "$P1$ checks failed",
+    "message": "チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ checks failed",
     "placeholders": {
       "p1": {
@@ -2132,7 +2132,7 @@
     }
   },
   "optionalCheckFailed": {
-    "message": "$P1$ optional check failed",
+    "message": "任意チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ optional check failed",
     "placeholders": {
       "p1": {
@@ -2141,7 +2141,7 @@
     }
   },
   "optionalChecksFailed": {
-    "message": "$P1$ optional checks failed",
+    "message": "任意チェック $P1$ 件が失敗",
     "description": "Extension text: $P1$ optional checks failed",
     "placeholders": {
       "p1": {
@@ -2150,7 +2150,7 @@
     }
   },
   "requiredCheckRunning": {
-    "message": "$P1$ required check running",
+    "message": "必須チェック $P1$ 件を実行中",
     "description": "Extension text: $P1$ required check running",
     "placeholders": {
       "p1": {
@@ -2159,7 +2159,7 @@
     }
   },
   "requiredChecksRunning": {
-    "message": "$P1$ required checks running",
+    "message": "必須チェック $P1$ 件を実行中",
     "description": "Extension text: $P1$ required checks running",
     "placeholders": {
       "p1": {
@@ -2168,7 +2168,7 @@
     }
   },
   "checkRunning": {
-    "message": "$P1$ check running",
+    "message": "チェック $P1$ 件を実行中",
     "description": "Extension text: $P1$ check running",
     "placeholders": {
       "p1": {
@@ -2177,7 +2177,7 @@
     }
   },
   "checksRunning2": {
-    "message": "$P1$ checks running",
+    "message": "チェック $P1$ 件を実行中",
     "description": "Extension text: $P1$ checks running",
     "placeholders": {
       "p1": {
@@ -2186,7 +2186,7 @@
     }
   },
   "conversationToResolve": {
-    "message": "$P1$ conversation to resolve",
+    "message": "未解決の会話 $P1$ 件",
     "description": "Extension text: $P1$ conversation to resolve",
     "placeholders": {
       "p1": {
@@ -2195,7 +2195,7 @@
     }
   },
   "conversationsToResolve": {
-    "message": "$P1$ conversations to resolve",
+    "message": "未解決の会話 $P1$ 件",
     "description": "Extension text: $P1$ conversations to resolve",
     "placeholders": {
       "p1": {
@@ -2204,7 +2204,7 @@
     }
   },
   "unresolved2": {
-    "message": "$P1$ unresolved",
+    "message": "未解決 $P1$ 件",
     "description": "Extension text: $P1$ unresolved",
     "placeholders": {
       "p1": {
@@ -2213,91 +2213,91 @@
     }
   },
   "updatingMergeStatus2": {
-    "message": ". Updating merge status",
+    "message": "。マージステータスを更新中",
     "description": "Extension text: . Updating merge status"
   },
   "noReviewRequestsForYourTeams": {
-    "message": "No review requests for your teams.",
+    "message": "チームへのレビュー依頼はありません。",
     "description": "Text in ListSections.tsx"
   },
   "allLoadedPullRequestsAreSnoozed": {
-    "message": "All loaded pull requests are snoozed",
+    "message": "読み込んだ PR はすべてスヌーズ中です",
     "description": "Text in ListSections.tsx"
   },
   "theyReturnHereWhenTheSnoozeEnds": {
-    "message": "They return here when the snooze ends.",
+    "message": "スヌーズが終了すると、ここに再表示されます。",
     "description": "Text in ListSections.tsx"
   },
   "showSnoozed": {
-    "message": "Show snoozed",
+    "message": "スヌーズ中の PR を表示",
     "description": "Text in ListSections.tsx"
   },
   "seeYourPullRequestsHere": {
-    "message": "See your pull requests here",
+    "message": "自分の PR をここで確認",
     "description": "Text in Onboarding.tsx"
   },
   "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
-    "message": "Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub.",
+    "message": "GitHub で Prowl を認証してください。トークンはこのブラウザに保存され、GitHub にのみ送信されます。",
     "description": "Text in Onboarding.tsx"
   },
   "useAPersonalAccessToken": {
-    "message": "Use a personal access token",
+    "message": "個人アクセストークンを使用",
     "description": "Text in Onboarding.tsx"
   },
   "prowlOnlyWatchesThePullRequestsItLoads": {
-    "message": "Prowl only watches the pull requests it loads.",
+    "message": "Prowl は読み込んだ PR のみ追跡します。",
     "description": "Text in Settings.tsx"
   },
   "refreshEveryMinutes": {
-    "message": "Refresh every (minutes)",
+    "message": "更新間隔（分）",
     "description": "Text in Settings.tsx"
   },
   "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
-    "message": "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+    "message": "PR 数が多く、更新間隔が短いほど、GitHub の時間あたりの上限を多く消費します。",
     "description": "Text in Settings.tsx"
   },
   "list": {
-    "message": "List",
+    "message": "リスト",
     "description": "Text in Settings.tsx"
   },
   "reviewRequestsSentToYourTeams": {
-    "message": "Review requests sent to your teams",
+    "message": "自分のチームへのレビュー依頼",
     "description": "Text in SettingsModel.ts"
   },
   "whatProwlCanAccess": {
-    "message": "What Prowl can access",
+    "message": "Prowl がアクセスできる情報",
     "description": "Text in SettingsPrivacy.tsx"
   },
   "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
-    "message": "Exclude pull requests in these, even when they match an include.",
+    "message": "対象条件に一致していても、これらのリポジトリの PR は除外します。",
     "description": "Text in SettingsScope.tsx"
   },
   "useAFineGrainedTokenOwnedByTheOrganizationWith": {
-    "message": "Use a fine-grained token owned by the organization with the Members: read permission.",
+    "message": "組織が所有し Members: read 権限を持つきめ細かいトークンを使ってください。",
     "description": "Text in SettingsTeams.tsx"
   },
   "prowlCanTSeeYourTeams": {
-    "message": "Prowl can't see your teams.",
+    "message": "Prowl がチームを確認できません。",
     "description": "Text in SettingsTeams.tsx"
   },
   "couldnTLoadYourTeams": {
-    "message": "Couldn't load your teams.",
+    "message": "チームを読み込めませんでした。",
     "description": "Text in SettingsTeams.tsx"
   },
   "thisTokenCanTTellWhichTeamAskedSoSwitched": {
-    "message": "This token can't tell which team asked, so switched-off teams still show.",
+    "message": "このトークンでは依頼先のチームを判別できないため、無効にしたチームも表示されます。",
     "description": "Text in SettingsTeams.tsx"
   },
   "loadingYourTeams": {
-    "message": "Loading your teams…",
+    "message": "チームを読み込み中…",
     "description": "Text in SettingsTeams.tsx"
   },
   "missingATeam": {
-    "message": "Missing a team?",
+    "message": "チームが見つかりませんか？",
     "description": "Text in SettingsTeams.tsx"
   },
   "sectionPartialResults": {
-    "message": "Partial results for “$P1$”: $P2$",
+    "message": "「$P1$」の一部の結果：$P2$",
     "description": "Section load error when only partial results were returned.",
     "placeholders": {
       "p1": {
@@ -2309,7 +2309,7 @@
     }
   },
   "searchingSection": {
-    "message": "Searching “$P1$”…",
+    "message": "「$P1$」を検索中…",
     "description": "Status while a section search is running.",
     "placeholders": {
       "p1": {
@@ -2318,7 +2318,7 @@
     }
   },
   "nothingInLoadedMatches": {
-    "message": "Nothing in “$P1$” matches “$P2$”. This search only covers the loaded PRs.",
+    "message": "「$P1$」に「$P2$」と一致するものはありません。この検索の対象は読み込んだ PR のみです。",
     "description": "Empty filter result when the section has more pull requests on GitHub.",
     "placeholders": {
       "p1": {
@@ -2330,11 +2330,11 @@
     }
   },
   "listCoverage": {
-    "message": "List coverage",
+    "message": "リストの対象範囲",
     "description": "Accessible label for the section search coverage notice."
   },
   "loadedCount": {
-    "message": "$P1$ loaded · ",
+    "message": "$P1$ 件読み込み済み · ",
     "description": "Number of pull requests loaded before the GitHub search link.",
     "placeholders": {
       "p1": {
@@ -2343,15 +2343,15 @@
     }
   },
   "searchSsoRequired": {
-    "message": "An organization requires single sign-on (SAML) that this token is not authorized for, so its pull requests are missing. Authorize the token for that organization on GitHub.",
+    "message": "組織で必要なシングルサインオン（SAML）にこのトークンが認証されていないため、その組織の PR が表示されていません。GitHub でその組織に対してトークンを認証してください。",
     "description": "Warning when organization SAML authorization hides search results."
   },
   "searchCursorUnavailable": {
-    "message": "GitHub did not provide a usable next-page cursor.",
+    "message": "GitHub から有効な次ページのカーソルが返されませんでした。",
     "description": "Warning when search pagination cannot continue."
   },
   "mergeRequirementsUnreadable": {
-    "message": "Some merge requirements could not be read: $P1$",
+    "message": "一部のマージ要件を読み取れませんでした：$P1$",
     "description": "Warning with GitHub errors explaining incomplete merge requirements.",
     "placeholders": {
       "p1": {
@@ -2360,7 +2360,7 @@
     }
   },
   "detailsUnreadable": {
-    "message": "Some details could not be read: $P1$",
+    "message": "一部の詳細を読み取れませんでした：$P1$",
     "description": "Warning with GitHub errors explaining incomplete pull request details.",
     "placeholders": {
       "p1": {
@@ -2369,47 +2369,47 @@
     }
   },
   "reviewsNotLoaded": {
-    "message": "Some reviews are not loaded. View the full conversation on GitHub.",
+    "message": "一部のレビューが読み込まれていません。GitHub で会話全体を確認してください。",
     "description": "Warning when reviews were truncated by the API."
   },
   "reviewRequestsNotLoaded": {
-    "message": "Some review requests are not loaded. View the full conversation on GitHub.",
+    "message": "一部のレビュー依頼が読み込まれていません。GitHub で会話全体を確認してください。",
     "description": "Warning when requested reviewers were truncated by the API."
   },
   "previewNewPr": {
-    "message": "New PR",
+    "message": "新規 PR",
     "description": "Preview button to simulate a new pull request."
   },
   "previewMergePr": {
-    "message": "Merge PR",
+    "message": "PR をマージ",
     "description": "Preview button to simulate a merged pull request."
   },
   "previewClosePr": {
-    "message": "Close PR",
+    "message": "PR を閉じる",
     "description": "Preview button to simulate a closed pull request."
   },
   "previewUpdateFailed": {
-    "message": "Could not simulate the update. Reload to try again.",
+    "message": "更新をシミュレートできませんでした。再読み込みして再試行してください。",
     "description": "Preview simulation error."
   },
   "previewTestAnimations": {
-    "message": "Test PR animations",
+    "message": "PR アニメーションを試す",
     "description": "Accessible label for preview animation controls."
   },
   "previewTryUpdate": {
-    "message": "Try an update",
+    "message": "更新を試す",
     "description": "Heading for preview simulation controls."
   },
   "previewTitle": {
-    "message": "Prowl — mock preview",
+    "message": "Prowl — モックプレビュー",
     "description": "Browser title for the mock preview."
   },
   "previewMode": {
-    "message": "Preview mode",
+    "message": "プレビューモード",
     "description": "Accessible label for the preview information banner."
   },
   "previewBanner": {
-    "message": "Mock preview · Sample data · Reload to reset",
+    "message": "モックプレビュー · サンプルデータ · 再読み込みでリセット",
     "description": "Information banner on the mock preview page."
   },
   "matchChromeLanguage": {

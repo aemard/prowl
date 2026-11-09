@@ -1941,11 +1941,11 @@
     "message": "语言"
   },
   "headCommitChangedRefreshAndTryAgain": {
-    "message": "The head commit changed. Refresh and try again.",
+    "message": "最新提交已更改。请刷新后重试。",
     "description": "Check restart error when the pull request head changes while loading suites."
   },
   "notAllCheckSuitesCouldBeLoaded": {
-    "message": "Not all check suites could be loaded. Re-run checks on GitHub.",
+    "message": "部分检查套件无法加载。请在 GitHub 上重新运行检查。",
     "description": "Check restart error when check suite pagination is incomplete."
   },
   "prowl": {
@@ -1953,19 +1953,19 @@
     "description": "Extension text: Prowl"
   },
   "turnOffAutoMerge": {
-    "message": "Turn off auto-merge",
+    "message": "禁用自动合并",
     "description": "Extension text: Turn off auto-merge"
   },
   "mergeOnGitHub": {
-    "message": "Merge on GitHub",
+    "message": "在 GitHub 上合并",
     "description": "Extension text: Merge on GitHub"
   },
   "mergeWithoutWaiting": {
-    "message": "Merge without waiting",
+    "message": "无需等待即可合并",
     "description": "Extension text: Merge without waiting"
   },
   "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
-    "message": "Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "message": "检查和审查通过后，由 GitHub 将 $P1$ 合并到 $P2$。",
     "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
     "placeholders": {
       "p1": {
@@ -1977,35 +1977,35 @@
     }
   },
   "youCanBypassTheBranchRulesForThisPullRequest": {
-    "message": "You can bypass the branch rules for this pull request.",
+    "message": "你可以绕过此 PR 的分支规则。",
     "description": "Extension text: You can bypass the branch rules for this pull request."
   },
   "justOpened": {
-    "message": "Just opened",
+    "message": "刚刚创建",
     "description": "Extension text: Just opened"
   },
   "mergeStatus": {
-    "message": "Merge status",
+    "message": "合并状态",
     "description": "Extension text: Merge status"
   },
   "checkingMergeStatus": {
-    "message": "Checking merge status…",
+    "message": "正在检查合并状态…",
     "description": "Extension text: Checking merge status…"
   },
   "thisTokenCanTReadChecks": {
-    "message": "This token can't read checks ·",
+    "message": "此令牌无法读取检查 ·",
     "description": "Extension text: This token can't read checks ·"
   },
   "viewOnGitHub": {
-    "message": "View on GitHub",
+    "message": "在 GitHub 上查看",
     "description": "Extension text: View on GitHub"
   },
   "someDetailsAreOnlyOnGitHub": {
-    "message": "Some details are only on GitHub ·",
+    "message": "部分详情仅在 GitHub 上显示 ·",
     "description": "Extension text: Some details are only on GitHub ·"
   },
   "actionsFor2": {
-    "message": "Actions for #$P1$",
+    "message": "#$P1$ 的操作",
     "description": "Extension text: Actions for #$P1$",
     "placeholders": {
       "p1": {
@@ -2014,11 +2014,11 @@
     }
   },
   "viewChangesOnGitHub": {
-    "message": "View changes on GitHub",
+    "message": "在 GitHub 上查看更改",
     "description": "Extension text: View changes on GitHub"
   },
   "couldNotReachGitHub": {
-    "message": "Could not reach GitHub — $P1$",
+    "message": "无法连接 GitHub：$P1$",
     "description": "Extension text: Could not reach GitHub — $P1$",
     "placeholders": {
       "p1": {
@@ -2027,11 +2027,11 @@
     }
   },
   "resolveOnGitHub": {
-    "message": "Resolve on GitHub",
+    "message": "在 GitHub 上解决",
     "description": "Extension text: Resolve on GitHub"
   },
   "behind": {
-    "message": "Behind $P1$",
+    "message": "落后于 $P1$",
     "description": "Extension text: Behind $P1$",
     "placeholders": {
       "p1": {
@@ -2040,27 +2040,27 @@
     }
   },
   "mergeStatusUnknown": {
-    "message": "Merge status unknown",
+    "message": "合并状态未知",
     "description": "Extension text: Merge status unknown"
   },
   "openOnGitHub": {
-    "message": "Open on GitHub",
+    "message": "在 GitHub 上打开",
     "description": "Extension text: Open on GitHub"
   },
   "blockedByBranchRules": {
-    "message": "Blocked by branch rules",
+    "message": "被分支规则阻止",
     "description": "Extension text: Blocked by branch rules"
   },
   "detailsOnGitHub": {
-    "message": "Details on GitHub",
+    "message": "在 GitHub 上查看详情",
     "description": "Extension text: Details on GitHub"
   },
   "autoMergeOnMergesWhenReady": {
-    "message": "Auto-merge on, merges when ready",
+    "message": "已启用自动合并，就绪后合并",
     "description": "Extension text: Auto-merge on, merges when ready"
   },
   "listUpdated2": {
-    "message": "List updated $P1$",
+    "message": "列表已更新 $P1$",
     "description": "Extension text: List updated $P1$",
     "placeholders": {
       "p1": {
@@ -2069,7 +2069,7 @@
     }
   },
   "changesRequestedBy": {
-    "message": "Changes requested by $P1$",
+    "message": "$P1$ 已请求更改",
     "description": "Extension text: Changes requested by $P1$",
     "placeholders": {
       "p1": {
@@ -2078,7 +2078,7 @@
     }
   },
   "approvalNeeded": {
-    "message": "$P1$ approval needed",
+    "message": "需要 $P1$ 项批准",
     "description": "Extension text: $P1$ approval needed",
     "placeholders": {
       "p1": {
@@ -2087,7 +2087,7 @@
     }
   },
   "approvalsNeeded": {
-    "message": "$P1$ approvals needed",
+    "message": "需要 $P1$ 项批准",
     "description": "Extension text: $P1$ approvals needed",
     "placeholders": {
       "p1": {
@@ -2096,7 +2096,7 @@
     }
   },
   "requiredCheckFailed": {
-    "message": "$P1$ required check failed",
+    "message": "$P1$ 项必需检查失败",
     "description": "Extension text: $P1$ required check failed",
     "placeholders": {
       "p1": {
@@ -2105,7 +2105,7 @@
     }
   },
   "requiredChecksFailed": {
-    "message": "$P1$ required checks failed",
+    "message": "$P1$ 项必需检查失败",
     "description": "Extension text: $P1$ required checks failed",
     "placeholders": {
       "p1": {
@@ -2114,7 +2114,7 @@
     }
   },
   "checkFailed": {
-    "message": "$P1$ check failed",
+    "message": "$P1$ 项检查失败",
     "description": "Extension text: $P1$ check failed",
     "placeholders": {
       "p1": {
@@ -2123,7 +2123,7 @@
     }
   },
   "checksFailed": {
-    "message": "$P1$ checks failed",
+    "message": "$P1$ 项检查失败",
     "description": "Extension text: $P1$ checks failed",
     "placeholders": {
       "p1": {
@@ -2132,7 +2132,7 @@
     }
   },
   "optionalCheckFailed": {
-    "message": "$P1$ optional check failed",
+    "message": "$P1$ 项可选检查失败",
     "description": "Extension text: $P1$ optional check failed",
     "placeholders": {
       "p1": {
@@ -2141,7 +2141,7 @@
     }
   },
   "optionalChecksFailed": {
-    "message": "$P1$ optional checks failed",
+    "message": "$P1$ 项可选检查失败",
     "description": "Extension text: $P1$ optional checks failed",
     "placeholders": {
       "p1": {
@@ -2150,7 +2150,7 @@
     }
   },
   "requiredCheckRunning": {
-    "message": "$P1$ required check running",
+    "message": "$P1$ 项必需检查正在运行",
     "description": "Extension text: $P1$ required check running",
     "placeholders": {
       "p1": {
@@ -2159,7 +2159,7 @@
     }
   },
   "requiredChecksRunning": {
-    "message": "$P1$ required checks running",
+    "message": "$P1$ 项必需检查正在运行",
     "description": "Extension text: $P1$ required checks running",
     "placeholders": {
       "p1": {
@@ -2168,7 +2168,7 @@
     }
   },
   "checkRunning": {
-    "message": "$P1$ check running",
+    "message": "$P1$ 项检查正在运行",
     "description": "Extension text: $P1$ check running",
     "placeholders": {
       "p1": {
@@ -2177,7 +2177,7 @@
     }
   },
   "checksRunning2": {
-    "message": "$P1$ checks running",
+    "message": "$P1$ 项检查正在运行",
     "description": "Extension text: $P1$ checks running",
     "placeholders": {
       "p1": {
@@ -2186,7 +2186,7 @@
     }
   },
   "conversationToResolve": {
-    "message": "$P1$ conversation to resolve",
+    "message": "$P1$ 项讨论待解决",
     "description": "Extension text: $P1$ conversation to resolve",
     "placeholders": {
       "p1": {
@@ -2195,7 +2195,7 @@
     }
   },
   "conversationsToResolve": {
-    "message": "$P1$ conversations to resolve",
+    "message": "$P1$ 项讨论待解决",
     "description": "Extension text: $P1$ conversations to resolve",
     "placeholders": {
       "p1": {
@@ -2204,7 +2204,7 @@
     }
   },
   "unresolved2": {
-    "message": "$P1$ unresolved",
+    "message": "$P1$ 项未解决",
     "description": "Extension text: $P1$ unresolved",
     "placeholders": {
       "p1": {
@@ -2213,91 +2213,91 @@
     }
   },
   "updatingMergeStatus2": {
-    "message": ". Updating merge status",
+    "message": "。正在更新合并状态",
     "description": "Extension text: . Updating merge status"
   },
   "noReviewRequestsForYourTeams": {
-    "message": "No review requests for your teams.",
+    "message": "你的团队没有收到审查请求。",
     "description": "Text in ListSections.tsx"
   },
   "allLoadedPullRequestsAreSnoozed": {
-    "message": "All loaded pull requests are snoozed",
+    "message": "已加载的 PR 均已暂停",
     "description": "Text in ListSections.tsx"
   },
   "theyReturnHereWhenTheSnoozeEnds": {
-    "message": "They return here when the snooze ends.",
+    "message": "暂停结束后，它们会重新显示在这里。",
     "description": "Text in ListSections.tsx"
   },
   "showSnoozed": {
-    "message": "Show snoozed",
+    "message": "显示已暂停的 PR",
     "description": "Text in ListSections.tsx"
   },
   "seeYourPullRequestsHere": {
-    "message": "See your pull requests here",
+    "message": "在这里查看你的 PR",
     "description": "Text in Onboarding.tsx"
   },
   "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
-    "message": "Approve Prowl on GitHub. Your token stays in this browser and is only sent to GitHub.",
+    "message": "请在 GitHub 上授权 Prowl。令牌保留在此浏览器中，仅发送给 GitHub。",
     "description": "Text in Onboarding.tsx"
   },
   "useAPersonalAccessToken": {
-    "message": "Use a personal access token",
+    "message": "使用个人访问令牌",
     "description": "Text in Onboarding.tsx"
   },
   "prowlOnlyWatchesThePullRequestsItLoads": {
-    "message": "Prowl only watches the pull requests it loads.",
+    "message": "Prowl 仅跟踪已加载的 PR。",
     "description": "Text in Settings.tsx"
   },
   "refreshEveryMinutes": {
-    "message": "Refresh every (minutes)",
+    "message": "刷新间隔（分钟）",
     "description": "Text in Settings.tsx"
   },
   "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
-    "message": "More pull requests and shorter intervals use more of GitHub's hourly limit.",
+    "message": "PR 越多、刷新间隔越短，消耗的 GitHub 每小时配额就越多。",
     "description": "Text in Settings.tsx"
   },
   "list": {
-    "message": "List",
+    "message": "列表",
     "description": "Text in Settings.tsx"
   },
   "reviewRequestsSentToYourTeams": {
-    "message": "Review requests sent to your teams",
+    "message": "发送给你的团队的审查请求",
     "description": "Text in SettingsModel.ts"
   },
   "whatProwlCanAccess": {
-    "message": "What Prowl can access",
+    "message": "Prowl 可访问的内容",
     "description": "Text in SettingsPrivacy.tsx"
   },
   "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
-    "message": "Exclude pull requests in these, even when they match an include.",
+    "message": "排除这些仓库中的 PR，即使它们符合包含条件。",
     "description": "Text in SettingsScope.tsx"
   },
   "useAFineGrainedTokenOwnedByTheOrganizationWith": {
-    "message": "Use a fine-grained token owned by the organization with the Members: read permission.",
+    "message": "请使用属于该组织且具有 Members: read 权限的细粒度令牌。",
     "description": "Text in SettingsTeams.tsx"
   },
   "prowlCanTSeeYourTeams": {
-    "message": "Prowl can't see your teams.",
+    "message": "Prowl 无法查看你的团队。",
     "description": "Text in SettingsTeams.tsx"
   },
   "couldnTLoadYourTeams": {
-    "message": "Couldn't load your teams.",
+    "message": "无法加载你的团队。",
     "description": "Text in SettingsTeams.tsx"
   },
   "thisTokenCanTTellWhichTeamAskedSoSwitched": {
-    "message": "This token can't tell which team asked, so switched-off teams still show.",
+    "message": "此令牌无法识别哪个团队收到了审查请求，因此已关闭的团队仍会显示。",
     "description": "Text in SettingsTeams.tsx"
   },
   "loadingYourTeams": {
-    "message": "Loading your teams…",
+    "message": "正在加载你的团队…",
     "description": "Text in SettingsTeams.tsx"
   },
   "missingATeam": {
-    "message": "Missing a team?",
+    "message": "找不到团队？",
     "description": "Text in SettingsTeams.tsx"
   },
   "sectionPartialResults": {
-    "message": "Partial results for “$P1$”: $P2$",
+    "message": "“$P1$”的部分结果：$P2$",
     "description": "Section load error when only partial results were returned.",
     "placeholders": {
       "p1": {
@@ -2309,7 +2309,7 @@
     }
   },
   "searchingSection": {
-    "message": "Searching “$P1$”…",
+    "message": "正在搜索“$P1$”…",
     "description": "Status while a section search is running.",
     "placeholders": {
       "p1": {
@@ -2318,7 +2318,7 @@
     }
   },
   "nothingInLoadedMatches": {
-    "message": "Nothing in “$P1$” matches “$P2$”. This search only covers the loaded PRs.",
+    "message": "“$P1$”中没有与“$P2$”匹配的结果。此搜索仅涵盖已加载的 PR。",
     "description": "Empty filter result when the section has more pull requests on GitHub.",
     "placeholders": {
       "p1": {
@@ -2330,11 +2330,11 @@
     }
   },
   "listCoverage": {
-    "message": "List coverage",
+    "message": "列表覆盖范围",
     "description": "Accessible label for the section search coverage notice."
   },
   "loadedCount": {
-    "message": "$P1$ loaded · ",
+    "message": "已加载 $P1$ 项 · ",
     "description": "Number of pull requests loaded before the GitHub search link.",
     "placeholders": {
       "p1": {
@@ -2343,15 +2343,15 @@
     }
   },
   "searchSsoRequired": {
-    "message": "An organization requires single sign-on (SAML) that this token is not authorized for, so its pull requests are missing. Authorize the token for that organization on GitHub.",
+    "message": "某个组织要求单点登录（SAML），但此令牌尚未获得该组织的授权，因此未显示其 PR。请在 GitHub 上为该组织授权此令牌。",
     "description": "Warning when organization SAML authorization hides search results."
   },
   "searchCursorUnavailable": {
-    "message": "GitHub did not provide a usable next-page cursor.",
+    "message": "GitHub 未提供可用的下一页游标。",
     "description": "Warning when search pagination cannot continue."
   },
   "mergeRequirementsUnreadable": {
-    "message": "Some merge requirements could not be read: $P1$",
+    "message": "无法读取部分合并要求：$P1$",
     "description": "Warning with GitHub errors explaining incomplete merge requirements.",
     "placeholders": {
       "p1": {
@@ -2360,7 +2360,7 @@
     }
   },
   "detailsUnreadable": {
-    "message": "Some details could not be read: $P1$",
+    "message": "无法读取部分详情：$P1$",
     "description": "Warning with GitHub errors explaining incomplete pull request details.",
     "placeholders": {
       "p1": {
@@ -2369,47 +2369,47 @@
     }
   },
   "reviewsNotLoaded": {
-    "message": "Some reviews are not loaded. View the full conversation on GitHub.",
+    "message": "部分审查未加载。请在 GitHub 上查看完整讨论。",
     "description": "Warning when reviews were truncated by the API."
   },
   "reviewRequestsNotLoaded": {
-    "message": "Some review requests are not loaded. View the full conversation on GitHub.",
+    "message": "部分审查请求未加载。请在 GitHub 上查看完整讨论。",
     "description": "Warning when requested reviewers were truncated by the API."
   },
   "previewNewPr": {
-    "message": "New PR",
+    "message": "新建 PR",
     "description": "Preview button to simulate a new pull request."
   },
   "previewMergePr": {
-    "message": "Merge PR",
+    "message": "合并 PR",
     "description": "Preview button to simulate a merged pull request."
   },
   "previewClosePr": {
-    "message": "Close PR",
+    "message": "关闭 PR",
     "description": "Preview button to simulate a closed pull request."
   },
   "previewUpdateFailed": {
-    "message": "Could not simulate the update. Reload to try again.",
+    "message": "无法模拟更新。请重新加载后重试。",
     "description": "Preview simulation error."
   },
   "previewTestAnimations": {
-    "message": "Test PR animations",
+    "message": "测试 PR 动画",
     "description": "Accessible label for preview animation controls."
   },
   "previewTryUpdate": {
-    "message": "Try an update",
+    "message": "试试更新",
     "description": "Heading for preview simulation controls."
   },
   "previewTitle": {
-    "message": "Prowl — mock preview",
+    "message": "Prowl — 模拟预览",
     "description": "Browser title for the mock preview."
   },
   "previewMode": {
-    "message": "Preview mode",
+    "message": "预览模式",
     "description": "Accessible label for the preview information banner."
   },
   "previewBanner": {
-    "message": "Mock preview · Sample data · Reload to reset",
+    "message": "模拟预览 · 示例数据 · 重新加载以重置",
     "description": "Information banner on the mock preview page."
   },
   "matchChromeLanguage": {
