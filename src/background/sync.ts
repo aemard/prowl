@@ -1,3 +1,4 @@
+import { setLanguage, t } from '../lib/i18n';
 /**
  * Optional settings sync (US-041). While this device's `sync.enabled` is on, settings are mirrored
  * to `chrome.storage.sync` (Chrome's own sync, one key), and settings another device synced come
@@ -25,16 +26,18 @@ const recordError = (error: string | null) =>
 
 /** Writes this device's settings to Chrome sync, unless they are already there. */
 export async function pushSettings(settings: Settings): Promise<void> {
+  settings = normalizeSettings(settings);
+  await setLanguage(settings.language);
   if (jsonEqual(await remoteSettings(), settings)) return recordError(null).then(() => undefined);
   const bytes = new TextEncoder().encode(SYNCED_KEY + JSON.stringify(settings)).length;
   let error: string | null = null;
   if (bytes > MAX_ITEM_BYTES) {
-    error = `Your settings take ${Math.ceil(bytes / 1024)} KB, more than the 8 KB Chrome sync keeps: remove some repositories or sections. They stay on this device.`;
+    error = t('yourSettingsTakeKbMoreThanThe8Kb', Math.ceil(bytes / 1024));
   } else {
     try {
       await chrome.storage.sync.set({ [SYNCED_KEY]: settings });
     } catch {
-      error = 'Chrome sync did not take your settings. They stay on this device.';
+      error = t('chromeSyncDidNotTakeYourSettingsTheyStay');
     }
   }
   await recordError(error);
@@ -45,7 +48,7 @@ export async function pullSettings(remote: unknown): Promise<void> {
   if (remote === undefined) return;
   const settings = normalizeSettings(remote);
   await updateItem(STORAGE_KEYS.settings, (local) =>
-    local !== undefined && jsonEqual(normalizeSettings(local), settings) ? local : settings,
+    local !== undefined && jsonEqual(local, settings) ? local : settings,
   );
 }
 

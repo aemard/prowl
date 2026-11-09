@@ -22,6 +22,14 @@
   gap: var(--space-2);
 }
 
+/* A link among buttons: underlined and in the accent color, or it reads as a label. */
+.pr-detail .pr-actions__link {
+  align-self: center;
+  color: var(--color-accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .pr-detail__list {
   display: flex;
   flex-direction: column;
@@ -91,6 +99,13 @@
   text-decoration: underline;
 }
 
+/* A link inside a sentence is underlined, so color is not the only thing marking it. */
+.pr-detail__hint a,
+.pr-detail__text a,
+.pr-detail__freshness a {
+  text-decoration: underline;
+}
+
 /* Names are clipped to one line, which would cut an outside ring: draw it inside the link. */
 .pr-detail a:focus-visible {
   outline-offset: calc(var(--focus-width) * -1);
@@ -143,4 +158,16 @@
 .pr-detail {
   border-radius: 0 0 21px 21px;
   background: var(--glass-solid);
+}
+.pr-detail__freshness {
+  margin: var(--space-2) 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+
+fieldset.pr-actions {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  margin: var(--space-2) 0;
 }

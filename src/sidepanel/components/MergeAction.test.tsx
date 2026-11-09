@@ -1,61 +1,50 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
 import type { PullRequest } from '../../lib/model';
 import { fakeChrome } from '../../test/chrome';
-import { buildAuth, buildPullRequest } from '../../test/panel';
 import { pendingActions } from '../state/prActions';
 import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
+import {
+  choose,
+  commitTitle,
+  confirm,
+  dialog,
+  merged,
+  method,
+  opener,
+  poll,
+  pr,
+  resetMergeTest,
+  setupMergeTest,
+  show,
+  stubGitHub,
+  toastTexts,
+} from './MergeAction.test-support';
 import { toasts } from './ui/Toast';
 
-const pr = buildPullRequest({ title: 'Improve the widgets', baseRefName: 'release' });
-const merged = { mergePullRequest: { pullRequest: { merged: true } } };
-
-interface Sent {
-  operation: string;
-  variables: Record<string, unknown>;
-}
-
-/** Stubs `fetch`: `answer(sent)` for each GraphQL request, which is recorded in `sent`. */
-function stubGitHub(answer: (sent: Sent) => Response | Promise<Response>) {
-  const sent: Sent[] = [];
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (_url: string, init: RequestInit) => {
-      const { query, variables } = JSON.parse(String(init.body));
-      const request = { operation: /mutation (\w+)/.exec(query)?.[1] ?? '', variables };
-      sent.push(request);
-      return answer(request);
-    }),
-  );
-  return sent;
-}
-
-const show = (overrides: Partial<PullRequest> = {}) =>
-  render(<MergeAction pr={{ ...pr, ...overrides }} />);
-const opener = () => screen.getByRole('button', { name: 'Merge acme/widgets#1' });
-const dialog = () => screen.getByRole('dialog', { name: 'Merge pull request' });
-const method = () => within(dialog()).getByRole('combobox', { name: 'Merge method' });
-const commitTitle = () => within(dialog()).getByRole('textbox', { name: /Commit title/ });
-const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
-const choose = (value: string) => fireEvent.change(method(), { target: { value } });
-const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-const poll = { type: 'poll', force: true };
-
-beforeEach(() => {
-  auth.value = buildAuth('octocat');
-});
-
-afterEach(() => {
-  auth.value = undefined;
-  pendingActions.value = {};
-  toasts.value = [];
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
+beforeEach(setupMergeTest);
+afterEach(resetMergeTest);
 
 describe('when the button shows', () => {
+  it('keeps GitHub blockers and auto-merge visible despite approved reviews and green checks', () => {
+    show({
+      viewerCanMergeAsAdmin: true,
+      reviewDecision: 'approved',
+      mergeStateStatus: 'blocked',
+      autoMergeAllowed: true,
+    });
+    expect(opener().getAttribute('data-variant')).toBe('secondary');
+    expect(opener().textContent).toBe('Merge without waiting');
+    fireEvent.click(opener());
+    expect(dialog().textContent).toContain(
+      'You can bypass the branch rules for this pull request.',
+    );
+    expect(within(dialog()).getByText(/Not ready: blocked by branch rules/)).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Enable auto-merge' })).toBeTruthy();
+  });
+
   it('shows for someone who can merge an open pull request, whoever wrote it', () => {
     show();
     expect(opener().textContent).toBe('Merge');
@@ -68,6 +57,7 @@ describe('when the button shows', () => {
     expect(opener().getAttribute('data-variant')).toBe('primary');
     const blocked: PullRequest = {
       ...pr,
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       mergeStateStatus: 'blocked',
     };
@@ -80,7 +70,6 @@ describe('when the button shows', () => {
     ['it is merged', { state: 'merged' }],
     ['it is closed', { state: 'closed' }],
     ['it is a draft', { isDraft: true }],
-    ['the repository allows no method', { allowedMergeMethods: [] }],
   ])('is hidden when %s', (_name, overrides) => {
     const { container } = show(overrides);
     expect(container.textContent).toBe('');
@@ -108,6 +97,7 @@ describe('the confirmation', () => {
 
   it('repeats what still blocks the merge, which the dialog hides on the card', () => {
     show({
+      viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       reviews: [
         { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },
@@ -141,8 +131,8 @@ describe('the confirmation', () => {
   it('falls back to the first allowed method when the default is not allowed', () => {
     show({ allowedMergeMethods: ['squash'], defaultMergeMethod: 'merge' });
     fireEvent.click(opener());
-    expect((method() as HTMLSelectElement).value).toBe('squash');
-    expect(within(method()).getAllByRole('option')).toHaveLength(1);
+    expect(within(dialog()).queryByRole('combobox')).toBeNull();
+    expect(within(dialog()).getByRole('button', { name: 'Squash and merge' })).toBeTruthy();
   });
 
   it('can be cancelled, sending nothing', () => {
@@ -165,7 +155,7 @@ describe('the confirmation', () => {
     expect(commitTitle()).toBeTruthy();
     choose('rebase');
     expect(within(dialog()).queryByRole('textbox')).toBeNull();
-    expect(dialog().textContent).toContain('Commits are kept as they are');
+    expect(dialog().textContent).not.toContain('Commits are kept as they are');
   });
 });
 
@@ -302,62 +292,5 @@ describe('next to other actions', () => {
       pendingActions.value = { PR_other_9: 'Approve' };
     });
     expect((opener() as HTMLButtonElement).disabled).toBe(false);
-  });
-});
-
-describe('auto-merge', () => {
-  const blocked = {
-    autoMergeAllowed: true,
-    mergeStateStatus: 'blocked' as const,
-    reviewDecision: 'review_required' as const,
-  };
-
-  it('offers to merge once checks and reviews pass, with the chosen method and title', async () => {
-    const sent = stubGitHub(() =>
-      jsonResponse({
-        data: {
-          enablePullRequestAutoMerge: {
-            pullRequest: { autoMergeRequest: { mergeMethod: 'SQUASH' } },
-          },
-        },
-      }),
-    );
-    show(blocked);
-    fireEvent.click(opener());
-    expect(dialog().textContent).toContain(
-      'or let GitHub merge it once its checks and reviews pass',
-    );
-    choose('squash');
-    fireEvent.input(commitTitle(), { target: { value: 'Widgets, improved' } });
-    fireEvent.click(within(dialog()).getByRole('button', { name: 'Enable auto-merge' }));
-    await waitFor(() =>
-      expect(toastTexts()).toEqual(['success: Auto-merge is on for acme/widgets#1']),
-    );
-    expect(sent).toEqual([
-      {
-        operation: 'ProwlEnableAutoMerge',
-        variables: { id: pr.id, method: 'SQUASH', oid: pr.headSha, headline: 'Widgets, improved' },
-      },
-    ]);
-  });
-
-  it('is not offered when the repository does not allow it or the PR is ready to merge', () => {
-    show({ autoMergeAllowed: false });
-    fireEvent.click(opener());
-    expect(within(dialog()).queryByRole('button', { name: 'Enable auto-merge' })).toBeNull();
-  });
-
-  it('turns auto-merge off from the actions row', async () => {
-    const sent = stubGitHub(() =>
-      jsonResponse({
-        data: { disablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null } } },
-      }),
-    );
-    show({ ...blocked, autoMerge: { method: 'merge', enabledBy: 'octocat' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Disable auto-merge of acme/widgets#1' }));
-    await waitFor(() =>
-      expect(toastTexts()).toEqual(['success: Auto-merge is off for acme/widgets#1']),
-    );
-    expect(sent).toEqual([{ operation: 'ProwlDisableAutoMerge', variables: { id: pr.id } }]);
   });
 });

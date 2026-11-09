@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * Search queries for the PR list: one GitHub issue-search string per section, plus the
  * repo include/exclude filters. Inputs come from `normalizeSettings`, which already validated
@@ -29,7 +30,7 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
  * The search string for a section: `is:pr` is always enforced (AND / OR / NOT only combine
  * search words in GitHub's syntax, never qualifiers, so `is:pr` cannot be OR-ed away).
  * Presets follow the shape `is:pr is:open <who>:@me archived:false`, the team section
- * `team-review-requested:<team>` for one team key (`org/slug`); a custom query is used
+ * `team-review-requested-user:@me` for every viewer team; a custom query is used
  * as typed (callers skip it when `validateCustomQuery` reports errors).
  *
  * `repoInclude` adds positive scope qualifiers, which GitHub ORs together, unless the custom
@@ -37,7 +38,7 @@ const scope = (pattern: string) => `${pattern.includes('/') ? 'repo' : 'user'}:$
  * with the include list. `repoExclude` adds `-repo:` / `-user:`. GitHub ignores a scope that
  * the exclusions cancel out completely, so `filterByRepo` stays the source of truth.
  */
-export function buildSearchQuery(section: Section, filters: RepoFilters, team = ''): string {
+export function buildSearchQuery(section: Section, filters: RepoFilters): string {
   const parts = ['is:pr'];
   let scoped = false;
   if (section.kind === 'custom') {
@@ -47,7 +48,7 @@ export function buildSearchQuery(section: Section, filters: RepoFilters, team = 
   } else {
     const who =
       section.kind === 'team_review_requested'
-        ? `team-review-requested:${team}`
+        ? 'team-review-requested-user:@me'
         : PRESET_QUALIFIER[section.kind];
     parts.push('is:open', who, 'archived:false');
   }
@@ -108,28 +109,20 @@ function analyze(query: string): { operators: number; text: string } {
  */
 export function validateCustomQuery(query: string): string[] {
   const trimmed = query.trim();
-  if (trimmed === '') return ['Enter a GitHub search query, for example: author:@me label:bug'];
+  if (trimmed === '') return [t('enterAGithubSearchQueryForExampleAuthorMe')];
   const errors: string[] = [];
   if (NOT_A_PR.test(trimmed)) {
-    errors.push('Prowl follows pull requests only: remove is:issue (or type:issue, -is:pr).');
+    errors.push(t('prowlFollowsPullRequestsOnlyRemoveIsIssueOr'));
   }
   const { operators, text } = analyze(trimmed);
   if (operators > 0 && text === '') {
-    errors.push(
-      'AND, OR and NOT only work between search words, not between qualifiers: GitHub rejects ' +
-        '"author:a OR author:b". Use one section per qualifier instead.',
-    );
+    errors.push(t('searchOperatorsHelp'));
   }
   if (operators > MAX_OPERATORS) {
-    errors.push(
-      `GitHub allows at most ${MAX_OPERATORS} AND / OR / NOT operators in a search (found ${operators}).`,
-    );
+    errors.push(t('githubAllowsAtMostAndOrNotOperatorsIn', MAX_OPERATORS, operators));
   }
   if (text.length > MAX_TEXT_LENGTH) {
-    errors.push(
-      `GitHub limits the search words to ${MAX_TEXT_LENGTH} characters, not counting qualifiers ` +
-        `such as author:@me (found ${text.length}).`,
-    );
+    errors.push(t('searchWordsLimit', MAX_TEXT_LENGTH, text.length));
   }
   return errors;
 }

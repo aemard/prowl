@@ -50,22 +50,22 @@ describe('filterPullRequests', () => {
   });
 });
 
-describe('groupByRepo', () => {
-  const inRepo = (number: number, nameWithOwner: string, updatedAt: string) => {
-    const [owner = '', name = ''] = nameWithOwner.split('/');
-    return buildPullRequest({ number, repo: { owner, name, nameWithOwner }, updatedAt });
-  };
-  // Newest first: web 1, mobile 2, web 3, api 4, mobile 5.
-  const mixed = [
-    inRepo(1, 'acme/web', '2026-10-06T05:00:00.000Z'),
-    inRepo(2, 'acme/mobile', '2026-10-06T04:00:00.000Z'),
-    inRepo(3, 'acme/web', '2026-10-06T03:00:00.000Z'),
-    inRepo(4, 'acme/api', '2026-10-06T02:00:00.000Z'),
-    inRepo(5, 'acme/mobile', '2026-10-06T01:00:00.000Z'),
-  ];
-  const shape = (list: ReturnType<typeof groupByRepo>) =>
-    list.map(({ repo, prs: inside }) => [repo, inside.map((pr) => pr.number)]);
+const inRepo = (number: number, nameWithOwner: string, updatedAt: string) => {
+  const [owner = '', name = ''] = nameWithOwner.split('/');
+  return buildPullRequest({ number, repo: { owner, name, nameWithOwner }, updatedAt });
+};
+// Newest first: web 1, mobile 2, web 3, api 4, mobile 5.
+const mixed = [
+  inRepo(1, 'acme/web', '2026-10-06T05:00:00.000Z'),
+  inRepo(2, 'acme/mobile', '2026-10-06T04:00:00.000Z'),
+  inRepo(3, 'acme/web', '2026-10-06T03:00:00.000Z'),
+  inRepo(4, 'acme/api', '2026-10-06T02:00:00.000Z'),
+  inRepo(5, 'acme/mobile', '2026-10-06T01:00:00.000Z'),
+];
+const shape = (list: ReturnType<typeof groupByRepo>) =>
+  list.map(({ repo, prs: inside }) => [repo, inside.map((pr) => pr.number)]);
 
+describe('groupByRepo', () => {
   it('orders the groups by their first PR, and keeps the order inside', () => {
     expect(shape(groupByRepo(sortPullRequests(mixed, 'updated')))).toEqual([
       ['acme/web', [1, 3]],
@@ -104,83 +104,41 @@ describe('sortPullRequests', () => {
   });
 });
 
+const NOW = Date.parse('2026-10-27T12:00:00.000Z');
+const recent = buildPullRequest({ number: 1, lastCommitAt: '2026-10-20T00:00:00.000Z' });
+const stale = buildPullRequest({ number: 2, lastCommitAt: '2026-09-20T00:00:00.000Z' });
+const staleSnoozed = buildPullRequest({ number: 3, lastCommitAt: '2026-09-01T00:00:00.000Z' });
+const snoozed = buildPullRequest({ number: 4, lastCommitAt: '2026-10-26T00:00:00.000Z' });
+const local = [staleSnoozed, snoozed].reduce(
+  (state, pr) => snooze(state, pr.id, NOW + 3_600_000),
+  emptyPrLocal(),
+);
+const all = [stale, recent, staleSnoozed, snoozed];
+
 describe('splitSection', () => {
-  const NOW = Date.parse('2026-10-27T12:00:00.000Z');
-  const recent = buildPullRequest({ number: 1, lastCommitAt: '2026-10-20T00:00:00.000Z' });
-  const stale = buildPullRequest({ number: 2, lastCommitAt: '2026-09-20T00:00:00.000Z' });
-  const staleSnoozed = buildPullRequest({ number: 3, lastCommitAt: '2026-09-01T00:00:00.000Z' });
-  const snoozed = buildPullRequest({ number: 4, lastCommitAt: '2026-10-26T00:00:00.000Z' });
-  const local = [staleSnoozed, snoozed].reduce(
-    (state, pr) => snooze(state, pr.id, NOW + 3_600_000),
-    emptyPrLocal(),
-  );
-  const all = [stale, recent, staleSnoozed, snoozed];
-
-  it('shows recent PRs, hides stale ones with the reason, and keeps snoozed ones apart', () => {
-    const parts = splitSection(all, local, DEFAULT_SETTINGS, NOW);
-    expect(numbers(parts.shown)).toEqual([1]);
-    expect(parts.hidden).toEqual([{ pr: stale, reasons: [{ kind: 'stale', days: 37 }] }]);
-    expect(numbers(parts.snoozed)).toEqual([3, 4]);
-  });
-
-  it('hides nothing with 0, and lets ended snoozes back in, in the given order', () => {
-    const parts = splitSection(
-      all,
-      local,
-      { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 },
-      NOW + 7_200_000,
-    );
-    expect(numbers(parts.shown)).toEqual([2, 1, 3, 4]);
-    expect(parts.hidden).toEqual([]);
-    expect(parts.snoozed).toEqual([]);
-  });
-
-  it('hides drafts and bots on request, with every reason, in the given order', () => {
-    const draft = buildPullRequest({ number: 5, isDraft: true });
-    const bot = buildPullRequest({
-      number: 6,
-      author: { login: 'dependabot', avatarUrl: '', isBot: true },
+  it('sets aside only snoozed PRs and preserves order', () => {
+    expect(splitSection(all, local, DEFAULT_SETTINGS, NOW)).toEqual({
+      shown: [stale, recent],
+      snoozed: [staleSnoozed, snoozed],
     });
-    const both = buildPullRequest({
-      number: 7,
+    expect(splitSection(all, local, DEFAULT_SETTINGS, NOW + 7_200_000)).toEqual({
+      shown: all,
+      snoozed: [],
+    });
+  });
+  it('ignores legacy hiding settings for drafts and bots', () => {
+    const pr = buildPullRequest({
       isDraft: true,
-      author: { login: 'renovate', avatarUrl: '', isBot: true },
-      lastCommitAt: '2026-09-20T00:00:00.000Z',
+      author: { login: 'bot', avatarUrl: '', isBot: true },
+      lastCommitAt: '2020-01-01T00:00:00Z',
     });
-    const prs = [draft, recent, bot, both];
-
-    const none = splitSection(prs, emptyPrLocal(), DEFAULT_SETTINGS, NOW);
-    expect(numbers(none.shown)).toEqual([5, 1, 6]);
-    expect(none.hidden.map(({ reasons }) => reasons)).toEqual([[{ kind: 'stale', days: 37 }]]);
-
-    const drafts = splitSection(
-      prs,
-      emptyPrLocal(),
-      { ...DEFAULT_SETTINGS, hideDrafts: true },
-      NOW,
-    );
-    expect(numbers(drafts.shown)).toEqual([1, 6]);
-    expect(drafts.hidden.map(({ pr }) => pr.number)).toEqual([5, 7]);
-
-    const all = splitSection(
-      prs,
-      emptyPrLocal(),
-      { hideDrafts: true, hideBots: true, hideStaleAfterDays: 20 },
-      NOW,
-    );
-    expect(numbers(all.shown)).toEqual([1]);
-    expect(all.hidden).toEqual([
-      { pr: draft, reasons: [{ kind: 'draft' }] },
-      { pr: bot, reasons: [{ kind: 'bot' }] },
-      { pr: both, reasons: [{ kind: 'draft' }, { kind: 'bot' }, { kind: 'stale', days: 37 }] },
-    ]);
-  });
-
-  it('keeps a snoozed draft under Snoozed', () => {
-    const draft = buildPullRequest({ number: 5, isDraft: true });
-    const local = snooze(emptyPrLocal(), draft.id, NOW + 3_600_000);
-    const parts = splitSection([draft], local, { ...DEFAULT_SETTINGS, hideDrafts: true }, NOW);
-    expect(numbers(parts.snoozed)).toEqual([5]);
-    expect(parts.hidden).toEqual([]);
+    expect(
+      splitSection(
+        [pr],
+        emptyPrLocal(),
+        { ...DEFAULT_SETTINGS, hideDrafts: true, hideBots: true, hideStaleAfterDays: 20 },
+        NOW,
+      ).shown,
+    ).toEqual([pr]);
   });
 });

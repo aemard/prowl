@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
+import { t } from '../lib/i18n';
+import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildPullRequest, buildSnapshotOf } from '../test/panel';
 import { App } from './App';
 import { navigate } from './state/router';
@@ -7,24 +9,24 @@ import { hydrated, hydrateStore } from './state/store';
 
 let stop: (() => void) | undefined;
 
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  location.hash = '';
-  delete document.documentElement.dataset.theme;
-});
-
-async function open(stored: Record<string, unknown> = {}) {
-  await chrome.storage.local.set(stored);
-  await act(async () => {
-    stop = await hydrateStore();
-  });
-  return render(<App />);
-}
-
-const theme = () => document.documentElement.dataset.theme;
-
 describe('App', () => {
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    location.hash = '';
+    delete document.documentElement.dataset.theme;
+  });
+
+  async function open(stored: Record<string, unknown> = {}) {
+    await chrome.storage.local.set(stored);
+    await act(async () => {
+      stop = await hydrateStore();
+    });
+    return render(<App />);
+  }
+
+  const theme = () => document.documentElement.dataset.theme;
+
   it('shows a labelled skeleton until the store is hydrated', async () => {
     const pending = hydrateStore();
     render(<App />);
@@ -41,9 +43,16 @@ describe('App', () => {
     expect(screen.getByRole('main', { name: 'Sign in' })).toBeTruthy();
   });
 
+  it('shows the list and full header even with an obsolete install marker', async () => {
+    await open({ auth: buildAuth(), onboarding: { status: 'pending', nextStep: 1 } });
+    expect(screen.getByRole('main', { name: 'Pull requests' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull();
+  });
+
   it('lands signed-out users on onboarding', async () => {
     await open();
-    expect(screen.getByRole('heading', { name: 'Sign in with GitHub' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'See your pull requests here' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
   });
 
@@ -103,9 +112,34 @@ describe('App', () => {
     expect(screen.getByRole('alert').textContent).toContain('token was revoked or expired');
     expect(screen.getByRole('link', { name: /Still readable/ })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Re-authenticate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(await screen.findByRole('main', { name: 'Sign in' })).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('renders localized list labels and colored GitHub labels after an eager app import', async () => {
+    // App and its tables were imported before startup chose the browser catalog.
+    fakeChrome().__state.locale = 'ja';
+    const prs = Array.from({ length: 4 }, (_, index) =>
+      buildPullRequest({
+        id: `PR_${index}`,
+        number: index + 1,
+        labels: [
+          { name: 'bug', color: 'd73a4a' },
+          { name: 'design', color: 'fbca04' },
+          { name: 'ui', color: '0b1f3a' },
+        ],
+      }),
+    );
+    await open({ auth: buildAuth(), snapshot: buildSnapshotOf({ authored: prs }) });
+    act(() => navigate('list'));
+    expect(screen.getByRole('main', { name: t('pullRequests') })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: new RegExp(t('mine')) })).toBeTruthy();
+    const labels = [...document.querySelectorAll<HTMLElement>('.pr-label:not(.pr-label--more)')];
+    expect(labels).toHaveLength(12);
+    expect(labels.map((label) => label.style.getPropertyValue('--label-color'))).toEqual(
+      Array.from({ length: 4 }, () => ['#d73a4a', '#fbca04', '#0b1f3a']).flat(),
+    );
   });
 
   it('mounts the toast region once', async () => {

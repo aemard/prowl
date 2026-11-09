@@ -1,7 +1,11 @@
 /** Routes the side panel's `BackgroundRequest`s. Answers (with nothing) once one is handled. */
+
+import { activityKey } from '../lib/activity';
 import type { BackgroundRequest } from '../lib/model';
-import { isRecord } from '../lib/storage/guards';
+import { isDateString, isRecord } from '../lib/storage/guards';
+import { loadLanguage } from '../lib/storage/language';
 import { markSeen, updatePrLocal } from '../lib/storage/prLocal';
+import { withSignedIn } from '../lib/storage/session';
 import { getItem } from '../lib/storage/storage';
 import { clearSignedOut, poll, refreshMergeState, setMergePriority } from './poller';
 
@@ -10,7 +14,10 @@ function isRequest(message: unknown): message is BackgroundRequest {
   if (!isRecord(message)) return false;
   switch (message.type) {
     case 'poll':
-      return message.force === undefined || typeof message.force === 'boolean';
+      return (
+        (message.force === undefined || typeof message.force === 'boolean') &&
+        (message.afterCurrent === undefined || typeof message.afterCurrent === 'boolean')
+      );
     case 'refreshMergeState':
       return (
         typeof message.prId === 'string' &&
@@ -19,8 +26,20 @@ function isRequest(message: unknown): message is BackgroundRequest {
         /^[a-f0-9]{40}$/i.test(message.headSha)
       );
     case 'mergePriority':
-    case 'markSeen':
       return Array.isArray(message.prIds) && message.prIds.every((id) => typeof id === 'string');
+    case 'markSeen':
+      return (
+        Array.isArray(message.prIds) &&
+        message.prIds.every((id) => typeof id === 'string') &&
+        isRecord(message.versions) &&
+        Object.values(message.versions).every(
+          (version) =>
+            isRecord(version) &&
+            isDateString(version.updatedAt) &&
+            typeof version.facts === 'string' &&
+            version.facts.length <= 16_384,
+        )
+      );
     case 'signedOut':
     case 'refreshTeams':
       return true;
@@ -30,9 +49,10 @@ function isRequest(message: unknown): message is BackgroundRequest {
 }
 
 async function route(request: BackgroundRequest, document: string): Promise<void> {
+  await loadLanguage();
   switch (request.type) {
     case 'poll':
-      await poll({ force: request.force === true });
+      await poll({ force: request.force === true, afterCurrent: request.afterCurrent === true });
       return;
     case 'refreshMergeState':
       await refreshMergeState(request.prId, request.headSha);
@@ -41,13 +61,23 @@ async function route(request: BackgroundRequest, document: string): Promise<void
       setMergePriority(document, request.prIds);
       return;
     case 'markSeen': {
-      const snapshot = await getItem('snapshot');
-      await updatePrLocal((state) =>
-        request.prIds.reduce((seen, id) => {
-          const pr = snapshot?.pullRequests[id];
-          return pr ? markSeen(seen, id, pr.updatedAt) : seen;
-        }, state),
-      );
+      const session = await getItem('auth');
+      if (!session) return;
+      await withSignedIn(session, async () => {
+        const snapshot = await getItem('snapshot');
+        if (snapshot?.viewer.login.toLowerCase() !== session.viewer.login.toLowerCase()) return;
+        await updatePrLocal((state) =>
+          request.prIds.reduce((seen, id) => {
+            const pr = snapshot.pullRequests[id];
+            if (!pr) return seen;
+            const facts = activityKey(pr);
+            const observed = request.versions[id];
+            if (!observed || observed.updatedAt !== pr.updatedAt || observed.facts !== facts)
+              return seen;
+            return markSeen(seen, id, observed.updatedAt, observed.facts);
+          }, state),
+        );
+      });
       return;
     }
     case 'refreshTeams':

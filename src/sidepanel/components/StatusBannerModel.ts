@@ -1,3 +1,4 @@
+import { countMessage, t, uiLocale } from '../../lib/i18n';
 /**
  * What the status banner says about the last poll, or about a token that expires soon. Pure: the
  * component only renders it.
@@ -36,9 +37,14 @@ const STALE_INTERVALS = 5;
 const STALE_MIN_MS = 10 * MINUTE;
 
 const clock = (ms: number) =>
-  new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  new Date(ms).toLocaleTimeString(uiLocale(), { hour: 'numeric', minute: '2-digit' });
 
-const RETRY = { type: 'retry', label: 'Retry' } as const;
+const RETRY = {
+  type: 'retry',
+  get label() {
+    return t('retry');
+  },
+} as const;
 
 /**
  * The banner for the stored poll state, or null when all is well. `fetchedAt` is the snapshot's:
@@ -54,57 +60,74 @@ export function describeStatus(
   // The header already says "just now"; the banner names an age worth noticing.
   const age =
     fetchedAt && now - Date.parse(fetchedAt) >= MINUTE
-      ? `Last updated ${formatRelativeTime(fetchedAt, now)}.`
+      ? t('lastUpdated', formatRelativeTime(fetchedAt, now))
       : '';
   const waiting = isWaiting(poll.nextAllowedAt, now);
   const until = poll.nextAllowedAt ? Date.parse(poll.nextAllowedAt) : 0;
   const retrying = waiting
-    ? `retrying in ${Math.max(1, Math.ceil((until - now) / MINUTE))} min`
-    : 'retrying soon';
+    ? t('retryingInMin', Math.max(1, Math.ceil((until - now) / MINUTE)))
+    : t('retryingSoon');
   const error = poll.lastError;
 
-  if (!error) {
-    // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
-    if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
-      return {
-        kind: 'rate_limited',
-        tone: 'warning',
-        title: 'GitHub rate limit almost used up',
-        detail: `Refreshing resumes at ${clock(until)}.`,
-        age,
-        action: null,
-      };
-    }
-    const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
-    if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  if (error) return describePollError(error, waiting, until, retrying, age);
+  // Low on points: the poller waits for the reset, and nothing else says why the list stands still.
+  if (waiting && poll.rateLimit && poll.rateLimit.remaining < LOW_RATE_LIMIT) {
     return {
-      kind: 'stale',
+      kind: 'rate_limited',
       tone: 'warning',
-      title: 'Pull requests may be out of date',
-      detail: '',
+      title: t('githubRateLimitAlmostUsedUp'),
+      detail: t('refreshingResumesAt', clock(until)),
       age,
-      action: { type: 'retry', label: 'Refresh now' },
+      action: null,
     };
   }
+  return describeStale(poll, fetchedAt, intervalMinutes, now, age);
+}
 
+function describeStale(
+  poll: PollState,
+  fetchedAt: string | undefined,
+  intervalMinutes: number,
+  now: number,
+  age: string,
+): Banner | null {
+  const limit = Math.max(STALE_MIN_MS, STALE_INTERVALS * intervalMinutes * MINUTE);
+  if (!fetchedAt || poll.inFlight || now - Date.parse(fetchedAt) <= limit) return null;
+  return {
+    kind: 'stale',
+    tone: 'warning',
+    title: t('pullRequestsMayBeOutOfDate'),
+    detail: '',
+    age,
+    action: { type: 'retry', label: t('refreshNow') },
+  };
+}
+
+function describePollError(
+  error: NonNullable<PollState['lastError']>,
+  waiting: boolean,
+  until: number,
+  retrying: string,
+  age: string,
+): Banner {
   switch (error.kind) {
     case 'unauthorized':
       return {
         kind: 'unauthorized',
         tone: 'danger',
-        title: 'Your GitHub token was revoked or expired',
-        detail: 'Prowl stopped refreshing. Sign in again to continue.',
+        title: t('yourGithubTokenWasRevokedOrExpired'),
+        detail: t('prowlStoppedRefreshingSignInAgainToContinue'),
         age,
-        action: { type: 'reauthenticate', label: 'Re-authenticate' },
+        action: { type: 'reauthenticate', label: t('signInAgain') },
       };
     case 'rate_limited':
       return {
         kind: 'rate_limited',
         tone: 'warning',
-        title: waiting ? `Rate limited until ${clock(until)}` : 'GitHub rate limit has reset',
+        title: waiting ? t('rateLimitedUntil', clock(until)) : t('githubRateLimitHasReset'),
         detail: waiting
-          ? 'GitHub is limiting Prowl’s requests, so refreshing is paused.'
-          : 'Prowl refreshes again shortly.',
+          ? t('githubIsLimitingProwlSRequestsSoRefreshingIs')
+          : t('prowlRefreshesAgainShortly'),
         age,
         action: waiting ? null : RETRY,
       };
@@ -112,7 +135,7 @@ export function describeStatus(
       return {
         kind: 'offline',
         tone: 'warning',
-        title: `Offline — ${retrying}`,
+        title: t('offlineRetryTitle', retrying),
         detail: error.message,
         age,
         action: RETRY,
@@ -121,7 +144,7 @@ export function describeStatus(
       return {
         kind: 'error',
         tone: 'danger',
-        title: `GitHub error — ${retrying}`,
+        title: t('githubError', retrying),
         detail: error.message,
         age,
         action: RETRY,
@@ -141,13 +164,13 @@ export function describeTokenExpiry(
   const left = expiresAt ? Date.parse(expiresAt) - now : Number.NaN;
   if (!(left > 0 && left <= EXPIRY_WARNING_DAYS * DAY)) return null;
   const days = Math.floor(left / DAY);
-  const when = days === 0 ? 'in less than a day' : `in ${days} day${days === 1 ? '' : 's'}`;
+  const when = days === 0 ? t('inLessThanADay') : countMessage(days, 'inDaysOne', 'inDaysOther');
   return {
     kind: 'expiring',
     tone: 'warning',
-    title: `Your GitHub token expires ${when}`,
-    detail: 'Create a new one and sign in with it to keep Prowl refreshing.',
+    title: t('yourGithubTokenExpires', when),
+    detail: t('createANewOneAndSignInWithIt'),
     age: '',
-    action: { type: 'reauthenticate', label: 'Renew token' },
+    action: { type: 'reauthenticate', label: t('renewToken') },
   };
 }

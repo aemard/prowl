@@ -37,7 +37,8 @@ test('every scope preset, a custom search and the repo filters reach GitHub’s 
   const has = (qualifier: string) => queries.filter((q) => q.includes(qualifier));
   expect(has('author:@me')).toHaveLength(1);
   expect(has('user-review-requested:@me')).toHaveLength(1);
-  expect(has('team-review-requested:acme/core')).toHaveLength(1);
+  expect(has('team-review-requested-user:@me')).toHaveLength(1);
+  expect(has('team-review-requested:')).toHaveLength(0);
   expect(has('mentions:@me')).toHaveLength(1);
   expect(has('assignee:@me')).toHaveLength(1);
   expect(has('label:bug')).toHaveLength(1);

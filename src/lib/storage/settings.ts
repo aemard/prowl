@@ -4,6 +4,7 @@
  */
 import {
   type BadgeMode,
+  type Language,
   type NotificationSettings,
   type PrEventType,
   type Section,
@@ -16,22 +17,19 @@ import {
 import { isRecord } from './guards';
 import { getItem, subscribe, type Unsubscribe, updateItem } from './storage';
 
-export const SETTINGS_VERSION: Settings['version'] = 1;
+export const SETTINGS_VERSION: Settings['version'] = 2;
 export const MIN_POLL_INTERVAL_MINUTES = 2;
 export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
 export const MAX_SECTION_LABEL_LENGTH = 60;
-/** `hideStaleAfterDays` range; 0 never hides. */
-export const MIN_HIDE_STALE_DAYS = 0;
-export const MAX_HIDE_STALE_DAYS = 365;
 
 export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
 
 /** Preset sections in default order. A preset's id is its kind and its label is fixed. */
 const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: boolean }> = {
   authored: { label: 'Created by me', enabled: true },
-  review_requested: { label: 'Review requested', enabled: false },
+  review_requested: { label: 'Review requested', enabled: true },
   team_review_requested: { label: 'Team reviews', enabled: false },
   mentioned: { label: 'Mentioned', enabled: false },
   assigned: { label: 'Assigned to me', enabled: false },
@@ -51,6 +49,16 @@ const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
 
 const BADGE_MODES: Record<BadgeMode, true> = { attention: true, unseen: true, off: true };
 const THEMES: Record<Theme, true> = { system: true, light: true, dark: true };
+const LANGUAGES: Record<Language, true> = {
+  system: true,
+  en: true,
+  ja: true,
+  'zh-CN': true,
+  'zh-TW': true,
+  fr: true,
+  de: true,
+  es: true,
+};
 const SORT_ORDERS: Record<SortOrder, true> = { updated: true, created: true, repo: true };
 
 function keysOf<K extends string>(record: Record<K, unknown>): K[] {
@@ -79,7 +87,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   sections: BUILT_IN_SECTION_KINDS.map((kind) => builtInSection(kind)),
   repoInclude: [],
   repoExclude: [],
-  pollIntervalMinutes: 5,
+  pollIntervalMinutes: 2,
   maxPerSection: 50,
   notifications: {
     enabled: false,
@@ -88,9 +96,10 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   },
   badge: 'attention',
   theme: 'system',
+  language: 'system',
   sort: 'updated',
   groupByRepo: true,
-  hideStaleAfterDays: 20,
+  hideStaleAfterDays: 0,
   hideDrafts: false,
   hideBots: false,
   unfollowedTeams: [],
@@ -110,7 +119,9 @@ export type SettingsMigration = (raw: Record<string, unknown>) => Record<string,
  * Migrations keyed by the version they upgrade from. To change the shape of `Settings`: bump
  * `version` in model.ts and `SETTINGS_VERSION`, add `SETTINGS_MIGRATIONS[previous]`, test it.
  */
-export const SETTINGS_MIGRATIONS: Readonly<Record<number, SettingsMigration>> = Object.freeze({});
+export const SETTINGS_MIGRATIONS: Readonly<Record<number, SettingsMigration>> = Object.freeze({
+  1: (raw) => ({ ...raw, language: raw.language ?? 'system' }),
+});
 
 function storedVersion(value: unknown): number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : 1;
@@ -256,7 +267,7 @@ function normalizeSections(value: unknown): Section[] {
     // "Review requested" used to include team requests: whoever followed it keeps seeing them.
     const inherited =
       kind === 'team_review_requested'
-        ? sections.find((section) => section.id === 'review_requested')?.enabled
+        ? parsed.find((section) => section.id === 'review_requested')?.enabled
         : undefined;
     sections.push(builtInSection(kind, inherited));
   }
@@ -308,16 +319,13 @@ export function normalizeSettings(value: unknown): Settings {
     notifications: normalizeNotifications(raw.notifications),
     badge: oneOf(raw.badge, BADGE_MODES, DEFAULT_SETTINGS.badge),
     theme: oneOf(raw.theme, THEMES, DEFAULT_SETTINGS.theme),
+    language: oneOf(raw.language, LANGUAGES, DEFAULT_SETTINGS.language),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
-    hideStaleAfterDays: clampInt(
-      raw.hideStaleAfterDays,
-      MIN_HIDE_STALE_DAYS,
-      MAX_HIDE_STALE_DAYS,
-      DEFAULT_SETTINGS.hideStaleAfterDays,
-    ),
-    hideDrafts: bool(raw.hideDrafts, DEFAULT_SETTINGS.hideDrafts),
-    hideBots: bool(raw.hideBots, DEFAULT_SETTINGS.hideBots),
+    // Keep explicit off values for older synced installs (missing stale keys default to 20).
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
     unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }

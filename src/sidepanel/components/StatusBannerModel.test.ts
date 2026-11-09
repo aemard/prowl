@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { uiLocale } from '../../lib/i18n';
 import type { ErrorKind, PollState } from '../../lib/model';
 import { buildPollState } from '../../test/panel';
 import { describeStatus, describeTokenExpiry } from './StatusBannerModel';
@@ -7,7 +8,7 @@ const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 const minutes = (n: number) => n * 60_000;
 const at = (offsetMs: number) => new Date(NOW + offsetMs).toISOString();
 const clock = (offsetMs: number) =>
-  new Date(NOW + offsetMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  new Date(NOW + offsetMs).toLocaleTimeString(uiLocale(), { hour: 'numeric', minute: '2-digit' });
 
 const failed = (kind: ErrorKind, message: string, overrides: Partial<PollState> = {}) =>
   buildPollState({ lastError: { kind, message }, consecutiveFailures: 1, ...overrides });
@@ -34,7 +35,7 @@ describe('describeStatus', () => {
       title: 'Your GitHub token was revoked or expired',
       detail: 'Prowl stopped refreshing. Sign in again to continue.',
       age: 'Last updated 14 min ago.',
-      action: { type: 'reauthenticate', label: 'Re-authenticate' },
+      action: { type: 'reauthenticate', label: 'Sign in again' },
     });
   });
 
@@ -68,14 +69,14 @@ describe('describeStatus', () => {
       );
     expect(offline(at(minutes(3) - 1000))).toMatchObject({
       kind: 'offline',
-      title: 'Offline — retrying in 3 min',
+      title: 'Could not reach GitHub — retrying in 3 min',
       detail: 'Could not reach GitHub.',
       action: { type: 'retry', label: 'Retry' },
     });
-    expect(offline(at(5000))?.title).toBe('Offline — retrying in 1 min');
+    expect(offline(at(5000))?.title).toBe('Could not reach GitHub — retrying in 1 min');
     // The wait is over (or there was none): the next alarm tries.
-    expect(offline(at(-minutes(1)))?.title).toBe('Offline — retrying soon');
-    expect(offline(null)?.title).toBe('Offline — retrying soon');
+    expect(offline(at(-minutes(1)))?.title).toBe('Could not reach GitHub — retrying soon');
+    expect(offline(null)?.title).toBe('Could not reach GitHub — retrying soon');
   });
 
   it.each<ErrorKind>(['server', 'graphql', 'forbidden', 'validation', 'not_found'])(
@@ -129,9 +130,9 @@ describe('describeStatus', () => {
   });
 });
 
-describe('describeTokenExpiry', () => {
-  const days = (n: number) => n * 24 * minutes(60);
+const days = (n: number) => n * 24 * minutes(60);
 
+describe('describeTokenExpiry', () => {
   it('says nothing without a known expiry, a week or more ahead, or once it has passed', () => {
     expect(describeTokenExpiry(undefined, NOW)).toBeNull();
     expect(describeTokenExpiry(null, NOW)).toBeNull();

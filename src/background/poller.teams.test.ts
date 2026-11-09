@@ -1,0 +1,151 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { prNode, requestedTeam, searchResponse, teamJson } from '../../tests/fixtures/github';
+import { jsonResponse, rateLimitHeaders } from '../../tests/fixtures/http';
+import { defaultSettings } from '../lib/storage/settings';
+import { getItem, setItem } from '../lib/storage/storage';
+import { poll } from './poller';
+import {
+  at,
+  github,
+  later,
+  MINUTE,
+  NOW,
+  PR,
+  pollState,
+  signIn,
+  teamCalls,
+} from './poller.test-support';
+
+describe('poll', () => {
+  describe('teams', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const HOUR = 60 * MINUTE;
+
+    const followTeams = () =>
+      setItem('settings', {
+        ...defaultSettings(),
+        sections: defaultSettings().sections.map((section) => ({
+          ...section,
+          enabled: section.kind === 'team_review_requested',
+        })),
+      });
+
+    it('discovers them on the first poll, searches them, and refreshes them a day later', async () => {
+      const requests = github(
+        () =>
+          searchResponse([
+            prNode({
+              reviewRequests: {
+                nodes: [requestedTeam('acme/core')],
+                totalCount: 1,
+                pageInfo: { hasNextPage: false },
+              },
+            }),
+          ]),
+        () => jsonResponse([teamJson('acme/core', 'Core')]),
+      );
+      await followTeams();
+      await signIn();
+      await poll();
+
+      expect(teamCalls).toBe(1);
+      expect(await getItem('teams')).toEqual({
+        login: 'octocat',
+        fetchedAt: at(NOW),
+        teams: [{ org: 'acme', slug: 'core', name: 'Core' }],
+        error: null,
+      });
+      expect(requests.map(({ query }) => query)).toEqual([
+        'is:pr is:open team-review-requested-user:@me archived:false sort:updated-desc',
+      ]);
+      expect(await getItem('snapshot')).toMatchObject({
+        sections: { team_review_requested: [PR] },
+        teamRequests: { [PR]: ['acme/core'] },
+        sectionErrors: {},
+      });
+
+      later(23 * HOUR);
+      await poll();
+      expect(teamCalls).toBe(1);
+      later(HOUR);
+      await poll();
+      expect(teamCalls).toBe(2);
+    });
+
+    it('reports a missing scope in the section, not as a poll failure, and retries hourly', async () => {
+      github(undefined, () => jsonResponse({ message: 'Not Found' }, { status: 404 }));
+      await followTeams();
+      await signIn();
+      await poll();
+
+      expect(await pollState()).toMatchObject({ lastError: null, consecutiveFailures: 0 });
+      expect((await getItem('teams'))?.error?.kind).toBe('missing_scope');
+      expect((await getItem('snapshot'))?.sectionErrors?.team_review_requested).toBeUndefined();
+      later(59 * MINUTE);
+      await poll();
+      expect(teamCalls).toBe(1);
+      later(MINUTE);
+      await poll();
+      expect(teamCalls).toBe(2);
+    });
+
+    it('fails the poll when the discovery cannot reach GitHub, and stores no team', async () => {
+      const requests = github(undefined, () => {
+        throw new TypeError('Failed to fetch');
+      });
+      await signIn();
+      await poll();
+      expect(requests).toEqual([]);
+      expect(await pollState()).toMatchObject({ lastError: { kind: 'network' } });
+      expect(await getItem('teams')).toBeUndefined();
+    });
+
+    it('stops before searches and waits for a team-discovery rate limit to reset', async () => {
+      const reset = NOW + 20 * MINUTE;
+      const requests = github(undefined, () =>
+        jsonResponse(
+          { message: 'API rate limit exceeded' },
+          {
+            status: 403,
+            headers: rateLimitHeaders({ remaining: 0, reset: reset / 1000 }),
+          },
+        ),
+      );
+      await signIn();
+      await poll();
+      expect(requests).toEqual([]);
+      expect(await getItem('teams')).toBeUndefined();
+      expect(await pollState()).toMatchObject({
+        lastError: { kind: 'rate_limited' },
+        consecutiveFailures: 1,
+        nextAllowedAt: at(reset),
+      });
+      await poll({ force: true });
+      expect(teamCalls).toBe(1);
+      later(20 * MINUTE);
+      await poll();
+      expect(teamCalls).toBe(2);
+    });
+
+    it('discovers them again on request, in a poll of its own after the one in flight', async () => {
+      const requests = github();
+      await signIn();
+      await poll();
+      expect(teamCalls).toBe(1);
+
+      const [shared, refreshed] = await Promise.all([poll(), poll({ refreshTeams: true })]);
+      expect(teamCalls).toBe(2);
+      expect(requests).toHaveLength(3);
+      expect(refreshed).not.toBe(shared);
+      expect(refreshed?.snapshot).toBeDefined();
+    });
+  });
+});

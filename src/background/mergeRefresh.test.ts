@@ -1,6 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { mergeStateResponse, prNode } from '../../tests/fixtures/github';
-import { graphqlRateLimit, jsonResponse } from '../../tests/fixtures/http';
+import {
+  graphqlError,
+  graphqlRateLimit,
+  jsonResponse,
+  rateLimitHeaders,
+} from '../../tests/fixtures/http';
 import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { getItem, removeItems, setItem, setItems } from '../lib/storage/storage';
@@ -8,7 +13,7 @@ import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildSnapshotOf } from '../test/panel';
 import { refreshMergeState, setMergePriority } from './poller';
 
-const node = prNode({ mergeStateStatus: 'CLEAN' });
+const node = prNode({ mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
 const pr = { ...mapPullRequest(node), mergeStateStatus: 'blocked' as const };
 
 beforeEach(async () => {
@@ -69,6 +74,21 @@ it('updates the badge and reports a readiness change only once', async () => {
   expect([...fakeChrome().__state.notifications.keys()][0]).toContain(':ready_to_merge:');
 });
 
+it.each(['b'.repeat(40), undefined])(
+  'rejects facts returned for an unverified head (%s)',
+  async (headRefOid) => {
+    serve(() => {
+      const response = mergeStateResponse([pr.id], [node]);
+      return jsonResponse({
+        data: { ...response, nodes: response.nodes?.map((item) => ({ ...item, headRefOid })) },
+      });
+    });
+    await refreshMergeState(pr.id, pr.headSha);
+    expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+    expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
+  },
+);
+
 it('honors rate-limit waits and rejects stale heads and absent PRs without fetching', async () => {
   const fetch = serve();
   await refreshMergeState('missing', pr.headSha);
@@ -124,4 +144,71 @@ it('visibility hints alone never trigger a GitHub read', () => {
   setMergePriority('panel-1', [pr.id]);
   setMergePriority('panel-1', []);
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it('does not publish readiness from a partially forbidden targeted response', async () => {
+  serve(() =>
+    jsonResponse({
+      data: mergeStateResponse([pr.id], [node]),
+      errors: [
+        graphqlError('FORBIDDEN', 'Review requirements unavailable', [
+          'nodes',
+          0,
+          'reviewDecision',
+        ]),
+      ],
+    }),
+  );
+  await refreshMergeState(pr.id, pr.headSha);
+  expect((await getItem('snapshot'))?.pullRequests[pr.id]?.mergeStateStatus).toBe('blocked');
+  expect((await getItem('snapshot'))?.mergeStateAt?.[pr.id]).toBeUndefined();
+  // A card-level GitHub error stays on the card (isPollBudgetFailure): no global poll failure.
+  expect((await getItem('pollState'))?.lastError?.kind).not.toBe('forbidden');
+});
+
+it.each([
+  ['not_found', () => jsonResponse({ message: 'Not Found' }, { status: 404 })],
+  ['graphql', () => jsonResponse({ errors: [{ message: 'Query failed' }] })],
+  [
+    'network',
+    () => {
+      throw new TypeError('Failed to fetch');
+    },
+  ],
+  ['server', () => jsonResponse({ message: 'Server Error' }, { status: 502 })],
+] as const)('keeps a card %s failure local and clears its pending indicator', async (_, reply) => {
+  const before = buildPollState({
+    consecutiveFailures: 2,
+    lastError: { kind: 'server', message: 'Earlier poll failed' },
+  });
+  await setItem('pollState', before);
+  const snapshot = await getItem('snapshot');
+  const fetch = serve(reply);
+  await refreshMergeState(pr.id, pr.headSha);
+  expect(await getItem('pollState')).toEqual(before);
+  expect(await getItem('snapshot')).toEqual(snapshot);
+  await refreshMergeState(pr.id, pr.headSha);
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+it('records a card rate limit globally, waits until reset and clears pending', async () => {
+  const reset = Math.floor(Date.now() / 1000) * 1000 + 600_000;
+  const fetch = serve(() =>
+    jsonResponse(
+      { message: 'API rate limit exceeded' },
+      {
+        status: 403,
+        headers: rateLimitHeaders({ remaining: 0, reset: reset / 1000 }),
+      },
+    ),
+  );
+  await refreshMergeState(pr.id, pr.headSha);
+  expect(await getItem('pollState')).toMatchObject({
+    lastError: { kind: 'rate_limited' },
+    consecutiveFailures: 1,
+    nextAllowedAt: new Date(reset).toISOString(),
+  });
+  expect(await getItem('pollState')).not.toHaveProperty('mergePending');
+  await refreshMergeState(pr.id, pr.headSha);
+  expect(fetch).toHaveBeenCalledTimes(1);
 });

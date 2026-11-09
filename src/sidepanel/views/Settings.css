@@ -189,11 +189,11 @@
   align-self: flex-start;
 }
 
-/* Teams: one fieldset per organization, its switches stacked like the rest of the group. */
+/* Teams: one fieldset per organization, a compact list nested under the Team reviews switch. */
 .settings-teams__org {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   border: 0;
@@ -201,7 +201,7 @@
 }
 
 .settings-teams__legend {
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
   padding: 0;
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
@@ -215,4 +215,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
+}
+
+.team-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-block: var(--space-1) var(--space-2);
 }

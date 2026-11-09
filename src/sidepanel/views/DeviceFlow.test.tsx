@@ -15,69 +15,70 @@ const DEVICE_CODE_BODY = {
   interval: 1,
 };
 
-beforeEach(() => {
-  vi.useFakeTimers({
-    toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
-  });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  toasts.value = [];
-  location.hash = '';
-});
-
-interface GitHubStub {
-  /** What `/login/oauth/access_token` answers, in turn (the last repeats). */
-  polls?: object[];
-  /** Answer of `/login/device/code`. */
-  code?: Response;
-  scopes?: string;
-  /** Answer of the sign-in checks. */
-  account?: Response;
-}
-
-/** Stubs github.com's device endpoints and the API calls that check the new token. */
-function stubGitHub({
-  polls = [{ access_token: TOKEN }],
-  code,
-  scopes = 'repo, read:org',
-  account,
-}: GitHubStub = {}) {
-  let poll = 0;
-  const fetch = vi.fn(async (input: RequestInfo | URL) => {
-    const url = String(input);
-    if (url.endsWith('/login/device/code')) return code ?? jsonResponse(DEVICE_CODE_BODY);
-    if (url.endsWith('/login/oauth/access_token')) {
-      return jsonResponse(polls[Math.min(poll++, polls.length - 1)]);
-    }
-    if (account) return account.clone();
-    return url.endsWith('/graphql')
-      ? jsonResponse({ data: { viewer: viewerNode() } })
-      : jsonResponse({ login: 'octocat' }, { headers: { 'x-oauth-scopes': scopes } });
-  });
-  vi.stubGlobal('fetch', fetch);
-  return fetch;
-}
-
-const urls = (fetch: ReturnType<typeof stubGitHub>) => fetch.mock.calls.map(([url]) => String(url));
-const start = () => screen.getByRole('button', { name: 'Continue with GitHub' });
-
-/** Clicks the start button and lets the permission and code requests settle. */
-async function begin() {
-  await act(async () => {
-    fireEvent.click(start());
-    await vi.advanceTimersByTimeAsync(0);
-  });
-}
-
-async function advance(ms: number) {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
-}
-
 describe('DeviceFlow', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    toasts.value = [];
+    location.hash = '';
+  });
+
+  interface GitHubStub {
+    /** What `/login/oauth/access_token` answers, in turn (the last repeats). */
+    polls?: object[];
+    /** Answer of `/login/device/code`. */
+    code?: Response;
+    scopes?: string;
+    /** Answer of the sign-in checks. */
+    account?: Response;
+  }
+
+  /** Stubs github.com's device endpoints and the API calls that check the new token. */
+  function stubGitHub({
+    polls = [{ access_token: TOKEN }],
+    code,
+    scopes = 'repo, read:org',
+    account,
+  }: GitHubStub = {}) {
+    let poll = 0;
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/login/device/code')) return code ?? jsonResponse(DEVICE_CODE_BODY);
+      if (url.endsWith('/login/oauth/access_token')) {
+        return jsonResponse(polls[Math.min(poll++, polls.length - 1)]);
+      }
+      if (account) return account.clone();
+      return url.endsWith('/graphql')
+        ? jsonResponse({ data: { viewer: viewerNode() } })
+        : jsonResponse({ login: 'octocat' }, { headers: { 'x-oauth-scopes': scopes } });
+    });
+    vi.stubGlobal('fetch', fetch);
+    return fetch;
+  }
+
+  const urls = (fetch: ReturnType<typeof stubGitHub>) =>
+    fetch.mock.calls.map(([url]) => String(url));
+  const start = () => screen.getByRole('button', { name: 'Continue with GitHub' });
+
+  /** Clicks the start button and lets the permission and code requests settle. */
+  async function begin() {
+    await act(async () => {
+      fireEvent.click(start());
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  }
+
+  async function advance(ms: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+  }
+
   it('asks to be allowed on github.com, shows the code, opens GitHub and keeps the code on screen', async () => {
     const request = vi.spyOn(chrome.permissions, 'request');
     stubGitHub({ polls: [{ error: 'authorization_pending' }] });
@@ -180,7 +181,7 @@ describe('DeviceFlow', () => {
       scopes: ['repo', 'read:org'],
       viewer: viewerNode(),
     });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
     expect(toasts.value).toEqual([]);
     expect(urls(fetch).filter((url) => url.endsWith('/access_token'))).toHaveLength(2);
   });
@@ -200,7 +201,8 @@ describe('DeviceFlow', () => {
   it('explains why access to github.com is needed when it is not granted', async () => {
     vi.spyOn(fakeChrome().permissions, 'request').mockResolvedValue(false);
     const fetch = stubGitHub();
-    render(<DeviceFlow />);
+    const fallback = vi.fn();
+    render(<DeviceFlow onTokenFallback={fallback} />);
 
     await begin();
 
@@ -209,6 +211,22 @@ describe('DeviceFlow', () => {
     );
     expect(fetch).not.toHaveBeenCalled();
     expect(start().getAttribute('aria-busy')).toBeNull();
+    expect(fallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for the token form when OAuth is unavailable or refused', async () => {
+    const fallback = vi.fn();
+    stubGitHub({ code: jsonResponse({ error: 'device_flow_disabled' }) });
+    render(<DeviceFlow onTokenFallback={fallback} />);
+    await begin();
+    expect(screen.getByRole('alert').textContent).toMatch(/not available for this build/);
+    expect(fallback).toHaveBeenCalledTimes(1);
+
+    stubGitHub({ polls: [{ error: 'access_denied' }] });
+    await begin();
+    await advance(1_000);
+    expect(screen.getByRole('alert').textContent).toMatch(/Access was denied on GitHub/);
+    expect(fallback).toHaveBeenCalledTimes(2);
   });
 
   it('shows the denial, goes back to the start button and lets the user try again', async () => {

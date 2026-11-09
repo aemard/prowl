@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import { normalizeRepoPattern } from '../../lib/storage/settings';
 import { PlusIcon, XIcon } from './icons';
 import { Button } from './ui/Button';
@@ -29,21 +30,21 @@ export function RepoFilter({ name, hint, patterns, onChange }: RepoFilterProps) 
     event.preventDefault();
     const pattern = normalizeRepoPattern(text);
     if (pattern === null) {
-      setError('Enter an owner or owner/name, for example acme or acme/widgets.');
+      setError(t('enterAnOwnerOrOwnerNameForExampleAcme'));
     } else if (patterns.some((known) => known.toLowerCase() === pattern.toLowerCase())) {
-      setError(`${pattern} is already in the ${list} list.`);
+      setError(t('isAlreadyInTheList', pattern, list));
     } else {
       onChange((current) => [...current, pattern]);
       setText('');
       setError(undefined);
-      setStatus(`Added ${pattern} to the ${list} list.`);
+      setStatus(t('addedToTheList', pattern, list));
     }
     input.current?.focus();
   }
 
   function remove(pattern: string) {
     onChange((current) => current.filter((known) => known !== pattern));
-    setStatus(`Removed ${pattern} from the ${list} list.`);
+    setStatus(t('removedFromTheList', pattern, list));
     // The button that had focus is gone: keep the keyboard where the user is working.
     input.current?.focus();
   }
@@ -62,7 +63,7 @@ export function RepoFilter({ name, hint, patterns, onChange }: RepoFilterProps) 
                 {pattern}
               </span>
               <IconButton
-                label={`Remove ${pattern}`}
+                label={t('remove', pattern)}
                 size="sm"
                 class="repo-chip__remove"
                 onClick={() => remove(pattern)}
@@ -76,21 +77,21 @@ export function RepoFilter({ name, hint, patterns, onChange }: RepoFilterProps) 
       <form class="repo-filter__add" onSubmit={add} noValidate>
         <TextField
           class="repo-filter__field"
-          label={`${name} repository`}
+          label={t('repository', name)}
           hideLabel
           value={text}
           onValueChange={(value) => {
             setText(value);
             setError(undefined);
           }}
-          placeholder="owner or owner/name"
+          placeholder={t('ownerOrOwnerName')}
           error={error}
           autoComplete="off"
           spellcheck={false}
           inputRef={input}
         />
-        <Button type="submit" icon={<PlusIcon />} aria-label={`Add to ${list} list`}>
-          Add
+        <Button type="submit" icon={<PlusIcon />} aria-label={t('addToList', list)}>
+          {t('add')}
         </Button>
       </form>
       <p class="sr-only" role="status">

@@ -84,9 +84,10 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
   // Re-authenticating keeps the settings and the snapshot, and the banner goes with the problem.
   await serviceWorker.evaluate(() => chrome.storage.local.set({ settings: { maxPerSection: 30 } }));
   failWith(null);
-  await panel.getByRole('button', { name: 'Re-authenticate' }).click();
-  await expect(panel.getByRole('heading', { name: 'Sign in with GitHub' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Sign in again' }).click();
+  await expect(panel.getByRole('heading', { name: 'See your pull requests here' })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Use a personal access token' }).click();
   await panel.getByLabel('Personal access token').fill(TOKEN);
   await panel.getByRole('button', { name: 'Sign in' }).click();
 
@@ -113,7 +114,7 @@ test('a rejected token before the first list loads says so instead of a skeleton
   const panel = await openPanel();
   await expect(panel.getByRole('alert')).toContainText('token was revoked or expired');
   await expect(panel.getByRole('heading', { name: 'Could not load pull requests' })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Re-authenticate' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Sign in again' })).toBeVisible();
 });
 
 test('rate limited: banner with the reset time, no retry, the list stays readable', async ({
@@ -154,7 +155,7 @@ test('a GitHub error: banner with its message, and Retry now recovers', async ({
   await poll();
 
   const status = panel.getByRole('status').filter({ hasText: 'GitHub error' });
-  await expect(status).toContainText(/GitHub error — retrying in ([89]|10) min/);
+  await expect(status).toContainText(/GitHub error — retrying in [34] min/);
   await expect(status).toContainText('Bad gateway');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);
@@ -184,8 +185,8 @@ test('offline: banner counts down to the retry, the list stays readable', async 
     await github.start();
   }
 
-  const status = panel.getByRole('status').filter({ hasText: 'Offline' });
-  await expect(status).toContainText(/Offline — retrying in ([89]|10) min/);
+  const status = panel.getByRole('status').filter({ hasText: 'Could not reach GitHub' });
+  await expect(status).toContainText(/Could not reach GitHub — retrying in [34] min/);
   await expect(status).toContainText('Could not reach GitHub.');
   await expect(card(panel)).toBeVisible();
   await expectNoA11yViolations(panel);

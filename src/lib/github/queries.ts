@@ -24,6 +24,7 @@ const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
 export const SEARCH_QUERY = /* GraphQL */ `
 query ProwlSearch($query: String!, $first: Int!, $after: String) {
   search(query: $query, type: ISSUE, first: $first, after: $after) {
+    issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
@@ -54,8 +55,9 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         autoMergeRequest { mergeMethod enabledBy { login } }
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
-        latestReviews(first: 20) { nodes { id state submittedAt author { login } } }
+        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { login } } }
         reviewRequests(first: 20) {
+          totalCount pageInfo { hasNextPage }
           nodes {
             requestedReviewer {
               ... on User { login }
@@ -64,7 +66,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
             }
           }
         }
-        reviewThreads(first: 100) { nodes { isResolved } }
+        reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
         comments(last: 1) { nodes { createdAt author { login } } }
         commits(last: 1) {
           nodes {
@@ -85,16 +87,26 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
   ${RATE_LIMIT}
 }`;
 
+/** Team fields are isolated: repo-only tokens must still load all other sections. */
+export const TEAM_SEARCH_QUERY = SEARCH_QUERY.replace(
+  '... on User { login }',
+  '... on User { login } ... on Team { slug organization { login } }',
+);
+
 /** The merge facts of open PRs: what GitHub computes per PR on every read (see the top). */
 export const MERGE_STATE_QUERY = /* GraphQL */ `
 query ProwlMergeState($ids: [ID!]!) {
   nodes(ids: $ids) {
     ... on PullRequest {
       id
+      headRefOid
       reviewDecision
       mergeable
       mergeStateStatus
       viewerCanUpdate
+      viewerCanMergeAsAdmin
+      viewerCanEnableAutoMerge
+      viewerCanDisableAutoMerge
     }
   }
   ${RATE_LIMIT}
@@ -129,8 +141,9 @@ export const DETAIL_QUERY = /* GraphQL */ `
 query ProwlPullRequestDetail($id: ID!, $after: String) {
   node(id: $id) {
     ... on PullRequest {
-      latestReviews(first: 20) { nodes { state author { login avatarUrl(size: 64) } } }
+      latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { state author { login avatarUrl(size: 64) } } }
       reviewRequests(first: 20) {
+        totalCount pageInfo { hasNextPage }
         nodes {
           requestedReviewer {
             ... on User { login avatarUrl(size: 64) }
@@ -164,6 +177,8 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
 
 /** A connection as selected here: only `nodes`, whose entries are null where a read failed. */
 export interface Nodes<T> {
+  totalCount?: number;
+  pageInfo?: { hasNextPage: boolean };
   nodes: (T | null)[] | null;
 }
 
@@ -214,7 +229,9 @@ export interface PullRequestNode {
     author: Login | null;
   }> | null;
   /** `{}` for a team (not selected, see `SEARCH_QUERY`). */
-  reviewRequests: Nodes<{ requestedReviewer: Partial<Login> | null }> | null;
+  reviewRequests: Nodes<{
+    requestedReviewer: (Partial<Login> & { slug?: string; organization?: Login | null }) | null;
+  }> | null;
   reviewThreads: Nodes<{ isResolved: boolean }>;
   comments: Nodes<{ createdAt: string; author: Login | null }>;
   commits: Nodes<{
@@ -233,10 +250,14 @@ export interface PullRequestNode {
 
 export interface MergeStateNode {
   id: string;
+  headRefOid: string;
   reviewDecision: string | null;
   mergeable: string;
   mergeStateStatus: string;
   viewerCanUpdate: boolean;
+  viewerCanMergeAsAdmin: boolean;
+  viewerCanEnableAutoMerge: boolean;
+  viewerCanDisableAutoMerge: boolean;
 }
 
 export interface MergeStateData {
@@ -254,6 +275,7 @@ export interface GraphQLRateLimit {
 
 export interface SearchData {
   search: {
+    issueCount?: number;
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     /** Null where a read failed (an org that requires SAML); `{}` for a non-PR result. */
     nodes: (PullRequestNode | Record<string, never> | null)[] | null;
@@ -283,7 +305,7 @@ export interface CheckRunNode {
   status: string;
   conclusion: string | null;
   detailsUrl: string | null;
-  isRequired: boolean;
+  isRequired: boolean | null;
 }
 
 export interface StatusContextNode {
@@ -291,7 +313,7 @@ export interface StatusContextNode {
   context: string;
   state: string;
   targetUrl: string | null;
-  isRequired: boolean;
+  isRequired: boolean | null;
 }
 
 export interface DetailPullRequestNode {

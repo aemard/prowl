@@ -1,37 +1,15 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
+import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
-import { formatRelativeTime } from '../../lib/time/relative';
-import { formatSnoozeEnd } from '../../lib/time/snooze';
+import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
-import { auth, pollState } from '../state/store';
+import { pollState } from '../state/store';
 import { GitHubLink } from './GitHubLink';
-import {
-  AlertIcon,
-  BellSlashIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ClockIcon,
-  CommentDiscussionIcon,
-  CommentIcon,
-  DotFillIcon,
-  EyeClosedIcon,
-  EyeIcon,
-  FileDiffIcon,
-  GitMergeIcon,
-  GitPullRequestDraftIcon,
-  PeopleIcon,
-  SyncIcon,
-  XIcon,
-} from './icons';
-import type { IconComponent } from './icons/Icon';
 import { lazy } from './lazy';
-import { PrMenu } from './PrMenu';
-import { describePullRequest, pullRequestStatuses, type StatusIcon } from './prStatus';
-import { Avatar } from './ui/Avatar';
-import { Badge } from './ui/Badge';
-import { IconButton } from './ui/IconButton';
+import { CardChips, CardHead, CardMeta } from './PullRequestCardParts';
+import { describePullRequest, pullRequestStatuses } from './prStatus';
 import './PullRequestCard.css';
+import './PullRequestCardMotion.css';
 
 /** The expanded part (checks, reviewers, actions, dialogs) loads with the first expand. */
 const PullRequestDetails = lazy(
@@ -40,21 +18,8 @@ const PullRequestDetails = lazy(
   ({ id }) => <div id={id} class="pr-detail" aria-busy="true" />,
 );
 
-const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
-  draft: GitPullRequestDraftIcon,
-  check: CheckIcon,
-  x: XIcon,
-  dot: DotFillIcon,
-  diff: FileDiffIcon,
-  eye: EyeIcon,
-  alert: AlertIcon,
-  merge: GitMergeIcon,
-};
-
-/** Labels shown on a card; the rest collapse into "+N". */
-const MAX_LABELS = 3;
-
 export interface PullRequestCardProps {
+  activity?: ActivityKind;
   pr: PullRequest;
   /** Changed since the user last saw it. */
   unseen: boolean;
@@ -64,52 +29,18 @@ export interface PullRequestCardProps {
   muted?: boolean;
   /** ISO time the snooze ends, when the PR is snoozed. */
   snoozedUntil?: string | null;
-  /** Why the list hides this PR ("No commit for 34 d"), on a card shown with the hidden ones. */
-  hiddenBecause?: string;
   /** The card sits under its repository's header, so its own row shows only `#number`. */
   grouped?: boolean;
   /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
   teams?: readonly string[];
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
-/**
- * One pull request in the list. The title is the link to GitHub; the chevron button (and a click
- * anywhere else on the card) expands it into its details, merge readiness first. The link and
- * the button are siblings, never nested, and each has its own name: the button says what it
- * opens and describes the card with every fact it shows, so a screen reader gets the whole card
- * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
- */
-export function PullRequestCard({
-  pr,
-  unseen,
-  now,
-  muted,
-  snoozedUntil,
-  hiddenBecause,
-  grouped,
-  teams,
-}: PullRequestCardProps) {
-  const detailId = useId();
+function useCardInteractions(id: string) {
   const card = useRef<HTMLLIElement>(null);
-  const expanded = expandedIds.value.includes(pr.id);
-  const statuses = pullRequestStatuses(pr);
-  const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
-  const labels = pr.labels.slice(0, MAX_LABELS);
-  const hidden = pr.labels.slice(MAX_LABELS);
-  const teamRequest =
-    teams && teams.length > 0 && `Review requested from ${teams.map((t) => `@${t}`).join(', ')}`;
-  // Who opened it, in words: the avatar alone is a 16 px picture with a tooltip. Not for your own.
-  const author = pr.author?.login;
-  const by =
-    author && author.toLowerCase() !== auth.value?.viewer.login.toLowerCase() ? author : null;
-
   // Two conveniences on top of the chevron button, which is the keyboard and screen reader path:
   // a click on the card's summary (not on a link or button, nor a selection made to copy text)
   // toggles it, and Escape folds an expanded card back and keeps focus on its button instead of
   // losing it with the detail that had it. Native listeners: the card itself is not a control.
-  const id = pr.id;
   useEffect(() => {
     const el = card.current;
     if (!el) return;
@@ -133,152 +64,77 @@ export function PullRequestCard({
     };
   }, [id]);
 
+  return card;
+}
+
+/**
+ * One pull request in the list. The title is the link to GitHub; the chevron button (and a click
+ * anywhere else on the card) expands it into its details, merge readiness first. The link and
+ * the button are siblings, never nested, and each has its own name: the button says what it
+ * opens and describes the card with every fact it shows, so a screen reader gets the whole card
+ * in one stop. Chips pair color with an icon and a word; the unseen dot is also in the sentence.
+ */
+export function PullRequestCard({
+  pr,
+  activity,
+  unseen,
+  now,
+  muted,
+  snoozedUntil,
+  grouped,
+  teams,
+}: PullRequestCardProps) {
+  const detailId = useId();
+  const card = useCardInteractions(pr.id);
+  const expanded = expandedIds.value.includes(pr.id);
+  const statuses = pullRequestStatuses(pr);
+  const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
+  const teamRequest =
+    teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));
+
   return (
-    <li class="pr-card" ref={card}>
-      <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
-        {unseen && <span class="pr-card__dot" title="Unseen changes" />}
-        <span class="pr-card__head">
-          <Avatar src={pr.author?.avatarUrl} title={pr.author?.login} />
-          <span class="pr-card__repo" title={`${pr.repo.nameWithOwner}#${pr.number}`}>
-            {!grouped && <span class="pr-card__repo-name">{pr.repo.nameWithOwner}</span>}
-            <span class="pr-card__number">#{pr.number}</span>
-          </span>
-          <time
-            class="pr-card__updated"
-            dateTime={pr.updatedAt}
-            title={`Last activity ${new Date(pr.updatedAt).toLocaleString()}`}
+    <li
+      class="pr-card"
+      ref={card}
+      data-activity={activity}
+      inert={activity !== undefined && activity !== 'new'}
+    >
+      <div class="pr-card__body">
+        <div class="pr-card__summary" data-pr-id={pr.id} data-unseen={unseen ? 'true' : undefined}>
+          <CardHead
+            unseen={unseen}
+            pr={pr}
+            activity={activity}
+            now={now}
+            muted={muted}
+            snoozedUntil={snoozedUntil}
+            grouped={grouped}
+            expanded={expanded}
+            detailId={detailId}
+          />
+          <GitHubLink
+            class="pr-card__title"
+            href={pr.url}
+            title={pr.title}
+            aria-label={`${pr.title}, ${pr.repo.nameWithOwner}#${pr.number}`}
           >
-            {formatRelativeTime(pr.updatedAt, now)}
-          </time>
-          {muted && (
-            <span class="pr-card__flag" title="Notifications muted">
-              <BellSlashIcon size={12} />
-              <span class="sr-only">Notifications muted</span>
-            </span>
-          )}
-          {snoozedUntil && (
-            <span
-              class="pr-card__flag"
-              title={`Snoozed until ${new Date(snoozedUntil).toLocaleString()}`}
-            >
-              <ClockIcon size={12} />
-              {formatSnoozeEnd(snoozedUntil, now)}
-            </span>
-          )}
-          <PrMenu pr={pr} now={now} />
-          <IconButton
-            class="pr-card__toggle"
-            size="sm"
-            label={`Details for ${pr.title}`}
-            aria-expanded={expanded}
-            aria-controls={expanded ? detailId : undefined}
-            aria-describedby={`${detailId}-facts`}
-            onClick={() => toggleExpanded(pr.id)}
-          >
-            {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-          </IconButton>
-        </span>
-        <GitHubLink
-          class="pr-card__title"
-          href={pr.url}
-          title={pr.title}
-          aria-label={`${pr.title}, ${pr.repo.nameWithOwner}#${pr.number}`}
-        >
-          {pr.title}
-        </GitHubLink>
-        {(refreshingMerge || hiddenBecause || teamRequest || statuses.length > 0) && (
-          <span class="pr-card__chips">
-            {refreshingMerge && (
-              <Badge
-                variant="plain"
-                icon={<SyncIcon size={12} />}
-                title="Checking the latest merge status on GitHub"
-              >
-                Updating merge status
-              </Badge>
-            )}
-            {hiddenBecause && (
-              <Badge
-                variant="plain"
-                icon={<EyeClosedIcon size={12} />}
-                title="Why it is hidden from the list"
-              >
-                {hiddenBecause}
-              </Badge>
-            )}
-            {teamRequest && (
-              <Badge variant="plain" icon={<PeopleIcon size={12} />} title={teamRequest}>
-                {teams?.map((t) => `@${t}`).join(', ')}
-              </Badge>
-            )}
-            {statuses.map(({ id, tone, icon, label, detail }) => {
-              const Icon = STATUS_ICONS[icon];
-              return (
-                <Badge
-                  key={id}
-                  tone={tone}
-                  variant="plain"
-                  icon={<Icon size={12} />}
-                  title={detail}
-                >
-                  {label}
-                </Badge>
-              );
-            })}
+            {pr.title}
+          </GitHubLink>
+          <CardChips
+            statuses={statuses}
+            refreshingMerge={refreshingMerge}
+            teams={teams}
+            teamRequest={teamRequest}
+          />
+          <CardMeta pr={pr} now={now} />
+          <span id={`${detailId}-facts`} hidden>
+            {describePullRequest(pr, statuses, unseen, now)}
+            {refreshingMerge && t('updatingMergeStatus2')}
+            {teamRequest && `. ${teamRequest}`}
           </span>
-        )}
-        <span class="pr-card__meta">
-          {pr.labels.length > 0 && (
-            <span class="pr-card__labels">
-              {labels.map(({ name, color }) => (
-                <span
-                  class="pr-label"
-                  key={name}
-                  title={name}
-                  style={{ '--label-color': `#${color}` }}
-                >
-                  {name}
-                </span>
-              ))}
-              {hidden.length > 0 && (
-                <span class="pr-label pr-label--more" title={hidden.map((l) => l.name).join(', ')}>
-                  +{hidden.length}
-                </span>
-              )}
-            </span>
-          )}
-          <span class="pr-card__foot">
-            {pr.commentCount > 0 && (
-              <span class="pr-card__stat" title={plural(pr.commentCount, 'comment')}>
-                <CommentIcon size={12} />
-                {pr.commentCount}
-              </span>
-            )}
-            {pr.unresolvedThreads > 0 && (
-              <span class="pr-card__stat" title={plural(pr.unresolvedThreads, 'unresolved thread')}>
-                <CommentDiscussionIcon size={12} />
-                {pr.unresolvedThreads} unresolved
-              </span>
-            )}
-            <span class="pr-card__age" title={by ? `Opened by ${by}` : undefined}>
-              <time
-                dateTime={pr.createdAt}
-                title={`Opened ${new Date(pr.createdAt).toLocaleString()}`}
-              >
-                Opened {formatRelativeTime(pr.createdAt, now)}
-              </time>
-              {by && ` by ${by}`}
-            </span>
-          </span>
-        </span>
-        <span id={`${detailId}-facts`} hidden>
-          {describePullRequest(pr, statuses, unseen, now)}
-          {refreshingMerge && `. Updating merge status`}
-          {teamRequest && `. ${teamRequest}`}
-          {hiddenBecause && `. Hidden from the list: ${hiddenBecause}`}
-        </span>
+        </div>
+        {expanded && <PullRequestDetails pr={pr} id={detailId} />}
       </div>
-      {expanded && <PullRequestDetails pr={pr} id={detailId} />}
     </li>
   );
 }

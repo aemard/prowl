@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Settings, STORAGE_KEYS, type SyncState } from '../lib/model';
-import { defaultSettings, loadSettings, updateSettings } from '../lib/storage/settings';
+import {
+  defaultSettings,
+  loadSettings,
+  SETTINGS_VERSION,
+  updateSettings,
+} from '../lib/storage/settings';
 import { setItem } from '../lib/storage/storage';
 import { pullSettings, pushSettings, SYNCED_KEY, watchSettingsSync } from './sync';
 
 const synced = async (): Promise<Record<string, unknown>> => chrome.storage.sync.get(null);
+
 const syncState = async () => (await chrome.storage.local.get<{ sync: SyncState }>('sync')).sync;
+
 /** Lets the listeners' storage round trips finish. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 
@@ -87,5 +94,26 @@ describe('settings sync', () => {
     vi.spyOn(chrome.storage.local, 'get').mockRejectedValue(new Error('storage'));
     await chrome.storage.sync.set({ [SYNCED_KEY]: defaultSettings() });
     await vi.waitFor(() => expect(error).toHaveBeenCalled());
+  });
+});
+
+it('forces legacy hiding keys off when an old device syncs a partial payload', async () => {
+  watchSettingsSync();
+  await setItem(STORAGE_KEYS.sync, { enabled: true, error: null });
+  await settle();
+  await chrome.storage.sync.set({ [SYNCED_KEY]: { hideStaleAfterDays: 20 } });
+  await vi.waitFor(async () =>
+    expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
+      version: SETTINGS_VERSION,
+      hideStaleAfterDays: 0,
+      hideDrafts: false,
+      hideBots: false,
+    }),
+  );
+  await updateSettings({ hideStaleAfterDays: 20, hideDrafts: true, hideBots: true });
+  expect(await loadSettings()).toMatchObject({
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
   });
 });

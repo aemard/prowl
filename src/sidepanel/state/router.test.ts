@@ -16,6 +16,9 @@ describe('resolveRoute', () => {
     ['#/settings', false, 'onboarding'],
     ['#/onboarding', false, 'onboarding'],
     ['', true, 'list'],
+    ['#/setup', true, 'list'],
+    ['#/settings', true, 'settings'],
+    ['#/', true, 'list'],
     ['#/', true, 'list'],
     ['#/settings', true, 'settings'],
     ['#/onboarding', true, 'onboarding'],
@@ -26,6 +29,12 @@ describe('resolveRoute', () => {
 });
 
 describe('route', () => {
+  it('does not gate old third-step progress', () => {
+    auth.value = buildAuth();
+    navigate('list');
+    expect(route.value).toBe('list');
+  });
+
   it('lands signed-out users on onboarding and signed-in users on the list', () => {
     expect(route.value).toBe('onboarding');
     auth.value = buildAuth();

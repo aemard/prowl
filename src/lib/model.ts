@@ -30,10 +30,16 @@ export interface CheckItem {
   /** The check's own page; null when GitHub has none. Not yet checked against the allowlist. */
   url: string | null;
   /** The base branch's protection requires it to pass before merging. */
-  required: boolean;
+  required: boolean | null;
 }
 
-export type ReviewDecision = 'approved' | 'changes_requested' | 'review_required' | 'none';
+/** `none`: no review required (null). `unknown`: not read for this commit, or not recognized. */
+export type ReviewDecision =
+  | 'approved'
+  | 'changes_requested'
+  | 'review_required'
+  | 'none'
+  | 'unknown';
 
 export type ReviewState = 'approved' | 'changes_requested' | 'commented' | 'dismissed';
 
@@ -123,6 +129,8 @@ export interface PullRequest {
   labels: Label[];
   /** Unresolved review threads. */
   unresolvedThreads: number;
+  /** Nested connections whose remaining results are available only on GitHub. */
+  incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
   lastComment: { author: string; createdAt: string } | null;
@@ -133,6 +141,9 @@ export interface PullRequest {
   /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */
   defaultMergeMethod: MergeMethod;
   viewerCanUpdate: boolean;
+  viewerCanMergeAsAdmin: boolean;
+  viewerCanEnableAutoMerge: boolean;
+  viewerCanDisableAutoMerge: boolean;
   /** The viewer has write access to the repository (GraphQL has no `viewerCanMerge`). */
   viewerCanMerge: boolean;
   /** The repository lets pull requests merge themselves once their requirements pass. */
@@ -156,11 +167,14 @@ export interface PullRequestDetail {
   requiredApprovals: number | null;
   /** The base branch needs every review conversation resolved before merging. */
   requiresConversationResolution: boolean;
+  /** Effective methods from readable branch rules; absent means not verified. */
+  allowedMergeMethods?: MergeMethod[];
+  warnings?: string[];
 }
 
 /**
  * `review_requested`: review asked of the viewer directly; `team_review_requested`: asked of a
- * team the viewer belongs to (one search per followed team, see `Settings.unfollowedTeams`).
+ * team the viewer belongs to (one viewer-team search, filtered by `Settings.unfollowedTeams`).
  */
 export type SectionKind =
   | 'authored'
@@ -192,6 +206,8 @@ export type TeamsErrorKind = ErrorKind | 'missing_scope';
 
 /** The viewer's teams, stored under `teams` by the service worker. */
 export interface TeamsState {
+  /** Discovery hit its page bound; never exclude requests from incomplete membership. */
+  incomplete?: boolean;
   /** Whose teams these are: another account's are discovered again. */
   login: string;
   /** Last discovery attempt; the poller retries after 24 h (1 h after a failure). */
@@ -208,6 +224,15 @@ export interface Viewer {
   name: string | null;
 }
 
+/** Coverage of a bounded section search; an absent total never means zero. */
+export interface SectionCoverage {
+  hasMore: boolean;
+  partial?: boolean;
+  stale?: boolean;
+  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  queries: { query: string; cursor: string | null; total?: number }[];
+}
+
 /** Everything one successful poll produced. Persisted by the service worker. */
 export interface Snapshot {
   fetchedAt: string;
@@ -215,6 +240,9 @@ export interface Snapshot {
   pullRequests: Record<string, PullRequest>;
   /** Section id -> ordered PR ids. A PR may appear in several sections. */
   sections: Record<string, string[]>;
+  sectionCoverage?: Record<string, SectionCoverage>;
+  /** Sections not yet searched in a progressive publication. */
+  sectionsPending?: string[];
   /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
@@ -233,11 +261,18 @@ export interface Snapshot {
    */
   settledChecks?: Record<string, SettledCheckState>;
   /**
+   * PR node id -> observed CI outcome count, ordered by last increment (oldest first).
+   * Includes all current PRs and at most 200 absent PRs. Missing counters start at zero.
+   */
+  ciOutcomes?: Record<string, number>;
+  /**
    * PR id -> when its merge facts (`reviewDecision`, `mergeable`, `mergeStateStatus`,
    * `viewerCanUpdate`) were read; they are carried from poll to poll while the PR is unchanged.
    * Absent means never: they are read again.
    */
   mergeStateAt?: Record<string, string>;
+  /** PR ids whose merge facts are aged, deferred, dropped or unread; those with a date keep it. */
+  mergeStateDue?: string[];
 }
 
 export type PrEventType =
@@ -324,6 +359,15 @@ export interface PrLocalState {
   muted: Record<string, true>;
   /** PR id -> `updatedAt` value the user has seen. */
   seen: Record<string, string>;
+  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
+  seenFacts?: Record<string, string>;
+}
+
+/** Local panel organization for one account; search text is deliberately session-only. */
+export interface PanelState {
+  login: string;
+  activeSectionId?: string;
+  foldedGroups: string[];
 }
 
 export interface QuietHours {
@@ -344,33 +388,34 @@ export type BadgeMode = 'attention' | 'unseen' | 'off';
 
 export type Theme = 'system' | 'light' | 'dark';
 
+export type Language = 'system' | 'en' | 'ja' | 'zh-CN' | 'zh-TW' | 'fr' | 'de' | 'es';
+
 export type SortOrder = 'updated' | 'created' | 'repo';
 
 export interface Settings {
-  version: 1;
+  version: 2;
   sections: Section[];
   /** `owner/name` or `owner`. Empty = all repositories. */
   repoInclude: string[];
   /** `owner/name` or `owner`. Applied after include. */
   repoExclude: string[];
-  /** Integer minutes, minimum 1, default 2. */
+  /** Integer minutes, minimum 2, default 2. */
   pollIntervalMinutes: number;
   /** Results fetched per section, 1-100, default 50. */
   maxPerSection: number;
   notifications: NotificationSettings;
   badge: BadgeMode;
   theme: Theme;
+  /** `system` follows Chrome's interface language; an explicit choice overrides it. */
+  language: Language;
   sort: SortOrder;
   /** The list groups each section's PRs under their repository (independent of `sort`). */
   groupByRepo: boolean;
-  /**
-   * PRs whose last commit is older than this many days are left out of the list, the section
-   * counts and the badge (they still notify). Integer 0-365, default 20; 0 never hides.
-   */
+  /** Legacy sync compatibility key, always normalized to 0. */
   hideStaleAfterDays: number;
-  /** Draft PRs are left out of the list, the counts and the badge too (they still notify). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideDrafts: boolean;
-  /** So are PRs opened by a bot (`Actor.isBot`). */
+  /** Legacy sync compatibility key, always normalized to false. */
   hideBots: boolean;
   /**
    * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
@@ -401,14 +446,19 @@ export const STORAGE_KEYS = {
   pollState: 'pollState',
   prLocal: 'prLocal',
   teams: 'teams',
+  panelState: 'panelState',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
-  | { type: 'poll'; force?: boolean }
-  | { type: 'markSeen'; prIds: string[] }
+  | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
+  | {
+      type: 'markSeen';
+      prIds: string[];
+      versions: Record<string, { updatedAt: string; facts: string }>;
+    }
   /** Refresh only the merge facts of a consulted PR, without searching again. */
   | { type: 'refreshMergeState'; prId: string; headSha: string }
   /** Hints from visible cards; changes priority only, never starts a GitHub request. */

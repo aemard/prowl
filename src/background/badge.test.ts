@@ -10,7 +10,9 @@ import { fakeChrome } from '../test/chrome';
 import { BADGE_COLORS, clearBadge, updateBadge, watchBadge } from './badge';
 
 const failing = mapPullRequest(prNode({ number: 1, commits: headCommit({ FAILURE: 1 }) }));
-const ready = mapPullRequest(prNode({ number: 2, mergeStateStatus: 'CLEAN' }));
+const ready = mapPullRequest(
+  prNode({ number: 2, mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' }),
+);
 
 function snapshot(...prs: PullRequest[]): Snapshot {
   return {
@@ -22,6 +24,7 @@ function snapshot(...prs: PullRequest[]): Snapshot {
 }
 
 const shown = () => fakeChrome().__state.badge;
+
 /** Waits for the repaint a storage change triggers. */
 const repainted = (text: string) => vi.waitFor(() => expect(shown().text).toBe(text));
 
@@ -112,7 +115,7 @@ describe('watchBadge', () => {
     await repainted('1');
   });
 
-  it('repaints when the list starts to hide drafts or bots', async () => {
+  it('keeps counting drafts and bots when legacy preferences are saved', async () => {
     const draft = mapPullRequest(
       prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
     );
@@ -128,9 +131,9 @@ describe('watchBadge', () => {
     watchBadge();
     await repainted('3');
     await updateSettings({ hideDrafts: true });
-    await repainted('2');
+    await repainted('3');
     await updateSettings({ hideBots: true });
-    await repainted('1');
+    await repainted('3');
     await updateSettings({ hideDrafts: false, hideBots: false });
     await repainted('3');
   });
@@ -138,7 +141,7 @@ describe('watchBadge', () => {
 
 describe('BADGE_COLORS', () => {
   it('match the danger and accent tokens', () => {
-    const tokens = readFileSync('src/styles/tokens.css', 'utf8');
+    const tokens = readFileSync('src/styles/tokens.base.css', 'utf8');
     const light = (name: string) =>
       new RegExp(`--color-${name}-solid: (#[0-9a-f]{6});`).exec(tokens)?.[1];
     expect(BADGE_COLORS).toEqual({ danger: light('danger'), accent: light('accent') });

@@ -1,31 +1,40 @@
 /** Signing in and out: what the panel owns of it (the worker reacts to the messages). */
 import { env } from '../../lib/env';
+import { t } from '../../lib/i18n';
 import { type AuthState, STORAGE_KEYS } from '../../lib/model';
-import { getItem, removeItems, setItem } from '../../lib/storage/storage';
+import { forgetSeenFacts } from '../../lib/storage/prLocal';
+import { SESSION_LOCK } from '../../lib/storage/session';
+import { getItem, removeItems, setItem, withLock } from '../../lib/storage/storage';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
 import { navigate } from './router';
 
 /**
  * Stores the validated sign-in (PAT or device flow), asks the worker for the first poll and shows
- * the list. A `warning` (the token works but not fully) stays on screen as a toast.
+ * the list with its full header. A `warning` stays as a toast.
  */
 export async function completeSignIn(
   auth: AuthState,
   warning: string | null = null,
 ): Promise<void> {
-  // Never show one account's cached pull requests to another.
-  const cached = await getItem(STORAGE_KEYS.snapshot);
-  if (cached && cached.viewer.login.toLowerCase() !== auth.viewer.login.toLowerCase()) {
-    await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
-  }
-  // A new token may see other teams (read:org added): the first poll discovers them again.
-  await removeItems(STORAGE_KEYS.teams);
-  await setItem(STORAGE_KEYS.auth, auth);
-  void sendToBackground({ type: 'poll', force: true });
+  await withLock(SESSION_LOCK, async () => {
+    await forgetSeenFacts();
+    // Never show one account's cached pull requests to another.
+    const cached = await getItem(STORAGE_KEYS.snapshot);
+    if (cached && cached.viewer.login.toLowerCase() !== auth.viewer.login.toLowerCase()) {
+      await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
+    }
+    const context = await getItem('panelState');
+    if (context && context.login !== auth.viewer.login.toLowerCase())
+      await removeItems('panelState');
+    // A new token may see other teams (read:org added): the first poll discovers them again.
+    await removeItems(STORAGE_KEYS.teams);
+    await setItem(STORAGE_KEYS.auth, auth);
+  });
+  void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   navigate('list');
   if (warning) {
-    showToast({ message: `Signed in as ${auth.viewer.login}. ${warning}`, durationMs: 15_000 });
+    showToast({ message: t('signedInAs', auth.viewer.login, warning), durationMs: 15_000 });
   }
 }
 
@@ -34,12 +43,16 @@ export async function completeSignIn(
  * onboarding on its own; the worker clears its alarms, badge and notifications on `signedOut`.
  */
 export async function signOut(): Promise<void> {
-  await removeItems(
-    STORAGE_KEYS.auth,
-    STORAGE_KEYS.snapshot,
-    STORAGE_KEYS.pollState,
-    STORAGE_KEYS.teams,
-  );
+  await withLock(SESSION_LOCK, async () => {
+    await forgetSeenFacts();
+    await removeItems(
+      STORAGE_KEYS.auth,
+      STORAGE_KEYS.snapshot,
+      STORAGE_KEYS.pollState,
+      STORAGE_KEYS.teams,
+      STORAGE_KEYS.panelState,
+    );
+  });
   await sendToBackground({ type: 'signedOut' });
   await releaseGitHubWebAccess();
 }

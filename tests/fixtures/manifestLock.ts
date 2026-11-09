@@ -20,6 +20,8 @@ export type LockedBuild = 'production' | 'e2e';
  */
 export const ALLOWED_KEYS = [
   'manifest_version',
+  // Message catalogs select language only; they grant no access.
+  'default_locale',
   'name',
   'short_name',
   'description',

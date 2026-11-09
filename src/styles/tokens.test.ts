@@ -3,10 +3,11 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = resolve(import.meta.dirname, '../..');
-const css = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8').replace(
-  /\/\*[\s\S]*?\*\//g,
-  '',
-);
+const tokenFiles = ['tokens.base.css', 'tokens.css'];
+const css = tokenFiles
+  .map((file) => readFileSync(resolve(root, 'src/styles', file), 'utf8'))
+  .join('\n')
+  .replace(/\/\*[\s\S]*?\*\//g, '');
 
 type Tokens = Map<string, string>;
 
@@ -130,6 +131,15 @@ function contrastTable(): string {
 }
 
 describe('design tokens', () => {
+  it('orders sticky chrome, menus and toasts independently of DOM order', () => {
+    const layers = rootBlocks.find((block) => block.has('--z-sticky')) ?? empty;
+    const levels = ['sticky', 'menu', 'toast'].map((name) => Number(layers.get(`--z-${name}`)));
+    expect(levels.every((level) => Number.isFinite(level))).toBe(true);
+    expect(levels.every((level, index) => index === 0 || level > (levels[index - 1] ?? 0))).toBe(
+      true,
+    );
+  });
+
   it('keeps brand text readable on the mint logo background', () => {
     expect(ratio(light, 'brand-ink', 'brand-mint')).toBeGreaterThanOrEqual(4.5);
   });
@@ -188,14 +198,18 @@ describe('design tokens', () => {
     expect(current).toBe(contrastTable());
   });
 
-  it('keeps raw colors out of every stylesheet except tokens.css', () => {
+  it('keeps raw colors out of every stylesheet except the design tokens', () => {
     const offenders: string[] = [];
     const walk = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
         entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
       );
     for (const file of walk(resolve(root, 'src'))) {
-      if (!file.endsWith('.css') || file.endsWith('tokens.css')) continue;
+      if (
+        !file.endsWith('.css') ||
+        tokenFiles.some((name) => file === resolve(root, 'src/styles', name))
+      )
+        continue;
       const source = readFileSync(file, 'utf8');
       if (/:[^;{}]*(#[0-9a-f]{3,8}\b|rgba?\(|hsla?\()/i.test(source)) offenders.push(file);
     }

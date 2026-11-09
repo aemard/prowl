@@ -1,59 +1,23 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fakeChrome } from '../../test/chrome';
-import type { Section, Settings } from '../model';
+import { describe, expect, it } from 'vitest';
+import type { Settings } from '../model';
 import {
   BUILT_IN_SECTION_KINDS,
   DEFAULT_SETTINGS,
   defaultSettings,
-  ensureSettings,
-  loadSettings,
-  migrateSettings,
-  normalizeRepoPattern,
   normalizeSettings,
-  normalizeTime,
   PR_EVENT_TYPES,
-  SETTINGS_MIGRATIONS,
   SETTINGS_VERSION,
-  type SettingsMigration,
-  subscribeSettings,
-  updateSettings,
 } from './settings';
-
-const presets = (overrides: Partial<Record<string, boolean>> = {}): Section[] => [
-  { id: 'authored', kind: 'authored', label: 'Created by me', enabled: overrides.authored ?? true },
-  {
-    id: 'review_requested',
-    kind: 'review_requested',
-    label: 'Review requested',
-    enabled: overrides.review_requested ?? false,
-  },
-  {
-    id: 'team_review_requested',
-    kind: 'team_review_requested',
-    label: 'Team reviews',
-    enabled: overrides.team_review_requested ?? false,
-  },
-  { id: 'mentioned', kind: 'mentioned', label: 'Mentioned', enabled: overrides.mentioned ?? false },
-  {
-    id: 'assigned',
-    kind: 'assigned',
-    label: 'Assigned to me',
-    enabled: overrides.assigned ?? false,
-  },
-];
-
-function sectionsOf(sections: unknown): Section[] {
-  return normalizeSettings({ ...defaultSettings(), sections }).sections;
-}
+import { presets } from './settings.test-support';
 
 describe('DEFAULT_SETTINGS', () => {
   it('matches the product defaults', () => {
     expect(DEFAULT_SETTINGS).toEqual({
-      version: 1,
+      version: 2,
       sections: presets(),
       repoInclude: [],
       repoExclude: [],
-      pollIntervalMinutes: 5,
+      pollIntervalMinutes: 2,
       maxPerSection: 50,
       notifications: {
         enabled: false,
@@ -72,9 +36,10 @@ describe('DEFAULT_SETTINGS', () => {
       },
       badge: 'attention',
       theme: 'system',
+      language: 'system',
       sort: 'updated',
       groupByRepo: true,
-      hideStaleAfterDays: 20,
+      hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,
       unfollowedTeams: [],
@@ -138,8 +103,8 @@ describe('normalizeSettings', () => {
       sort: 'repo',
       groupByRepo: true,
       hideStaleAfterDays: 0,
-      hideDrafts: true,
-      hideBots: true,
+      hideDrafts: false,
+      hideBots: false,
       unfollowedTeams: ['acme/core', 'octo-org/web.ui'],
     };
     expect(normalizeSettings(custom)).toEqual(custom);
@@ -193,10 +158,10 @@ describe('normalizeSettings', () => {
     [45, 45],
     [61, 60],
     [1e9, 60],
-    [Number.NaN, 5],
-    [Number.POSITIVE_INFINITY, 5],
-    ['3', 5],
-    [null, 5],
+    [Number.NaN, 2],
+    [Number.POSITIVE_INFINITY, 2],
+    ['3', 2],
+    [null, 2],
   ])('repairs pollIntervalMinutes %j to %j', (value, expected) => {
     expect(normalizeSettings({ pollIntervalMinutes: value }).pollIntervalMinutes).toBe(expected);
   });
@@ -215,31 +180,22 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
   });
 
-  it.each([
-    [0, 0],
-    [-1, 0],
-    [7.4, 7],
-    [365, 365],
-    [366, 365],
-    [Number.POSITIVE_INFINITY, 20],
-    ['30', 20],
-    [null, 20],
-  ])('repairs hideStaleAfterDays %j to %j', (value, expected) => {
-    expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(expected);
-  });
-
-  it.each(['groupByRepo', 'hideDrafts', 'hideBots'] as const)(
-    'repairs %s: a boolean, else its default',
-    (key) => {
-      expect(normalizeSettings({ [key]: true })[key]).toBe(true);
-      expect(normalizeSettings({ [key]: false })[key]).toBe(false);
-      for (const value of ['yes', 1, null, undefined]) {
-        expect(normalizeSettings({ [key]: value })[key]).toBe(DEFAULT_SETTINGS[key]);
-      }
-      // Settings stored before the switches existed.
-      expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(DEFAULT_SETTINGS[key]);
+  it.each([0, -1, 7.4, 20, 365, 366, Number.POSITIVE_INFINITY, '30', null, undefined])(
+    'normalizes legacy hideStaleAfterDays %j to zero',
+    (value) => {
+      expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(0);
     },
   );
+
+  it.each(['groupByRepo'] as const)('repairs %s: a boolean, else its default', (key) => {
+    expect(normalizeSettings({ [key]: true })[key]).toBe(true);
+    expect(normalizeSettings({ [key]: false })[key]).toBe(false);
+    for (const value of ['yes', 1, null, undefined]) {
+      expect(normalizeSettings({ [key]: value })[key]).toBe(DEFAULT_SETTINGS[key]);
+    }
+    // Settings stored before the switches existed.
+    expect(normalizeSettings({ hideStaleAfterDays: 5 })[key]).toBe(DEFAULT_SETTINGS[key]);
+  });
 
   it('repairs notification switches and quiet hours', () => {
     const { notifications } = normalizeSettings({
@@ -329,280 +285,13 @@ describe('normalizeSettings', () => {
   });
 });
 
-describe('normalizeSettings sections', () => {
-  it('uses the default sections when sections is not a list', () => {
-    expect(sectionsOf(undefined)).toEqual(presets());
-    expect(sectionsOf({ authored: true })).toEqual(presets());
-  });
-
-  it('keeps the stored order and appends missing presets with their defaults', () => {
-    expect(
-      sectionsOf([
-        { id: 'mentioned', kind: 'mentioned', label: 'Mentioned', enabled: true },
-        {
-          id: 'c1',
-          kind: 'custom',
-          label: 'Team',
-          enabled: true,
-          query: 'team-review-requested:org/team',
-        },
-      ]),
-    ).toEqual([
-      { id: 'mentioned', kind: 'mentioned', label: 'Mentioned', enabled: true },
-      {
-        id: 'c1',
-        kind: 'custom',
-        label: 'Team',
-        enabled: true,
-        query: 'team-review-requested:org/team',
-      },
-      ...presets().filter((section) => section.kind !== 'mentioned'),
-    ]);
-    expect(sectionsOf([])).toEqual(presets());
-  });
-
-  it('gives presets their canonical id and label, drops duplicates and stray queries', () => {
-    expect(
-      sectionsOf([
-        { id: 'mine', kind: 'authored', label: 'Mine', enabled: false, query: 'is:draft', x: 1 },
-        { id: 'authored', kind: 'authored', enabled: true },
-        { kind: 'assigned', enabled: 'no' },
-      ]),
-    ).toEqual([
-      { id: 'authored', kind: 'authored', label: 'Created by me', enabled: false },
-      { id: 'assigned', kind: 'assigned', label: 'Assigned to me', enabled: false },
-      ...presets().slice(1, 4),
-    ]);
-  });
-
-  it('enables a missing Team reviews section when Review requested is followed', () => {
-    // Settings stored before team reviews had their own section.
-    const before = presets({ review_requested: true }).filter(
-      (section) => section.kind !== 'team_review_requested',
-    );
-    expect(sectionsOf(before)).toEqual([...before, { ...presets()[2], enabled: true } as Section]);
-    expect(sectionsOf(presets().filter((s) => s.kind !== 'team_review_requested'))).toContainEqual(
-      presets()[2],
-    );
-    // Once stored, the section keeps its own state.
-    expect(sectionsOf(presets({ review_requested: true }))).toEqual(
-      presets({ review_requested: true }),
-    );
-  });
-
-  it('drops entries that are not sections', () => {
-    expect(sectionsOf([null, 'authored', 7, [], { kind: 'issues' }, { id: 'x' }])).toEqual(
-      presets(),
-    );
-  });
-
-  it('requires a query for custom sections and trims query and label', () => {
-    const sections = sectionsOf([
-      { id: 'empty', kind: 'custom', label: 'Empty', query: '   ' },
-      { id: 'missing', kind: 'custom', label: 'Missing' },
-      { id: 'number', kind: 'custom', label: 'Number', query: 42 },
-      { id: 'ok', kind: 'custom', label: '  Bots  ', query: '  author:app/renovate  ' },
-    ]);
-    expect(sections.filter((section) => section.kind === 'custom')).toEqual([
-      { id: 'ok', kind: 'custom', label: 'Bots', enabled: true, query: 'author:app/renovate' },
-    ]);
-  });
-
-  it('falls back to the query as label and caps labels at 60 characters', () => {
-    const [blank, long] = sectionsOf([
-      { id: 'a', kind: 'custom', label: '  ', enabled: false, query: 'label:urgent' },
-      { id: 'b', kind: 'custom', label: 'x'.repeat(80), query: 'q' },
-    ]);
-    expect(blank).toEqual({
-      id: 'a',
-      kind: 'custom',
-      label: 'label:urgent',
-      enabled: false,
-      query: 'label:urgent',
-    });
-    expect(long?.label).toBe('x'.repeat(60));
-  });
-
-  it('assigns custom-N ids to custom sections whose id is missing, invalid, a preset or taken', () => {
-    const ids = sectionsOf([
-      { kind: 'custom', query: 'a' },
-      { id: 'has space', kind: 'custom', query: 'b' },
-      { id: 'authored', kind: 'custom', query: 'c' },
-      { id: 'custom-1', kind: 'custom', query: 'd' },
-      { id: 'dup', kind: 'custom', query: 'e' },
-      { id: 'dup', kind: 'custom', query: 'f' },
-      { id: 'x'.repeat(65), kind: 'custom', query: 'g' },
-      { id: 'authored', kind: 'authored' },
-    ]).map((section) => section.id);
-    expect(ids).toEqual([
-      'custom-2',
-      'custom-3',
-      'custom-4',
-      'custom-1',
-      'dup',
-      'custom-5',
-      'custom-6',
-      'authored',
-      'review_requested',
-      'team_review_requested',
-      'mentioned',
-      'assigned',
-    ]);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-});
-
-describe('normalizeTime', () => {
-  it.each([
-    ['00:00', '00:00'],
-    ['7:05', '07:05'],
-    [' 23:59 ', '23:59'],
-    ['24:00', null],
-    ['12:60', null],
-    ['12:5', null],
-    ['1200', null],
-    ['', null],
-    [930, null],
-  ])('normalizes %j to %j', (value, expected) => {
-    expect(normalizeTime(value)).toBe(expected);
-  });
-});
-
-describe('normalizeRepoPattern', () => {
-  it('accepts owners and owner/name and rejects everything else', () => {
-    expect(normalizeRepoPattern('  octo  ')).toBe('octo');
-    expect(normalizeRepoPattern('octo/.github')).toBe('octo/.github');
-    expect(normalizeRepoPattern(`${'a'.repeat(39)}/${'b'.repeat(100)}`)).not.toBeNull();
-    for (const invalid of ['octo/.', `${'a'.repeat(40)}`, `a/${'b'.repeat(101)}`, 'a b', 'é']) {
-      expect(normalizeRepoPattern(invalid)).toBeNull();
-    }
-    expect(normalizeRepoPattern(undefined)).toBeNull();
-  });
-});
-
-describe('migrateSettings', () => {
-  const migrations: Record<number, SettingsMigration> = {
-    1: (raw) => ({ ...raw, pollMinutes: undefined, pollIntervalMinutes: raw.pollMinutes }),
-    2: (raw) => ({ ...raw, theme: raw.theme === 'auto' ? 'system' : raw.theme }),
-  };
-
-  it('runs each step from the stored version up to the target, in order', () => {
-    const steps: number[] = [];
-    const tracked = Object.fromEntries(
-      Object.entries(migrations).map(([from, step]) => [
-        from,
-        (raw: Record<string, unknown>) => {
-          steps.push(Number(from));
-          return step(raw);
-        },
-      ]),
-    );
-    const result = migrateSettings({ version: 1, pollMinutes: 5, theme: 'auto' }, tracked, 3);
-    expect(steps).toEqual([1, 2]);
-    expect(result).toMatchObject({ version: 3, pollIntervalMinutes: 5, theme: 'system' });
-  });
-
-  it('treats unversioned or invalid versions as version 1', () => {
-    for (const version of [undefined, 0, -1, 1.5, '2']) {
-      expect(migrateSettings({ version, pollMinutes: 7 }, migrations, 2)).toMatchObject({
-        version: 2,
-        pollIntervalMinutes: 7,
-      });
-    }
-  });
-
-  it('starts from the stored version and leaves newer data alone', () => {
-    expect(migrateSettings({ version: 2, theme: 'auto' }, migrations, 3)).toEqual({
-      version: 3,
-      theme: 'system',
-    });
-    const future = { version: 5, theme: 'auto' };
-    expect(migrateSettings(future, migrations, 3)).toEqual(future);
-  });
-
-  it('stops at a missing step instead of throwing', () => {
-    expect(
-      migrateSettings({ version: 1, theme: 'auto' }, { 2: migrations[2] as SettingsMigration }, 3),
-    ).toEqual({ version: 1, theme: 'auto' });
-  });
-
-  it('has a migration for every version below the current one', () => {
-    for (let version = 1; version < SETTINGS_VERSION; version += 1) {
-      expect(SETTINGS_MIGRATIONS[version], `migration from v${version}`).toBeTypeOf('function');
-    }
-    expect(migrateSettings({ version: SETTINGS_VERSION, theme: 'dark' })).toEqual({
-      version: SETTINGS_VERSION,
-      theme: 'dark',
-    });
-  });
-});
-
-describe('settings storage', () => {
-  it('loads the defaults on first run without writing', async () => {
-    expect(await loadSettings()).toEqual(DEFAULT_SETTINGS);
-    expect(fakeChrome().storage.local.data.has('settings')).toBe(false);
-  });
-
-  it('loads stored settings normalized', async () => {
-    await chrome.storage.local.set({ settings: { pollIntervalMinutes: 0, theme: 'dark' } });
-    expect(await loadSettings()).toEqual({
-      ...DEFAULT_SETTINGS,
-      pollIntervalMinutes: 2,
-      theme: 'dark',
-    });
-  });
-
-  it('applies a patch, normalizes it and persists the result', async () => {
-    const saved = await updateSettings({ pollIntervalMinutes: 0.2, sort: 'repo' });
-    expect(saved).toEqual({ ...DEFAULT_SETTINGS, pollIntervalMinutes: 2, sort: 'repo' });
-    expect(fakeChrome().storage.local.data.get('settings')).toEqual(saved);
-
-    const next = await updateSettings((current) => ({
-      ...current,
-      repoExclude: [...current.repoExclude, ' octo/legacy ', 'not valid'],
-    }));
-    expect(next).toEqual({ ...saved, repoExclude: ['octo/legacy'] });
-    expect(await loadSettings()).toEqual(next);
-  });
-
-  it('does not lose concurrent patches', async () => {
-    await Promise.all([
-      updateSettings({ theme: 'dark' }),
-      updateSettings({ badge: 'off' }),
-      updateSettings((current) => ({ ...current, maxPerSection: 10 })),
-    ]);
-    expect(await loadSettings()).toMatchObject({ theme: 'dark', badge: 'off', maxPerSection: 10 });
-  });
-
-  it('ensureSettings writes the defaults on first run and repairs stored values', async () => {
-    expect(await ensureSettings()).toEqual(DEFAULT_SETTINGS);
-    expect(fakeChrome().storage.local.data.get('settings')).toEqual(DEFAULT_SETTINGS);
-
-    await chrome.storage.local.set({ settings: { maxPerSection: 500, legacy: true } });
-    expect(await ensureSettings()).toEqual({ ...DEFAULT_SETTINGS, maxPerSection: 100 });
-    expect(fakeChrome().storage.local.data.get('settings')).toEqual({
-      ...DEFAULT_SETTINGS,
-      maxPerSection: 100,
-    });
-  });
-
-  it('ensureSettings does not write when the stored settings are current', async () => {
-    await chrome.storage.local.set({ settings: defaultSettings() });
-    const set = vi.spyOn(chrome.storage.local, 'set');
-    await ensureSettings();
-    expect(set).not.toHaveBeenCalled();
-  });
-
-  it('notifies subscribers with normalized settings', async () => {
-    const listener = vi.fn();
-    const unsubscribe = subscribeSettings(listener);
-    await chrome.storage.local.set({ settings: { theme: 'dark', pollIntervalMinutes: -1 } });
-    await chrome.storage.local.remove('settings');
-    unsubscribe();
-    await updateSettings({ theme: 'light' });
-    expect(listener.mock.calls).toEqual([
-      [{ ...DEFAULT_SETTINGS, theme: 'dark', pollIntervalMinutes: 2 }],
-      [DEFAULT_SETTINGS],
-    ]);
+it('forces all legacy hiding preferences off on every read', () => {
+  expect(
+    normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
+  ).toMatchObject({
+    version: SETTINGS_VERSION,
+    hideStaleAfterDays: 0,
+    hideDrafts: false,
+    hideBots: false,
   });
 });

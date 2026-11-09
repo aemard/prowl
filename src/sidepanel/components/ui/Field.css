@@ -51,11 +51,12 @@
   border-color: var(--color-fg-muted);
 }
 
-/* Inputs show focus for mouse users too (a caret alone is easy to miss). */
+/* Inputs show focus for mouse users too (a caret alone is easy to miss). The second line sits
+   just inside the border, so a dialog or scroller that clips its children cannot thin it. */
 .ui-control:focus {
   border-color: var(--color-focus);
   outline: var(--border-width) solid var(--color-focus);
-  outline-offset: 0;
+  outline-offset: calc(-2 * var(--border-width));
 }
 
 .ui-control:disabled {

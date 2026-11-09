@@ -1,5 +1,5 @@
 import pkg from '../package.json' with { type: 'json' };
-import { OPEN_PANEL_COMMAND } from './lib/model';
+import { OPEN_PANEL_COMMAND } from './lib/model.ts';
 
 export type BuildMode = 'production' | 'development' | 'e2e';
 
@@ -37,10 +37,10 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
 
   return {
     manifest_version: 3,
-    name: e2e ? 'Prowl (e2e)' : 'Prowl — GitHub Pull Request Manager',
+    default_locale: 'en',
+    name: e2e ? 'Prowl (e2e)' : '__MSG_extensionName__',
     short_name: 'Prowl',
-    description:
-      'Open source GitHub pull request manager for Chrome. Track CI, reviews and merge status in your side panel. No tracking.',
+    description: '__MSG_extensionDescription__',
     version: toExtensionVersion(pkg.version),
     minimum_chrome_version: '116',
     icons,
@@ -55,7 +55,7 @@ export function createManifest(mode: BuildMode): chrome.runtime.ManifestV3 {
     commands: {
       [OPEN_PANEL_COMMAND]: {
         suggested_key: { default: 'Ctrl+Shift+P', mac: 'Command+Shift+P' },
-        description: 'Open Prowl',
+        description: '__MSG_openProwl__',
       },
     },
     background: {

@@ -1,0 +1,2421 @@
+{
+  "open": {
+    "message": "開く"
+  },
+  "snooze1H": {
+    "message": "1 時間スヌーズ"
+  },
+  "somethingWentWrongWhileRefreshing": {
+    "message": "更新中に問題が発生しました。"
+  },
+  "yourSettingsTakeKbMoreThanThe8Kb": {
+    "message": "設定は $P1$ KB で、Chrome 同期の上限 8 KB を超えています。リポジトリやセクションを減らしてください。設定はこのデバイスに保存されています。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeSyncDidNotTakeYourSettingsTheyStay": {
+    "message": "Chrome 同期で設定を保存できませんでした。設定はこのデバイスに保存されています。"
+  },
+  "ciFailing": {
+    "message": "CI 失敗"
+  },
+  "changesRequested": {
+    "message": "変更要求あり"
+  },
+  "readyToMerge": {
+    "message": "マージ可能"
+  },
+  "withUnseenChanges": {
+    "message": "$P1$: 未確認の変更がある $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "needingAttention": {
+    "message": "$P1$: 対応が必要な $P2$（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "writeAMessageFirst": {
+    "message": "先にメッセージを入力してください。"
+  },
+  "theMessageIsLongerThanCharacters": {
+    "message": "メッセージが $P1$ 文字を超えています。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheReview": {
+    "message": "GitHub がレビューを確認できませんでした。"
+  },
+  "githubDidNotConfirmTheComment": {
+    "message": "GitHub がコメントを確認できませんでした。"
+  },
+  "githubDidNotConfirmTheMerge": {
+    "message": "GitHub がマージを確認できませんでした。"
+  },
+  "somethingWentWrong": {
+    "message": "問題が発生しました。"
+  },
+  "reRanOf": {
+    "message": "$P2$ 件中 $P1$ 件を再実行しました。$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "theCodeExpiredBeforeItWasUsedStartAgain": {
+    "message": "コードの有効期限が切れました。最初からやり直して新しいコードを取得してください。"
+  },
+  "accessWasDeniedOnGithubStartAgainToAuthorize": {
+    "message": "GitHub でアクセスが拒否されました。Prowl の認証をやり直すか、トークンを貼り付けてください。"
+  },
+  "signingInFromTheBrowserIsNotAvailableFor": {
+    "message": "このビルドの Prowl はブラウザ経由のログインに対応していません。トークンを貼り付けてください。"
+  },
+  "couldNotReachGithubCheckYourConnectionAndTry": {
+    "message": "GitHub に接続できません。接続を確認して再試行してください。"
+  },
+  "githubIsHavingTroubleRightNowTryAgainIn": {
+    "message": "GitHub で問題が発生しています。しばらくしてから再試行してください。"
+  },
+  "withoutTheReadOrgScopeTeamReviewsMayNot": {
+    "message": "read:org スコープがないとチームが見つからない場合があります。チームへのレビュー依頼を追跡するには、このスコープを追加してください。"
+  },
+  "githubDoesNotOfferTheChecksPermissionToFine": {
+    "message": "GitHub はきめ細かいトークンに Checks 権限を提供しないため、CI ステータスが表示されない場合があります。repo スコープのある従来のトークンなら完全に表示できます。"
+  },
+  "githubReturnedAnUnexpectedResponse": {
+    "message": "GitHub から予期しない応答が返されました。"
+  },
+  "pasteATokenToSignIn": {
+    "message": "トークンを貼り付けてログインしてください。"
+  },
+  "thatDoesNotLookLikeAGithubTokenCopy": {
+    "message": "GitHub トークンの形式ではありません。空白や引用符を含めずにコピーし直してください。"
+  },
+  "couldNotSignInTryAgain": {
+    "message": "ログインできませんでした。再試行してください。"
+  },
+  "githubRejectedThisTokenCheckThatYouCopiedAll": {
+    "message": "GitHub がトークンを拒否しました。全体がコピーされているか、有効期限が切れていないか、取り消されていないかを確認してください。"
+  },
+  "githubRefusedThisToken": {
+    "message": "GitHub がトークンを拒否しました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitReachedTryAgainInAMinute": {
+    "message": "GitHub のレート制限に達しました。1 分後に再試行してください。"
+  },
+  "githubRespondedWithHttp": {
+    "message": "GitHub が HTTP $P1$ を返しました。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotRespondWithinSeconds": {
+    "message": "GitHub が $P1$ 秒以内に応答しませんでした。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotReachGithub": {
+    "message": "GitHub に接続できません。"
+  },
+  "githubReturnedAnError": {
+    "message": "GitHub がエラーを返しました。"
+  },
+  "githubReturnedNoData": {
+    "message": "GitHub がデータを返しませんでした。"
+  },
+  "thisPullRequestIsNotAvailable": {
+    "message": "この PR は利用できません。"
+  },
+  "enterAGithubSearchQueryForExampleAuthorMe": {
+    "message": "GitHub 検索クエリを入力してください。例: author:@me label:bug"
+  },
+  "prowlFollowsPullRequestsOnlyRemoveIsIssueOr": {
+    "message": "Prowl が追跡するのは PR のみです。is:issue（または type:issue、-is:pr）を削除してください。"
+  },
+  "githubAllowsAtMostAndOrNotOperatorsIn": {
+    "message": "GitHub の検索で使える AND / OR / NOT 演算子は最大 $P1$ 個です（現在 $P2$ 個）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotListYourTeams": {
+    "message": "チームを取得できませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "bot": {
+    "message": "Bot"
+  },
+  "someone": {
+    "message": "誰か"
+  },
+  "ciFailed": {
+    "message": "CI 失敗"
+  },
+  "ciPassed": {
+    "message": "CI 成功"
+  },
+  "reviewed": {
+    "message": "$P1$ がレビューしました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approved": {
+    "message": "$P1$ が承認しました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestedChanges": {
+    "message": "$P1$ が変更を要求しました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commented": {
+    "message": "$P1$ がコメントしました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyToMerge2": {
+    "message": "マージ可能"
+  },
+  "merged": {
+    "message": "マージ済み"
+  },
+  "closed": {
+    "message": "クローズ済み"
+  },
+  "justNow": {
+    "message": "たった今"
+  },
+  "minAgo": {
+    "message": "$P1$ 分前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "hAgo": {
+    "message": "$P1$ 時間前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dAgo": {
+    "message": "$P1$ 日前",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "for1Hour": {
+    "message": "1 時間"
+  },
+  "for4Hours": {
+    "message": "4 時間"
+  },
+  "untilTomorrow": {
+    "message": "明日まで"
+  },
+  "untilMonday": {
+    "message": "月曜日まで"
+  },
+  "pullRequests": {
+    "message": "プルリクエスト"
+  },
+  "settings": {
+    "message": "設定"
+  },
+  "signIn": {
+    "message": "ログイン"
+  },
+  "loading": {
+    "message": "読み込み中"
+  },
+  "updating": {
+    "message": "更新中…"
+  },
+  "notUpdatedYet": {
+    "message": "未更新"
+  },
+  "updated": {
+    "message": "更新済み"
+  },
+  "refresh": {
+    "message": "更新"
+  },
+  "backToPullRequests": {
+    "message": "PR に戻る"
+  },
+  "viewGithubProfile": {
+    "message": "GitHub プロフィールを表示"
+  },
+  "keyboardShortcuts": {
+    "message": "キーボードショートカット"
+  },
+  "signOut": {
+    "message": "ログアウト"
+  },
+  "account": {
+    "message": "アカウント: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reRunFailedChecks": {
+    "message": "失敗したチェックを再実行"
+  },
+  "updateBranch": {
+    "message": "ブランチを更新"
+  },
+  "updatedTheBranchOf": {
+    "message": "ブランチを更新しました:"
+  },
+  "readyForReview": {
+    "message": "レビュー可能にする"
+  },
+  "convertToDraft": {
+    "message": "ドラフトに変換"
+  },
+  "reRunningFailedChecksOf": {
+    "message": "失敗したチェックを再実行しています:"
+  },
+  "markedReadyForReview": {
+    "message": "レビュー可能にしました:"
+  },
+  "convertedToDraft": {
+    "message": "ドラフトに変換しました:"
+  },
+  "of": {
+    "message": "$P2$ の$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "updateWithARebase": {
+    "message": "リベースで更新"
+  },
+  "createAMergeCommit": {
+    "message": "マージコミットを作成"
+  },
+  "squashAndMerge": {
+    "message": "スカッシュしてマージ"
+  },
+  "rebaseAndMerge": {
+    "message": "リベースしてマージ"
+  },
+  "merge": {
+    "message": "マージ"
+  },
+  "enableAutoMerge": {
+    "message": "自動マージを有効化"
+  },
+  "autoMergeIsOnFor": {
+    "message": "自動マージを有効にしました:"
+  },
+  "message2": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeIsOffFor": {
+    "message": "自動マージを無効にしました:"
+  },
+  "mergePullRequest": {
+    "message": "PR をマージ"
+  },
+  "mergeIntoNowOrLetGithubMergeItOnce": {
+    "message": "今すぐ $P1$ を $P2$ にマージするか、チェックとレビューの完了後に GitHub にマージさせます。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "mergeInto": {
+    "message": "$P1$ を $P2$ にマージします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "commitTitleOptional": {
+    "message": "コミットタイトル（任意）"
+  },
+  "emptyUsesGithubSDefault": {
+    "message": "空欄の場合は GitHub の既定値を使います。"
+  },
+  "enterAWholeNumberFromTo": {
+    "message": "$P1$ から $P2$ までの整数を入力してください。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openInGithub": {
+    "message": "GitHub で開く"
+  },
+  "copyBranchName": {
+    "message": "ブランチ名をコピー"
+  },
+  "couldNotCopyTheBranchName": {
+    "message": "ブランチ名をコピーできませんでした。"
+  },
+  "copiedButThisBranchNameContainsShellCharactersQuote": {
+    "message": "コピーしましたが、ブランチ名にシェルの特殊文字が含まれています。ターミナルに貼り付ける際は引用符で囲んでください。"
+  },
+  "copied": {
+    "message": "$P1$ をコピーしました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unsnooze": {
+    "message": "スヌーズを解除"
+  },
+  "snooze": {
+    "message": "$P1$スヌーズ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "snoozed": {
+    "message": "スヌーズしました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unmuteNotifications": {
+    "message": "通知のミュートを解除"
+  },
+  "muteNotifications": {
+    "message": "通知をミュート"
+  },
+  "actionsFor": {
+    "message": "$P1$ の操作",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreActionsFor": {
+    "message": "$P1$ のその他の操作",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequestedFrom": {
+    "message": "$P1$ にレビューを依頼",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unseenChanges": {
+    "message": "未確認の変更"
+  },
+  "lastActivity": {
+    "message": "最終アクティビティ $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationsMuted": {
+    "message": "通知をミュート中"
+  },
+  "snoozedUntil": {
+    "message": "$P1$ までスヌーズ中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkingTheLatestMergeStatusOnGithub": {
+    "message": "GitHub で最新のマージステータスを確認中"
+  },
+  "updatingMergeStatus": {
+    "message": "マージステータスを更新中"
+  },
+  "openedBy": {
+    "message": "作成者: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opened": {
+    "message": "作成日時: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "by2": {
+    "message": "（$P1$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failed": {
+    "message": "失敗"
+  },
+  "pending": {
+    "message": "保留中"
+  },
+  "passed": {
+    "message": "成功"
+  },
+  "skipped": {
+    "message": "スキップ"
+  },
+  "approved2": {
+    "message": "承認済み"
+  },
+  "changesRequested2": {
+    "message": "変更要求あり"
+  },
+  "reviewRequested": {
+    "message": "レビュー依頼あり"
+  },
+  "commented2": {
+    "message": "コメント済み"
+  },
+  "dismissed": {
+    "message": "却下済み"
+  },
+  "theBaseBranchRequiresThisCheckToPass": {
+    "message": "ベースブランチではこのチェックの成功が必要です"
+  },
+  "required": {
+    "message": "必須"
+  },
+  "passed2": {
+    "message": "$P1$ 件成功",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2": {
+    "message": "$P1$ 件スキップ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noChecksOnTheLatestCommit": {
+    "message": "最新のコミットにチェックはありません。"
+  },
+  "noReviewsYet": {
+    "message": "まだレビューはありません。"
+  },
+  "actions": {
+    "message": "操作"
+  },
+  "tryAgain": {
+    "message": "再試行"
+  },
+  "loadingChecksAndReviewers": {
+    "message": "チェックとレビュアーを読み込み中"
+  },
+  "checks": {
+    "message": "チェック"
+  },
+  "reviewers": {
+    "message": "レビュアー"
+  },
+  "enterAnOwnerOrOwnerNameForExampleAcme": {
+    "message": "所有者または所有者/リポジトリ名を入力してください。例: acme、acme/widgets。"
+  },
+  "isAlreadyInTheList": {
+    "message": "$P1$ は既に「$P2$」一覧に含まれています。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToTheList": {
+    "message": "$P1$ を「$P2$」一覧に追加しました。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "removedFromTheList": {
+    "message": "$P1$ を「$P2$」一覧から削除しました。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "remove": {
+    "message": "$P1$ を削除",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repository": {
+    "message": "リポジトリ: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ownerOrOwnerName": {
+    "message": "所有者または所有者/リポジトリ名"
+  },
+  "addToList": {
+    "message": "「$P1$」一覧に追加",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "add": {
+    "message": "追加"
+  },
+  "pullRequests2": {
+    "message": "$P1$ の PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestChanges": {
+    "message": "変更を要求"
+  },
+  "requestedChangesOn": {
+    "message": "変更を要求しました:"
+  },
+  "comment": {
+    "message": "コメント"
+  },
+  "commentedOn": {
+    "message": "コメントしました:"
+  },
+  "addACommentToTheConversationOf": {
+    "message": "$P1$ の会話にコメントを追加します。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approve": {
+    "message": "承認"
+  },
+  "on": {
+    "message": "$P2$ に$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "cancel": {
+    "message": "キャンセル"
+  },
+  "message3": {
+    "message": "メッセージ"
+  },
+  "sections": {
+    "message": "セクション"
+  },
+  "couldNotLoadThisSection": {
+    "message": "このセクションを読み込めませんでした"
+  },
+  "couldNotLoad": {
+    "message": "読み込めませんでした"
+  },
+  "moreSections": {
+    "message": "その他のセクション"
+  },
+  "more": {
+    "message": "その他"
+  },
+  "refreshFailed": {
+    "message": "更新に失敗しました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "couldNotSignOutTryAgain": {
+    "message": "ログアウトできませんでした。再試行してください。"
+  },
+  "signOut2": {
+    "message": "ログアウトしますか？"
+  },
+  "prowlForgetsYourTokenAndThePullRequestsIt": {
+    "message": "Prowl はこのブラウザに保存されたトークンと PR を削除します。GitHub で取り消すまで、トークン自体は有効なままです。"
+  },
+  "retry": {
+    "message": "再試行"
+  },
+  "lastUpdated": {
+    "message": "最終更新: $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingInMin": {
+    "message": "$P1$ 分後に再試行",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "retryingSoon": {
+    "message": "まもなく再試行"
+  },
+  "githubRateLimitAlmostUsedUp": {
+    "message": "GitHub のレート制限に近づいています"
+  },
+  "refreshingResumesAt": {
+    "message": "$P1$ に更新を再開します。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullRequestsMayBeOutOfDate": {
+    "message": "PR 情報が古い可能性があります"
+  },
+  "refreshNow": {
+    "message": "今すぐ更新"
+  },
+  "yourGithubTokenWasRevokedOrExpired": {
+    "message": "GitHub トークンが取り消されたか、有効期限が切れました"
+  },
+  "prowlStoppedRefreshingSignInAgainToContinue": {
+    "message": "Prowl は更新を停止しました。続行するには再度ログインしてください。"
+  },
+  "rateLimitedUntil": {
+    "message": "$P1$ までレート制限中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubRateLimitHasReset": {
+    "message": "GitHub のレート制限がリセットされました"
+  },
+  "githubIsLimitingProwlSRequestsSoRefreshingIs": {
+    "message": "GitHub が Prowl のリクエストを制限しているため、更新を一時停止しています。"
+  },
+  "prowlRefreshesAgainShortly": {
+    "message": "Prowl はまもなく更新を再開します。"
+  },
+  "offline": {
+    "message": "オフライン — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubError": {
+    "message": "GitHub エラー — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inLessThanADay": {
+    "message": "1 日以内"
+  },
+  "yourGithubTokenExpires": {
+    "message": "GitHub トークンの有効期限: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "createANewOneAndSignInWithIt": {
+    "message": "Prowl の更新を続けるには、新しいトークンを作成してログインしてください。"
+  },
+  "renewToken": {
+    "message": "トークンを更新"
+  },
+  "mergedBy": {
+    "message": "$P1$ がマージしました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedWithoutMerging": {
+    "message": "マージせずにクローズ済み"
+  },
+  "conflictsWith": {
+    "message": "$P1$ と競合あり",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergeCommit": {
+    "message": "マージコミット"
+  },
+  "failed2": {
+    "message": "$P1$ 件失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2": {
+    "message": "$P1$ 件保留中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failing": {
+    "message": "$P1$ 件失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailing": {
+    "message": "チェック失敗: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning": {
+    "message": "チェック実行中: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksPassed": {
+    "message": "チェック成功: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewRequired": {
+    "message": "レビューが必要"
+  },
+  "draft": {
+    "message": "ドラフト"
+  },
+  "conflicts": {
+    "message": "競合"
+  },
+  "hasMergeConflicts": {
+    "message": "マージの競合あり"
+  },
+  "autoMerge": {
+    "message": "自動マージ"
+  },
+  "labels": {
+    "message": "ラベル: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updated2": {
+    "message": "更新: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "閉じる"
+  },
+  "messages": {
+    "message": "メッセージ"
+  },
+  "dismiss": {
+    "message": "閉じる"
+  },
+  "failed3": {
+    "message": "$P1$ に失敗しました: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotLoadTheDetails": {
+    "message": "詳細を読み込めませんでした。"
+  },
+  "signedInAs": {
+    "message": "$P1$ としてログインしました。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "couldNotSaveTheSettingTryAgain": {
+    "message": "設定を保存できませんでした。再試行してください。"
+  },
+  "nextPullRequest": {
+    "message": "次の PR"
+  },
+  "previousPullRequest": {
+    "message": "前の PR"
+  },
+  "expandOrCollapseTheFocusedPullRequest": {
+    "message": "フォーカス中の PR を展開・折りたたみ"
+  },
+  "openTheFocusedPullRequestOnGithub": {
+    "message": "フォーカス中の PR を GitHub で開く"
+  },
+  "filterPullRequests": {
+    "message": "PR を絞り込む"
+  },
+  "showKeyboardShortcuts": {
+    "message": "キーボードショートカットを表示"
+  },
+  "closeADialogOrMenuCollapseAPullRequest": {
+    "message": "ダイアログやメニューを閉じる・PR を折りたたむ"
+  },
+  "prowlNeedsAccessToGithubComToSignYou": {
+    "message": "ブラウザからログインするには、コードの取得と認証のために Prowl が github.com にアクセスする必要があります。許可して再試行するか、追加のアクセス権が不要なトークンを下に貼り付けてください。"
+  },
+  "codeCopied": {
+    "message": "コードをコピーしました"
+  },
+  "couldNotCopySelectTheCodeAndCopyIt": {
+    "message": "コピーできませんでした。コードを選択して手動でコピーしてください。"
+  },
+  "authorizeProwlOnGithub": {
+    "message": "GitHub で Prowl を認証"
+  },
+  "enterThisCodeOnGithubToFinishSigningIn": {
+    "message": "GitHub でこのコードを入力してログインを完了してください。"
+  },
+  "copyCode": {
+    "message": "コード $P1$ をコピー",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "openGithub": {
+    "message": "GitHub を開く"
+  },
+  "waitingForYouToApproveProwlOnGithub": {
+    "message": "GitHub での Prowl の認証を待っています…"
+  },
+  "continueWithGithub": {
+    "message": "GitHub で続行"
+  },
+  "approveProwlOnGithubComWithAOneTime": {
+    "message": "ワンタイムコードを使って github.com で Prowl を認証します。最初に Chrome が github.com へのアクセス許可を求めます。"
+  },
+  "mine": {
+    "message": "自分の PR"
+  },
+  "pullRequestsYouOpenWillShowUpHere": {
+    "message": "作成した PR がここに表示されます。"
+  },
+  "review": {
+    "message": "レビュー"
+  },
+  "whenSomeoneAsksYouForAReviewItWill": {
+    "message": "レビューを依頼された PR がここに表示されます。"
+  },
+  "teams": {
+    "message": "チーム"
+  },
+  "mentions": {
+    "message": "メンション"
+  },
+  "pullRequestsThatMentionYouWillShowUpHere": {
+    "message": "自分がメンションされた PR がここに表示されます。"
+  },
+  "assigned": {
+    "message": "割り当て"
+  },
+  "pullRequestsAssignedToYouWillShowUpHere": {
+    "message": "自分に割り当てられた PR がここに表示されます。"
+  },
+  "noOpenPullRequestsMatchThisSearch": {
+    "message": "この検索に一致するオープンな PR はありません。"
+  },
+  "loadingPullRequests": {
+    "message": "PR を読み込み中"
+  },
+  "noSectionsTurnedOn": {
+    "message": "有効なセクションがありません"
+  },
+  "chooseWhichPullRequestsProwlFollowsInSettings": {
+    "message": "設定で Prowl が追跡する PR を選択してください。"
+  },
+  "openSettings": {
+    "message": "設定を開く"
+  },
+  "couldNotLoadPullRequests": {
+    "message": "PR を読み込めませんでした"
+  },
+  "nothingHasBeenFetchedYetTheNoticeAboveSays": {
+    "message": "まだデータを取得していません。理由は上の通知をご確認ください。"
+  },
+  "filterByTitleRepoAuthorOrLabel": {
+    "message": "タイトル、リポジトリ、作成者、ラベルで絞り込み"
+  },
+  "snoozedPullRequests": {
+    "message": "スヌーズ中の $P1$ の PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatches": {
+    "message": "一致なし"
+  },
+  "noPullRequests": {
+    "message": "PR がありません"
+  },
+  "nothingInMatches": {
+    "message": "「$P1$」に「$P2$」と一致するものはありません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "clearFilter": {
+    "message": "絞り込みを解除"
+  },
+  "signingInFromTheBrowserIsNotAvailableIn": {
+    "message": "このビルドはブラウザ経由のログインに対応していません。"
+  },
+  "howToSignInWithAToken": {
+    "message": "トークンでログインする方法"
+  },
+  "personalAccessToken": {
+    "message": "個人アクセストークン"
+  },
+  "createAToken": {
+    "message": "トークンを作成"
+  },
+  "classicToken": {
+    "message": "従来のトークン"
+  },
+  "recommended": {
+    "message": "推奨"
+  },
+  "createAClassicToken": {
+    "message": "従来のトークンを作成"
+  },
+  "fineGrainedToken": {
+    "message": "きめ細かいトークン"
+  },
+  "limited": {
+    "message": "制限あり"
+  },
+  "coversOneAccountOrOrganizationAndTheRepositoriesYou": {
+    "message": "1 つのアカウントまたは組織と、選択したリポジトリが対象です。承認・マージ・チェック再実行には Pull requests、Contents、Actions の読み書き権限と Commit statuses の読み取り権限を付与してください。組織のチーム取得には Members の読み取り権限も必要です。GitHub はこのトークンに Checks 権限を提供しないため、CI ステータスが表示されない場合があります。"
+  },
+  "createAFineGrainedToken": {
+    "message": "きめ細かいトークンを作成"
+  },
+  "matchSystem": {
+    "message": "システム設定に合わせる"
+  },
+  "light": {
+    "message": "ライト"
+  },
+  "dark": {
+    "message": "ダーク"
+  },
+  "recentlyUpdated": {
+    "message": "更新が新しい順"
+  },
+  "newestFirst": {
+    "message": "作成が新しい順"
+  },
+  "repository2": {
+    "message": "リポジトリ"
+  },
+  "needsAttention": {
+    "message": "対応が必要"
+  },
+  "off": {
+    "message": "オフ"
+  },
+  "pullRequestsPerSection": {
+    "message": "セクションごとの PR 数"
+  },
+  "appearance": {
+    "message": "表示"
+  },
+  "theme": {
+    "message": "テーマ"
+  },
+  "sortPullRequestsBy": {
+    "message": "PR の並び順"
+  },
+  "groupPullRequestsByRepository": {
+    "message": "PR をリポジトリごとに表示"
+  },
+  "listsEachRepositorySPullRequestsUnderAHeader": {
+    "message": "各リポジトリの PR を、上で選んだ順序で折りたたみ可能な見出しの下に表示します。"
+  },
+  "toolbarBadge": {
+    "message": "ツールバーバッジ"
+  },
+  "notifications": {
+    "message": "通知"
+  },
+  "account2": {
+    "message": "アカウント"
+  },
+  "privacyAndPermissions": {
+    "message": "プライバシーと権限"
+  },
+  "privacy": {
+    "message": "プライバシー"
+  },
+  "about": {
+    "message": "このアプリについて"
+  },
+  "settingsSections": {
+    "message": "設定のセクション"
+  },
+  "documentation": {
+    "message": "ドキュメント"
+  },
+  "sourceCode": {
+    "message": "ソースコード"
+  },
+  "token": {
+    "message": "トークン"
+  },
+  "scopes": {
+    "message": "スコープ"
+  },
+  "noneFineGrainedTokensUsePerRepositoryPermissions": {
+    "message": "なし: きめ細かいトークンはリポジトリごとの権限を使います。"
+  },
+  "none": {
+    "message": "なし"
+  },
+  "expires": {
+    "message": "有効期限"
+  },
+  "version": {
+    "message": "バージョン"
+  },
+  "noKeyboardShortcutOpensProwlYet": {
+    "message": "Prowl を開くショートカットは未設定です。"
+  },
+  "changeItAtChromeExtensionsShortcuts": {
+    "message": "chrome://extensions/shortcuts で変更できます。"
+  },
+  "pullRequestsYouOpened": {
+    "message": "自分が作成した PR"
+  },
+  "pullRequestsThatAskYouForAReviewYour": {
+    "message": "自分にレビューが依頼された PR（チームには専用セクションがあります）"
+  },
+  "pullRequestsThatMentionYou": {
+    "message": "自分がメンションされた PR"
+  },
+  "pullRequestsAssignedToYou": {
+    "message": "自分に割り当てられた PR"
+  },
+  "ciFails": {
+    "message": "CI が失敗"
+  },
+  "ciPasses": {
+    "message": "CI が成功"
+  },
+  "afterItFailedBefore": {
+    "message": "以前失敗していた場合。"
+  },
+  "newReview": {
+    "message": "新しいレビュー"
+  },
+  "aReviewThatOnlyLeavesComments": {
+    "message": "コメントのみのレビュー。"
+  },
+  "newComment": {
+    "message": "新しいコメント"
+  },
+  "countsPullRequestsThatNeedYouFailingCiChanges": {
+    "message": "CI 失敗、変更要求、競合、マージ可能など、対応が必要な PR を数えます。"
+  },
+  "countsPullRequestsWithChangesYouHaveNotLooked": {
+    "message": "まだ確認していない変更がある PR を数えます。"
+  },
+  "theToolbarIconShowsNoNumber": {
+    "message": "ツールバーアイコンに件数を表示しません。"
+  },
+  "startAndEndAreTheSameSoNothingIs": {
+    "message": "開始と終了が同じため、通知はミュートされません。"
+  },
+  "thisWindowCrossesMidnightAndEndsTheNextDay": {
+    "message": "この時間帯は日付をまたぎ、翌日に終了します。"
+  },
+  "classicPersonalAccessToken": {
+    "message": "従来の個人アクセストークン"
+  },
+  "fineGrainedPersonalAccessToken": {
+    "message": "きめ細かい個人アクセストークン"
+  },
+  "oauthTokenSignedInWithGithub": {
+    "message": "OAuth トークン（GitHub でログイン）"
+  },
+  "unknown": {
+    "message": "不明"
+  },
+  "never": {
+    "message": "無期限"
+  },
+  "expiredOn": {
+    "message": "$P1$ に期限切れ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sidePanel": {
+    "message": "サイドパネル"
+  },
+  "showProwlInChromeSSidePanel": {
+    "message": "Chrome のサイドパネルに Prowl を表示します。"
+  },
+  "storage": {
+    "message": "ストレージ"
+  },
+  "keepYourSettingsAndPullRequestsInThisBrowser": {
+    "message": "設定と PR をこのブラウザに保存します。"
+  },
+  "alarms": {
+    "message": "アラーム"
+  },
+  "checkGithubOnAScheduleEvenWhenThePanel": {
+    "message": "パネルが閉じていても、定期的に GitHub を確認します。"
+  },
+  "tellYouWhenAPullRequestChanges": {
+    "message": "PR に変更があると通知します。"
+  },
+  "readYourPullRequestsAndActOnThemUsing": {
+    "message": "トークンを使って PR を読み取り、操作します。"
+  },
+  "signInWithGithubProwlAsksForThisOnly": {
+    "message": "GitHub でログインします。Prowl はログイン中だけこの権限を要求し、終了後に解除します。"
+  },
+  "readAndChangeYourDataOnThisSite": {
+    "message": "このサイトのデータを読み取り、変更します。"
+  },
+  "notDescribedByThisVersionOfProwl": {
+    "message": "このバージョンの Prowl では説明がありません。"
+  },
+  "prowlTestNotification": {
+    "message": "Prowl テスト通知"
+  },
+  "notificationsFromProwlLookLikeThis": {
+    "message": "Prowl の通知はこのように表示されます。"
+  },
+  "testNotificationSent": {
+    "message": "テスト通知を送信しました。"
+  },
+  "couldNotShowANotification": {
+    "message": "通知を表示できませんでした。"
+  },
+  "desktopNotifications": {
+    "message": "デスクトップ通知"
+  },
+  "showANotificationWhenAPullRequestChanges": {
+    "message": "PR に変更があると通知を表示します。"
+  },
+  "notifyMeWhen": {
+    "message": "通知するイベント"
+  },
+  "quietHours": {
+    "message": "通知しない時間帯"
+  },
+  "silenceNotificationsAtSetTimesEveryDayInYour": {
+    "message": "毎日、指定した時間帯の通知をミュートします。時刻は現地時間です。"
+  },
+  "from": {
+    "message": "開始"
+  },
+  "until": {
+    "message": "終了"
+  },
+  "sendTestNotification": {
+    "message": "テスト通知を送信"
+  },
+  "nothingAppearsCheckThatYourSystemLetsChromeShow": {
+    "message": "表示されない場合は、システムが Chrome の通知を許可しているか確認してください。"
+  },
+  "prowlCannotSeeOrChangeThePagesYouVisit": {
+    "message": "Prowl はタブやその内容へのアクセス権を持たないため、閲覧したページを確認・変更できません。"
+  },
+  "syncSettingsWithYourChromeProfile": {
+    "message": "Chrome プロフィールで設定を同期"
+  },
+  "yourSettingsFollowYouToChromeOnYourOther": {
+    "message": "Chrome 同期（Google アカウント）を通じて、他のパソコンでも設定を使えます。トークンとスヌーズ・ミュートした PR の情報は、このデバイスにのみ保存されます。"
+  },
+  "whatProwlMayDo": {
+    "message": "Prowl に許可されている操作"
+  },
+  "readThePrivacyPolicy": {
+    "message": "プライバシーポリシーを読む"
+  },
+  "giveTheSectionAName": {
+    "message": "セクション名を入力してください。"
+  },
+  "editCustomSection": {
+    "message": "カスタムセクションを編集"
+  },
+  "addCustomSection": {
+    "message": "カスタムセクションを追加"
+  },
+  "aTabInTheListThatFollowsAnyGithub": {
+    "message": "任意の GitHub PR 検索を追跡する一覧のタブです。"
+  },
+  "save": {
+    "message": "保存"
+  },
+  "name": {
+    "message": "名前"
+  },
+  "shownOnTheTab": {
+    "message": "タブに表示されます。"
+  },
+  "searchQuery": {
+    "message": "検索クエリ"
+  },
+  "githubSSearchSyntaxForExampleLabelBugReview": {
+    "message": "GitHub の検索構文です。例: label:bug review-requested:@me。Prowl が is:pr を追加します。"
+  },
+  "removed": {
+    "message": "「$P1$」を削除しました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "undo": {
+    "message": "元に戻す"
+  },
+  "edit": {
+    "message": "$P1$ を編集",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "edit2": {
+    "message": "編集"
+  },
+  "remove2": {
+    "message": "削除"
+  },
+  "chooseWhichPullRequestsProwlFollows": {
+    "message": "Prowl が追跡する PR を選択してください。"
+  },
+  "onlyFollowPullRequestsInTheseLeaveEmptyTo": {
+    "message": "これらのリポジトリの PR のみ追跡します。空欄の場合はすべてを追跡します。"
+  },
+  "signInAgain": {
+    "message": "再ログイン"
+  },
+  "githubListsNoTeamForYourAccount": {
+    "message": "GitHub にこのアカウントのチームがありません。"
+  },
+  "refreshTeams": {
+    "message": "チームを更新"
+  },
+  "classicTokenHelp": {
+    "message": "アクセスできるすべてのリポジトリと完全な CI ステータスを表示します。$P1$ スコープと、チームへのレビュー依頼を取得するための $P2$ が必要です。リンクを開くと両方が選択されます。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "openWithShortcut": {
+    "message": "$P1$ で Prowl を開けます。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "codeCountdown": {
+    "message": "コードの有効期限まで $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "versionNumber": {
+    "message": "バージョン $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionLoadError": {
+    "message": "「$P1$」を読み込めませんでした: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "snoozedCount": {
+    "message": "スヌーズ中（$P1$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notReadyReasons": {
+    "message": "準備未完了: $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "andMore": {
+    "message": "、ほか $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closedBy": {
+    "message": "$P1$ がクローズしました",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOne": {
+    "message": "$P1$ 件の PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pullCountOther": {
+    "message": "$P1$ 件の PR",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOne": {
+    "message": "$P1$ 件のコメント",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commentCountOther": {
+    "message": "$P1$ 件のコメント",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOne": {
+    "message": "$P1$ 件の未解決スレッド",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolvedCountOther": {
+    "message": "$P1$ 件の未解決スレッド",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOne": {
+    "message": "$P1$ 件のチェック",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkCountOther": {
+    "message": "$P1$ 件のチェック",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOne": {
+    "message": "さらに $P1$ 件のチェック",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "moreCheckCountOther": {
+    "message": "さらに $P1$ 件のチェック",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOne": {
+    "message": "更新しました。PR $P1$ 件。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "refreshedOther": {
+    "message": "更新しました。PR $P1$ 件。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOne": {
+    "message": "$P1$ 日後",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inDaysOther": {
+    "message": "$P1$ 日後",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expiryDate": {
+    "message": "$P1$（$P2$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notificationUpdateOne": {
+    "message": "PR の更新 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notificationUpdateOther": {
+    "message": "PR の更新 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conflictsLower": {
+    "message": "競合"
+  },
+  "include": {
+    "message": "含める"
+  },
+  "exclude": {
+    "message": "除外"
+  },
+  "createdByMe": {
+    "message": "自分が作成"
+  },
+  "reviewRequestedSection": {
+    "message": "レビュー依頼"
+  },
+  "teamReviews": {
+    "message": "チームレビュー"
+  },
+  "mentionedSection": {
+    "message": "メンション"
+  },
+  "assignedToMe": {
+    "message": "自分に割り当て"
+  },
+  "extensionName": {
+    "message": "Prowl — GitHub PR マネージャー"
+  },
+  "extensionDescription": {
+    "message": "Chrome 向けオープンソース GitHub PR 管理ツール。サイドパネルで CI、レビュー、マージ状況を確認。トラッキングなし。"
+  },
+  "openProwl": {
+    "message": "Prowl を開く"
+  },
+  "searchOperatorsHelp": {
+    "message": "AND、OR、NOT は検索語の間でのみ使え、修飾子の間では使えません。GitHub は「author:a OR author:b」を拒否します。修飾子ごとにセクションを作成してください。"
+  },
+  "searchWordsLimit": {
+    "message": "GitHub の検索語は、author:@me などの修飾子を除いて最大 $P1$ 文字です（現在 $P2$ 文字）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listTeamsScopeHelp": {
+    "message": "GitHub がチームを返しませんでした。read:org スコープで再度ログインするか、組織が所有し Members: read 権限を持つきめ細かいトークンを使ってください。"
+  },
+  "autoMergeBy": {
+    "message": "自動マージ有効（$P1$）、設定者: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoMergeMethod": {
+    "message": "自動マージ有効（$P1$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "tokenPlaceholder": {
+    "message": "ghp_… または github_pat_…"
+  },
+  "githubDidNotFindPullRequest": {
+    "message": "GitHub に PR が見つかりませんでした。"
+  },
+  "githubDidNotConfirmChange": {
+    "message": "GitHub が変更を確認できませんでした。"
+  },
+  "githubDidNotConfirmUpdate": {
+    "message": "GitHub が更新を確認できませんでした。"
+  },
+  "noRepoScope": {
+    "message": "このトークンには repo スコープがないため、公開リポジトリのみ表示できます。非公開リポジトリを追跡するには、repo スコープ付きトークンを作成してください。"
+  },
+  "githubErrorDetail": {
+    "message": "GitHub がエラーを返しました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updateWithMerge": {
+    "message": "マージコミットで更新"
+  },
+  "rerunFailed": {
+    "message": "失敗分を再実行"
+  },
+  "mergeMethod": {
+    "message": "マージ方法"
+  },
+  "detailsFor": {
+    "message": "$P1$ の詳細",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "onGithub": {
+    "message": "GitHub 上"
+  },
+  "requestChangesDescription": {
+    "message": "$P1$ で必要な変更を作成者に伝えてください。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "repositories": {
+    "message": "リポジトリ"
+  },
+  "authorBy": {
+    "message": "、作成者: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "actionReference": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "selectedSection": {
+    "message": "のセクション、$P1$ を選択中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sectionsSuffix": {
+    "message": "のセクション"
+  },
+  "copy": {
+    "message": "コピー"
+  },
+  "pullNounOne": {
+    "message": " 件の PR"
+  },
+  "pullNounOther": {
+    "message": " 件の PR"
+  },
+  "failed2One": {
+    "message": "$P1$ 件失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "pending2One": {
+    "message": "$P1$ 件保留中",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "passed2One": {
+    "message": "$P1$ 件成功",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "skipped2One": {
+    "message": "$P1$ 件スキップ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "failingOne": {
+    "message": "$P1$ 件失敗",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "languageTag": {
+    "message": "ja",
+    "description": "BCP 47 language of this catalog, used for document language and plural rules."
+  },
+  "keyEnter": {
+    "message": "Enter",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keySpace": {
+    "message": "スペース",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "keyEscape": {
+    "message": "Esc",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "squashMethod": {
+    "message": "スカッシュ",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "rebaseMethod": {
+    "message": "リベース",
+    "description": "Keyboard key or GitHub merge method label."
+  },
+  "language": {
+    "message": "言語"
+  },
+  "headCommitChangedRefreshAndTryAgain": {
+    "message": "最新のコミットが変更されました。更新して再試行してください。",
+    "description": "Check restart error when the pull request head changes while loading suites."
+  },
+  "notAllCheckSuitesCouldBeLoaded": {
+    "message": "一部のチェックスイートを読み込めませんでした。GitHub でチェックを再実行してください。",
+    "description": "Check restart error when check suite pagination is incomplete."
+  },
+  "prowl": {
+    "message": "Prowl",
+    "description": "Extension text: Prowl"
+  },
+  "turnOffAutoMerge": {
+    "message": "自動マージを無効化",
+    "description": "Extension text: Turn off auto-merge"
+  },
+  "mergeOnGitHub": {
+    "message": "GitHub でマージ",
+    "description": "Extension text: Merge on GitHub"
+  },
+  "mergeWithoutWaiting": {
+    "message": "待たずにマージ",
+    "description": "Extension text: Merge without waiting"
+  },
+  "letGitHubMergeIntoOnceItsChecksAndReviewsPass": {
+    "message": "チェックとレビューの通過後、GitHub が $P1$ を $P2$ にマージします。",
+    "description": "Extension text: Let GitHub merge $P1$ into $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "youCanBypassTheBranchRulesForThisPullRequest": {
+    "message": "この PR のブランチルールをバイパスできます。",
+    "description": "Extension text: You can bypass the branch rules for this pull request."
+  },
+  "justOpened": {
+    "message": "作成したばかり",
+    "description": "Extension text: Just opened"
+  },
+  "mergeStatus": {
+    "message": "マージステータス",
+    "description": "Extension text: Merge status"
+  },
+  "checkingMergeStatus": {
+    "message": "マージステータスを確認中…",
+    "description": "Extension text: Checking merge status…"
+  },
+  "thisTokenCanTReadChecks": {
+    "message": "このトークンではチェックを読み取れません ·",
+    "description": "Extension text: This token can't read checks ·"
+  },
+  "viewOnGitHub": {
+    "message": "GitHub で表示",
+    "description": "Extension text: View on GitHub"
+  },
+  "someDetailsAreOnlyOnGitHub": {
+    "message": "一部の詳細は GitHub でのみ表示できます ·",
+    "description": "Extension text: Some details are only on GitHub ·"
+  },
+  "actionsFor2": {
+    "message": "#$P1$ の操作",
+    "description": "Extension text: Actions for #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "viewChangesOnGitHub": {
+    "message": "GitHub で変更を表示",
+    "description": "Extension text: View changes on GitHub"
+  },
+  "offlineRetryTitle": {
+    "message": "GitHub に接続できませんでした：$P1$",
+    "description": "Extension text: Could not reach GitHub — $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveOnGitHub": {
+    "message": "GitHub で解決",
+    "description": "Extension text: Resolve on GitHub"
+  },
+  "behind": {
+    "message": "$P1$ より遅れています",
+    "description": "Extension text: Behind $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "mergeStatusUnknown": {
+    "message": "マージステータス不明",
+    "description": "Extension text: Merge status unknown"
+  },
+  "openOnGitHub": {
+    "message": "GitHub で開く",
+    "description": "Extension text: Open on GitHub"
+  },
+  "blockedByBranchRules": {
+    "message": "ブランチルールによりブロック中",
+    "description": "Extension text: Blocked by branch rules"
+  },
+  "detailsOnGitHub": {
+    "message": "GitHub で詳細を表示",
+    "description": "Extension text: Details on GitHub"
+  },
+  "autoMergeOnMergesWhenReady": {
+    "message": "自動マージ有効、準備が整うとマージします",
+    "description": "Extension text: Auto-merge on, merges when ready"
+  },
+  "listUpdated2": {
+    "message": "リスト更新：$P1$",
+    "description": "Extension text: List updated $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "changesRequestedBy": {
+    "message": "$P1$ が変更を要求",
+    "description": "Extension text: Changes requested by $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalNeeded": {
+    "message": "承認が $P1$ 件必要",
+    "description": "Extension text: $P1$ approval needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "approvalsNeeded": {
+    "message": "承認が $P1$ 件必要",
+    "description": "Extension text: $P1$ approvals needed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckFailed": {
+    "message": "必須チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ required check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksFailed": {
+    "message": "必須チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ required checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkFailed": {
+    "message": "チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksFailed": {
+    "message": "チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalCheckFailed": {
+    "message": "任意チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ optional check failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionalChecksFailed": {
+    "message": "任意チェック $P1$ 件が失敗",
+    "description": "Extension text: $P1$ optional checks failed",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredCheckRunning": {
+    "message": "必須チェック $P1$ 件を実行中",
+    "description": "Extension text: $P1$ required check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "requiredChecksRunning": {
+    "message": "必須チェック $P1$ 件を実行中",
+    "description": "Extension text: $P1$ required checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkRunning": {
+    "message": "チェック $P1$ 件を実行中",
+    "description": "Extension text: $P1$ check running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "checksRunning2": {
+    "message": "チェック $P1$ 件を実行中",
+    "description": "Extension text: $P1$ checks running",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationToResolve": {
+    "message": "未解決の会話 $P1$ 件",
+    "description": "Extension text: $P1$ conversation to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "conversationsToResolve": {
+    "message": "未解決の会話 $P1$ 件",
+    "description": "Extension text: $P1$ conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "unresolved2": {
+    "message": "未解決 $P1$ 件",
+    "description": "Extension text: $P1$ unresolved",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "updatingMergeStatus2": {
+    "message": "。マージステータスを更新中",
+    "description": "Extension text: . Updating merge status"
+  },
+  "noReviewRequestsForYourTeams": {
+    "message": "チームへのレビュー依頼はありません。",
+    "description": "Text in ListSections.tsx"
+  },
+  "allLoadedPullRequestsAreSnoozed": {
+    "message": "読み込んだ PR はすべてスヌーズ中です",
+    "description": "Text in ListSections.tsx"
+  },
+  "theyReturnHereWhenTheSnoozeEnds": {
+    "message": "スヌーズが終了すると、ここに再表示されます。",
+    "description": "Text in ListSections.tsx"
+  },
+  "showSnoozed": {
+    "message": "スヌーズ中の PR を表示",
+    "description": "Text in ListSections.tsx"
+  },
+  "seeYourPullRequestsHere": {
+    "message": "自分の PR をここで確認",
+    "description": "Text in Onboarding.tsx"
+  },
+  "approveProwlOnGitHubYourTokenStaysInThisBrowser": {
+    "message": "GitHub で Prowl を認証してください。トークンはこのブラウザに保存され、GitHub にのみ送信されます。",
+    "description": "Text in Onboarding.tsx"
+  },
+  "useAPersonalAccessToken": {
+    "message": "個人アクセストークンを使用",
+    "description": "Text in Onboarding.tsx"
+  },
+  "prowlOnlyWatchesThePullRequestsItLoads": {
+    "message": "Prowl は読み込んだ PR のみ追跡します。",
+    "description": "Text in Settings.tsx"
+  },
+  "refreshEveryMinutes": {
+    "message": "更新間隔（分）",
+    "description": "Text in Settings.tsx"
+  },
+  "morePullRequestsAndShorterIntervalsUseMoreOfGitHub": {
+    "message": "PR 数が多く、更新間隔が短いほど、GitHub の時間あたりの上限を多く消費します。",
+    "description": "Text in Settings.tsx"
+  },
+  "list": {
+    "message": "リスト",
+    "description": "Text in Settings.tsx"
+  },
+  "reviewRequestsSentToYourTeams": {
+    "message": "自分のチームへのレビュー依頼",
+    "description": "Text in SettingsModel.ts"
+  },
+  "whatProwlCanAccess": {
+    "message": "Prowl がアクセスできる情報",
+    "description": "Text in SettingsPrivacy.tsx"
+  },
+  "excludePullRequestsInTheseEvenWhenTheyMatchAn": {
+    "message": "対象条件に一致していても、これらのリポジトリの PR は除外します。",
+    "description": "Text in SettingsScope.tsx"
+  },
+  "useAFineGrainedTokenOwnedByTheOrganizationWith": {
+    "message": "組織が所有し Members: read 権限を持つきめ細かいトークンを使ってください。",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "prowlCanTSeeYourTeams": {
+    "message": "Prowl がチームを確認できません。",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "couldnTLoadYourTeams": {
+    "message": "チームを読み込めませんでした。",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "thisTokenCanTTellWhichTeamAskedSoSwitched": {
+    "message": "このトークンでは依頼先のチームを判別できないため、無効にしたチームも表示されます。",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "loadingYourTeams": {
+    "message": "チームを読み込み中…",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "missingATeam": {
+    "message": "チームが見つかりませんか？",
+    "description": "Text in SettingsTeams.tsx"
+  },
+  "sectionPartialResults": {
+    "message": "「$P1$」の一部の結果：$P2$",
+    "description": "Section load error when only partial results were returned.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "searchingSection": {
+    "message": "「$P1$」を検索中…",
+    "description": "Status while a section search is running.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "nothingInLoadedMatches": {
+    "message": "「$P1$」に「$P2$」と一致するものはありません。この検索の対象は読み込んだ PR のみです。",
+    "description": "Empty filter result when the section has more pull requests on GitHub.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listCoverage": {
+    "message": "リストの対象範囲",
+    "description": "Accessible label for the section search coverage notice."
+  },
+  "loadedCount": {
+    "message": "$P1$ 件読み込み済み · ",
+    "description": "Number of pull requests loaded before the GitHub search link.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "searchSsoRequired": {
+    "message": "組織で必要なシングルサインオン（SAML）にこのトークンが認証されていないため、その組織の PR が表示されていません。GitHub でその組織に対してトークンを認証してください。",
+    "description": "Warning when organization SAML authorization hides search results."
+  },
+  "searchCursorUnavailable": {
+    "message": "GitHub から有効な次ページのカーソルが返されませんでした。",
+    "description": "Warning when search pagination cannot continue."
+  },
+  "mergeRequirementsUnreadable": {
+    "message": "一部のマージ要件を読み取れませんでした：$P1$",
+    "description": "Warning with GitHub errors explaining incomplete merge requirements.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "detailsUnreadable": {
+    "message": "一部の詳細を読み取れませんでした：$P1$",
+    "description": "Warning with GitHub errors explaining incomplete pull request details.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewsNotLoaded": {
+    "message": "一部のレビューが読み込まれていません。GitHub で会話全体を確認してください。",
+    "description": "Warning when reviews were truncated by the API."
+  },
+  "reviewRequestsNotLoaded": {
+    "message": "一部のレビュー依頼が読み込まれていません。GitHub で会話全体を確認してください。",
+    "description": "Warning when requested reviewers were truncated by the API."
+  },
+  "previewNewPr": {
+    "message": "新規 PR",
+    "description": "Preview button to simulate a new pull request."
+  },
+  "previewMergePr": {
+    "message": "PR をマージ",
+    "description": "Preview button to simulate a merged pull request."
+  },
+  "previewClosePr": {
+    "message": "PR を閉じる",
+    "description": "Preview button to simulate a closed pull request."
+  },
+  "previewUpdateFailed": {
+    "message": "更新をシミュレートできませんでした。再読み込みして再試行してください。",
+    "description": "Preview simulation error."
+  },
+  "previewTestAnimations": {
+    "message": "PR アニメーションを試す",
+    "description": "Accessible label for preview animation controls."
+  },
+  "previewTryUpdate": {
+    "message": "更新を試す",
+    "description": "Heading for preview simulation controls."
+  },
+  "previewTitle": {
+    "message": "Prowl — モックプレビュー",
+    "description": "Browser title for the mock preview."
+  },
+  "previewMode": {
+    "message": "プレビューモード",
+    "description": "Accessible label for the preview information banner."
+  },
+  "previewBanner": {
+    "message": "モックプレビュー · サンプルデータ · 再読み込みでリセット",
+    "description": "Information banner on the mock preview page."
+  },
+  "matchChromeLanguage": {
+    "message": "Chrome の言語に合わせる"
+  },
+  "languageHint": {
+    "message": "変更はすぐに反映されます。翻訳がない場合は英語で表示されます。"
+  },
+  "noFailedCheckRunsToReRunHere": {
+    "message": "ここで再実行できる失敗したチェック実行はありません。その他のチェックは GitHub か、報告元のサービスで再実行してください。"
+  }
+}

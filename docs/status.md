@@ -24,7 +24,9 @@ promise: issues track the progress.
    SAML errors and of `GitHub-Authentication-Token-Expiration` that Prowl reads.
 2. GitHub Enterprise Server support (custom API/web origins as optional host permissions).
 3. Merge queues (today GitHub's refusal is shown as is).
-4. Localization (strings are in components; English only).
+
+The extension supports English, Japanese, Simplified and Traditional Chinese, French, German
+and Spanish. Choose a language in Settings → Appearance → Language, or follow Chrome.
 
 What Prowl will not do: run a backend or any server of its own, collect telemetry, talk to a host
 other than GitHub, or read the pages you browse.

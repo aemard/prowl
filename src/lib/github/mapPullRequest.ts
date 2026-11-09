@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * GitHub GraphQL nodes -> `PullRequest` of `src/lib/model.ts`. The only place that reads raw
  * PR JSON. Enum values GitHub may add later map to safe defaults instead of leaking through.
@@ -77,6 +78,20 @@ function pick<T extends string, F>(
 const present = <T>(connection: Nodes<T> | null): T[] =>
   (connection?.nodes ?? []).filter((node): node is T => node !== null);
 
+/** A connection can be bounded without being empty or inaccessible. */
+function limitedConnections(
+  connections: Record<string, Nodes<unknown> | null | undefined>,
+): string[] {
+  return Object.entries(connections)
+    .filter(
+      ([, connection]) =>
+        connection?.pageInfo?.hasNextPage ||
+        (connection?.totalCount !== undefined &&
+          connection.totalCount > (connection.nodes?.length ?? 0)),
+    )
+    .map(([name]) => name);
+}
+
 /**
  * `CheckRunState`, `CheckStatusState` and `StatusState` (which share SUCCESS / FAILURE /
  * PENDING) -> bucket. Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED
@@ -129,16 +144,52 @@ const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
 /** The fields `ProwlMergeState` reads (see `MERGE_STATE_QUERY`). */
 export type MergeFacts = Pick<
   PullRequest,
-  'reviewDecision' | 'mergeable' | 'mergeStateStatus' | 'viewerCanUpdate'
+  | 'reviewDecision'
+  | 'mergeable'
+  | 'mergeStateStatus'
+  | 'viewerCanUpdate'
+  | 'viewerCanMergeAsAdmin'
+  | 'viewerCanEnableAutoMerge'
+  | 'viewerCanDisableAutoMerge'
 >;
 
 /** Merge facts of a node; what it does not carry is unknown (none, unknown, false). */
 export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
   return {
-    reviewDecision: pick(REVIEW_DECISIONS, node.reviewDecision ?? null, 'none'),
+    reviewDecision:
+      node.reviewDecision === null
+        ? 'none'
+        : pick(REVIEW_DECISIONS, node.reviewDecision ?? null, 'unknown'),
     mergeable: pick(MERGEABLE, node.mergeable ?? null, 'unknown'),
     mergeStateStatus: pick(MERGE_STATE_STATUSES, node.mergeStateStatus ?? null, 'unknown'),
     viewerCanUpdate: node.viewerCanUpdate === true,
+    viewerCanMergeAsAdmin: node.viewerCanMergeAsAdmin === true,
+    viewerCanEnableAutoMerge: node.viewerCanEnableAutoMerge === true,
+    viewerCanDisableAutoMerge: node.viewerCanDisableAutoMerge === true,
+  };
+}
+
+function mapConversation(node: PullRequestNode) {
+  const lastComment = present(node.comments).at(-1);
+  return {
+    reviews: present(node.latestReviews)
+      .flatMap(({ id, state, submittedAt, author }) => {
+        const mapped = pick(REVIEW_STATES, state, null);
+        return mapped && submittedAt
+          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
+          : [];
+      })
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+    requestedReviewers: present(node.reviewRequests).flatMap(
+      ({ requestedReviewer }) => requestedReviewer?.login ?? [],
+    ),
+    labels: present(node.labels).map(mapLabel),
+    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
+    unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
+    commentCount: node.totalCommentsCount ?? 0,
+    lastComment: lastComment
+      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
+      : null,
   };
 }
 
@@ -147,9 +198,14 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
   const { repository: repo } = node;
   const head = node.commits.nodes?.at(-1)?.commit;
   const contexts = head?.statusCheckRollup?.contexts;
-  const lastComment = present(node.comments).at(-1);
   const allowed = [repo.mergeCommitAllowed, repo.squashMergeAllowed, repo.rebaseMergeAllowed];
+  const incomplete = limitedConnections({
+    reviews: node.latestReviews,
+    'review requests': node.reviewRequests,
+    conversations: node.reviewThreads,
+  });
   return {
+    ...(incomplete.length ? { incomplete } : {}),
     id: node.id,
     number: node.number,
     title: node.title,
@@ -175,24 +231,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
       ...(contexts?.statusContextCountsByState ?? []),
     ]),
     ...mapMergeState(node),
-    reviews: present(node.latestReviews)
-      .flatMap(({ id, state, submittedAt, author }) => {
-        const mapped = pick(REVIEW_STATES, state, null);
-        return mapped && submittedAt
-          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
-          : [];
-      })
-      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
-    requestedReviewers: present(node.reviewRequests).flatMap(
-      ({ requestedReviewer }) => requestedReviewer?.login ?? [],
-    ),
-    labels: present(node.labels).map(mapLabel),
-    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
-    unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
-    commentCount: node.totalCommentsCount ?? 0,
-    lastComment: lastComment
-      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
-      : null,
+    ...mapConversation(node),
     // A search result does not carry the ClosedEvent: closed PRs get their closer from
     // `mapClosedState`, merged ones from `mergedBy`.
     closedBy: node.mergedBy?.login ?? null,
@@ -254,7 +293,7 @@ function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
     state: BUCKET[state] ?? 'neutral',
     // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
     url: url !== null && HTTP_URL.test(url) ? url : null,
-    required: node.isRequired === true,
+    required: typeof node.isRequired === 'boolean' ? node.isRequired : null,
   };
 }
 
@@ -271,6 +310,10 @@ export function mapPullRequestDetail(
     (page) => page.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts ?? [],
   );
   const rule = node.baseRef?.branchProtectionRule;
+  const warnings = limitedConnections({
+    reviews: node.latestReviews,
+    'review requests': node.reviewRequests,
+  }).map((name) => t(name === 'reviews' ? 'reviewsNotLoaded' : 'reviewRequestsNotLoaded'));
   const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
     const mapped = pick(REVIEW_STATES, state, null);
     return mapped
@@ -291,7 +334,8 @@ export function mapPullRequestDetail(
     reviewers: [...reviewed, ...requested].sort(
       (a, b) => REVIEWER_ORDER[a.state] - REVIEWER_ORDER[b.state],
     ),
-    requiredApprovals: rule?.requiredApprovingReviewCount || null,
+    ...(warnings.length ? { warnings } : {}),
+    requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
     requiresConversationResolution: rule?.requiresConversationResolution ?? false,
   };
 }

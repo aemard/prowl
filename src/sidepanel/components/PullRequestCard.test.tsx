@@ -235,12 +235,12 @@ describe('PullRequestCard', () => {
   });
 });
 
-describe('expanding', () => {
-  const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
+const expanded = () => toggleOf().button.getAttribute('aria-expanded') === 'true';
 
+describe('expanding', () => {
   it('opens the details with the button, which then points at them', async () => {
     renderCard();
-    expect(screen.queryByRole('list', { name: 'Merge' })).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Merge status' })).toBeNull();
 
     fireEvent.click(toggleOf().button);
     expect(expanded()).toBe(true);
@@ -248,7 +248,7 @@ describe('expanding', () => {
     const controls = toggleOf().button.getAttribute('aria-controls') ?? '';
     expect(document.getElementById(controls)?.classList.contains('pr-detail')).toBe(true);
     // ...and at the loaded detail afterwards.
-    const merge = await screen.findByRole('list', { name: 'Merge' });
+    const merge = await screen.findByRole('list', { name: 'Merge status' });
     expect(merge.closest('.pr-detail')?.id).toBe(controls);
     await screen.findByRole('link', { name: 'lint' });
     expect(document.querySelectorAll('.pr-card__summary')).toHaveLength(1);
@@ -275,7 +275,7 @@ describe('expanding', () => {
     renderCard();
     fireEvent.click(toggleOf().button);
     await screen.findByRole('link', { name: 'lint' });
-    fireEvent.click(screen.getByText('Merge', { selector: '.pr-detail__label' }));
+    fireEvent.click(screen.getByRole('list', { name: 'Merge status' }));
     expect(expanded()).toBe(true);
   });
 

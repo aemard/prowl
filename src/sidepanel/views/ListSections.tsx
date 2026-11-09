@@ -1,0 +1,302 @@
+import type { RefObject } from 'preact';
+import { useState } from 'preact/hooks';
+import { activityKey } from '../../lib/activity';
+import { t } from '../../lib/i18n';
+import type { PullRequest, SectionKind } from '../../lib/model';
+import { sectionLabel } from '../../lib/sectionLabel';
+import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
+import {
+  AlertIcon,
+  ClockIcon,
+  EyeClosedIcon,
+  EyeIcon,
+  FilterIcon,
+  GitPullRequestIcon,
+  InboxIcon,
+  MentionIcon,
+  PeopleIcon,
+  PersonIcon,
+  SearchIcon,
+} from '../components/icons';
+import type { IconComponent } from '../components/icons/Icon';
+import { PullRequestCard } from '../components/PullRequestCard';
+import { RepoGroup } from '../components/RepoGroup';
+import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
+import { pollState } from '../state/store';
+import {
+  filterQuery,
+  foldKey,
+  type LoadedListData,
+  pullRequestsOf,
+  toggleFolded,
+} from './ListState';
+
+/**
+ * Per section kind: its icon and short name in the section bar (a custom section shows its own
+ * label) and the hint of its empty list. A new kind is one entry here.
+ */
+export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
+  authored: {
+    icon: GitPullRequestIcon,
+    get short() {
+      return t('mine');
+    },
+    get empty() {
+      return t('pullRequestsYouOpenWillShowUpHere');
+    },
+  },
+  review_requested: {
+    icon: EyeIcon,
+    get short() {
+      return t('review');
+    },
+    get empty() {
+      return t('whenSomeoneAsksYouForAReviewItWill');
+    },
+  },
+  team_review_requested: {
+    icon: PeopleIcon,
+    get short() {
+      return t('teams');
+    },
+    get empty() {
+      return t('noReviewRequestsForYourTeams');
+    },
+  },
+  mentioned: {
+    icon: MentionIcon,
+    get short() {
+      return t('mentions');
+    },
+    get empty() {
+      return t('pullRequestsThatMentionYouWillShowUpHere');
+    },
+  },
+  assigned: {
+    icon: PersonIcon,
+    get short() {
+      return t('assigned');
+    },
+    get empty() {
+      return t('pullRequestsAssignedToYouWillShowUpHere');
+    },
+  },
+  custom: {
+    icon: FilterIcon,
+    get empty() {
+      return t('noOpenPullRequestsMatchThisSearch');
+    },
+  },
+};
+
+function ListCard({
+  pr,
+  data,
+  grouped = false,
+  snoozed = false,
+}: {
+  pr: PullRequest;
+  data: LoadedListData;
+  grouped?: boolean;
+  snoozed?: boolean;
+}) {
+  return (
+    <PullRequestCard
+      pr={pr}
+      activity={data.activity[pr.id]}
+      now={data.now}
+      unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr))}
+      muted={isMuted(data.local, pr.id)}
+      teams={data.snap.teamRequests?.[pr.id]}
+      grouped={grouped}
+      snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
+    />
+  );
+}
+
+function ShownRequests({ data }: { data: LoadedListData }) {
+  const { shown, selected, grouped, groups, isFolded } = data;
+  const card = (pr: PullRequest) => <ListCard key={pr.id} pr={pr} data={data} grouped={grouped} />;
+  return (
+    shown.length > 0 && (
+      <ul class="pr-list" aria-label={t('pullRequests2', sectionLabel(selected))}>
+        {grouped
+          ? groups.map(({ repo, prs }) => (
+              <RepoGroup
+                key={repo}
+                repo={repo}
+                count={prs.length}
+                expanded={!isFolded(repo)}
+                onToggle={() => toggleFolded(foldKey(selected.id, repo))}
+              >
+                {prs.map(card)}
+              </RepoGroup>
+            ))
+          : shown.map(card)}
+      </ul>
+    )
+  );
+}
+
+function SnoozedRequests({
+  data,
+  open,
+  setOpen,
+}: {
+  data: LoadedListData;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
+  const { snoozed, selected } = data;
+  return (
+    snoozed.length > 0 && (
+      <div class="list__aside">
+        <Button
+          class="list__aside-toggle"
+          size="sm"
+          variant="ghost"
+          icon={<ClockIcon size={12} />}
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          {t('snoozedCount', snoozed.length)}
+        </Button>
+        {open && (
+          <ul class="pr-list" aria-label={t('snoozedPullRequests', sectionLabel(selected))}>
+            {snoozed.map((pr) => (
+              <ListCard key={pr.id} pr={pr} data={data} snoozed />
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  );
+}
+
+function EmptySection({
+  data,
+  filterInput,
+}: {
+  data: LoadedListData;
+  filterInput: RefObject<HTMLElement>;
+}) {
+  const { shown, snoozed, snap, selected, query } = data;
+  if (
+    shown.length + snoozed.length > 0 ||
+    snap.sectionErrors?.[selected.id] !== undefined ||
+    searching(data)
+  )
+    return null;
+  // Empty only because of the filter: the section itself has pull requests.
+  const filteredOut = pullRequestsOf(snap, selected.id).length > 0;
+  return (
+    <EmptyState
+      icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
+      title={filteredOut ? t('noMatches') : t('noPullRequests')}
+      description={
+        filteredOut
+          ? t(
+              snap.sectionCoverage?.[selected.id]?.hasMore
+                ? 'nothingInLoadedMatches'
+                : 'nothingInMatches',
+              sectionLabel(selected),
+              query.trim(),
+            )
+          : KINDS[selected.kind].empty
+      }
+      action={
+        filteredOut ? (
+          <Button
+            onClick={() => {
+              filterQuery.value = '';
+              filterInput.current?.focus();
+            }}
+          >
+            {t('clearFilter')}
+          </Button>
+        ) : undefined
+      }
+    />
+  );
+}
+
+export function SectionContent({
+  data,
+  filterInput,
+}: {
+  data: LoadedListData;
+  filterInput: RefObject<HTMLElement>;
+}) {
+  const [snoozedOpen, setSnoozedOpen] = useState(false);
+  const matches = data.shown.length + data.snoozed.length;
+  const setAside =
+    data.shown.length === 0 &&
+    matches > 0 &&
+    !snoozedOpen &&
+    pullRequestsOf(data.snap, data.selected.id).every((pr) =>
+      isSnoozed(data.local, pr.id, data.now),
+    );
+  const error = data.snap.sectionErrors?.[data.selected.id];
+  const coverage = data.snap.sectionCoverage?.[data.selected.id];
+  return (
+    <>
+      {searching(data) && (
+        <p class="list__notice" role="status">
+          {t('searchingSection', sectionLabel(data.selected))}
+        </p>
+      )}
+      {error !== undefined && (
+        <p class="list__notice">
+          <AlertIcon size={16} />
+          <span>
+            {t(
+              coverage?.partial ? 'sectionPartialResults' : 'sectionLoadError',
+              sectionLabel(data.selected),
+              error,
+            )}
+          </span>
+        </p>
+      )}
+      {coverage && (
+        <SectionCoverageNotice
+          coverage={coverage}
+          count={pullRequestsOf(data.snap, data.selected.id).length}
+        />
+      )}
+      {setAside && !searching(data) && (
+        <EmptyState
+          icon={<EyeClosedIcon size={24} />}
+          title={t('allLoadedPullRequestsAreSnoozed')}
+          description={t('theyReturnHereWhenTheSnoozeEnds')}
+          action={
+            <Button
+              onClick={() => {
+                setSnoozedOpen(true);
+                // Keep keyboard focus on the fold after the empty-state button disappears.
+                filterInput.current
+                  ?.closest('.list')
+                  ?.querySelector<HTMLElement>('.list__aside-toggle')
+                  ?.focus();
+              }}
+            >
+              {t('showSnoozed')}
+            </Button>
+          }
+        />
+      )}
+      <ShownRequests data={data} />
+      <SnoozedRequests data={data} open={snoozedOpen} setOpen={setSnoozedOpen} />
+      <EmptySection data={data} filterInput={filterInput} />
+    </>
+  );
+}
+
+function searching(data: LoadedListData) {
+  return (
+    pollState.value?.inFlight === true &&
+    (data.snap.sectionsPending?.includes(data.selected.id) ||
+      (!(data.selected.id in data.snap.sections) && !data.snap.sectionErrors?.[data.selected.id]))
+  );
+}
