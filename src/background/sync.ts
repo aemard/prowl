@@ -25,6 +25,7 @@ const recordError = (error: string | null) =>
 
 /** Writes this device's settings to Chrome sync, unless they are already there. */
 export async function pushSettings(settings: Settings): Promise<void> {
+  settings = normalizeSettings(settings);
   if (jsonEqual(await remoteSettings(), settings)) return recordError(null).then(() => undefined);
   const bytes = new TextEncoder().encode(SYNCED_KEY + JSON.stringify(settings)).length;
   let error: string | null = null;
@@ -45,7 +46,7 @@ export async function pullSettings(remote: unknown): Promise<void> {
   if (remote === undefined) return;
   const settings = normalizeSettings(remote);
   await updateItem(STORAGE_KEYS.settings, (local) =>
-    local !== undefined && jsonEqual(normalizeSettings(local), settings) ? local : settings,
+    local !== undefined && jsonEqual(local, settings) ? local : settings,
   );
 }
 

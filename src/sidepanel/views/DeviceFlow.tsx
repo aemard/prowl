@@ -44,7 +44,7 @@ async function completeDeviceFlow(
   await completeSignIn(auth, warning);
 }
 
-function useDeviceFlow() {
+function useDeviceFlow(onTokenFallback?: () => void) {
   const [code, setCode] = useState<DeviceCode>();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string>();
@@ -52,11 +52,12 @@ function useDeviceFlow() {
   // Leaving the view (signed in with a token, route change) ends the flow.
   useEffect(() => () => flow.current?.abort(), []);
   /** Back to the start button, with `message` as the reason when there is one. */
-  function reset(message?: string) {
+  function reset(message?: string, offerToken = false) {
     flow.current = undefined;
     setCode(undefined);
     setStarting(false);
     setError(message);
+    if (offerToken) onTokenFallback?.();
   }
 
   async function start() {
@@ -69,11 +70,15 @@ function useDeviceFlow() {
     setError(undefined);
     setStarting(true);
     try {
-      if (!(await permission)) return reset(PERMISSION_DENIED);
+      if (!(await permission)) return reset(PERMISSION_DENIED, true);
       await completeDeviceFlow(controller, setCode);
     } catch (failure) {
       if (controller.signal.aborted) return;
-      reset(failure instanceof DeviceFlowError ? failure.message : signInErrorMessage(failure));
+      const known = failure instanceof DeviceFlowError;
+      reset(
+        known ? failure.message : signInErrorMessage(failure),
+        known && (failure.reason === 'unsupported' || failure.reason === 'denied'),
+      );
     } finally {
       // github.com is only needed while the flow runs; give the permission back afterwards.
       void releaseGitHubWebAccess();
@@ -160,9 +165,9 @@ function StartDeviceFlow({ starting, start }: { starting: boolean; start: () => 
   );
 }
 
-/** Sign in with GitHub's device flow; only rendered when the build has an OAuth client id. */
-export function DeviceFlow() {
-  const { code, starting, error, start, cancel } = useDeviceFlow();
+/** Continue with GitHub's device flow; only rendered when the build has an OAuth client id. */
+export function DeviceFlow({ onTokenFallback }: { onTokenFallback?: () => void }) {
+  const { code, starting, error, start, cancel } = useDeviceFlow(onTokenFallback);
   const root = useRef<HTMLDivElement>(null);
   const wasWaiting = useRef(false);
   const showingCode = code !== undefined;

@@ -92,3 +92,28 @@ it('says so for a section the running poll has not loaded yet, unless it failed'
   render(<ListView />);
   expect(screen.queryByRole('status')).toBeNull();
 });
+
+it('links separately to every unfinished team search without joining queries', () => {
+  withSections(['team_review_requested']);
+  snapshot.value = buildSnapshotOf(
+    { team_review_requested: [] },
+    {
+      sectionCoverage: {
+        team_review_requested: {
+          hasMore: true,
+          queries: [
+            { query: 'team:first', cursor: null },
+            { query: 'team:second', cursor: '50' },
+            { query: 'team:third', cursor: '25' },
+          ],
+        },
+      },
+    },
+  );
+  render(<ListView />);
+  const links = screen.getAllByRole('link', { name: 'View on GitHub' });
+  expect(links.map((link) => link.getAttribute('href')?.split('?q=')[1])).toEqual([
+    'team%3Asecond',
+    'team%3Athird',
+  ]);
+});

@@ -10,7 +10,13 @@ import { createGitHubClient } from '../lib/github/client';
 import { type FetchResult, fetchPullRequests } from '../lib/github/fetchPullRequests';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
 import type { AuthState, PollState, PrEvent, RateLimit, Snapshot, TeamsState } from '../lib/model';
-import { normalizePrLocal, pruneExpired, updatePrLocal } from '../lib/storage/prLocal';
+import {
+  baselineSeenFacts,
+  forgetSeenFacts,
+  normalizePrLocal,
+  pruneExpired,
+  updatePrLocal,
+} from '../lib/storage/prLocal';
 import { SESSION_LOCK, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import {
@@ -50,6 +56,7 @@ export async function scheduleAlarm(minutes: number, ifScheduled = false): Promi
 export async function clearSignedOut(): Promise<void> {
   await withLock(SESSION_LOCK, async () => {
     if (await getItem('auth')) return;
+    await forgetSeenFacts();
     clearMergePriority();
     const shown = await chrome.notifications.getAll();
     await Promise.all([
@@ -172,6 +179,7 @@ function progressPublisher({ auth, previous, attempt, settings }: PollAttempt) {
   const events: PrEvent[] = [];
   const publish = async (fetched: FetchResult, mergePending: string[]) => {
     await withSignedIn(auth, async () => {
+      if (previous) await updatePrLocal((state) => baselineSeenFacts(state, previous.pullRequests));
       const next = snapshotOf(auth, previous, fetched);
       const changes = previous ? diffSnapshots(published, next, auth.viewer.login) : [];
       await setItems({ snapshot: next, pollState: { ...attempt, mergePending, lastError: null } });
@@ -269,6 +277,7 @@ async function finishPoll(
           ...Object.keys(state.muted),
           ...Object.keys(state.snoozed),
           ...Object.keys(state.seen),
+          ...Object.keys(state.seenFacts ?? {}),
         ]),
       ].filter((id) => !closed.has(id)),
     ),

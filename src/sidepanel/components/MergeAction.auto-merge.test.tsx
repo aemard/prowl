@@ -35,10 +35,9 @@ describe('auto-merge', () => {
       }),
     );
     show(blocked);
-    fireEvent.click(opener());
-    expect(dialog().textContent).toContain(
-      'or let GitHub merge it once its checks and reviews pass',
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Enable auto-merge acme/widgets#1' }));
+    expect(within(dialog()).queryByRole('button', { name: 'Merge' })).toBeNull();
+    expect(dialog().textContent).toContain('once its checks and reviews pass');
     choose('squash');
     fireEvent.input(commitTitle(), { target: { value: 'Widgets, improved' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Enable auto-merge' }));

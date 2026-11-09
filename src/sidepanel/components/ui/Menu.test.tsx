@@ -154,4 +154,31 @@ describe('Menu', () => {
     expect(created?.getAttribute('aria-checked')).toBe('false');
     expect(created?.querySelector('svg')).toBeNull();
   });
+
+  it('renders independent toggles as menuitemcheckbox, not as a radio group', () => {
+    render(
+      <Menu
+        label="Options"
+        items={[
+          {
+            id: 'pin',
+            label: 'Pin',
+            checked: true,
+            checkRole: 'menuitemcheckbox',
+            onSelect: vi.fn(),
+          },
+        ]}
+        trigger={(p) => (
+          <button type="button" {...p}>
+            Options
+          </button>
+        )}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Pin' }).getAttribute('aria-checked')).toBe(
+      'true',
+    );
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+  });
 });

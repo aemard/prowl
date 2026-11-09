@@ -1,5 +1,4 @@
 /** Merge-fact caching, bounded refreshes and progressive publication during a poll. */
-import { hiddenReasons } from '../hidden';
 import type { PrLocalState, PullRequest, Snapshot } from '../model';
 import { jsonEqual } from '../storage/guards';
 import { isSnoozed } from '../storage/prLocal';
@@ -24,14 +23,17 @@ const MERGE_STATE_BATCH = 10;
 const MERGE_STATE_PER_POLL = 20;
 /** Merge facts no search field gives away (a base branch that moved on) are read again after this. */
 const MERGE_STATE_MAX_AGE_MS = 15 * 60 * 1000;
-const HIDDEN_MERGE_STATE_MAX_AGE_MS = 60 * 60 * 1000;
+const SNOOZED_MERGE_STATE_MAX_AGE_MS = 60 * 60 * 1000;
 
-const mergeFacts = ({
-  reviewDecision,
-  mergeable,
-  mergeStateStatus,
-  viewerCanUpdate,
-}: PullRequest): MergeFacts => ({ reviewDecision, mergeable, mergeStateStatus, viewerCanUpdate });
+const mergeFacts = (pr: PullRequest): MergeFacts => ({
+  reviewDecision: pr.reviewDecision,
+  mergeable: pr.mergeable,
+  mergeStateStatus: pr.mergeStateStatus,
+  viewerCanUpdate: pr.viewerCanUpdate,
+  viewerCanMergeAsAdmin: pr.viewerCanMergeAsAdmin === true,
+  viewerCanEnableAutoMerge: pr.viewerCanEnableAutoMerge === true,
+  viewerCanDisableAutoMerge: pr.viewerCanDisableAutoMerge === true,
+});
 
 /** What the search says about a PR, for telling whether anything changed since the last poll. */
 const searchFacts = (pr: PullRequest) => ({
@@ -40,6 +42,9 @@ const searchFacts = (pr: PullRequest) => ({
   mergeable: null,
   mergeStateStatus: null,
   viewerCanUpdate: null,
+  viewerCanMergeAsAdmin: null,
+  viewerCanEnableAutoMerge: null,
+  viewerCanDisableAutoMerge: null,
 });
 // Chrome storage may reorder keys, including nested ones. Serialization order is not activity.
 export const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
@@ -47,14 +52,12 @@ export const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
 
 function staleMergeStates(
   result: FetchResult,
-  settings: FetchSettings,
   previous: Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> | null,
   local: PrLocalState,
 ): PullRequest[] {
   const now = Date.now();
   const stale: PullRequest[] = [];
-  const hidden = (pr: PullRequest) =>
-    hiddenReasons(pr, settings, now).length > 0 || isSnoozed(local, pr.id, now);
+  const snoozed = (pr: PullRequest) => isSnoozed(local, pr.id, now);
   for (const pr of Object.values(result.pullRequests)) {
     if (pr.state !== 'open') continue;
     const before = previous?.pullRequests[pr.id];
@@ -64,7 +67,7 @@ function staleMergeStates(
       sameSearchFacts(before, pr) &&
       readAt !== undefined &&
       now - Date.parse(readAt) <
-        (hidden(pr) ? HIDDEN_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
+        (snoozed(pr) ? SNOOZED_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
       before.mergeable !== 'unknown' &&
       before.mergeStateStatus !== 'unknown' &&
       before.reviewDecision !== 'unknown';
@@ -83,7 +86,7 @@ function staleMergeStates(
   }
   // Visible PRs first, then the oldest successful read so deferred PRs get a turn.
   const age = (pr: PullRequest) => Date.parse(previous?.mergeStateAt?.[pr.id] ?? '') || 0;
-  stale.sort((a, b) => Number(hidden(a)) - Number(hidden(b)) || age(a) - age(b));
+  stale.sort((a, b) => Number(snoozed(a)) - Number(snoozed(b)) || age(a) - age(b));
   return stale;
 }
 
@@ -125,7 +128,6 @@ function takeMergeBatch(
  */
 export async function readMergeState({
   result,
-  settings,
   previous,
   local,
   read,
@@ -144,7 +146,7 @@ export async function readMergeState({
   partialErrors?: () => string[];
   reportPartial?: (id: string, messages: string[]) => void;
 }): Promise<void> {
-  const stale = staleMergeStates(result, settings, previous, local);
+  const stale = staleMergeStates(result, previous, local);
   for (
     let count = 0;
     stale.length > 0 && count < MERGE_STATE_PER_POLL;

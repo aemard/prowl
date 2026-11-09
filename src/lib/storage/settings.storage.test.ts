@@ -76,6 +76,12 @@ describe('settings storage', () => {
     expect(fakeChrome().storage.local.data.has('settings')).toBe(false);
   });
 
+  it('keeps an existing five-minute interval', async () => {
+    await chrome.storage.local.set({ settings: { ...DEFAULT_SETTINGS, pollIntervalMinutes: 5 } });
+    expect((await loadSettings()).pollIntervalMinutes).toBe(5);
+    expect((await ensureSettings()).pollIntervalMinutes).toBe(5);
+  });
+
   it('loads stored settings normalized', async () => {
     await chrome.storage.local.set({ settings: { pollIntervalMinutes: 0, theme: 'dark' } });
     expect(await loadSettings()).toEqual({

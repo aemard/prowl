@@ -17,6 +17,8 @@ export interface MenuItem {
   danger?: boolean;
   /** Makes the item a `menuitemradio` with this checked state (single-choice groups). */
   checked?: boolean;
+  /** Independent toggle; other checked items use radio semantics. */
+  checkRole?: 'menuitemcheckbox';
 }
 
 export type MenuEntry = MenuItem | 'separator';
@@ -213,6 +215,10 @@ function menuEntry(item: MenuEntry, index: number, state: ReturnType<typeof useM
   );
   return item.checked === undefined ? (
     <button role="menuitem" {...common}>
+      {content}
+    </button>
+  ) : item.checkRole === 'menuitemcheckbox' ? (
+    <button role="menuitemcheckbox" aria-checked={item.checked} {...common}>
       {content}
     </button>
   ) : (

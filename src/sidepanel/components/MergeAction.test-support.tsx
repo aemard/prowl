@@ -36,7 +36,8 @@ export function stubGitHub(answer: (sent: Sent) => Response | Promise<Response>)
 
 export const show = (overrides: Partial<PullRequest> = {}) =>
   render(<MergeAction pr={{ ...pr, ...overrides }} />);
-export const opener = () => screen.getByRole('button', { name: 'Merge acme/widgets#1' });
+export const opener = () =>
+  screen.getByRole('button', { name: /^(Merge|Merge without waiting) acme\/widgets#1$/ });
 export const dialog = () => screen.getByRole('dialog', { name: 'Merge pull request' });
 export const method = () => within(dialog()).getByRole('combobox', { name: 'Merge method' });
 export const commitTitle = () => within(dialog()).getByRole('textbox', { name: /Commit title/ });

@@ -1,24 +1,22 @@
+import { useEffect } from 'preact/hooks';
 import type { BadgeMode, SortOrder, Theme } from '../../lib/model';
 import {
-  MAX_HIDE_STALE_DAYS,
   MAX_PER_SECTION,
   MAX_POLL_INTERVAL_MINUTES,
-  MIN_HIDE_STALE_DAYS,
   MIN_PER_SECTION,
   MIN_POLL_INTERVAL_MINUTES,
 } from '../../lib/storage/settings';
 import { NumberField } from '../components/NumberField';
 import { Select, type SelectOption } from '../components/ui/Select';
 import { Switch } from '../components/ui/Switch';
-import { saveSettings } from '../state/settings';
+import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
 import { settings, teams } from '../state/store';
-import { AboutSettings, AccountSettings } from './SettingsAccount';
+import { AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
 import { BADGE_HINTS, estimatedPointsPerHour, HOURLY_POINTS, teamSearches } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
 import { ScopeSettings } from './SettingsScope';
-import { TeamsSettings } from './SettingsTeams';
 
 const THEMES: SelectOption<Theme>[] = [
   { value: 'system', label: 'Match system' },
@@ -54,37 +52,36 @@ function PollingSettings() {
   const points = estimatedPointsPerHour(searches, maxPerSection, pollIntervalMinutes);
   return (
     <SettingsGroup title="Refresh">
-      <div class="settings-pair">
-        <NumberField
-          label="Check every (minutes)"
-          value={pollIntervalMinutes}
-          min={MIN_POLL_INTERVAL_MINUTES}
-          max={MAX_POLL_INTERVAL_MINUTES}
-          onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
-        />
-        <NumberField
-          label="Maximum PRs loaded per section"
-          value={maxPerSection}
-          min={MIN_PER_SECTION}
-          max={MAX_PER_SECTION}
-          onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
-        />
-      </div>
+      <NumberField
+        id={PR_LIMIT_ID}
+        label="Maximum pull requests loaded per section"
+        value={maxPerSection}
+        min={MIN_PER_SECTION}
+        max={MAX_PER_SECTION}
+        hint="Loaded before snooze. PRs outside every loaded section are not monitored."
+        onCommit={(value) => void saveSettings({ maxPerSection: value }, { refresh: true })}
+      />
+      <NumberField
+        label="Check every (minutes)"
+        value={pollIntervalMinutes}
+        min={MIN_POLL_INTERVAL_MINUTES}
+        max={MAX_POLL_INTERVAL_MINUTES}
+        onCommit={(value) => void saveSettings({ pollIntervalMinutes: value })}
+      />
       <p class="settings-note">
         GitHub gives each token {HOURLY_POINTS.toLocaleString('en-US')} points an hour, and every
-        check of every section spends some: more pull requests and shorter intervals cost more.
-        Right now Prowl uses about {points.toLocaleString('en-US')} points an hour, and it waits for
-        the limit to reset if you run low.
+        check of every section spends some: more pull requests and shorter intervals cost more. A
+        baseline estimate is about {points.toLocaleString('en-US')} points an hour; extra pages,
+        merge reads and actions can cost more. Prowl waits for the limit to reset if you run low.
       </p>
     </SettingsGroup>
   );
 }
 
 function AppearanceSettings() {
-  const { theme, sort, groupByRepo, badge, hideStaleAfterDays, hideDrafts, hideBots } =
-    settings.value;
+  const { theme, sort, groupByRepo, badge } = settings.value;
   return (
-    <SettingsGroup title="Appearance">
+    <SettingsGroup title="List">
       <Select
         label="Theme"
         value={theme}
@@ -103,26 +100,6 @@ function AppearanceSettings() {
         checked={groupByRepo}
         onChange={(checked) => void saveSettings({ groupByRepo: checked })}
       />
-      <NumberField
-        label="Hide PRs with no commit for (days)"
-        value={hideStaleAfterDays}
-        min={MIN_HIDE_STALE_DAYS}
-        max={MAX_HIDE_STALE_DAYS}
-        hint="They stay out of the list, the counts and the badge until you choose “Show hidden”, and still notify you. 0 never hides."
-        onCommit={(value) => void saveSettings({ hideStaleAfterDays: value })}
-      />
-      <Switch
-        label="Hide draft PRs"
-        description="Shown again with “Show hidden”. They still notify you."
-        checked={hideDrafts}
-        onChange={(checked) => void saveSettings({ hideDrafts: checked })}
-      />
-      <Switch
-        label="Hide PRs opened by bots"
-        description="Dependabot, Renovate and other apps. Shown again with “Show hidden”. They still notify you."
-        checked={hideBots}
-        onChange={(checked) => void saveSettings({ hideBots: checked })}
-      />
       <Select
         label="Toolbar badge"
         value={badge}
@@ -136,14 +113,12 @@ function AppearanceSettings() {
 
 /** The groups below, in order, as the section links name them. */
 const SECTIONS = [
-  ['Pull requests', 'Pull requests'],
-  ['Teams', 'Teams'],
+  ['Sections', 'Sections'],
   ['Refresh', 'Refresh'],
   ['Notifications', 'Notifications'],
-  ['Appearance', 'Appearance'],
+  ['List', 'List'],
   ['Account', 'Account'],
-  ['Privacy and permissions', 'Privacy'],
-  ['About', 'About'],
+  ['Privacy and permissions', 'Privacy and permissions'],
 ] as const;
 
 /**
@@ -178,18 +153,24 @@ function SectionLinks() {
 
 /** Everything the user can configure. Every control saves as soon as it changes. */
 export function SettingsView() {
+  useEffect(() => {
+    if (settingsFocus.peek() !== 'pr-limit') return;
+    settingsFocus.value = undefined;
+    const field = document.getElementById(PR_LIMIT_ID);
+    field?.scrollIntoView({ block: 'center' });
+    field?.focus({ preventScroll: true });
+  }, []);
+
   return (
     <div class="settings">
       <h2 class="settings__title">Settings</h2>
       <SectionLinks />
       <ScopeSettings />
-      <TeamsSettings />
       <PollingSettings />
       <NotificationsSettings />
       <AppearanceSettings />
       <AccountSettings />
       <PrivacySettings />
-      <AboutSettings />
     </div>
   );
 }

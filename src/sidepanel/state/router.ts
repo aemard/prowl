@@ -1,4 +1,4 @@
-/** Hash routes: `#/` the list, `#/settings`, `#/onboarding`. Signed-out users only see onboarding. */
+/** Hash routes: signed-out users see sign-in; signed-in users can always reach their list. */
 import { computed, signal } from '@preact/signals';
 import { auth } from './store';
 
@@ -10,9 +10,10 @@ const HASHES: Record<Route, string> = {
   onboarding: '#/onboarding',
 };
 
-/** Which view a hash shows: onboarding is forced while signed out, unknown hashes mean the list. */
+/** Unknown and obsolete hashes fall back to the list. */
 export function resolveRoute(hash: string, signedIn: boolean): Route {
-  if (!signedIn || hash === HASHES.onboarding) return 'onboarding';
+  if (!signedIn) return 'onboarding';
+  if (hash === HASHES.onboarding) return 'onboarding';
   return hash === HASHES.settings ? 'settings' : 'list';
 }
 
@@ -25,6 +26,6 @@ export const route = computed(() => resolveRoute(hash.value, auth.value !== unde
 
 export function navigate(to: Route): void {
   location.hash = HASHES[to];
-  // `hashchange` is dispatched as a later task; update now so the view switches in this frame.
+  // hashchange is delivered later; switch views immediately.
   hash.value = location.hash;
 }

@@ -10,6 +10,17 @@ afterEach(() => {
 });
 
 describe('completeSignIn', () => {
+  it('opens the list after sign-in and retains progress on sign-out', async () => {
+    await chrome.storage.local.set({ onboarding: { status: 'pending', nextStep: 1 } });
+    await completeSignIn(buildAuth());
+    expect(location.hash).toBe('#/');
+    await signOut();
+    expect((await chrome.storage.local.get('onboarding')).onboarding).toEqual({
+      status: 'pending',
+      nextStep: 1,
+    });
+  });
+
   it('stores the auth, asks for the first poll and shows the list', async () => {
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
     location.hash = '#/onboarding';
@@ -50,17 +61,40 @@ describe('signOut', () => {
       snapshot: buildSnapshot(),
       pollState: buildPollState(),
       settings: { version: 1 },
-      prLocal: { snoozed: {}, muted: {}, seen: {} },
+      prLocal: {
+        snoozed: {},
+        muted: { PR_1: true },
+        seen: {},
+        seenFacts: { PR_1: 'private observed content' },
+      },
       teams: { login: 'octocat', teams: [] },
+      panelState: {
+        login: 'octocat',
+        activeSectionId: 'authored',
+        foldedGroups: ['authored\nprivate/repo'],
+      },
     });
 
     await signOut();
 
     expect(
       Object.keys(
-        await getItems(['auth', 'snapshot', 'pollState', 'settings', 'prLocal', 'teams']),
+        await getItems([
+          'auth',
+          'snapshot',
+          'pollState',
+          'settings',
+          'prLocal',
+          'teams',
+          'panelState',
+        ]),
       ),
     ).toEqual(['settings', 'prLocal']);
+    expect((await getItems(['prLocal'])).prLocal).toEqual({
+      snoozed: {},
+      muted: { PR_1: true },
+      seen: {},
+    });
     expect(send).toHaveBeenCalledWith({ type: 'signedOut' });
   });
 });
