@@ -39,7 +39,6 @@ function renderTokens() {
   render(<OnboardingView />);
   const alternative = screen.queryByRole('button', { name: 'Use a personal access token' });
   if (alternative) fireEvent.click(alternative);
-  fireEvent.click(screen.getByRole('button', { name: 'Help choosing a token' }));
 }
 
 describe('OnboardingView', () => {
@@ -51,7 +50,7 @@ describe('OnboardingView', () => {
     expect(alternative.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(alternative);
     expect(alternative.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.queryByRole('heading', { name: 'Classic token' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Classic token' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('data-variant')).toBe(
       'secondary',
     );

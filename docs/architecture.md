@@ -959,9 +959,9 @@ clear them under the session lock, retaining the existing timestamps and local c
 ### Sign-in disclosure (2026-11-08)
 
 Continue with GitHub is primary. “Use a personal access token” opens the token form;
-“Help choosing a token” separately opens its help. The form opens automatically without an
-OAuth client id, after refusing github.com permission, when device flow is unsupported, or
-when authorization is denied on GitHub. Token help stays on request. The base visual style
+the two token cards (classic, fine-grained) show under it, as before. The form opens
+automatically without an OAuth client id, after refusing github.com permission, when device
+flow is unsupported, or when authorization is denied on GitHub. The base visual style
 is unchanged; no glass styles or reflection code are included.
 
 ### First run (2026-11-09)

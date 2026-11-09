@@ -62,9 +62,7 @@ function useTokenForm() {
 export function OnboardingView() {
   const deviceFlow = env.clientId !== '';
   const [patOpen, setPatOpen] = useState(!deviceFlow);
-  const [helpOpen, setHelpOpen] = useState(false);
   const patId = useId();
-  const helpId = useId();
   const { token, setToken, error, busy, input, submit } = useTokenForm();
 
   return (
@@ -112,22 +110,7 @@ export function OnboardingView() {
           </Button>
         </form>
 
-        <p>A classic token needs repo and read:org. A fine-grained token can miss CI status.</p>
-        <Button
-          variant="ghost"
-          aria-expanded={helpOpen}
-          aria-controls={helpId}
-          onClick={() => setHelpOpen(!helpOpen)}
-        >
-          Help choosing a token
-        </Button>
-
-        <section
-          id={helpId}
-          hidden={!helpOpen}
-          class="onboarding__tokens"
-          aria-label="Create a token"
-        >
+        <section class="onboarding__tokens" aria-label="Create a token">
           <article class="onboarding__card">
             <header class="onboarding__card-header">
               <h3 class="onboarding__card-title">Classic token</h3>
