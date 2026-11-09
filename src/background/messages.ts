@@ -2,7 +2,7 @@
 
 import { activityKey } from '../lib/activity';
 import type { BackgroundRequest } from '../lib/model';
-import { isRecord } from '../lib/storage/guards';
+import { isDateString, isRecord } from '../lib/storage/guards';
 import { markSeen, updatePrLocal } from '../lib/storage/prLocal';
 import { withSignedIn } from '../lib/storage/session';
 import { getItem } from '../lib/storage/storage';
@@ -30,11 +30,14 @@ function isRequest(message: unknown): message is BackgroundRequest {
       return (
         Array.isArray(message.prIds) &&
         message.prIds.every((id) => typeof id === 'string') &&
-        (message.versions === undefined ||
-          (isRecord(message.versions) &&
-            Object.values(message.versions).every(
-              (version) => typeof version === 'string' && version.length <= 16_384,
-            )))
+        isRecord(message.versions) &&
+        Object.values(message.versions).every(
+          (version) =>
+            isRecord(version) &&
+            isDateString(version.updatedAt) &&
+            typeof version.facts === 'string' &&
+            version.facts.length <= 16_384,
+        )
       );
     case 'signedOut':
     case 'refreshTeams':
@@ -66,8 +69,10 @@ async function route(request: BackgroundRequest, document: string): Promise<void
             const pr = snapshot.pullRequests[id];
             if (!pr) return seen;
             const facts = activityKey(pr);
-            if (request.versions && request.versions[id] !== facts) return seen;
-            return markSeen(seen, id, pr.updatedAt, facts);
+            const observed = request.versions[id];
+            if (!observed || observed.updatedAt !== pr.updatedAt || observed.facts !== facts)
+              return seen;
+            return markSeen(seen, id, observed.updatedAt, observed.facts);
           }, state),
         );
       });

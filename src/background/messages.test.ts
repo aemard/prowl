@@ -82,9 +82,16 @@ describe('handleMessage', () => {
   it('marks the snapshot version of PRs seen', async () => {
     const snapshot = buildSnapshot();
     const id = prId(1);
-    snapshot.pullRequests[id] = buildPullRequest({ id, updatedAt: '2026-10-06T10:00:00Z' });
+    const pr = buildPullRequest({ id, updatedAt: '2026-10-06T10:00:00Z' });
+    snapshot.pullRequests[id] = pr;
     await setItems({ auth: buildAuth(), snapshot });
-    expect(await send({ type: 'markSeen', prIds: [id, 'PR_unknown'] })).toBe(true);
+    expect(
+      await send({
+        type: 'markSeen',
+        prIds: [id, 'PR_unknown'],
+        versions: { [id]: { updatedAt: pr.updatedAt, facts: activityKey(pr) } },
+      }),
+    ).toBe(true);
     expect((await getItem('prLocal'))?.seen).toEqual({ [id]: '2026-10-06T10:00:00Z' });
   });
 
@@ -93,10 +100,52 @@ describe('handleMessage', () => {
     const pr = buildPullRequest();
     snapshot.pullRequests[pr.id] = pr;
     await setItems({ auth: buildAuth(), snapshot });
-    await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: 'older version' } });
+    await send({
+      type: 'markSeen',
+      prIds: [pr.id],
+      versions: { [pr.id]: { updatedAt: pr.updatedAt, facts: 'older version' } },
+    });
     expect((await getItem('prLocal'))?.seen).toEqual({});
-    await send({ type: 'markSeen', prIds: [pr.id], versions: { [pr.id]: activityKey(pr) } });
+    await send({
+      type: 'markSeen',
+      prIds: [pr.id],
+      versions: { [pr.id]: { updatedAt: pr.updatedAt, facts: activityKey(pr) } },
+    });
     expect((await getItem('prLocal'))?.seenFacts?.[pr.id]).toBe(activityKey(pr));
+  });
+
+  it('never marks newer activity seen from an older viewing interval', async () => {
+    const snapshot = buildSnapshot();
+    const observed = buildPullRequest({ updatedAt: '2026-10-06T10:00:00Z' });
+    const latest = { ...observed, updatedAt: '2026-10-06T11:00:00Z' };
+    snapshot.pullRequests[latest.id] = latest;
+    await setItems({ auth: buildAuth(), snapshot });
+    await send({
+      type: 'markSeen',
+      prIds: [observed.id],
+      versions: {
+        [observed.id]: { updatedAt: observed.updatedAt, facts: activityKey(observed) },
+      },
+    });
+    expect((await getItem('prLocal'))?.seen).toEqual({});
+    await send({
+      type: 'markSeen',
+      prIds: [latest.id],
+      versions: {
+        [latest.id]: { updatedAt: observed.updatedAt, facts: activityKey(latest) },
+      },
+    });
+    expect((await getItem('prLocal'))?.seen).toEqual({});
+    expect(await send({ type: 'markSeen', prIds: [latest.id] })).toBe(false);
+    expect(
+      await send({
+        type: 'markSeen',
+        prIds: [latest.id],
+        versions: {
+          [latest.id]: { updatedAt: 'invalid', facts: activityKey(latest) },
+        },
+      }),
+    ).toBe(false);
   });
 
   it('marks nothing seen when signed out or when the snapshot belongs to another account', async () => {
@@ -104,9 +153,17 @@ describe('handleMessage', () => {
     const pr = buildPullRequest();
     snapshot.pullRequests[pr.id] = pr;
     await setItems({ snapshot });
-    await send({ type: 'markSeen', prIds: [pr.id] });
+    await send({
+      type: 'markSeen',
+      prIds: [pr.id],
+      versions: { [pr.id]: { updatedAt: pr.updatedAt, facts: activityKey(pr) } },
+    });
     await setItems({ auth: buildAuth('hubot') });
-    await send({ type: 'markSeen', prIds: [pr.id] });
+    await send({
+      type: 'markSeen',
+      prIds: [pr.id],
+      versions: { [pr.id]: { updatedAt: pr.updatedAt, facts: activityKey(pr) } },
+    });
     expect(await getItem('prLocal')).toBeUndefined();
   });
 
@@ -123,7 +180,7 @@ describe('handleMessage', () => {
   it('answers even when handling fails', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.spyOn(chrome.storage.local, 'get').mockRejectedValue(new Error('storage broken'));
-    expect(await send({ type: 'markSeen', prIds: [] })).toBe(true);
+    expect(await send({ type: 'markSeen', prIds: [], versions: {} })).toBe(true);
     expect(log).toHaveBeenCalledWith('Prowl: message failed', expect.any(Error));
   });
 });
