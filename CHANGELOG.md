@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.5.0](https://github.com/aemard/prowl/compare/v1.4.0...v1.5.0) (2026-11-09)
+
+
+### Features
+
+* clarify list visibility and restore reading context ([#50](https://github.com/aemard/prowl/issues/50)) ([2e33ad2](https://github.com/aemard/prowl/commit/2e33ad2173b5c588c24987ed7617a57bd13c7bb9))
+* **i18n:** add Japanese, Chinese, French, German and Spanish support ([#55](https://github.com/aemard/prowl/issues/55)) ([6a3eaed](https://github.com/aemard/prowl/commit/6a3eaede6cc0116fa946f6073ab475573ec3e389))
+* **onboarding:** go straight to the list after sign-in, with a first-run note ([#71](https://github.com/aemard/prowl/issues/71)) ([f8a87b6](https://github.com/aemard/prowl/commit/f8a87b60438bed461b97cc29bb7e5790e7025266))
+* **settings:** six clear groups and team choice inside Team reviews ([#69](https://github.com/aemard/prowl/issues/69)) ([3243dc7](https://github.com/aemard/prowl/commit/3243dc71bbbcf774b28d0c776edc0c4a04705a6a))
+* **ui:** animate pull request cards in and out ([#63](https://github.com/aemard/prowl/issues/63)) ([0d73c88](https://github.com/aemard/prowl/commit/0d73c883943545a8cdd394c72a1cc26bfc96c0d8))
+* **ui:** simplify the expanded card, team reviews and settings ([#74](https://github.com/aemard/prowl/issues/74)) ([e33636e](https://github.com/aemard/prowl/commit/e33636e972482f2230487537caf4c1b65ea1688f))
+
+
+### Bug Fixes
+
+* **actions:** re-run failed checks one at a time and explain status-only failures ([#73](https://github.com/aemard/prowl/issues/73)) ([4dd0e90](https://github.com/aemard/prowl/commit/4dd0e9076270ecd2285b4e4e2c5af5966f08e204))
+* apply trailing refreshes and serialize session publications ([#46](https://github.com/aemard/prowl/issues/46)) ([0f89ba7](https://github.com/aemard/prowl/commit/0f89ba7e45d440bd814f5fa05766802336489fcc))
+* **background:** stop the poll on rate limits and keep card failures local ([#59](https://github.com/aemard/prowl/issues/59)) ([a00f0de](https://github.com/aemard/prowl/commit/a00f0de854b5b682cf5410f417c20c00efa139c9))
+* **detail:** drop a detail answer from an earlier request or sign-in ([#72](https://github.com/aemard/prowl/issues/72)) ([7a30c2b](https://github.com/aemard/prowl/commit/7a30c2beaf24eb5604cd0c1c0cdcfe3489f0d504))
+* expose bounded coverage and preserve partial PR results ([#45](https://github.com/aemard/prowl/issues/45)) ([1c98b96](https://github.com/aemard/prowl/commit/1c98b9651db66cc87847f05da6d9bc70e4d6e163))
+* **list:** mark a card seen only when it was really on screen at that version ([#75](https://github.com/aemard/prowl/issues/75)) ([04d1ac5](https://github.com/aemard/prowl/commit/04d1ac5357197bd968a774545b4f068db803b91c))
+* **merge:** offer Merge only when it can succeed ([#68](https://github.com/aemard/prowl/issues/68)) ([fb6bd62](https://github.com/aemard/prowl/commit/fb6bd6268ed3a09606fc2664501d2369dcf615c9))
+* **notify:** hold quiet-hours notifications until quiet hours end ([#60](https://github.com/aemard/prowl/issues/60)) ([07d1770](https://github.com/aemard/prowl/commit/07d1770c82392207e534724f67a7cd83f68dbe33))
+* **notify:** notify each CI failure and recovery, also on the same commit ([#61](https://github.com/aemard/prowl/issues/61)) ([90188a6](https://github.com/aemard/prowl/commit/90188a684830794254b63445e0b20d20aeac566a))
+* preserve review drafts and keep send errors inline ([#47](https://github.com/aemard/prowl/issues/47)) ([bf0d29b](https://github.com/aemard/prowl/commit/bf0d29b177ac4277fb57f75caf8e84feccb1cbd7))
+* respect GitHub merge blockers and commit boundaries ([#44](https://github.com/aemard/prowl/issues/44)) ([2c41d6a](https://github.com/aemard/prowl/commit/2c41d6a17c9504ce90daa4de15e490d851c15c7e))
+* **ui:** keep menus above the list, soften field focus, align the unseen dot ([#70](https://github.com/aemard/prowl/issues/70)) ([f0b3fd3](https://github.com/aemard/prowl/commit/f0b3fd3feb86af98c816c66bf0522d9023c22468))
+* verify merge freshness and respect applied branch rules ([#67](https://github.com/aemard/prowl/issues/67)) ([ded1577](https://github.com/aemard/prowl/commit/ded157718d2bdfe789bdfc84fff30f8f9d10646f))
+
+
+### Reverts
+
+* discard quiet-hours notifications again ([#60](https://github.com/aemard/prowl/issues/60)) ([#64](https://github.com/aemard/prowl/issues/64)) ([152951a](https://github.com/aemard/prowl/commit/152951abb4936880f5c6876f234ab60a1369efd1))
+
 ## [1.4.0](https://github.com/aemard/prowl/compare/v1.3.1...v1.4.0) (2026-10-31)
 
 
