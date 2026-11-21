@@ -47,7 +47,7 @@ describe('SettingsView', () => {
       expect(dialog.getByText(/follows pull requests only/)).toBeTruthy();
       fireEvent.click(dialog.getByRole('button', { name: 'Save' }));
       expect(document.activeElement).toBe(dialog.getByLabelText('Search query'));
-      expect((await saved()).sections).toHaveLength(5);
+      expect((await saved()).sections).toHaveLength(6);
     });
 
     it('rejects queries GitHub would answer with an error', async () => {
@@ -83,7 +83,7 @@ describe('SettingsView', () => {
       fill(dialog, 'Bugs', 'label:bug');
       fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));
       expect(screen.queryByRole('dialog')).toBeNull();
-      expect((await saved()).sections).toHaveLength(5);
+      expect((await saved()).sections).toHaveLength(6);
     });
 
     it('removes a section and puts it back where it was on undo', async () => {
@@ -110,6 +110,7 @@ describe('SettingsView', () => {
           'team_review_requested',
           'mentioned',
           'assigned',
+          'your_turn',
         ]),
       );
     });

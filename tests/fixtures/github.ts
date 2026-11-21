@@ -5,16 +5,18 @@
  */
 import type {
   CheckRunNode,
-  ClosedPullRequestNode,
   DetailData,
   DetailPullRequestNode,
+  StatusContextNode,
+} from '../../src/lib/github/detailQuery';
+import type {
+  ClosedPullRequestNode,
   MergeStateData,
   MergeStateNode,
   NodesData,
   PullRequestNode,
   SearchData,
   StateCount,
-  StatusContextNode,
 } from '../../src/lib/github/queries';
 import { graphqlRateLimit } from './http';
 

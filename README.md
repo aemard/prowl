@@ -64,10 +64,22 @@ Details: [sign-in guide](docs/auth.md).
 - **Scope**: PRs you authored by default; add review requested (from you), team reviews
   (requests to your teams, found with `read:org`), mentioned, assigned, custom GitHub
   searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of
-  the panel, with its count. PRs with no
-  commit for 20 days (you choose) step aside behind a "Show hidden" button and still notify;
-  so can drafts and PRs opened by bots (Dependabot, Renovate), one switch each in Settings.
-  A further switch groups each tab's PRs under their repository, in collapsible groups.
+  the panel, with its count. Snooze a PR to set it aside in a "Snoozed" fold until the
+  time you pick. A switch groups each tab's PRs under their repository, in collapsible groups.
+- **Your turn**: a section, a chip on every card and the toolbar badge say which pull
+  requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
+  answer, a merge to make), longest waiting first. No extra GitHub request.
+- **Deployments**: an expanded card lists where its head commit is deployed (preview, staging)
+  and how that went.
+- **Stacks and merge queues**: a card stacked on another PR says so; on a branch with a merge
+  queue, add a PR to the queue (or take it out) and see its position.
+- **Review conversations**: an expanded card lists the open review threads with their last
+  comments; reply or resolve them without opening GitHub.
+- **Fast updates**: between polls, a free conditional check of your GitHub notifications (once a
+  minute) refreshes the list as soon as a pull request changes.
+- **On-device AI** (optional, off by default): with Chrome's built-in Gemini Nano, an expanded
+  card summarizes the pull request and explains why its checks fail. The model runs on your
+  device; nothing is sent anywhere but the GitHub read of that pull request.
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
@@ -84,6 +96,17 @@ Details: [sign-in guide](docs/auth.md).
   other computers; the token and your local PR state never leave the device.
 - **Polite polling**: every 2 minutes by default (2 minutes minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
+
+### A closer look
+
+<p align="center">
+  <img src="docs/screenshots/your-turn.png" alt="The Your turn section: four pull requests waiting on you, each with a chip saying what to do, under a summary of the queue" width="400" height="760">
+  <img src="docs/screenshots/local-ai.png" alt="An expanded card with a summary of the pull request written by Chrome's on-device AI" width="400" height="760">
+</p>
+<p align="center">
+  <img src="docs/screenshots/review-threads.png" alt="An expanded card listing two review conversations, each with its last comments, a reply box and a Resolve button" width="400" height="760">
+  <img src="docs/screenshots/merge-queue.png" alt="An expanded card in a merge queue at position 2, about 9 minutes, with a Remove from merge queue button" width="400" height="760">
+</p>
 
 ## Privacy
 

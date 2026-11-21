@@ -4,6 +4,8 @@ import { countMessage, t } from '../../lib/i18n';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { detailKey, details, loadDetail } from '../state/prDetail';
+import { settings } from '../state/store';
+import { Deployments } from './Deployments';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -19,10 +21,12 @@ import {
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
+import { LocalAi } from './LocalAi';
 import { MaintenanceActions } from './MaintenanceActions';
 import { MergeAction } from './MergeAction';
 import { type MergeLine, mergeReadiness } from './mergeReadiness';
 import { ReviewActions } from './ReviewActions';
+import { ReviewThreads } from './ReviewThreads';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -295,6 +299,11 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
               <DetailSkeleton />
             )}
           </Group>
+          {settings.value.localAi && <LocalAi pr={pr} />}
+          {detail?.deployments && (
+            <Deployments deployments={detail.deployments} id={`${id}-deployments`} />
+          )}
+          <ReviewThreads pr={pr} id={id} />
           <Group id={`${id}-reviewers`} label={t('reviewers')}>
             {detail ? (
               <Reviewers reviewers={detail.reviewers} labelledBy={`${id}-reviewers`} />

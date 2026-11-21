@@ -2417,5 +2417,324 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "Aucune exécution de vérification en échec à relancer ici. Relancez les autres vérifications sur GitHub ou sur le service qui les a signalées."
+  },
+  "quietDigestOne": {
+    "message": "Pendant les heures calmes : $P1$ mise à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "Pendant les heures calmes : $P1$ mises à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "À vous"
+  },
+  "yourTurnEmpty": {
+    "message": "Rien ne vous attend. Une pull request arrive ici quand c’est à vous d’agir : une review à faire, une CI à réparer, un retour à traiter ou un merge à faire."
+  },
+  "yourTurnPreset": {
+    "message": "Les pull requests de vos autres sections où c’est à vous d’agir"
+  },
+  "yourTurnEventDescription": {
+    "message": "Quand une pull request se met à vous attendre"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Compte les pull requests où c’est à vous d’agir : reviews à faire, CI à réparer, retours à traiter, merges à faire."
+  },
+  "waitingOnYou": {
+    "message": "$P1$ : en attente de votre part : $P2$ ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Votre review"
+  },
+  "turnReReview": {
+    "message": "À revoir"
+  },
+  "turnCiFailed": {
+    "message": "CI à réparer"
+  },
+  "turnChangesRequested": {
+    "message": "Changements à faire"
+  },
+  "turnConflicts": {
+    "message": "Conflits à résoudre"
+  },
+  "turnFeedback": {
+    "message": "Retours à traiter"
+  },
+  "turnReadyToMerge": {
+    "message": "À merger"
+  },
+  "yourTurnSince": {
+    "message": "À vous : $P1$, depuis $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "IA locale de Chrome"
+  },
+  "localAiDescription": {
+    "message": "Résume les pull requests et explique les checks en échec avec Gemini Nano, que Chrome exécute sur cet appareil. Rien n’est envoyé à un serveur."
+  },
+  "localAiAvailable": {
+    "message": "Prête sur cet appareil."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome doit télécharger son modèle une fois (plusieurs Go)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome télécharge son modèle."
+  },
+  "localAiUnavailable": {
+    "message": "Indisponible dans ce navigateur ou sur cet appareil : il faut un Chrome récent pour ordinateur, avec assez de mémoire et d’espace disque libre."
+  },
+  "localAiDownload": {
+    "message": "Télécharger le modèle"
+  },
+  "localAiProgress": {
+    "message": "Téléchargement du modèle : $P1$ %",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Résumer"
+  },
+  "aiExplainFailure": {
+    "message": "Expliquer l’échec"
+  },
+  "aiWorking": {
+    "message": "Réflexion sur votre appareil"
+  },
+  "aiGeneratedNote": {
+    "message": "Généré sur votre appareil par l’IA intégrée de Chrome. Elle peut se tromper."
+  },
+  "aiFailed": {
+    "message": "L’IA locale n’a pas pu répondre : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Résumé"
+  },
+  "aiExplanationHeading": {
+    "message": "Pourquoi les checks échouent"
+  },
+  "aiNothingToExplain": {
+    "message": "Les checks en échec n’ont rapporté aucun détail à expliquer. Ouvrez-les sur GitHub."
+  },
+  "aiAssistant": {
+    "message": "IA locale"
+  },
+  "conversations": {
+    "message": "Discussions"
+  },
+  "showConversationsOne": {
+    "message": "Afficher $P1$ discussion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Afficher $P1$ discussions",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Chargement des discussions"
+  },
+  "noOpenConversations": {
+    "message": "Aucune discussion ouverte."
+  },
+  "outdated": {
+    "message": "Obsolète"
+  },
+  "earlierComments": {
+    "message": "$P1$ commentaires précédents sur GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Répondre sur $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Répondre"
+  },
+  "resolveAction": {
+    "message": "Résoudre"
+  },
+  "replied": {
+    "message": "Réponse envoyée"
+  },
+  "resolved": {
+    "message": "Résolue"
+  },
+  "viewInTheDiff": {
+    "message": "Voir dans le diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Impossible de charger les discussions : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "Mettre en pause la pull request sélectionnée pendant 1 heure"
+  },
+  "shortcutYourTurn": {
+    "message": "Afficher ce qui vous attend (À vous)"
+  },
+  "snoozedForAnHour": {
+    "message": "En pause pendant 1 heure : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "Ajouter à la file de merge"
+  },
+  "removeFromMergeQueue": {
+    "message": "Retirer de la file de merge"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merge $P1$ dans $P2$ quand la file l’atteint et que ses checks passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "Dans la file de merge : position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "Dans la file de merge : position $P1$, environ $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Ajoutée à la file de merge"
+  },
+  "removedFromMergeQueue": {
+    "message": "Retirée de la file de merge"
+  },
+  "stackedOnChip": {
+    "message": "Sur #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "Empilée sur #$P1$ ($P2$) : elle se merge après",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "deployments": {
+    "message": "Déploiements"
+  },
+  "deployed": {
+    "message": "Déployé"
+  },
+  "deploying": {
+    "message": "En cours"
+  },
+  "deployFailed": {
+    "message": "Échec"
+  },
+  "turnSummaryWaiting": {
+    "message": "En attente de votre part : $P1$, la plus ancienne depuis $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ de vos pull requests attend des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ de vos pull requests attendent des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

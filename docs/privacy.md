@@ -45,12 +45,22 @@ the interface sends no text to a translation service and requires no additional 
 
 - **`api.github.com`:** on every poll, and when you act on a pull request. Prowl sends your token
   in the `Authorization` header and the search queries built from your settings. An action you
-  start, such as approving, is sent as you.
+  start, such as approving, is sent as you. Between polls, once a minute, Prowl also asks
+  whether your GitHub notifications changed (`GET /notifications` with `If-Modified-Since`); it
+  only reads the answer to decide whether to poll now, and never marks anything as read. When a
+  Chrome window comes to the front, Prowl may refresh: it learns only that a window got focus,
+  never which page it shows.
 - **`github.com`:** only when you choose "Continue with GitHub". Prowl sends the OAuth App's public
   client id and the one-time device code, to get a token. Chrome asks you to allow this host
   first, and you can say no.
 - **`avatars.githubusercontent.com`:** when the panel shows a picture. It is a plain image
   request, with no token.
+
+When you turn on **On-device AI in Chrome** (Settings → List, off by default) and click
+Summarize or Explain the failure on a card, Prowl reads that pull request's description,
+latest comments and reviews and failing-check reports from `api.github.com`, and hands them to
+Gemini Nano, the model Chrome runs on your device. Chrome downloads the model once, after you
+click "Download the model"; the text and the answer stay on your device and are not stored.
 
 Your token only ever goes to `api.github.com`. When you open a pull request, Prowl opens its
 `github.com` page in a normal browser tab, and it opens nothing that is not on GitHub.

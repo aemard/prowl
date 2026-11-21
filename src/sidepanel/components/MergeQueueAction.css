@@ -1,0 +1,5 @@
+.merge-queue__position {
+  align-self: center;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}

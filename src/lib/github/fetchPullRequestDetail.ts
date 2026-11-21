@@ -5,9 +5,9 @@ import { t } from '../i18n';
 import type { PullRequest, PullRequestDetail } from '../model';
 import { isRecord } from '../storage/guards';
 import type { GitHubClient } from './client';
+import { DETAIL_QUERY, type DetailData, type DetailPullRequestNode } from './detailQuery';
 import { GitHubError } from './errors';
-import { mapPullRequestDetail } from './mapPullRequest';
-import { DETAIL_QUERY, type DetailData, type DetailPullRequestNode } from './queries';
+import { mapPullRequestDetail } from './mapPullRequestDetail';
 
 /** Pages of 100 check contexts read at most: a PR with more shows "N more on GitHub". */
 const MAX_PAGES = 5;

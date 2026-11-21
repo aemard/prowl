@@ -2844,5 +2844,390 @@
   "noFailedCheckRunsToReRunHere": {
     "message": "No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.",
     "description": "Error when only commit statuses or non-rerunnable suites failed."
+  },
+  "quietDigestOne": {
+    "message": "During quiet hours: $P1$ update",
+    "description": "Extension text: During quiet hours: $P1$ update",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "During quiet hours: $P1$ updates",
+    "description": "Extension text: During quiet hours: $P1$ updates",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "Your turn",
+    "description": "Extension text: Your turn"
+  },
+  "yourTurnEmpty": {
+    "message": "Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make.",
+    "description": "Extension text: Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make."
+  },
+  "yourTurnPreset": {
+    "message": "Pull requests of your other sections where it is your move",
+    "description": "Extension text: Pull requests of your other sections where it is your move"
+  },
+  "yourTurnEventDescription": {
+    "message": "When a pull request starts waiting on you",
+    "description": "Extension text: When a pull request starts waiting on you"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make.",
+    "description": "Extension text: Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make."
+  },
+  "waitingOnYou": {
+    "message": "$P1$: $P2$ waiting on you ($P3$)",
+    "description": "Extension text: $P1$: $P2$ waiting on you ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Your review",
+    "description": "Extension text: Your review"
+  },
+  "turnReReview": {
+    "message": "Review again",
+    "description": "Extension text: Review again"
+  },
+  "turnCiFailed": {
+    "message": "Fix CI",
+    "description": "Extension text: Fix CI"
+  },
+  "turnChangesRequested": {
+    "message": "Address changes",
+    "description": "Extension text: Address changes"
+  },
+  "turnConflicts": {
+    "message": "Resolve conflicts",
+    "description": "Extension text: Resolve conflicts"
+  },
+  "turnFeedback": {
+    "message": "Answer feedback",
+    "description": "Extension text: Answer feedback"
+  },
+  "turnReadyToMerge": {
+    "message": "Merge it",
+    "description": "Extension text: Merge it"
+  },
+  "yourTurnSince": {
+    "message": "Your turn: $P1$, since $P2$",
+    "description": "Extension text: Your turn: $P1$, since $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "On-device AI in Chrome",
+    "description": "Extension text: On-device AI in Chrome"
+  },
+  "localAiDescription": {
+    "message": "Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server.",
+    "description": "Extension text: Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server."
+  },
+  "localAiAvailable": {
+    "message": "Ready on this device.",
+    "description": "Extension text: Ready on this device."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome needs to download its model once (several GB).",
+    "description": "Extension text: Chrome needs to download its model once (several GB)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome is downloading its model.",
+    "description": "Extension text: Chrome is downloading its model."
+  },
+  "localAiUnavailable": {
+    "message": "Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space.",
+    "description": "Extension text: Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space."
+  },
+  "localAiDownload": {
+    "message": "Download the model",
+    "description": "Extension text: Download the model"
+  },
+  "localAiProgress": {
+    "message": "Downloading the model: $P1$%",
+    "description": "Extension text: Downloading the model: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Summarize",
+    "description": "Extension text: Summarize"
+  },
+  "aiExplainFailure": {
+    "message": "Explain the failure",
+    "description": "Extension text: Explain the failure"
+  },
+  "aiWorking": {
+    "message": "Thinking on your device",
+    "description": "Extension text: Thinking on your device"
+  },
+  "aiGeneratedNote": {
+    "message": "Generated on your device by Chrome’s built-in AI. It can be wrong.",
+    "description": "Extension text: Generated on your device by Chrome’s built-in AI. It can be wrong."
+  },
+  "aiFailed": {
+    "message": "The on-device AI could not answer: $P1$",
+    "description": "Extension text: The on-device AI could not answer: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Summary",
+    "description": "Extension text: Summary"
+  },
+  "aiExplanationHeading": {
+    "message": "Why the checks fail",
+    "description": "Extension text: Why the checks fail"
+  },
+  "aiNothingToExplain": {
+    "message": "The failing checks reported no details to explain. Open them on GitHub.",
+    "description": "Extension text: The failing checks reported no details to explain. Open them on GitHub."
+  },
+  "aiAssistant": {
+    "message": "On-device AI",
+    "description": "Extension text: On-device AI"
+  },
+  "conversations": {
+    "message": "Conversations",
+    "description": "Extension text: Conversations"
+  },
+  "showConversationsOne": {
+    "message": "Show $P1$ conversation",
+    "description": "Extension text: Show $P1$ conversation",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Show $P1$ conversations",
+    "description": "Extension text: Show $P1$ conversations",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Loading conversations",
+    "description": "Extension text: Loading conversations"
+  },
+  "noOpenConversations": {
+    "message": "No open conversations.",
+    "description": "Extension text: No open conversations."
+  },
+  "outdated": {
+    "message": "Outdated",
+    "description": "Extension text: Outdated"
+  },
+  "earlierComments": {
+    "message": "$P1$ earlier comments on GitHub",
+    "description": "Extension text: $P1$ earlier comments on GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Reply on $P1$",
+    "description": "Extension text: Reply on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Reply",
+    "description": "Extension text: Reply"
+  },
+  "resolveAction": {
+    "message": "Resolve",
+    "description": "Extension text: Resolve"
+  },
+  "replied": {
+    "message": "Replied",
+    "description": "Extension text: Replied"
+  },
+  "resolved": {
+    "message": "Resolved",
+    "description": "Extension text: Resolved"
+  },
+  "viewInTheDiff": {
+    "message": "View in the diff",
+    "description": "Extension text: View in the diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Could not load the conversations: $P1$",
+    "description": "Extension text: Could not load the conversations: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "Snooze the focused pull request for 1 hour",
+    "description": "Extension text: Snooze the focused pull request for 1 hour"
+  },
+  "shortcutYourTurn": {
+    "message": "Show what waits on you (Your turn)",
+    "description": "Extension text: Show what waits on you (Your turn)"
+  },
+  "snoozedForAnHour": {
+    "message": "Snoozed for 1 hour: $P1$",
+    "description": "Extension text: Snoozed for 1 hour: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "Add to merge queue",
+    "description": "Extension text: Add to merge queue"
+  },
+  "removeFromMergeQueue": {
+    "message": "Remove from merge queue",
+    "description": "Extension text: Remove from merge queue"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "description": "Extension text: GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "In the merge queue: position $P1$",
+    "description": "Extension text: In the merge queue: position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "In the merge queue: position $P1$, about $P2$ min",
+    "description": "Extension text: In the merge queue: position $P1$, about $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Added to the merge queue",
+    "description": "Extension text: Added to the merge queue"
+  },
+  "removedFromMergeQueue": {
+    "message": "Removed from the merge queue",
+    "description": "Extension text: Removed from the merge queue"
+  },
+  "stackedOnChip": {
+    "message": "On #$P1$",
+    "description": "Extension text: On #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "Stacked on #$P1$ ($P2$): it merges after it",
+    "description": "Extension text: Stacked on #$P1$ ($P2$): it merges after it",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "deployments": {
+    "message": "Deployments",
+    "description": "Extension text: Deployments"
+  },
+  "deployed": {
+    "message": "Deployed",
+    "description": "Extension text: Deployed"
+  },
+  "deploying": {
+    "message": "Deploying",
+    "description": "Extension text: Deploying"
+  },
+  "deployFailed": {
+    "message": "Failed",
+    "description": "Extension text: Failed"
+  },
+  "turnSummaryWaiting": {
+    "message": "Waiting on you: $P1$, the oldest since $P2$.",
+    "description": "Extension text: Waiting on you: $P1$, the oldest since $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

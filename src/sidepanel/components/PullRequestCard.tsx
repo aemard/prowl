@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import { t } from '../../lib/i18n';
-import type { PullRequest } from '../../lib/model';
+import type { PullRequest, Turn } from '../../lib/model';
 import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { pollState } from '../state/store';
@@ -33,6 +33,10 @@ export interface PullRequestCardProps {
   grouped?: boolean;
   /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
   teams?: readonly string[];
+  /** Whose move it is (`whoseTurn`); the card shows a chip when it is the viewer's. */
+  turn?: Turn;
+  /** The open PR this one is stacked on (`stackedOn`). */
+  stackedOn?: Pick<PullRequest, 'number' | 'title'>;
 }
 
 function useCardInteractions(id: string) {
@@ -83,11 +87,13 @@ export function PullRequestCard({
   snoozedUntil,
   grouped,
   teams,
+  turn,
+  stackedOn,
 }: PullRequestCardProps) {
   const detailId = useId();
   const card = useCardInteractions(pr.id);
   const expanded = expandedIds.value.includes(pr.id);
-  const statuses = pullRequestStatuses(pr);
+  const statuses = pullRequestStatuses(pr, turn, now, stackedOn);
   const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const teamRequest =
     teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));

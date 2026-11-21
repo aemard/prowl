@@ -2417,5 +2417,324 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "ここで再実行できる失敗したチェック実行はありません。その他のチェックは GitHub か、報告元のサービスで再実行してください。"
+  },
+  "quietDigestOne": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "あなたの番"
+  },
+  "yourTurnEmpty": {
+    "message": "あなたを待っているものはありません。レビュー、CI の修正、フィードバックへの対応、マージなど、あなたが動く番になったプルリクエストがここに表示されます。"
+  },
+  "yourTurnPreset": {
+    "message": "ほかのセクションのうち、あなたが動く番のプルリクエスト"
+  },
+  "yourTurnEventDescription": {
+    "message": "プルリクエストがあなたの対応待ちになったとき"
+  },
+  "yourTurnBadgeHint": {
+    "message": "あなたが動く番のプルリクエストを数えます（レビュー、CI の修正、フィードバックへの対応、マージ）。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$: あなたを待っている $P2$（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "レビュー依頼"
+  },
+  "turnReReview": {
+    "message": "再レビュー"
+  },
+  "turnCiFailed": {
+    "message": "CI を修正"
+  },
+  "turnChangesRequested": {
+    "message": "変更に対応"
+  },
+  "turnConflicts": {
+    "message": "競合を解消"
+  },
+  "turnFeedback": {
+    "message": "フィードバックに対応"
+  },
+  "turnReadyToMerge": {
+    "message": "マージ"
+  },
+  "yourTurnSince": {
+    "message": "あなたの番: $P1$（$P2$ から）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "Chrome のオンデバイス AI"
+  },
+  "localAiDescription": {
+    "message": "Chrome がこのデバイス上で実行する Gemini Nano で、プルリクエストを要約し、失敗したチェックを説明します。サーバーには何も送信されません。"
+  },
+  "localAiAvailable": {
+    "message": "このデバイスで使用できます。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome がモデルを一度ダウンロードする必要があります（数 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome がモデルをダウンロードしています。"
+  },
+  "localAiUnavailable": {
+    "message": "このブラウザまたはデバイスでは使用できません。十分なメモリと空きディスク容量がある最新のデスクトップ版 Chrome が必要です。"
+  },
+  "localAiDownload": {
+    "message": "モデルをダウンロード"
+  },
+  "localAiProgress": {
+    "message": "モデルをダウンロード中: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "要約"
+  },
+  "aiExplainFailure": {
+    "message": "失敗を説明"
+  },
+  "aiWorking": {
+    "message": "デバイス上で処理中"
+  },
+  "aiGeneratedNote": {
+    "message": "Chrome の組み込み AI がデバイス上で生成しました。誤りを含む場合があります。"
+  },
+  "aiFailed": {
+    "message": "オンデバイス AI が応答できませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "要約"
+  },
+  "aiExplanationHeading": {
+    "message": "チェックが失敗する理由"
+  },
+  "aiNothingToExplain": {
+    "message": "失敗したチェックには説明できる詳細がありません。GitHub で開いてください。"
+  },
+  "aiAssistant": {
+    "message": "オンデバイス AI"
+  },
+  "conversations": {
+    "message": "会話"
+  },
+  "showConversationsOne": {
+    "message": "$P1$ 件の会話を表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "$P1$ 件の会話を表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "会話を読み込み中"
+  },
+  "noOpenConversations": {
+    "message": "未解決の会話はありません。"
+  },
+  "outdated": {
+    "message": "古い"
+  },
+  "earlierComments": {
+    "message": "GitHub に以前のコメントが $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "$P1$ に返信",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "返信"
+  },
+  "resolveAction": {
+    "message": "解決"
+  },
+  "replied": {
+    "message": "返信しました"
+  },
+  "resolved": {
+    "message": "解決しました"
+  },
+  "viewInTheDiff": {
+    "message": "差分で表示"
+  },
+  "couldNotLoadConversations": {
+    "message": "会話を読み込めませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "選択中のプルリクエストを 1 時間スヌーズ"
+  },
+  "shortcutYourTurn": {
+    "message": "あなたを待っているものを表示（あなたの番）"
+  },
+  "snoozedForAnHour": {
+    "message": "1 時間スヌーズしました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "マージキューに追加"
+  },
+  "removeFromMergeQueue": {
+    "message": "マージキューから削除"
+  },
+  "addToMergeQueueDescription": {
+    "message": "キューの順番が来てチェックが通ると、GitHub が $P1$ を $P2$ にマージします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "マージキュー内: $P1$ 番目",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "マージキュー内: $P1$ 番目、約 $P2$ 分",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "マージキューに追加しました"
+  },
+  "removedFromMergeQueue": {
+    "message": "マージキューから削除しました"
+  },
+  "stackedOnChip": {
+    "message": "#$P1$ の上",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "#$P1$（$P2$）の上に積まれています。そのあとにマージされます",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "deployments": {
+    "message": "デプロイ"
+  },
+  "deployed": {
+    "message": "デプロイ済み"
+  },
+  "deploying": {
+    "message": "デプロイ中"
+  },
+  "deployFailed": {
+    "message": "失敗"
+  },
+  "turnSummaryWaiting": {
+    "message": "あなたの対応待ち: $P1$ 件（最も古いもの: $P2$）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

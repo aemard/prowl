@@ -33,7 +33,7 @@ Keep an eye on CI, reviews and merge readiness while you work. Catch changes tha
 - YOUR PR INBOX: follow pull requests you authored, personal and team review requests, mentions, assignments or a custom GitHub search.
 - CLEAR STATUS: see failing checks, approvals, requested changes, conflicts and merge readiness. Expand a PR to understand what blocks it.
 - ACTIONS BESIDE YOUR WORK: approve, request changes, comment, merge, manage auto-merge, update a branch or re-run failed checks.
-- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, snooze PRs and hide stale, draft or bot PRs.
+- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, and snooze PRs until you want them back.
 - YOUR PREFERRED VIEW: light and dark themes, keyboard navigation, repository grouping and optional settings sync.
 
 FREE AND OPEN SOURCE
@@ -163,6 +163,27 @@ publisher can have one service account.
    | `CWS_WORKLOAD_IDENTITY_PROVIDER` | Printed by step 2 |
 
 The next release then stops at "Review deployments"; approve it and the job submits it.
+
+## Microsoft Edge Add-ons
+
+Edge runs the same Manifest V3 package, side panel included, so every release can also go to
+[Edge Add-ons](https://microsoftedge.microsoft.com/addons). `edge-add-ons.yml` uploads the
+release's attested zip and submits it for certification through the
+[Publish API](https://learn.microsoft.com/microsoft-edge/extensions/publish/api/using-addons-api);
+`release-please.yml` and `release-tag.yml` call it after the assets job, next to the Chrome Web
+Store job, and skip it until it is set up.
+
+One-time setup:
+
+1. Create the product in [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge)
+   with the listing text above and the store images, and publish a first version by hand.
+2. In Partner Center, open **Publish API**, create API credentials and note the client id, the
+   API key and the product id.
+3. In the repository settings, create the environment `edge-add-ons` with required reviewers,
+   the secret `EDGE_API_KEY` in it, and the variables `EDGE_CLIENT_ID` and `EDGE_PRODUCT_ID`.
+   Releases start publishing to Edge once `EDGE_PRODUCT_ID` is set.
+
+API keys expire after 72 days: create a new one in Partner Center and replace `EDGE_API_KEY`.
 
 ## When it fails
 

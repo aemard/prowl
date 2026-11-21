@@ -6,8 +6,9 @@
 import { activityKey } from '../activity';
 import { isReadyToMerge } from '../diff/diffSnapshots';
 import { countMessage, formatNumber, type MessageKey, t } from '../i18n';
-import type { BadgeMode, PrLocalState, PullRequest, Settings, Snapshot } from '../model';
+import type { BadgeMode, PrLocalState, PullRequest, Snapshot, TurnReason } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
+import { TURN_LABELS, turnIn } from '../turn/whoseTurn';
 
 export interface BadgeView {
   /** Badge text: empty for none, `99+` above 99. */
@@ -39,28 +40,50 @@ export const NO_BADGE: BadgeView = { text: '', title: BADGE_TITLE, danger: false
 const reasonsOf = (pr: PullRequest) =>
   pr.state === 'open' ? REASONS.filter((reason) => reason.applies(pr)) : [];
 
+const RED_TURNS: ReadonlySet<TurnReason> = new Set(['ci_failed', 'changes_requested']);
+
+/** `turn`: the PRs where it is the viewer's move, and why, from the same rule as the list. */
+function turnBadge(snapshot: Snapshot, prs: PullRequest[]): BadgeView {
+  const reasons = prs
+    .map((pr) => turnIn(snapshot, pr))
+    .flatMap((turn) => (turn.owner === 'you' ? [turn.reason] : []));
+  if (reasons.length === 0) return NO_BADGE;
+  const why = Object.entries(TURN_LABELS)
+    .map(([reason, label]) => ({ label: t(label), n: reasons.filter((r) => r === reason).length }))
+    .filter(({ n }) => n > 0)
+    .map(({ label, n }) => `${formatNumber(n)} ${label}`);
+  const pulls = countMessage(reasons.length, 'pullCountOne', 'pullCountOther');
+  return {
+    text: reasons.length > MAX_SHOWN ? `${MAX_SHOWN}+` : String(reasons.length),
+    title: t('waitingOnYou', BADGE_TITLE, pulls, why.join(', ')),
+    danger: reasons.some((reason) => RED_TURNS.has(reason)),
+  };
+}
+
 /**
- * The badge for `snapshot` under `mode`. Only PRs in a section count, never a snoozed one; a muted one does: mute only silences notifications. `attention`
- * counts open PRs with failing CI, requested changes, conflicts or ready to merge; `unseen`
- * counts PRs updated since the user saw them. No snapshot (signed out) and `off` show nothing.
+ * The badge for `snapshot` under `mode`. Only PRs in a section count, never a snoozed one; a
+ * muted one does: mute only silences notifications. `turn` counts PRs where it is the viewer's
+ * move (`whoseTurn`); `attention` counts open PRs with failing CI, requested changes, conflicts
+ * or ready to merge; `unseen` counts PRs updated since the user saw them. No snapshot (signed
+ * out) and `off` show nothing.
  */
 export function computeBadge(
   snapshot: Snapshot | undefined,
   local: PrLocalState,
   mode: BadgeMode,
-  _settings: Settings,
   now: number,
 ): BadgeView {
   if (!snapshot || mode === 'off') return NO_BADGE;
   const ids = new Set(Object.values(snapshot.sections).flat());
-  const counted = [...ids]
+  const awake = [...ids]
     .flatMap((id) => snapshot.pullRequests[id] ?? [])
-    .filter((pr) => !isSnoozed(local, pr.id, now))
-    .filter((pr) =>
-      mode === 'attention'
-        ? reasonsOf(pr).length > 0
-        : !isSeen(local, pr.id, pr.updatedAt, activityKey(pr)),
-    );
+    .filter((pr) => !isSnoozed(local, pr.id, now));
+  if (mode === 'turn') return turnBadge(snapshot, awake);
+  const counted = awake.filter((pr) =>
+    mode === 'attention'
+      ? reasonsOf(pr).length > 0
+      : !isSeen(local, pr.id, pr.updatedAt, activityKey(pr)),
+  );
   if (counted.length === 0) return NO_BADGE;
 
   const count = counted.length;

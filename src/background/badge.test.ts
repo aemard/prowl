@@ -35,7 +35,7 @@ describe('updateBadge', () => {
     expect(shown()).toEqual({
       text: '2',
       color: BADGE_COLORS.danger,
-      title: 'Prowl: 2 pull requests needing attention (1 CI failing, 1 ready to merge)',
+      title: 'Prowl: 2 pull requests waiting on you (1 Fix CI, 1 Merge it)',
     });
 
     await setItem('snapshot', snapshot(ready));
@@ -127,6 +127,7 @@ describe('watchBadge', () => {
       }),
     );
     await setItem('snapshot', snapshot(failing, draft, bot));
+    await updateSettings({ badge: 'attention' });
     await updateBadge();
     watchBadge();
     await repainted('3');

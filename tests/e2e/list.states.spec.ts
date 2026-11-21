@@ -83,8 +83,13 @@ test.describe('other states', () => {
     await poll();
 
     const panel = await openPanel();
-    // Review requested is on by default and is appended when the stored list omits it.
-    expect(await tabNames(panel)).toEqual(['Mine8', 'StaleCould not load', 'Review3']);
+    // Review requested and Your turn are on by default and are appended when the list omits them.
+    expect(await tabNames(panel)).toEqual([
+      'Mine8',
+      'StaleCould not load',
+      'Review3',
+      'Your turn4',
+    ]);
     await panel.getByRole('tab', { name: /Stale/ }).click();
     await expect(panel.getByText(/Could not load “Stale”/)).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'No pull requests' })).toHaveCount(0);

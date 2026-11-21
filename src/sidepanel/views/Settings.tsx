@@ -14,6 +14,7 @@ import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
 import { settings } from '../state/store';
 import { AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
+import { LocalAiSettings } from './SettingsLocalAi';
 import { BADGE_HINTS } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
@@ -32,6 +33,7 @@ const SORTS: SelectOption<SortOrder>[] = [
 ];
 
 const BADGES: SelectOption<BadgeMode>[] = [
+  { value: 'turn', label: t('yourTurnSection') },
   { value: 'attention', label: t('needsAttention') },
   { value: 'unseen', label: t('unseenChanges') },
   { value: 'off', label: t('off') },
@@ -111,6 +113,7 @@ function AppearanceSettings() {
         hint={BADGE_HINTS[badge]}
         onValueChange={(value) => void saveSettings({ badge: value })}
       />
+      <LocalAiSettings />
     </SettingsGroup>
   );
 }

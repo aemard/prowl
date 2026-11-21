@@ -8,9 +8,9 @@ import {
 import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
 import { buildPullRequest } from '../../test/panel';
 import { createGitHubClient, type FetchLike } from './client';
+import type { DetailData } from './detailQuery';
 import { GitHubError } from './errors';
 import { fetchPullRequestDetail } from './fetchPullRequestDetail';
-import type { DetailData } from './queries';
 
 /** A client whose fetch answers every request with `answer(variables)`. */
 function setup(answer: (variables: Record<string, unknown>) => Response | DetailData) {

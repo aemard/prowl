@@ -9,6 +9,7 @@ import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import { AlertIcon, GitMergeIcon } from './icons';
+import { MergeQueueAction } from './MergeQueueAction';
 import { mergeReadiness } from './mergeReadiness';
 import { Button } from './ui/Button';
 import { Dialog } from './ui/Dialog';
@@ -111,6 +112,10 @@ export function MergeAction({ pr, placement = 'all' }: { pr: PullRequest; placem
   const method =
     [controls.picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
   if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
+  // A merge queue replaces Merge and auto-merge: GitHub refuses a direct merge there.
+  const queue = currentDetail(pr)?.mergeQueue;
+  if (queue !== undefined)
+    return placement === 'auto' ? null : <MergeQueueAction pr={pr} queue={queue} />;
   if (!method)
     return placement === 'auto' ? null : (
       <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>

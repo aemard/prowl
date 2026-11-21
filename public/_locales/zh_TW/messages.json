@@ -2417,5 +2417,324 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "這裡沒有可重新執行的失敗檢查。請在 GitHub 或回報這些檢查的服務上重新執行其他檢查。"
+  },
+  "quietDigestOne": {
+    "message": "勿擾時段內：$P1$ 則更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "勿擾時段內：$P1$ 則更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "輪到你"
+  },
+  "yourTurnEmpty": {
+    "message": "沒有等你處理的事項。輪到你行動時（待審查、待修復 CI、待回覆意見或待合併），拉取請求會出現在這裡。"
+  },
+  "yourTurnPreset": {
+    "message": "你其他區段中輪到你行動的拉取請求"
+  },
+  "yourTurnEventDescription": {
+    "message": "當拉取請求開始等待你時"
+  },
+  "yourTurnBadgeHint": {
+    "message": "統計輪到你行動的拉取請求：待審查、待修復 CI、待回覆意見、待合併。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$：$P2$ 在等你（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "待你審查"
+  },
+  "turnReReview": {
+    "message": "再次審查"
+  },
+  "turnCiFailed": {
+    "message": "修復 CI"
+  },
+  "turnChangesRequested": {
+    "message": "處理修改意見"
+  },
+  "turnConflicts": {
+    "message": "解決衝突"
+  },
+  "turnFeedback": {
+    "message": "回覆意見"
+  },
+  "turnReadyToMerge": {
+    "message": "去合併"
+  },
+  "yourTurnSince": {
+    "message": "輪到你：$P1$，自 $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "Chrome 裝置端 AI"
+  },
+  "localAiDescription": {
+    "message": "使用 Chrome 在此裝置上執行的 Gemini Nano 摘要拉取請求並說明失敗的檢查。不會傳送任何內容到伺服器。"
+  },
+  "localAiAvailable": {
+    "message": "已可在此裝置上使用。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome 需要下載一次模型（數 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome 正在下載模型。"
+  },
+  "localAiUnavailable": {
+    "message": "此瀏覽器或裝置無法使用：需要較新的桌面版 Chrome，並有足夠的記憶體與磁碟空間。"
+  },
+  "localAiDownload": {
+    "message": "下載模型"
+  },
+  "localAiProgress": {
+    "message": "正在下載模型：$P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "摘要"
+  },
+  "aiExplainFailure": {
+    "message": "說明失敗原因"
+  },
+  "aiWorking": {
+    "message": "正在你的裝置上處理"
+  },
+  "aiGeneratedNote": {
+    "message": "由 Chrome 內建 AI 在你的裝置上產生，可能有誤。"
+  },
+  "aiFailed": {
+    "message": "裝置端 AI 無法回答：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "摘要"
+  },
+  "aiExplanationHeading": {
+    "message": "檢查失敗的原因"
+  },
+  "aiNothingToExplain": {
+    "message": "失敗的檢查沒有可說明的詳細資料，請在 GitHub 上查看。"
+  },
+  "aiAssistant": {
+    "message": "裝置端 AI"
+  },
+  "conversations": {
+    "message": "對話"
+  },
+  "showConversationsOne": {
+    "message": "顯示 $P1$ 個對話",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "顯示 $P1$ 個對話",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "正在載入對話"
+  },
+  "noOpenConversations": {
+    "message": "沒有未解決的對話。"
+  },
+  "outdated": {
+    "message": "已過時"
+  },
+  "earlierComments": {
+    "message": "GitHub 上還有 $P1$ 則較早的留言",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "回覆 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "回覆"
+  },
+  "resolveAction": {
+    "message": "標記為已解決"
+  },
+  "replied": {
+    "message": "已回覆"
+  },
+  "resolved": {
+    "message": "已解決"
+  },
+  "viewInTheDiff": {
+    "message": "在差異中檢視"
+  },
+  "couldNotLoadConversations": {
+    "message": "無法載入對話：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "將選取的拉取請求暫停提醒 1 小時"
+  },
+  "shortcutYourTurn": {
+    "message": "顯示等你處理的內容（輪到你）"
+  },
+  "snoozedForAnHour": {
+    "message": "已暫停提醒 1 小時：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "加入合併佇列"
+  },
+  "removeFromMergeQueue": {
+    "message": "移出合併佇列"
+  },
+  "addToMergeQueueDescription": {
+    "message": "輪到它且檢查通過後，GitHub 會將 $P1$ 合併到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "在合併佇列中：第 $P1$ 位",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "在合併佇列中：第 $P1$ 位，約 $P2$ 分鐘",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "已加入合併佇列"
+  },
+  "removedFromMergeQueue": {
+    "message": "已移出合併佇列"
+  },
+  "stackedOnChip": {
+    "message": "基於 #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "堆疊在 #$P1$（$P2$）之上：需在其之後合併",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "deployments": {
+    "message": "部署"
+  },
+  "deployed": {
+    "message": "已部署"
+  },
+  "deploying": {
+    "message": "部署中"
+  },
+  "deployFailed": {
+    "message": "失敗"
+  },
+  "turnSummaryWaiting": {
+    "message": "等你處理：$P1$ 個，最早的自 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "你有 $P1$ 個拉取請求已等待審查超過 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "你有 $P1$ 個拉取請求已等待審查超過 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

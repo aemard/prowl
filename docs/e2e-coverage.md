@@ -60,3 +60,9 @@ notifications, the team action and persistent dismissal; no wizard or Account re
 Unit tests cover install/update markers, old progress, no-op defaults, immediate team saves,
 cap labels, loading, no teams, singular counts and the single missing read:org notice.
 E2E updated here but not run in this environment.
+`your-turn.spec.ts` checks the Your turn section and badge on a small dataset. `card-tools.spec.ts`
+runs on the rich list data with Your turn and the on-device AI on: the Your turn queue, a summary
+and a CI explanation from a fake of Chrome's `LanguageModel` / `Summarizer` (installed with
+`context.addInitScript`, since the real model cannot run in CI), review conversations, and a merge
+queue position. Each passes axe and writes a screenshot (`your-turn`, `local-ai`,
+`review-threads`, `merge-queue`) shown in the README.

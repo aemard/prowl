@@ -1,4 +1,3 @@
-import logoUrl from '../../../assets/logo.png';
 import './ProwlMark.css';
 
 export interface ProwlMarkProps {
@@ -9,12 +8,17 @@ export interface ProwlMarkProps {
   class?: string;
 }
 
-/** The Prowl logo (src/assets/logo.png): a round ivory cat on a mint tile. */
+/**
+ * The Prowl logo: a round ivory cat on a mint tile. Uses the 48 px toolbar icon rasterized from
+ * src/assets/logo.png (`pnpm icons`): sharp at 2x for the 20 px header, 2 KB instead of 97 KB.
+ */
+export const LOGO_URL = '/icons/icon-48.png';
+
 export function ProwlMark({ size = 20, label, class: className }: ProwlMarkProps) {
   return (
     <img
       class={className ? `prowl-mark ${className}` : 'prowl-mark'}
-      src={logoUrl}
+      src={LOGO_URL}
       width={size}
       height={size}
       alt={label ?? ''}

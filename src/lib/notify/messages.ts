@@ -19,6 +19,7 @@ const TITLES: Record<PrEventType, (actor: string | null) => string> = {
   ready_to_merge: () => t('readyToMerge2'),
   merged: (actor) => (actor ? t('mergedBy', actor) : t('merged')),
   closed: (actor) => (actor ? t('closedBy', actor) : t('closed')),
+  your_turn: () => t('yourTurnSection'),
 };
 
 /** `acme/widgets#12` */
@@ -42,5 +43,14 @@ export function summaryContent(events: PrEvent[]): NotificationContent {
   return {
     title: countMessage(events.length, 'notificationUpdateOne', 'notificationUpdateOther'),
     message: refs.slice(0, LISTED).join(', ') + (more > 0 ? t('andMore', more) : ''),
+  };
+}
+
+/** The one notification after quiet hours: what happened while they were on. */
+export function quietDigestContent(events: PrEvent[]): NotificationContent {
+  const { message } = summaryContent(events);
+  return {
+    title: countMessage(events.length, 'quietDigestOne', 'quietDigestOther'),
+    message,
   };
 }

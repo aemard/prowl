@@ -33,6 +33,8 @@ const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: bo
   team_review_requested: { label: 'Team reviews', enabled: false },
   mentioned: { label: 'Mentioned', enabled: false },
   assigned: { label: 'Assigned to me', enabled: false },
+  // Last, so installs from before it get it appended in the same place as new ones.
+  your_turn: { label: 'Your turn', enabled: true },
 };
 
 const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
@@ -45,9 +47,15 @@ const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
   ready_to_merge: true,
   merged: true,
   closed: true,
+  your_turn: true,
 };
 
-const BADGE_MODES: Record<BadgeMode, true> = { attention: true, unseen: true, off: true };
+const BADGE_MODES: Record<BadgeMode, true> = {
+  turn: true,
+  attention: true,
+  unseen: true,
+  off: true,
+};
 const THEMES: Record<Theme, true> = { system: true, light: true, dark: true };
 const LANGUAGES: Record<Language, true> = {
   system: true,
@@ -94,11 +102,12 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
     events: { ...EVENT_DEFAULTS },
     quietHours: { enabled: false, start: '22:00', end: '08:00' },
   },
-  badge: 'attention',
+  badge: 'turn',
   theme: 'system',
   language: 'system',
   sort: 'updated',
   groupByRepo: true,
+  localAi: false,
   hideStaleAfterDays: 0,
   hideDrafts: false,
   hideBots: false,
@@ -322,6 +331,7 @@ export function normalizeSettings(value: unknown): Settings {
     language: oneOf(raw.language, LANGUAGES, DEFAULT_SETTINGS.language),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
+    localAi: bool(raw.localAi, DEFAULT_SETTINGS.localAi),
     // Keep explicit off values for older synced installs (missing stale keys default to 20).
     hideStaleAfterDays: 0,
     hideDrafts: false,

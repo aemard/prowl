@@ -5,7 +5,9 @@ import { t } from '../lib/i18n';
  * maps the id of every event already reported to its PR's URL. It dedupes events (ids are
  * stable per change, see the diff engine) and tells a click where to go; a notification for
  * one event has that event's id as its id. A summary of several events is recorded under its
- * own id too, pointing at the viewer's pull requests on GitHub.
+ * own id too, pointing at the viewer's pull requests on GitHub. Events silenced only by quiet
+ * hours wait under `quietHeld` and become one digest notification at the first poll after the
+ * window ends.
  */
 
 import { env } from '../lib/env';
@@ -14,12 +16,17 @@ import { filterEvents } from '../lib/notify/filterEvents';
 import {
   type NotificationContent,
   notificationContent,
+  quietDigestContent,
   summaryContent,
 } from '../lib/notify/messages';
 import { snooze, updatePrLocal } from '../lib/storage/prLocal';
+import { isQuietNow } from '../lib/time/quietHours';
 import { isGitHubUrl } from '../lib/url';
 
 const NOTIFIED = 'notified';
+const HELD = 'quietHeld';
+/** Events kept for the quiet-hours digest; older ones are dropped first. */
+const MAX_HELD = 50;
 /** Ids remembered; older ones are forgotten first. */
 const MAX_NOTIFIED = 300;
 /** More events than this in one poll become one summary notification. */
@@ -36,9 +43,41 @@ async function readNotified(): Promise<Notified> {
   return stored[NOTIFIED] ?? {};
 }
 
-/** Forgets what was reported (sign-out). */
+async function readHeld(): Promise<PrEvent[]> {
+  const stored = await chrome.storage.session.get<{ [HELD]?: PrEvent[] }>(HELD);
+  return stored[HELD] ?? [];
+}
+
+/** Forgets what was reported and what waits for the digest (sign-out). */
 export function forgetNotified(): Promise<void> {
-  return chrome.storage.session.remove(NOTIFIED);
+  return chrome.storage.session.remove([NOTIFIED, HELD]);
+}
+
+/** Keeps the events quiet hours silenced (and nothing else would have) for the digest. */
+async function hold(events: PrEvent[], settings: NotificationSettings, local: PrLocalState) {
+  const audible = { ...settings, quietHours: { ...settings.quietHours, enabled: false } };
+  const kept = filterEvents(events, audible, local);
+  if (kept.length === 0) return;
+  const held = await readHeld();
+  const ids = new Set(held.map((event) => event.id));
+  const next = [...held, ...kept.filter((event) => !ids.has(event.id))].slice(-MAX_HELD);
+  await chrome.storage.session.set({ [HELD]: next });
+}
+
+/** After quiet hours: one digest of what waited, still enabled, unmuted and not yet reported. */
+async function flushHeld(
+  notified: Notified,
+  settings: NotificationSettings,
+  local: PrLocalState,
+): Promise<[string, string][]> {
+  const held = await readHeld();
+  if (held.length === 0) return [];
+  await chrome.storage.session.remove(HELD);
+  const due = filterEvents(held, settings, local).filter((e) => !Object.hasOwn(notified, e.id));
+  if (due.length === 0) return [];
+  const id = `digest:${Date.now()}`;
+  await show(id, quietDigestContent(due));
+  return [...due.map((e) => [e.id, e.url] as [string, string]), [id, `${env.webUrl}/pulls`]];
 }
 
 function show(id: string, content: NotificationContent, buttons?: { title: string }[]) {
@@ -60,12 +99,25 @@ export async function notifyEvents(
   local: PrLocalState,
 ): Promise<void> {
   try {
-    if (events.length === 0) return;
     const notified = await readNotified();
     const fresh = events.filter((event) => !Object.hasOwn(notified, event.id));
-    const shown = filterEvents(fresh, settings, local);
-    if (shown.length === 0) return;
-    const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
+    if (settings.enabled && isQuietNow(settings.quietHours))
+      return await hold(fresh, settings, local);
+    const digest = await flushHeld(notified, settings, local);
+    const reported = new Set(digest.map(([id]) => id));
+    const shown = filterEvents(fresh, settings, local).filter((e) => !reported.has(e.id));
+    const kept = [
+      ...Object.entries(notified),
+      ...digest,
+      ...shown.map((e) => [e.id, e.url] as const),
+    ];
+    if (shown.length === 0) {
+      if (digest.length > 0)
+        await chrome.storage.session.set({
+          [NOTIFIED]: Object.fromEntries(kept.slice(-MAX_NOTIFIED)),
+        });
+      return;
+    }
     if (shown.length <= MAX_SEPARATE) {
       for (const event of shown) await show(event.id, notificationContent(event), buttons());
     } else {

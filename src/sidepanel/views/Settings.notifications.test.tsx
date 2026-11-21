@@ -25,7 +25,7 @@ describe('SettingsView', () => {
         expect(events.merged).toBe(false);
         expect(events.ci_failed).toBe(true);
       });
-      expect(notifications.getAllByRole('switch')).toHaveLength(1 + 9 + 1);
+      expect(notifications.getAllByRole('switch')).toHaveLength(1 + 10 + 1);
     });
 
     it('reveals notification options only when enabled, retaining the saved choices', async () => {

@@ -1,6 +1,7 @@
 import { OPEN_PANEL_COMMAND } from '../lib/model';
 import { subscribeSettings } from '../lib/storage/settings';
 import { updateBadge, watchBadge } from './badge';
+import { checkFastLane, INBOX_ALARM, onChromeFocused } from './fastLane';
 import { handleMessage } from './messages';
 import { onNotificationButtonClicked, onNotificationClicked } from './notifier';
 import { POLL_ALARM, poll, scheduleAlarm } from './poller';
@@ -18,8 +19,11 @@ export function registerBackground(): void {
   chrome.runtime.onStartup.addListener(start);
   chrome.alarms.onAlarm.addListener(({ name }) => {
     if (name === POLL_ALARM) void poll();
+    else if (name === INBOX_ALARM) void checkFastLane();
   });
   chrome.runtime.onMessage.addListener(handleMessage);
+  // Back from sleep or from another app: a stale list refreshes without waiting for the alarm.
+  chrome.windows.onFocusChanged.addListener((id) => void onChromeFocused(id));
   chrome.notifications.onClicked.addListener((id) => void onNotificationClicked(id));
   chrome.notifications.onButtonClicked.addListener(
     (id, index) => void onNotificationButtonClicked(id, index),

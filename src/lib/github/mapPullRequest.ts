@@ -1,10 +1,8 @@
-import { t } from '../i18n';
 /**
  * GitHub GraphQL nodes -> `PullRequest` of `src/lib/model.ts`. The only place that reads raw
  * PR JSON. Enum values GitHub may add later map to safe defaults instead of leaking through.
  */
 import type {
-  CheckItem,
   CheckItemState,
   CheckSummary,
   Label,
@@ -12,25 +10,20 @@ import type {
   MergeMethod,
   MergeStateStatus,
   PullRequest,
-  PullRequestDetail,
   PullRequestState,
   ReviewDecision,
-  Reviewer,
   ReviewState,
 } from '../model';
 import type {
-  CheckRunNode,
   ClosedPullRequestNode,
-  DetailPullRequestNode,
   MergeStateNode,
   Nodes,
   PullRequestNode,
   StateCount,
-  StatusContextNode,
 } from './queries';
 
 /** GitHub's name for a deleted account. */
-const GHOST = 'ghost';
+export const GHOST = 'ghost';
 /** REST spells a bot's login `dependabot[bot]`; GraphQL gives `dependabot` and `__typename: Bot`. */
 const BOT_SUFFIX = '[bot]';
 /** Used when a label color is not six hex digits. */
@@ -43,7 +36,7 @@ const REVIEW_DECISIONS: readonly ReviewDecision[] = [
   'changes_requested',
   'review_required',
 ];
-const REVIEW_STATES: readonly ReviewState[] = [
+export const REVIEW_STATES: readonly ReviewState[] = [
   'approved',
   'changes_requested',
   'commented',
@@ -65,7 +58,7 @@ const MERGE_STATE_STATUSES: readonly MergeStateStatus[] = [
 ];
 
 /** GitHub's upper-case enum value lower-cased when the model knows it, else `fallback`. */
-function pick<T extends string, F>(
+export function pick<T extends string, F>(
   allowed: readonly T[],
   value: string | null,
   fallback: F,
@@ -75,11 +68,11 @@ function pick<T extends string, F>(
 }
 
 /** The nodes of a connection without the holes left by failed reads. */
-const present = <T>(connection: Nodes<T> | null): T[] =>
+export const present = <T>(connection: Nodes<T> | null): T[] =>
   (connection?.nodes ?? []).filter((node): node is T => node !== null);
 
 /** A connection can be bounded without being empty or inaccessible. */
-function limitedConnections(
+export function limitedConnections(
   connections: Record<string, Nodes<unknown> | null | undefined>,
 ): string[] {
   return Object.entries(connections)
@@ -97,7 +90,7 @@ function limitedConnections(
  * PENDING) -> bucket. Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED
  * and new values.
  */
-const BUCKET: Record<string, CheckItemState> = {
+export const BUCKET: Record<string, CheckItemState> = {
   SUCCESS: 'passed',
   FAILURE: 'failed',
   ERROR: 'failed',
@@ -184,7 +177,7 @@ function mapConversation(node: PullRequestNode) {
       ({ requestedReviewer }) => requestedReviewer?.login ?? [],
     ),
     labels: present(node.labels).map(mapLabel),
-    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
+    // ponytail: counts the first 100 threads; `incomplete` then names conversations and the card shows N+.
     unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
     commentCount: node.totalCommentsCount ?? 0,
     lastComment: lastComment
@@ -261,81 +254,5 @@ export function mapClosedState(pr: PullRequest, node: ClosedPullRequestNode): Pu
     state,
     updatedAt: node.updatedAt,
     closedBy: node.mergedBy?.login ?? closer ?? null,
-  };
-}
-
-const CHECK_ORDER: Record<CheckItemState, number> = {
-  failed: 0,
-  pending: 1,
-  passed: 2,
-  neutral: 3,
-};
-const REVIEWER_ORDER: Record<Reviewer['state'], number> = {
-  changes_requested: 0,
-  requested: 1,
-  approved: 2,
-  commented: 3,
-  dismissed: 4,
-};
-const HTTP_URL = /^https?:\/\//i;
-
-/** A check run's state is its conclusion once it completed, else where it is in its run. */
-function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
-  const run = node.__typename === 'CheckRun';
-  const state = run
-    ? node.status === 'COMPLETED'
-      ? (node.conclusion ?? '')
-      : node.status
-    : node.state;
-  const url = run ? node.detailsUrl : node.targetUrl;
-  return {
-    name: run ? node.name : node.context,
-    state: BUCKET[state] ?? 'neutral',
-    // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
-    url: url !== null && HTTP_URL.test(url) ? url : null,
-    required: typeof node.isRequired === 'boolean' ? node.isRequired : null,
-  };
-}
-
-/**
- * Detail of an expanded card (`ProwlPullRequestDetail`). `pages` are the PR node of each page of
- * check contexts, first page first: reviewers and branch rules come from the first, the checks
- * from all. A reviewer who reviewed shows that review even when asked to review again.
- */
-export function mapPullRequestDetail(
-  pages: [DetailPullRequestNode, ...DetailPullRequestNode[]],
-): PullRequestDetail {
-  const [node] = pages;
-  const rollups = pages.flatMap(
-    (page) => page.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts ?? [],
-  );
-  const rule = node.baseRef?.branchProtectionRule;
-  const warnings = limitedConnections({
-    reviews: node.latestReviews,
-    'review requests': node.reviewRequests,
-  }).map((name) => t(name === 'reviews' ? 'reviewsNotLoaded' : 'reviewRequestsNotLoaded'));
-  const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
-    const mapped = pick(REVIEW_STATES, state, null);
-    return mapped
-      ? [{ login: author?.login ?? GHOST, avatarUrl: author?.avatarUrl ?? '', state: mapped }]
-      : [];
-  });
-  const requested: Reviewer[] = present(node.reviewRequests).flatMap(
-    ({ requestedReviewer: who }) =>
-      who?.login && !reviewed.some(({ login }) => login === who.login)
-        ? [{ login: who.login, avatarUrl: who.avatarUrl ?? '', state: 'requested' as const }]
-        : [],
-  );
-  return {
-    checks: rollups
-      .flatMap(({ nodes }) => (nodes ?? []).flatMap((check) => (check ? [mapContext(check)] : [])))
-      .sort((a, b) => CHECK_ORDER[a.state] - CHECK_ORDER[b.state]),
-    checksTotal: rollups[0]?.totalCount ?? 0,
-    reviewers: [...reviewed, ...requested].sort(
-      (a, b) => REVIEWER_ORDER[a.state] - REVIEWER_ORDER[b.state],
-    ),
-    ...(warnings.length ? { warnings } : {}),
-    requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
-    requiresConversationResolution: rule?.requiresConversationResolution ?? false,
   };
 }

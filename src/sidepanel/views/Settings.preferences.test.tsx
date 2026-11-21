@@ -72,7 +72,7 @@ describe('SettingsView', () => {
         [...(group('List').getByLabelText(label) as HTMLSelectElement).options].map((o) => o.value);
       expect(options('Theme')).toEqual(['system', 'light', 'dark']);
       expect(options('Sort pull requests by')).toEqual(['updated', 'created', 'repo']);
-      expect(options('Toolbar badge')).toEqual(['attention', 'unseen', 'off']);
+      expect(options('Toolbar badge')).toEqual(['turn', 'attention', 'unseen', 'off']);
     });
   });
 

@@ -156,7 +156,10 @@ async function searchSections(
   onProgress?: (result: FetchResult, mergePending: string[]) => Promise<void>,
 ) {
   const { settings } = context;
-  const enabled = settings.sections.filter((section) => section.enabled);
+  // "Your turn" lists the other sections' PRs (`yourTurnIds`): there is nothing to search.
+  const enabled = settings.sections.filter(
+    (section) => section.enabled && section.kind !== 'your_turn',
+  );
   const pending = new Set(enabled.map(({ id }) => id));
   for (const section of enabled) {
     await searchSection(context, section);

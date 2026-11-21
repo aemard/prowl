@@ -1,9 +1,12 @@
 import { signal, useSignalEffect } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { countMessage, t } from '../../lib/i18n';
+import { snooze, updatePrLocal } from '../../lib/storage/prLocal';
+import { selectSection } from '../state/listContext';
 import { refreshRequested, requestRefresh, SHORTCUTS, shortcutFor } from '../state/shortcuts';
-import { pollState, snapshot } from '../state/store';
+import { pollState, settings, snapshot } from '../state/store';
 import { Dialog } from './ui/Dialog';
+import { showToast } from './ui/Toast';
 import './Shortcuts.css';
 
 export const shortcutsOpen = signal(false);
@@ -32,6 +35,27 @@ function moveFocus(step: 1 | -1) {
   toggles[next]?.scrollIntoView({ block: 'nearest' });
 }
 
+/** `s`: snoozes the focused card's PR for an hour and says so (the card leaves the list). */
+function snoozeFocused() {
+  const card = document.activeElement?.closest('.pr-card');
+  const id = card?.querySelector<HTMLElement>('[data-pr-id]')?.dataset.prId;
+  const title = card?.querySelector('.pr-card__title')?.textContent ?? '';
+  if (!id) return;
+  // Keep focus in the list: on the next card, or the previous one for the last card.
+  moveFocus(1);
+  if (document.activeElement?.closest('.pr-card') === card) moveFocus(-1);
+  void updatePrLocal((state) => snooze(state, id, Date.now() + HOUR));
+  showToast({ message: t('snoozedForAnHour', title), tone: 'success' });
+}
+
+/** `t`: selects the "Your turn" section when it is on. */
+function showYourTurn() {
+  const section = settings.value.sections.find((s) => s.kind === 'your_turn' && s.enabled);
+  if (section) void selectSection(section.id);
+}
+
+const HOUR = 60 * 60 * 1000;
+
 /** Wires the list shortcuts to the document while the shell is shown. */
 export function useShortcuts(enabled: boolean): void {
   useEffect(() => {
@@ -48,6 +72,8 @@ export function useShortcuts(enabled: boolean): void {
           ?.closest('.pr-card')
           ?.querySelector<HTMLElement>('.pr-card__title')
           ?.click();
+      else if (shortcut === 'snooze') snoozeFocused();
+      else if (shortcut === 'yourTurn') showYourTurn();
       else if (shortcut === 'refresh') requestRefresh();
       else if (shortcut === 'filter')
         document.querySelector<HTMLElement>('.list__filter input')?.focus();
