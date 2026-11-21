@@ -25,6 +25,7 @@ import { MaintenanceActions } from './MaintenanceActions';
 import { MergeAction } from './MergeAction';
 import { type MergeLine, mergeReadiness } from './mergeReadiness';
 import { ReviewActions } from './ReviewActions';
+import { ReviewThreads } from './ReviewThreads';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -298,6 +299,7 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
             )}
           </Group>
           {settings.value.localAi && <LocalAi pr={pr} />}
+          <ReviewThreads pr={pr} id={id} />
           <Group id={`${id}-reviewers`} label={t('reviewers')}>
             {detail ? (
               <Reviewers reviewers={detail.reviewers} labelledBy={`${id}-reviewers`} />

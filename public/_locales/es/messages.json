@@ -2555,5 +2555,72 @@
   },
   "aiAssistant": {
     "message": "IA en el dispositivo"
+  },
+  "conversations": {
+    "message": "Conversaciones"
+  },
+  "showConversationsOne": {
+    "message": "Mostrar $P1$ conversación",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Mostrar $P1$ conversaciones",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Cargando conversaciones"
+  },
+  "noOpenConversations": {
+    "message": "No hay conversaciones abiertas."
+  },
+  "outdated": {
+    "message": "Obsoleta"
+  },
+  "earlierComments": {
+    "message": "$P1$ comentarios anteriores en GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Responder en $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Responder"
+  },
+  "resolveAction": {
+    "message": "Resolver"
+  },
+  "replied": {
+    "message": "Respondido"
+  },
+  "resolved": {
+    "message": "Resuelta"
+  },
+  "viewInTheDiff": {
+    "message": "Ver en el diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "No se pudieron cargar las conversaciones: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

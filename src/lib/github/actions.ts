@@ -61,7 +61,7 @@ interface CommentData {
 }
 
 /** The message a person has to write: trimmed, never empty, within GitHub's limit. */
-function messageOf(body: string): string {
+export function messageOf(body: string): string {
   const text = body.trim();
   if (text === '') throw new GitHubError('validation', t('writeAMessageFirst'));
   if (text.length > MAX_BODY_LENGTH) {

@@ -2555,5 +2555,72 @@
   },
   "aiAssistant": {
     "message": "KI auf dem Gerät"
+  },
+  "conversations": {
+    "message": "Unterhaltungen"
+  },
+  "showConversationsOne": {
+    "message": "$P1$ Unterhaltung anzeigen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "$P1$ Unterhaltungen anzeigen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Unterhaltungen werden geladen"
+  },
+  "noOpenConversations": {
+    "message": "Keine offenen Unterhaltungen."
+  },
+  "outdated": {
+    "message": "Veraltet"
+  },
+  "earlierComments": {
+    "message": "$P1$ frühere Kommentare auf GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Antworten zu $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Antworten"
+  },
+  "resolveAction": {
+    "message": "Auflösen"
+  },
+  "replied": {
+    "message": "Geantwortet"
+  },
+  "resolved": {
+    "message": "Aufgelöst"
+  },
+  "viewInTheDiff": {
+    "message": "Im Diff ansehen"
+  },
+  "couldNotLoadConversations": {
+    "message": "Unterhaltungen konnten nicht geladen werden: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

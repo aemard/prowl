@@ -2555,5 +2555,72 @@
   },
   "aiAssistant": {
     "message": "裝置端 AI"
+  },
+  "conversations": {
+    "message": "對話"
+  },
+  "showConversationsOne": {
+    "message": "顯示 $P1$ 個對話",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "顯示 $P1$ 個對話",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "正在載入對話"
+  },
+  "noOpenConversations": {
+    "message": "沒有未解決的對話。"
+  },
+  "outdated": {
+    "message": "已過時"
+  },
+  "earlierComments": {
+    "message": "GitHub 上還有 $P1$ 則較早的留言",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "回覆 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "回覆"
+  },
+  "resolveAction": {
+    "message": "標記為已解決"
+  },
+  "replied": {
+    "message": "已回覆"
+  },
+  "resolved": {
+    "message": "已解決"
+  },
+  "viewInTheDiff": {
+    "message": "在差異中檢視"
+  },
+  "couldNotLoadConversations": {
+    "message": "無法載入對話：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

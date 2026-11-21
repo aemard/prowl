@@ -69,6 +69,8 @@ Details: [sign-in guide](docs/auth.md).
 - **Your turn**: a section, a chip on every card and the toolbar badge say which pull
   requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
   answer, a merge to make), longest waiting first. No extra GitHub request.
+- **Review conversations**: an expanded card lists the open review threads with their last
+  comments; reply or resolve them without opening GitHub.
 - **On-device AI** (optional, off by default): with Chrome's built-in Gemini Nano, an expanded
   card summarizes the pull request and explains why its checks fail. The model runs on your
   device; nothing is sent anywhere but the GitHub read of that pull request.

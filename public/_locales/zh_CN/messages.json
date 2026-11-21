@@ -2555,5 +2555,72 @@
   },
   "aiAssistant": {
     "message": "设备端 AI"
+  },
+  "conversations": {
+    "message": "对话"
+  },
+  "showConversationsOne": {
+    "message": "显示 $P1$ 个对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "显示 $P1$ 个对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "正在加载对话"
+  },
+  "noOpenConversations": {
+    "message": "没有未解决的对话。"
+  },
+  "outdated": {
+    "message": "已过时"
+  },
+  "earlierComments": {
+    "message": "GitHub 上还有 $P1$ 条更早的评论",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "回复 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "回复"
+  },
+  "resolveAction": {
+    "message": "标记为已解决"
+  },
+  "replied": {
+    "message": "已回复"
+  },
+  "resolved": {
+    "message": "已解决"
+  },
+  "viewInTheDiff": {
+    "message": "在差异中查看"
+  },
+  "couldNotLoadConversations": {
+    "message": "无法加载对话：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

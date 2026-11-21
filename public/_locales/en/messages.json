@@ -3015,5 +3015,86 @@
   "aiAssistant": {
     "message": "On-device AI",
     "description": "Extension text: On-device AI"
+  },
+  "conversations": {
+    "message": "Conversations",
+    "description": "Extension text: Conversations"
+  },
+  "showConversationsOne": {
+    "message": "Show $P1$ conversation",
+    "description": "Extension text: Show $P1$ conversation",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Show $P1$ conversations",
+    "description": "Extension text: Show $P1$ conversations",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Loading conversations",
+    "description": "Extension text: Loading conversations"
+  },
+  "noOpenConversations": {
+    "message": "No open conversations.",
+    "description": "Extension text: No open conversations."
+  },
+  "outdated": {
+    "message": "Outdated",
+    "description": "Extension text: Outdated"
+  },
+  "earlierComments": {
+    "message": "$P1$ earlier comments on GitHub",
+    "description": "Extension text: $P1$ earlier comments on GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Reply on $P1$",
+    "description": "Extension text: Reply on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Reply",
+    "description": "Extension text: Reply"
+  },
+  "resolveAction": {
+    "message": "Resolve",
+    "description": "Extension text: Resolve"
+  },
+  "replied": {
+    "message": "Replied",
+    "description": "Extension text: Replied"
+  },
+  "resolved": {
+    "message": "Resolved",
+    "description": "Extension text: Resolved"
+  },
+  "viewInTheDiff": {
+    "message": "View in the diff",
+    "description": "Extension text: View in the diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Could not load the conversations: $P1$",
+    "description": "Extension text: Could not load the conversations: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

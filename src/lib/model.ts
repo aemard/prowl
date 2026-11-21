@@ -172,6 +172,21 @@ export interface PullRequestDetail {
   warnings?: string[];
 }
 
+/** A review conversation on the diff, as an expanded card lists it (read on demand, never stored). */
+export interface ReviewThread {
+  id: string;
+  resolved: boolean;
+  /** The code it was about changed since. */
+  outdated: boolean;
+  path: string;
+  line: number | null;
+  canResolve: boolean;
+  canReply: boolean;
+  /** Every comment of the thread; `comments` holds the last three, oldest first. */
+  commentCount: number;
+  comments: { author: string; text: string; createdAt: string; url: string }[];
+}
+
 /**
  * `review_requested`: review asked of the viewer directly; `team_review_requested`: asked of a
  * team the viewer belongs to (one viewer-team search, filtered by `Settings.unfollowedTeams`).

@@ -2555,5 +2555,72 @@
   },
   "aiAssistant": {
     "message": "IA locale"
+  },
+  "conversations": {
+    "message": "Discussions"
+  },
+  "showConversationsOne": {
+    "message": "Afficher $P1$ discussion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Afficher $P1$ discussions",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "loadingConversations": {
+    "message": "Chargement des discussions"
+  },
+  "noOpenConversations": {
+    "message": "Aucune discussion ouverte."
+  },
+  "outdated": {
+    "message": "Obsolète"
+  },
+  "earlierComments": {
+    "message": "$P1$ commentaires précédents sur GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Répondre sur $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Répondre"
+  },
+  "resolveAction": {
+    "message": "Résoudre"
+  },
+  "replied": {
+    "message": "Réponse envoyée"
+  },
+  "resolved": {
+    "message": "Résolue"
+  },
+  "viewInTheDiff": {
+    "message": "Voir dans le diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Impossible de charger les discussions : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }
