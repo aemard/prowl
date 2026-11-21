@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { buildPullRequest, buildSnapshotOf } from '../../src/test/panel';
+import { searchResponse } from '../fixtures/github';
 import { expect, test } from './fixtures';
 import { box } from './helpers/listAssertions';
 import { MOCK_ORIGIN } from './mock-github/server';
@@ -41,7 +42,8 @@ const theme = (page: Page) =>
 
 test.describe('signed in', () => {
   test.beforeEach(async ({ seedStorage }) => {
-    await seedStorage({ auth, snapshot: snapshot(minutesAgo(2)), pollState: pollState(false) });
+    // 30 s old: fresh enough that opening the panel does not refresh it (see the test below).
+    await seedStorage({ auth, snapshot: snapshot(minutesAgo(0.5)), pollState: pollState(false) });
   });
 
   test('shows the shell, accessible in light and dark', async ({
@@ -50,7 +52,7 @@ test.describe('signed in', () => {
   }) => {
     const panel = await openPanel();
     await expect(panel.getByRole('heading', { level: 1, name: 'Prowl' })).toBeVisible();
-    await expect(panel.getByText('List updated 2 min ago', { exact: true })).toBeVisible();
+    await expect(panel.getByText('List updated just now', { exact: true })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Refresh' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Account: octocat' })).toBeVisible();
@@ -151,15 +153,22 @@ test.describe('signed in', () => {
       });
     });
     const panel = await openPanel();
-    // Opening the panel on a list older than a minute already refreshes it once.
-    const received = () =>
-      serviceWorker.evaluate(() => (globalThis as { received?: unknown[] }).received);
-    await expect.poll(received).toEqual([{ type: 'poll', force: true }]);
     await panel.getByRole('button', { name: 'Refresh' }).click();
-    await expect.poll(received).toEqual([
-      { type: 'poll', force: true },
-      { type: 'poll', force: true },
-    ]);
+    await expect
+      .poll(() => serviceWorker.evaluate(() => (globalThis as { received?: unknown[] }).received))
+      .toEqual([{ type: 'poll', force: true }]);
+  });
+
+  test('opening the panel on a list older than a minute refreshes it at once', async ({
+    github,
+    openPanel,
+    seedStorage,
+  }) => {
+    github.onGraphQL('ProwlSearch', (variables) => searchResponse([], variables));
+    await seedStorage({ snapshot: snapshot(minutesAgo(3 * 24 * 60)) });
+    const panel = await openPanel();
+    await expect(panel.getByText('List updated just now', { exact: true })).toBeVisible();
+    expect(github.requestsFor('ProwlSearch').length).toBeGreaterThan(0);
   });
 
   test('moves between the list and settings, and back to onboarding on sign-out', async ({
