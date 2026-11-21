@@ -32,6 +32,10 @@ import { isWaiting, LOW_RATE_LIMIT, rateLimitedUntil } from '../lib/time/backoff
 import { clearBadge, updateBadge } from './badge';
 import { clearMergePriority, mergePriority } from './mergeState';
 import { forgetNotified, notifyEvents } from './notifier';
+
+/** The `inbox` alarm of fastLane.ts (named here: fastLane imports the poller). */
+export const INBOX_ALARM = 'inbox';
+
 import { IDLE, iso, POLL_ALARM, recordPollFailure } from './pollState';
 
 export { refreshMergeState, setMergePriority } from './mergeState';
@@ -48,6 +52,8 @@ export async function scheduleAlarm(minutes: number, ifScheduled = false): Promi
   const alarm = await chrome.alarms.get(POLL_ALARM);
   if (alarm ? alarm.periodInMinutes === minutes : ifScheduled) return;
   await chrome.alarms.create(POLL_ALARM, { delayInMinutes: minutes, periodInMinutes: minutes });
+  // The inbox check (fastLane.ts) runs every minute while polls are scheduled.
+  await chrome.alarms.create(INBOX_ALARM, { periodInMinutes: 1 });
 }
 
 /**
@@ -62,6 +68,7 @@ export async function clearSignedOut(): Promise<void> {
     const shown = await chrome.notifications.getAll();
     await Promise.all([
       chrome.alarms.clear(POLL_ALARM),
+      chrome.alarms.clear(INBOX_ALARM),
       removeItems('pollState'),
       clearBadge(),
       forgetNotified(),

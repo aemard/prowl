@@ -40,7 +40,8 @@ export interface GitHubClient {
     method: HttpMethod,
     path: string,
     body?: unknown,
-  ): Promise<{ data: T; headers: Headers }>;
+    headers?: Record<string, string>,
+  ): Promise<{ data: T; headers: Headers; status: number }>;
 }
 
 const TIMEOUT_MS = 20_000;
@@ -84,8 +85,10 @@ async function send(
   path: string,
   body: unknown,
   rest: boolean,
+  extra: Record<string, string> = {},
 ) {
   const headers: Record<string, string> = {
+    ...extra,
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
   };
@@ -130,7 +133,9 @@ async function send(
   } catch {
     payload = UNPARSEABLE;
   }
-  if (!response.ok) throw httpError(response, payload, token);
+  // 304 answers a conditional request (`If-Modified-Since`): nothing changed, no payload.
+  const unchanged = response.status === 304 && 'If-Modified-Since' in extra;
+  if (!response.ok && !unchanged) throw httpError(response, payload, token);
   return { response, payload };
 }
 
@@ -189,11 +194,16 @@ export function createGitHubClient({
   fetch: fetchImpl,
 }: GitHubClientOptions): GitHubClient {
   const client = { token, apiUrl: apiUrl.replace(/\/+$/, ''), fetch: fetchImpl };
-  async function restResponse<T = void>(method: HttpMethod, path: string, body?: unknown) {
-    const { response, payload } = await send(client, method, path, body, true);
+  async function restResponse<T = void>(
+    method: HttpMethod,
+    path: string,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ) {
+    const { response, payload } = await send(client, method, path, body, true, headers);
     if (payload === UNPARSEABLE)
       throw fail('server', unexpected(), response.status, response.headers);
-    return { data: payload as T, headers: response.headers };
+    return { data: payload as T, headers: response.headers, status: response.status };
   }
   return {
     graphql<T>(query: string, variables?: Record<string, unknown>, options?: GraphQLOptions) {

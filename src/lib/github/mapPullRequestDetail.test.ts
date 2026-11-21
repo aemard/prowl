@@ -8,7 +8,8 @@ import {
   requestedReviewer,
   statusContextNode,
 } from '../../../tests/fixtures/github';
-import { mapClosedState, mapPullRequest, mapPullRequestDetail } from './mapPullRequest';
+import { mapClosedState, mapPullRequest } from './mapPullRequest';
+import { mapPullRequestDetail } from './mapPullRequestDetail';
 
 const open = mapPullRequest(prNode());
 

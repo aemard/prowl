@@ -73,6 +73,8 @@ Details: [sign-in guide](docs/auth.md).
   queue, add a PR to the queue (or take it out) and see its position.
 - **Review conversations**: an expanded card lists the open review threads with their last
   comments; reply or resolve them without opening GitHub.
+- **Fast updates**: between polls, a free conditional check of your GitHub notifications (once a
+  minute) refreshes the list as soon as a pull request changes.
 - **On-device AI** (optional, off by default): with Chrome's built-in Gemini Nano, an expanded
   card summarizes the pull request and explains why its checks fail. The model runs on your
   device; nothing is sent anywhere but the GitHub read of that pull request.

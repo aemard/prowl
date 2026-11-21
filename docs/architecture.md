@@ -414,6 +414,18 @@ once that poll is done. `markSeen` stores the snapshot's `updatedAt` of each kno
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
 notification and the memory of what was reported.
 
+### Inbox fast lane
+
+Between polls, the `inbox` alarm (every minute, created with the `poll` alarm and cleared with
+it) runs `checkFastLane()` (`src/background/fastLane.ts`): `checkInbox` (`src/lib/github/notifications.ts`)
+sends `GET /notifications` with the last `Last-Modified` as `If-Modified-Since`. GitHub answers
+304, which does not count against the rate limit, until something changes; when a pull request
+thread changed, a poll runs at once (`poll({ afterCurrent: true })`, which still honors backoff
+and rate-limit waits). The first check of a browser session only records the date. Fine-grained
+tokens cannot read the inbox, and a 403 or 404 turns the lane off until the browser restarts
+(`chrome.storage.session` key `inbox`); polls keep their schedule either way. The client treats
+304 as success only for a request that sent `If-Modified-Since`.
+
 ### Whose turn
 
 `whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)
