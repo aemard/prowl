@@ -2622,5 +2622,19 @@
         "content": "$1"
       }
     }
+  },
+  "shortcutSnooze": {
+    "message": "Den ausgewählten Pull Request 1 Stunde zurückstellen"
+  },
+  "shortcutYourTurn": {
+    "message": "Anzeigen, was auf dich wartet (Du bist dran)"
+  },
+  "snoozedForAnHour": {
+    "message": "Für 1 Stunde zurückgestellt: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

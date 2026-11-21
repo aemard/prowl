@@ -2622,5 +2622,19 @@
         "content": "$1"
       }
     }
+  },
+  "shortcutSnooze": {
+    "message": "Posponer la pull request seleccionada 1 hora"
+  },
+  "shortcutYourTurn": {
+    "message": "Mostrar lo que te espera (Tu turno)"
+  },
+  "snoozedForAnHour": {
+    "message": "Pospuesta 1 hora: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

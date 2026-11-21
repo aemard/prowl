@@ -2622,5 +2622,19 @@
         "content": "$1"
       }
     }
+  },
+  "shortcutSnooze": {
+    "message": "将选中的拉取请求暂停提醒 1 小时"
+  },
+  "shortcutYourTurn": {
+    "message": "显示等你处理的内容（轮到你）"
+  },
+  "snoozedForAnHour": {
+    "message": "已暂停提醒 1 小时：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -3096,5 +3096,22 @@
         "content": "$1"
       }
     }
+  },
+  "shortcutSnooze": {
+    "message": "Snooze the focused pull request for 1 hour",
+    "description": "Extension text: Snooze the focused pull request for 1 hour"
+  },
+  "shortcutYourTurn": {
+    "message": "Show what waits on you (Your turn)",
+    "description": "Extension text: Show what waits on you (Your turn)"
+  },
+  "snoozedForAnHour": {
+    "message": "Snoozed for 1 hour: $P1$",
+    "description": "Extension text: Snoozed for 1 hour: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

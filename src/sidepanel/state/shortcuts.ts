@@ -6,7 +6,15 @@ import { signal } from '@preact/signals';
 import { t } from '../../lib/i18n';
 import { sendToBackground } from './background';
 
-export type Shortcut = 'next' | 'previous' | 'open' | 'refresh' | 'filter' | 'help';
+export type Shortcut =
+  | 'next'
+  | 'previous'
+  | 'open'
+  | 'snooze'
+  | 'yourTurn'
+  | 'refresh'
+  | 'filter'
+  | 'help';
 
 export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
   {
@@ -33,6 +41,18 @@ export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
     keys: ['o'],
     get action() {
       return t('openTheFocusedPullRequestOnGithub');
+    },
+  },
+  {
+    keys: ['s'],
+    get action() {
+      return t('shortcutSnooze');
+    },
+  },
+  {
+    keys: ['t'],
+    get action() {
+      return t('shortcutYourTurn');
     },
   },
   {
@@ -91,6 +111,10 @@ export function shortcutFor(event: KeyLike): Shortcut | null {
       return inList ? 'previous' : null;
     case 'o':
       return inList ? 'open' : null;
+    case 's':
+      return inList ? 'snooze' : null;
+    case 't':
+      return 'yourTurn';
     case 'r':
       return 'refresh';
     case '/':
