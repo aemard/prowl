@@ -2417,5 +2417,21 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "Keine fehlgeschlagenen Check-Runs zum erneuten Ausführen. Starte andere Checks auf GitHub oder bei dem Dienst neu, der sie gemeldet hat."
+  },
+  "quietDigestOne": {
+    "message": "Während der Ruhezeiten: $P1$ Aktualisierung",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "Während der Ruhezeiten: $P1$ Aktualisierungen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

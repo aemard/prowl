@@ -44,3 +44,12 @@ export function summaryContent(events: PrEvent[]): NotificationContent {
     message: refs.slice(0, LISTED).join(', ') + (more > 0 ? t('andMore', more) : ''),
   };
 }
+
+/** The one notification after quiet hours: what happened while they were on. */
+export function quietDigestContent(events: PrEvent[]): NotificationContent {
+  const { message } = summaryContent(events);
+  return {
+    title: countMessage(events.length, 'quietDigestOne', 'quietDigestOther'),
+    message,
+  };
+}

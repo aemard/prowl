@@ -2417,5 +2417,21 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "ここで再実行できる失敗したチェック実行はありません。その他のチェックは GitHub か、報告元のサービスで再実行してください。"
+  },
+  "quietDigestOne": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

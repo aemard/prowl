@@ -2417,5 +2417,21 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "No hay ejecuciones de comprobaciones fallidas que volver a ejecutar aquí. Vuelve a ejecutar las demás comprobaciones en GitHub o en el servicio que las informó."
+  },
+  "quietDigestOne": {
+    "message": "Durante el horario de silencio: $P1$ novedad",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "Durante el horario de silencio: $P1$ novedades",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -451,7 +451,10 @@ is logged and the published snapshot stands).
    off or `isQuietNow` (`src/lib/time/quietHours.ts`: local time, `start` inclusive, `end`
    exclusive, a window may wrap past midnight, `start === end` is empty), then the events whose
    type is switched off and those of a muted or snoozed PR. Dropped events are not retried
-   later and not marked as reported.
+   later and not marked as reported, except those silenced only by quiet hours: they wait in
+   `chrome.storage.session` under `quietHeld` (newest 50) and the first poll after the window
+   shows them as one `digest:<time>` notification ("During quiet hours: 4 updates"), filtered
+   again by the toggles, mutes and snoozes of that moment.
 3. Up to 3 events become one `basic` notification each (`src/lib/notify/messages.ts`: title says what happened
    and who did it, message is the PR title, context is `owner/name#number`); more than 3 become
    one summary ("5 pull request updates", the first PRs listed). The notification id of a

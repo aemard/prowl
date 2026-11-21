@@ -2417,5 +2417,21 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "这里没有可重新运行的失败检查。请在 GitHub 或报告这些检查的服务上重新运行其他检查。"
+  },
+  "quietDigestOne": {
+    "message": "勿扰时段内：$P1$ 条更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "勿扰时段内：$P1$ 条更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

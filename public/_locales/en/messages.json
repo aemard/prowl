@@ -2844,5 +2844,23 @@
   "noFailedCheckRunsToReRunHere": {
     "message": "No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.",
     "description": "Error when only commit statuses or non-rerunnable suites failed."
+  },
+  "quietDigestOne": {
+    "message": "During quiet hours: $P1$ update",
+    "description": "Extension text: During quiet hours: $P1$ update",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "During quiet hours: $P1$ updates",
+    "description": "Extension text: During quiet hours: $P1$ updates",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

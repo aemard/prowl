@@ -2417,5 +2417,21 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "Aucune exécution de vérification en échec à relancer ici. Relancez les autres vérifications sur GitHub ou sur le service qui les a signalées."
+  },
+  "quietDigestOne": {
+    "message": "Pendant les heures calmes : $P1$ mise à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "Pendant les heures calmes : $P1$ mises à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }
