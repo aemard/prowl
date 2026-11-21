@@ -2697,5 +2697,17 @@
         "content": "$2"
       }
     }
+  },
+  "deployments": {
+    "message": "部署"
+  },
+  "deployed": {
+    "message": "已部署"
+  },
+  "deploying": {
+    "message": "部署中"
+  },
+  "deployFailed": {
+    "message": "失敗"
   }
 }

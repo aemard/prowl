@@ -3183,5 +3183,21 @@
         "content": "$2"
       }
     }
+  },
+  "deployments": {
+    "message": "Deployments",
+    "description": "Extension text: Deployments"
+  },
+  "deployed": {
+    "message": "Deployed",
+    "description": "Extension text: Deployed"
+  },
+  "deploying": {
+    "message": "Deploying",
+    "description": "Extension text: Deploying"
+  },
+  "deployFailed": {
+    "message": "Failed",
+    "description": "Extension text: Failed"
   }
 }

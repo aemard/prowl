@@ -83,6 +83,7 @@ export function mapPullRequestDetail(
     ...(warnings.length ? { warnings } : {}),
     requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
     requiresConversationResolution: rule?.requiresConversationResolution ?? false,
+    ...deploymentsOf(pages[0]),
     ...(node.isMergeQueueEnabled
       ? {
           mergeQueue: node.mergeQueueEntry
@@ -94,4 +95,32 @@ export function mapPullRequestDetail(
         }
       : {}),
   };
+}
+
+const DEPLOY_STATE: Record<string, CheckItemState> = {
+  SUCCESS: 'passed',
+  FAILURE: 'failed',
+  ERROR: 'failed',
+  PENDING: 'pending',
+  QUEUED: 'pending',
+  IN_PROGRESS: 'pending',
+  WAITING: 'pending',
+};
+
+/** The head commit's deployments, newest per environment; inactive ones are left out. */
+function deploymentsOf(node: DetailPullRequestNode): Pick<PullRequestDetail, 'deployments'> {
+  const seen = new Set<string>();
+  const deployments = present(node.commits.nodes?.at(-1)?.commit.deployments ?? null)
+    .reverse()
+    .flatMap(({ latestEnvironment: environment, latestStatus: status }) => {
+      const state = status && DEPLOY_STATE[status.state];
+      if (!environment || !state || seen.has(environment)) return [];
+      seen.add(environment);
+      const url =
+        status.environmentUrl && HTTP_URL.test(status.environmentUrl)
+          ? status.environmentUrl
+          : null;
+      return [{ environment, state, url }];
+    });
+  return deployments.length ? { deployments } : {};
 }

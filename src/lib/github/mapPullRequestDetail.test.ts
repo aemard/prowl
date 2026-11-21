@@ -134,6 +134,32 @@ describe('mapPullRequestDetail', () => {
     ).toEqual({ position: 4, estimatedSeconds: null });
   });
 
+  it('lists the newest deployment per environment and leaves inactive ones out', () => {
+    const deployment = (env: string | null, state: string, url: string | null = null) => ({
+      latestEnvironment: env,
+      latestStatus: { state, environmentUrl: url },
+    });
+    const node = detailNode();
+    const commit = node.commits.nodes?.[0]?.commit;
+    if (commit)
+      commit.deployments = {
+        nodes: [
+          deployment('preview', 'FAILURE'),
+          deployment('staging', 'INACTIVE'),
+          null,
+          deployment(null, 'SUCCESS'),
+          deployment('preview', 'SUCCESS', 'https://pr-1.example.dev'),
+          { latestEnvironment: 'docs', latestStatus: null },
+          deployment('prod', 'QUEUED', 'javascript:alert(1)'),
+        ],
+      };
+    expect(mapPullRequestDetail([node]).deployments).toEqual([
+      { environment: 'prod', state: 'pending', url: null },
+      { environment: 'preview', state: 'passed', url: 'https://pr-1.example.dev' },
+    ]);
+    expect(mapPullRequestDetail([detailNode()]).deployments).toBeUndefined();
+  });
+
   it('merges the checks of every page and reports the total of the first', () => {
     const all = Array.from({ length: 5 }, (_, i) => checkRunNode(`job-${i}`));
     const detail = mapPullRequestDetail([

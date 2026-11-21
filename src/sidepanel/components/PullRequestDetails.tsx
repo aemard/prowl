@@ -5,6 +5,7 @@ import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib
 import { sendToBackground } from '../state/background';
 import { detailKey, details, loadDetail } from '../state/prDetail';
 import { settings } from '../state/store';
+import { Deployments } from './Deployments';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -299,6 +300,9 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
             )}
           </Group>
           {settings.value.localAi && <LocalAi pr={pr} />}
+          {detail?.deployments && (
+            <Deployments deployments={detail.deployments} id={`${id}-deployments`} />
+          )}
           <ReviewThreads pr={pr} id={id} />
           <Group id={`${id}-reviewers`} label={t('reviewers')}>
             {detail ? (

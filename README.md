@@ -69,6 +69,8 @@ Details: [sign-in guide](docs/auth.md).
 - **Your turn**: a section, a chip on every card and the toolbar badge say which pull
   requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
   answer, a merge to make), longest waiting first. No extra GitHub request.
+- **Deployments**: an expanded card lists where its head commit is deployed (preview, staging)
+  and how that went.
 - **Stacks and merge queues**: a card stacked on another PR says so; on a branch with a merge
   queue, add a PR to the queue (or take it out) and see its position.
 - **Review conversations**: an expanded card lists the open review threads with their last

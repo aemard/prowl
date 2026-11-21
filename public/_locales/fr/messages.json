@@ -2697,5 +2697,17 @@
         "content": "$2"
       }
     }
+  },
+  "deployments": {
+    "message": "Déploiements"
+  },
+  "deployed": {
+    "message": "Déployé"
+  },
+  "deploying": {
+    "message": "En cours"
+  },
+  "deployFailed": {
+    "message": "Échec"
   }
 }

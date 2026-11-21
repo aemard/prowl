@@ -45,6 +45,7 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
                 }
               }
             }
+            deployments(last: 5) { nodes { latestEnvironment latestStatus { state environmentUrl } } }
           }
         }
       }
@@ -102,6 +103,11 @@ export interface DetailPullRequestNode {
           nodes: (CheckRunNode | StatusContextNode | null)[] | null;
         };
       } | null;
+      /** Absent in older fixtures. */
+      deployments?: Nodes<{
+        latestEnvironment: string | null;
+        latestStatus: { state: string; environmentUrl: string | null } | null;
+      }>;
     };
   }>;
 }

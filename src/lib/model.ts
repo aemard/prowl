@@ -174,6 +174,8 @@ export interface PullRequestDetail {
    * it is not queued. Absent: no queue.
    */
   mergeQueue?: { position: number; estimatedSeconds: number | null } | null;
+  /** Where the head commit is deployed (GitHub Deployments), newest first, one per environment. */
+  deployments?: { environment: string; state: CheckItemState; url: string | null }[];
   warnings?: string[];
 }
 
