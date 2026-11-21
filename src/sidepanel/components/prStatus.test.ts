@@ -71,8 +71,38 @@ describe('pullRequestStatuses', () => {
 
   it('asks for a review unless the PR is a draft', () => {
     const pr = buildPullRequest({ reviewDecision: 'review_required' });
-    expect(labels(pr)).toEqual(['Review required']);
+    expect(labels(pr)).toEqual(['Awaiting review']);
     expect(labels({ ...pr, isDraft: true })).toEqual(['Draft']);
+  });
+
+  it("turns the chip of the fact into the action when it is the viewer's move: one chip per fact", () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const now = Date.parse('2026-10-06T12:00:00.000Z');
+    const failing = buildPullRequest({
+      checks: { state: 'failure', total: 2, passed: 1, failed: 1, pending: 0, neutral: 0 },
+    });
+    const fix = pullRequestStatuses(failing, { owner: 'you', reason: 'ci_failed', since }, now);
+    expect(fix.map(({ id, tone, icon, label }) => ({ id, tone, icon, label }))).toEqual([
+      { id: 'ci', tone: 'danger', icon: 'bell', label: 'Fix CI · 1 failing' },
+    ]);
+    expect(fix[0]?.detail).toMatch(/^Your turn: Fix CI, since 1 h ago\. Checks failing/);
+
+    const asked = buildPullRequest({ reviewDecision: 'review_required' });
+    const review = pullRequestStatuses(
+      asked,
+      { owner: 'you', reason: 'review_requested', since },
+      now,
+    );
+    expect(review.map(({ tone, label }) => [tone, label])).toEqual([['accent', 'Review']]);
+
+    const feedback = pullRequestStatuses(failing, { owner: 'you', reason: 'feedback', since }, now);
+    expect(feedback.map(({ id, label }) => [id, label])).toEqual([
+      ['turn', 'Answer feedback'],
+      ['ci', '1 failing'],
+    ]);
+    expect(
+      pullRequestStatuses(asked, { owner: 'them', reason: 'waiting_on_author', since }, now),
+    ).toHaveLength(1);
   });
 
   it('folds "approved" into "ready to merge", and keeps it when something blocks the merge', () => {

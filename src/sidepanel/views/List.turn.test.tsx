@@ -14,6 +14,10 @@ const failing = {
   neutral: 0,
 } as const;
 
+/** A chip on a card, not the section tab of the same name. */
+const chip = (text: string) =>
+  screen.queryAllByText(text).find((el) => el.closest('.pr-card__chips'));
+
 describe('Your turn section', () => {
   beforeEach(() => {
     withSections(['authored', 'review_requested', 'your_turn']);
@@ -40,9 +44,9 @@ describe('Your turn section', () => {
     expect(tab.textContent).toBe('Your turn2');
     fireEvent.click(tab);
     expect(cardTitles()).toEqual(['Asked of me', 'Mine, red']);
-    expect(screen.getByText('Fix CI')).toBeTruthy();
-    expect(screen.getByText('Your review').closest('[title]')?.getAttribute('title')).toMatch(
-      /^Your turn: Your review, since /,
+    expect(screen.getByText('Fix CI · 1 failing')).toBeTruthy();
+    expect(chip('Review')?.closest('[title]')?.getAttribute('title')).toMatch(
+      /^Your turn: Review, since /,
     );
   });
 
@@ -56,23 +60,7 @@ describe('Your turn section', () => {
 
   it('shows the chip on cards of the other sections too', () => {
     render(<ListView />);
-    expect(screen.getByText('Fix CI')).toBeTruthy();
-    expect(screen.queryByText('Your review')).toBeNull();
-  });
-});
-
-describe('stacked pull requests', () => {
-  it('says which pull request a card is stacked on', () => {
-    withSections(['authored']);
-    snapshot.value = buildSnapshotOf({
-      authored: [
-        pr(1, { headRefName: 'part-1' }),
-        pr(2, { title: 'Part 2', headRefName: 'part-2', baseRefName: 'part-1' }),
-      ],
-    });
-    render(<ListView />);
-    expect(screen.getByText('On #1').closest('[title]')?.getAttribute('title')).toBe(
-      'Stacked on #1 (PR number 1): it merges after it',
-    );
+    expect(screen.getByText('Fix CI · 1 failing')).toBeTruthy();
+    expect(chip('Review')).toBeUndefined();
   });
 });

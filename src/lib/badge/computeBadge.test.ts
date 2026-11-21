@@ -194,7 +194,7 @@ describe('turn badge', () => {
     const others = theirs(3, { commits: headCommit({ FAILURE: 1 }) });
     expect(badge([asked, red, others], 'turn')).toEqual({
       text: '2',
-      title: 'Prowl: 2 pull requests waiting on you (1 Your review, 1 Fix CI)',
+      title: 'Prowl: 2 pull requests waiting on you (1 Review, 1 Fix CI)',
       danger: true,
     });
   });

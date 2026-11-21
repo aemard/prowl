@@ -2464,7 +2464,7 @@
     }
   },
   "turnReviewRequested": {
-    "message": "待你審查"
+    "message": "審查"
   },
   "turnReReview": {
     "message": "再次審查"
@@ -2679,25 +2679,6 @@
   "removedFromMergeQueue": {
     "message": "已移出合併佇列"
   },
-  "stackedOnChip": {
-    "message": "基於 #$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "stackedOnDetail": {
-    "message": "堆疊在 #$P1$（$P2$）之上：需在其之後合併",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "deployments": {
     "message": "部署"
   },
@@ -2736,5 +2717,8 @@
         "content": "$1"
       }
     }
+  },
+  "awaitingReview": {
+    "message": "等待審查"
   }
 }

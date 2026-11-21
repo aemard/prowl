@@ -2464,7 +2464,7 @@
     }
   },
   "turnReviewRequested": {
-    "message": "Tu revisión"
+    "message": "Revisar"
   },
   "turnReReview": {
     "message": "Revisar de nuevo"
@@ -2679,25 +2679,6 @@
   "removedFromMergeQueue": {
     "message": "Quitada de la cola de merge"
   },
-  "stackedOnChip": {
-    "message": "Sobre #$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "stackedOnDetail": {
-    "message": "Apilada sobre #$P1$ ($P2$): se fusiona después",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "deployments": {
     "message": "Despliegues"
   },
@@ -2736,5 +2717,8 @@
         "content": "$1"
       }
     }
+  },
+  "awaitingReview": {
+    "message": "Pendiente de revisión"
   }
 }

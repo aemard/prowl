@@ -2464,7 +2464,7 @@
     }
   },
   "turnReviewRequested": {
-    "message": "待你审查"
+    "message": "审查"
   },
   "turnReReview": {
     "message": "再次审查"
@@ -2679,25 +2679,6 @@
   "removedFromMergeQueue": {
     "message": "已移出合并队列"
   },
-  "stackedOnChip": {
-    "message": "基于 #$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "stackedOnDetail": {
-    "message": "堆叠在 #$P1$（$P2$）之上：需在其之后合并",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "deployments": {
     "message": "部署"
   },
@@ -2736,5 +2717,8 @@
         "content": "$1"
       }
     }
+  },
+  "awaitingReview": {
+    "message": "等待审查"
   }
 }

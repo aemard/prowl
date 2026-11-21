@@ -35,8 +35,6 @@ export interface PullRequestCardProps {
   teams?: readonly string[];
   /** Whose move it is (`whoseTurn`); the card shows a chip when it is the viewer's. */
   turn?: Turn;
-  /** The open PR this one is stacked on (`stackedOn`). */
-  stackedOn?: Pick<PullRequest, 'number' | 'title'>;
 }
 
 function useCardInteractions(id: string) {
@@ -88,12 +86,11 @@ export function PullRequestCard({
   grouped,
   teams,
   turn,
-  stackedOn,
 }: PullRequestCardProps) {
   const detailId = useId();
   const card = useCardInteractions(pr.id);
   const expanded = expandedIds.value.includes(pr.id);
-  const statuses = pullRequestStatuses(pr, turn, now, stackedOn);
+  const statuses = pullRequestStatuses(pr, turn, now);
   const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const teamRequest =
     teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));

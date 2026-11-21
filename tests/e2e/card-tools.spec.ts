@@ -66,7 +66,7 @@ test.describe('card tools', () => {
     const panel = await openPanel();
     await panel.getByRole('tab', { name: /^Your turn/ }).click();
     await expect(panel.locator('.turn-summary')).toContainText('Waiting on you');
-    await expect(panel.getByText('Fix CI', { exact: true }).first()).toBeVisible();
+    await expect(panel.getByText('Fix CI · 1 failing', { exact: true }).first()).toBeVisible();
     await expectNoA11yViolations(panel);
     await saveScreenshot(panel, 'your-turn');
   });

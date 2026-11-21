@@ -2464,7 +2464,7 @@
     }
   },
   "turnReviewRequested": {
-    "message": "Votre review"
+    "message": "Review"
   },
   "turnReReview": {
     "message": "À revoir"
@@ -2679,25 +2679,6 @@
   "removedFromMergeQueue": {
     "message": "Retirée de la file de merge"
   },
-  "stackedOnChip": {
-    "message": "Sur #$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "stackedOnDetail": {
-    "message": "Empilée sur #$P1$ ($P2$) : elle se merge après",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "deployments": {
     "message": "Déploiements"
   },
@@ -2736,5 +2717,8 @@
         "content": "$1"
       }
     }
+  },
+  "awaitingReview": {
+    "message": "En attente de review"
   }
 }

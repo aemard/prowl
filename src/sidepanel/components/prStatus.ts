@@ -19,11 +19,10 @@ export type StatusIcon =
   | 'eye'
   | 'alert'
   | 'merge'
-  | 'bell'
-  | 'branch';
+  | 'bell';
 
 export interface Status {
-  id: 'turn' | 'stack' | 'draft' | 'ci' | 'review' | 'merge';
+  id: 'turn' | 'draft' | 'ci' | 'review' | 'merge';
   tone: Tone;
   icon: StatusIcon;
   /** Short chip text. */
@@ -113,7 +112,7 @@ function reviewStatus(pr: PullRequest): Status | null {
             id: 'review',
             tone: 'attention',
             icon: 'eye',
-            label: t('reviewRequired'),
+            label: t('awaitingReview'),
             detail: t('reviewRequired'),
           };
     default:
@@ -121,39 +120,45 @@ function reviewStatus(pr: PullRequest): Status | null {
   }
 }
 
-/** "Your turn" first, when it is the viewer's move, with what to do and since when. */
-function turnStatus(turn: Turn | undefined, now: number): Status | null {
+/** The chip each reason of the viewer's turn takes over: one chip per fact. */
+const TURN_CHIP: Partial<Record<Turn['reason'], Status['id']>> = {
+  ci_failed: 'ci',
+  changes_requested: 'review',
+  review_requested: 'review',
+  re_review: 'review',
+  conflicts: 'merge',
+  ready_to_merge: 'merge',
+};
+
+/**
+ * When it is the viewer's move, the chip stating that fact becomes the action: same color, a
+ * bell, words saying what to do ("Fix CI · 1 failing", "Review", "Merge it"). A reason with no
+ * chip of its own (feedback to answer, a review asked with no decision yet) adds one up front.
+ */
+function withTurn(chips: Status[], turn: Turn | undefined, now: number): Status[] {
   const key = turn?.owner === 'you' ? TURN_LABELS[turn.reason] : undefined;
-  if (!turn || !key) return null;
-  const label = t(key);
-  return {
-    id: 'turn',
-    tone: 'accent',
+  if (!turn || !key) return chips;
+  const action = t(key);
+  const detail = t('yourTurnSince', action, formatRelativeTime(turn.since, now));
+  const target = TURN_CHIP[turn.reason];
+  const index = chips.findIndex((chip) => chip.id === target);
+  const fact = chips[index];
+  if (!fact) return [{ id: 'turn', tone: 'accent', icon: 'bell', label: action, detail }, ...chips];
+  const merged: Status = {
+    ...fact,
+    // Someone else's review state is neutral news; asked of you, it is your action.
+    tone: fact.tone === 'attention' ? 'accent' : fact.tone,
     icon: 'bell',
-    label,
-    detail: t('yourTurnSince', label, formatRelativeTime(turn.since, now)),
+    label: turn.reason === 'ci_failed' ? `${action} · ${fact.label}` : action,
+    detail: `${detail}. ${fact.detail}`,
   };
+  return chips.map((chip, i) => (i === index ? merged : chip));
 }
 
-/** Chips in reading order: your turn, Draft, CI, review, then conflicts or ready to merge. */
-export function pullRequestStatuses(
-  pr: PullRequest,
-  turn?: Turn,
-  now = Date.now(),
-  stackedOn?: Pick<PullRequest, 'number' | 'title'>,
-): Status[] {
+/** Chips in reading order: Draft, CI, review, then conflicts or ready to merge; see `withTurn`. */
+export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now()): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
-    turnStatus(turn, now),
-    stackedOn
-      ? {
-          id: 'stack',
-          tone: 'neutral',
-          icon: 'branch',
-          label: t('stackedOnChip', String(stackedOn.number)),
-          detail: t('stackedOnDetail', String(stackedOn.number), stackedOn.title),
-        }
-      : null,
     pr.isDraft
       ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,
@@ -188,7 +193,11 @@ export function pullRequestStatuses(
             }
           : null,
   ];
-  return chips.filter((chip): chip is Status => chip !== null);
+  return withTurn(
+    chips.filter((chip): chip is Status => chip !== null),
+    turn,
+    now,
+  );
 }
 
 /** One sentence per fact, for the card's accessible description (its name is the title). */

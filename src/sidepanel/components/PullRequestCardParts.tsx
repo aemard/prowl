@@ -16,7 +16,6 @@ import {
   DotFillIcon,
   EyeIcon,
   FileDiffIcon,
-  GitBranchIcon,
   GitMergeIcon,
   GitPullRequestClosedIcon,
   GitPullRequestDraftIcon,
@@ -43,7 +42,6 @@ const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
   alert: AlertIcon,
   merge: GitMergeIcon,
   bell: BellIcon,
-  branch: GitBranchIcon,
 };
 
 type CardHeadProps = Pick<

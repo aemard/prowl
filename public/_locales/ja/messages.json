@@ -2464,7 +2464,7 @@
     }
   },
   "turnReviewRequested": {
-    "message": "レビュー依頼"
+    "message": "レビュー"
   },
   "turnReReview": {
     "message": "再レビュー"
@@ -2679,25 +2679,6 @@
   "removedFromMergeQueue": {
     "message": "マージキューから削除しました"
   },
-  "stackedOnChip": {
-    "message": "#$P1$ の上",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      }
-    }
-  },
-  "stackedOnDetail": {
-    "message": "#$P1$（$P2$）の上に積まれています。そのあとにマージされます",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "deployments": {
     "message": "デプロイ"
   },
@@ -2736,5 +2717,8 @@
         "content": "$1"
       }
     }
+  },
+  "awaitingReview": {
+    "message": "レビュー待ち"
   }
 }
