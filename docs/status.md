@@ -10,7 +10,9 @@ Every release ships its zip, an SBOM and a provenance attestation, and rebuilds 
 
 1. **OAuth App client id** (`PROWL_GITHUB_CLIENT_ID` repository variable): release builds offer
    "Continue with GitHub" only with it; without it they support token sign-in.
-2. **Dependabot alerts and security updates** on (Settings, Advanced Security): the weekly
+2. **Edge Add-ons** (optional): create the product and the Publish API credentials, then the
+   `edge-add-ons` environment ([setup](chrome-web-store.md#microsoft-edge-add-ons)).
+3. **Dependabot alerts and security updates** on (Settings, Advanced Security): the weekly
    version updates do not cover an advisory published against a lockfile that has not changed.
 
 ## Roadmap

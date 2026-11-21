@@ -1,0 +1,66 @@
+# Uploads a release's zip to Microsoft Edge Add-ons and submits it for certification (API v1.1).
+# release-please.yml and release-tag.yml call it once the release assets are attached, next to
+# the Chrome Web Store job; run it by hand to publish an existing tag again. The job waits for a
+# reviewer's approval in the `edge-add-ons` environment. One-time setup: docs/chrome-web-store.md
+# ("Microsoft Edge Add-ons").
+name: Edge Add-ons
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag (for example v1.2.0)
+        required: true
+        type: string
+    secrets:
+      EDGE_API_KEY:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (for example v1.2.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Edge Add-ons
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: edge-add-ons
+    concurrency:
+      group: edge-add-ons
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      # The same zip the Chrome Web Store gets, and only if release-assets.yml built it.
+      - name: Download and verify the release zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a release tag: $TAG"; exit 1; }
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "prowl-$TAG.zip"
+          gh attestation verify "prowl-$TAG.zip" --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release-assets.yml"
+
+      - name: Upload and submit for certification
+        env:
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+          EDGE_CLIENT_ID: ${{ vars.EDGE_CLIENT_ID }}
+          EDGE_PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          TAG: ${{ inputs.tag }}
+        run: node scripts/edge-publish.mjs "prowl-$TAG.zip" | tee -a "$GITHUB_STEP_SUMMARY"
