@@ -154,7 +154,8 @@ test.describe('merge', () => {
     await expect(
       dialog.getByRole('button', { name: 'Squash and merge', exact: true }),
     ).toBeVisible();
-    await expect(dialog.getByRole('textbox', { name: 'Commit title (optional)' })).toBeVisible();
+    // It starts on the title GitHub would use, not on an empty "optional" field.
+    await expect(dialog.getByRole('textbox', { name: 'Commit title' })).toHaveValue(/\(#\d+\)$/);
     await expectNoA11yViolations(panel);
 
     // A rebase has no commit title to ask for.
