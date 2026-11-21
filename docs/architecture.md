@@ -426,6 +426,12 @@ tokens cannot read the inbox, and a 403 or 404 turns the lane off until the brow
 (`chrome.storage.session` key `inbox`); polls keep their schedule either way. The client treats
 304 as success only for a request that sent `If-Modified-Since`.
 
+The same alarm also polls while CI runs (`checks.state` pending) on a listed open PR and the list
+is at least 50 s old, for every token type: third-party CI never reaches the inbox. A Chrome
+window that regains focus (`chrome.windows.onFocusChanged`, `onChromeFocused`) polls when the
+list is older than the poll interval, and the panel itself forces a poll when it opens or
+becomes visible on a list older than a minute (`refreshIfStale`, `src/sidepanel/state/freshness.ts`).
+
 ### Whose turn
 
 `whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)

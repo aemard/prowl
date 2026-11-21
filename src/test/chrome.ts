@@ -232,6 +232,7 @@ export function createFakeChrome() {
       onChanged: storageOnChanged,
     },
     alarms: fakeAlarms(alarms),
+    windows: { WINDOW_ID_NONE: -1, onFocusChanged: new FakeEvent<[number]>() },
     notifications: fakeNotifications(notifications),
     action: {
       setBadgeText: async ({ text }: { text?: string | null }) => {

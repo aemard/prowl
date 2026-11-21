@@ -75,8 +75,10 @@ test.describe('signed in', () => {
       }),
     });
     const panel = await openPanel();
-    await panel.clock.install();
-    await panel.clock.pauseAt(new Date());
+    // Pause a moment ahead of the installed clock: the page's clock can run ahead of the test's.
+    const start = Date.now();
+    await panel.clock.install({ time: start });
+    await panel.clock.pauseAt(start + 1_000);
     for (const groupByRepo of [false, true]) {
       for (const theme of ['light', 'dark']) {
         await seedStorage({ settings: { groupByRepo, theme } });
@@ -149,10 +151,15 @@ test.describe('signed in', () => {
       });
     });
     const panel = await openPanel();
+    // Opening the panel on a list older than a minute already refreshes it once.
+    const received = () =>
+      serviceWorker.evaluate(() => (globalThis as { received?: unknown[] }).received);
+    await expect.poll(received).toEqual([{ type: 'poll', force: true }]);
     await panel.getByRole('button', { name: 'Refresh' }).click();
-    await expect
-      .poll(() => serviceWorker.evaluate(() => (globalThis as { received?: unknown[] }).received))
-      .toEqual([{ type: 'poll', force: true }]);
+    await expect.poll(received).toEqual([
+      { type: 'poll', force: true },
+      { type: 'poll', force: true },
+    ]);
   });
 
   test('moves between the list and settings, and back to onboarding on sign-out', async ({

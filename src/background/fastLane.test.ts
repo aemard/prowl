@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../tests/fixtures/http';
 import { setItem } from '../lib/storage/storage';
-import { buildAuth } from '../test/panel';
-import { checkFastLane } from './fastLane';
+import { buildAuth, buildPullRequest, buildSnapshotOf } from '../test/panel';
+import { checkFastLane, onChromeFocused } from './fastLane';
 import { poll } from './poller';
 
 vi.mock('./poller', async (original) => ({
@@ -54,5 +54,51 @@ describe('checkFastLane', () => {
     expect(await inbox()).toEqual({ lastModified: null, off: true });
     await checkFastLane();
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('polls every minute while CI runs on a listed pull request, even for fine-grained tokens', async () => {
+    await setItem('auth', { ...buildAuth(), tokenType: 'fine_grained' });
+    const running = {
+      state: 'pending',
+      total: 1,
+      passed: 0,
+      failed: 0,
+      pending: 1,
+      neutral: 0,
+    } as const;
+    const old = new Date(Date.now() - 2 * 60_000).toISOString();
+    await setItem(
+      'snapshot',
+      buildSnapshotOf({ authored: [buildPullRequest({ checks: running })] }, { fetchedAt: old }),
+    );
+    await checkFastLane();
+    expect(poll).toHaveBeenCalledWith({ afterCurrent: true });
+
+    vi.mocked(poll).mockClear();
+    await setItem(
+      'snapshot',
+      buildSnapshotOf(
+        { authored: [buildPullRequest({ checks: running })] },
+        { fetchedAt: new Date().toISOString() },
+      ),
+    );
+    await checkFastLane();
+    expect(poll).not.toHaveBeenCalled();
+  });
+});
+
+describe('onChromeFocused', () => {
+  beforeEach(() => vi.mocked(poll).mockClear());
+
+  it('polls when Chrome comes back and the list is older than the interval', async () => {
+    await onChromeFocused(chrome.windows.WINDOW_ID_NONE);
+    expect(poll).not.toHaveBeenCalled();
+    await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: new Date().toISOString() }));
+    await onChromeFocused(1);
+    expect(poll).not.toHaveBeenCalled();
+    const days = new Date(Date.now() - 3 * 24 * 3_600_000).toISOString();
+    await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: days }));
+    await onChromeFocused(1);
+    expect(poll).toHaveBeenCalledTimes(1);
   });
 });

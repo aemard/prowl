@@ -9,6 +9,7 @@ import { lazy } from './components/lazy';
 import { RefreshAnnouncer, ShortcutsDialog, useShortcuts } from './components/Shortcuts';
 import { StatusBanner } from './components/StatusBanner';
 import { ToastRegion } from './components/ui/Toast';
+import { useRefreshOnOpen } from './state/freshness';
 import { type Route, route } from './state/router';
 import { PR_LIMIT_ID, settingsFocus } from './state/settings';
 import { hydrated, settings } from './state/store';
@@ -59,6 +60,7 @@ function Shell() {
   }, [current]);
 
   useShortcuts(current === 'list');
+  useRefreshOnOpen();
 
   return (
     <>
