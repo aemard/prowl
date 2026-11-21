@@ -421,12 +421,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "提交标题（可选）"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "留空则使用 GitHub 默认值。"
-  },
   "enterAWholeNumberFromTo": {
     "message": "请输入 $P1$ 到 $P2$ 之间的整数。",
     "placeholders": {
@@ -2917,5 +2911,8 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "提交标题"
   }
 }

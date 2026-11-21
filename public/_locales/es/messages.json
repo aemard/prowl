@@ -421,12 +421,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "Título del commit (opcional)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Vacío usa el valor predeterminado de GitHub."
-  },
   "enterAWholeNumberFromTo": {
     "message": "Introduce un entero entre $P1$ y $P2$.",
     "placeholders": {
@@ -2917,5 +2911,8 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "Título del commit"
   }
 }

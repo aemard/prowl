@@ -31,6 +31,9 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
       baseRef { branchProtectionRule { requiredApprovingReviewCount requiresConversationResolution } }
       isMergeQueueEnabled
       mergeQueueEntry { position state estimatedTimeToMerge }
+      number title headRefName headRepositoryOwner { login }
+      repository { squashMergeCommitTitle mergeCommitTitle }
+      firstCommit: commits(first: 1) { totalCount nodes { commit { messageHeadline } } }
       commits(last: 1) {
         nodes {
           commit {
@@ -83,6 +86,16 @@ export interface DetailPullRequestNode {
   reviewRequests: Nodes<{
     requestedReviewer: Partial<Login & { avatarUrl: string }> | null;
   }> | null;
+  /** What GitHub titles the merge commit with (absent in older fixtures). */
+  number?: number;
+  title?: string;
+  headRefName?: string;
+  headRepositoryOwner?: Login | null;
+  repository?: { squashMergeCommitTitle: string; mergeCommitTitle: string };
+  firstCommit?: {
+    totalCount: number;
+    nodes: ({ commit: { messageHeadline: string } } | null)[] | null;
+  };
   /** The base branch merges through a queue; absent in older fixtures. */
   isMergeQueueEnabled?: boolean;
   mergeQueueEntry?: { position: number; state: string; estimatedTimeToMerge: number | null } | null;

@@ -515,14 +515,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "Commit title (optional)",
-    "description": "Extension text: Commit title (optional)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Empty uses GitHub's default.",
-    "description": "Extension text: Empty uses GitHub's default."
-  },
   "enterAWholeNumberFromTo": {
     "message": "Enter a whole number from $P1$ to $P2$.",
     "description": "Extension text: Enter a whole number from $1 to $2.",
@@ -3436,5 +3428,9 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "Commit title",
+    "description": "Extension text: Commit title"
   }
 }

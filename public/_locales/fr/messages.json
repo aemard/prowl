@@ -421,12 +421,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "Titre du commit (facultatif)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Vide : valeur par défaut de GitHub."
-  },
   "enterAWholeNumberFromTo": {
     "message": "Saisissez un entier entre $P1$ et $P2$.",
     "placeholders": {
@@ -2917,5 +2911,8 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "Titre du commit"
   }
 }

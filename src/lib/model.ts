@@ -180,6 +180,8 @@ export interface PullRequestDetail {
    * it is not queued. Absent: no queue.
    */
   mergeQueue?: { position: number; estimatedSeconds: number | null } | null;
+  /** The commit title GitHub would use for a squash or a merge commit, from the repository's settings. */
+  commitTitles?: { squash: string; merge: string };
   /** Where the head commit is deployed (GitHub Deployments), newest first, one per environment. */
   deployments?: { environment: string; state: CheckItemState; url: string | null }[];
   warnings?: string[];

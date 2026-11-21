@@ -25,8 +25,6 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: var(--radius-md);
-  background: var(--color-accent-bg);
   color: var(--color-accent-fg);
 }
 
@@ -110,10 +108,11 @@
 }
 
 /* Members: the usual cards on a rail numbered by position, top of the stack first. */
-.stack-item__list {
+/* `.stack-item` raises the specificity over `.pr-list`'s own padding, which loads later. */
+.stack-item .stack-item__list {
   position: relative;
   margin: 0;
-  padding-left: 30px;
+  padding: var(--space-1) 0 0 32px;
 }
 
 .stack-item__list::before {
@@ -124,6 +123,7 @@
   left: 10px;
   width: 2px;
   background: var(--color-border);
+  /* Centered under the 22 px position marks (0 to 22 px from the list's edge). */
 }
 
 .stack-item__list > .pr-card {
@@ -134,7 +134,7 @@
   content: attr(data-stack-position);
   position: absolute;
   top: 14px;
-  left: -30px;
+  left: -32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +161,7 @@
 .stack-item__note,
 .stack-item__base {
   margin: 0;
-  padding-left: 30px;
+  padding-left: 32px;
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
 }

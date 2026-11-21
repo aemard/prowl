@@ -84,6 +84,7 @@ export function mapPullRequestDetail(
     requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
     requiresConversationResolution: rule?.requiresConversationResolution ?? false,
     ...deploymentsOf(pages[0]),
+    ...commitTitlesOf(pages[0]),
     ...(node.isMergeQueueEnabled
       ? {
           mergeQueue: node.mergeQueueEntry
@@ -123,4 +124,22 @@ function deploymentsOf(node: DetailPullRequestNode): Pick<PullRequestDetail, 'de
       return [{ environment, state, url }];
     });
   return deployments.length ? { deployments } : {};
+}
+
+/**
+ * GitHub's own default titles, so the merge dialog starts on them: a squash takes the PR title
+ * (or, set to COMMIT_OR_PR_TITLE, the commit's when there is one commit), a merge commit "Merge
+ * pull request #N from owner/branch" (or the PR title); both add "(#N)" when they use a title.
+ */
+function commitTitlesOf(node: DetailPullRequestNode): Pick<PullRequestDetail, 'commitTitles'> {
+  const { number, title, repository: repo, firstCommit } = node;
+  if (number === undefined || title === undefined || !repo) return {};
+  const only =
+    firstCommit?.totalCount === 1 ? firstCommit.nodes?.[0]?.commit.messageHeadline : undefined;
+  const squash = `${repo.squashMergeCommitTitle === 'COMMIT_OR_PR_TITLE' && only ? only : title} (#${number})`;
+  const merge =
+    repo.mergeCommitTitle === 'PR_TITLE'
+      ? `${title} (#${number})`
+      : `Merge pull request #${number} from ${node.headRepositoryOwner?.login ?? 'ghost'}/${node.headRefName ?? ''}`;
+  return { commitTitles: { squash, merge } };
 }

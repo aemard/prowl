@@ -32,24 +32,27 @@ const METHODS: Record<MergeMethod, string> = {
 function useMergeControls(pr: PullRequest) {
   const [confirming, setConfirming] = useState(false);
   const [picked, setPicked] = useState<MergeMethod>();
-  const [title, setTitle] = useState('');
+  // null until the user edits it: the field shows GitHub's own title for the chosen method.
+  const [edited, setTitle] = useState<string | null>(null);
   const pending = pendingActions.value[pr.id];
+  const titleFor = (method: MergeMethod) => edited ?? defaultCommitTitle(pr, method);
   // What is being sent cannot be taken back by closing the dialog.
   const close = () => pending === undefined && setConfirming(false);
   const merge = async (method: MergeMethod) => {
     const merged = await runPrAction(pr, t('merge'), t('merged'), (client) =>
-      mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title }),
+      // Untouched, GitHub applies its own default, which is what the field showed.
+      mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title: edited ?? undefined }),
     );
     setConfirming(false);
-    if (merged) setTitle('');
+    if (merged) setTitle(null);
     else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
     const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>
-      setAutoMerge(client, pr.id, method, pr.headSha, title),
+      setAutoMerge(client, pr.id, method, pr.headSha, edited ?? undefined),
     );
     setConfirming(false);
-    if (enabled) setTitle('');
+    if (enabled) setTitle(null);
   };
 
   return {
@@ -57,7 +60,7 @@ function useMergeControls(pr: PullRequest) {
     setConfirming,
     picked,
     setPicked,
-    title,
+    titleFor,
     setTitle,
     pending,
     close,
@@ -67,6 +70,12 @@ function useMergeControls(pr: PullRequest) {
 }
 
 type MergeControls = ReturnType<typeof useMergeControls>;
+
+/** The title GitHub gives the commit unless told otherwise (`PullRequestDetail.commitTitles`). */
+function defaultCommitTitle(pr: PullRequest, method: MergeMethod): string {
+  const titles = currentDetail(pr)?.commitTitles;
+  return (method === 'merge' ? titles?.merge : titles?.squash) ?? `${pr.title} (#${pr.number})`;
+}
 type Placement = 'merge' | 'auto' | 'all';
 type MergeDialogProps = {
   pr: PullRequest;
@@ -277,7 +286,7 @@ function MergeFields({
   controls,
   blockers,
 }: MergeDialogProps & { blockers: string[] }) {
-  const { pending, title, setPicked, setTitle } = controls;
+  const { pending, titleFor, setPicked, setTitle } = controls;
   const detail = currentDetail(pr);
   const methods = detail?.allowedMergeMethods ?? pr.allowedMergeMethods;
   return (
@@ -300,9 +309,8 @@ function MergeFields({
       )}
       {method !== 'rebase' && (
         <TextField
-          label={t('commitTitleOptional')}
-          hint={t('emptyUsesGithubSDefault')}
-          value={title}
+          label={t('commitTitle')}
+          value={titleFor(method)}
           readOnly={pending !== undefined}
           onValueChange={setTitle}
         />

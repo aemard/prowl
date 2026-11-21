@@ -421,12 +421,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "コミットタイトル（任意）"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "空欄の場合は GitHub の既定値を使います。"
-  },
   "enterAWholeNumberFromTo": {
     "message": "$P1$ から $P2$ までの整数を入力してください。",
     "placeholders": {
@@ -2917,5 +2911,8 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "コミットのタイトル"
   }
 }

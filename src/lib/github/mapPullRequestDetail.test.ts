@@ -160,6 +160,30 @@ describe('mapPullRequestDetail', () => {
     expect(mapPullRequestDetail([detailNode()]).deployments).toBeUndefined();
   });
 
+  it("gives GitHub's default commit titles from the repository's settings", () => {
+    const node = (squash: string, merge: string, commits = 3) =>
+      detailNode({
+        number: 42,
+        title: 'Improve widgets',
+        headRefName: 'feature',
+        headRepositoryOwner: { login: 'octocat' },
+        repository: { squashMergeCommitTitle: squash, mergeCommitTitle: merge },
+        firstCommit: {
+          totalCount: commits,
+          nodes: [{ commit: { messageHeadline: 'Speed up widgets' } }],
+        },
+      });
+    expect(mapPullRequestDetail([node('PR_TITLE', 'MERGE_MESSAGE')]).commitTitles).toEqual({
+      squash: 'Improve widgets (#42)',
+      merge: 'Merge pull request #42 from octocat/feature',
+    });
+    expect(mapPullRequestDetail([node('COMMIT_OR_PR_TITLE', 'PR_TITLE', 1)]).commitTitles).toEqual({
+      squash: 'Speed up widgets (#42)',
+      merge: 'Improve widgets (#42)',
+    });
+    expect(mapPullRequestDetail([detailNode()]).commitTitles).toBeUndefined();
+  });
+
   it('merges the checks of every page and reports the total of the first', () => {
     const all = Array.from({ length: 5 }, (_, i) => checkRunNode(`job-${i}`));
     const detail = mapPullRequestDetail([

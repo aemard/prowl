@@ -421,12 +421,6 @@
       }
     }
   },
-  "commitTitleOptional": {
-    "message": "Commit-Titel (optional)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Leer verwendet GitHubs Standard."
-  },
   "enterAWholeNumberFromTo": {
     "message": "Gib eine ganze Zahl zwischen $P1$ und $P2$ ein.",
     "placeholders": {
@@ -2917,5 +2911,8 @@
         "content": "$1"
       }
     }
+  },
+  "commitTitle": {
+    "message": "Commit-Titel"
   }
 }

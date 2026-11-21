@@ -235,7 +235,7 @@ describe('merging', () => {
     fireEvent.click(confirm());
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     fireEvent.click(opener());
-    expect((commitTitle() as HTMLInputElement).value).toBe('');
+    expect((commitTitle() as HTMLInputElement).value).toBe('Improve the widgets (#1)');
   });
 });
 
