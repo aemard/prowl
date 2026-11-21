@@ -29,7 +29,11 @@ function Thread({ pr, thread }: { pr: PullRequest; thread: ReviewThread }) {
       <p class="review-thread__where">
         <code>{where}</code>
         {thread.outdated && <Badge size="sm">{t('outdated')}</Badge>}
-        {last && <GitHubLink href={last.url}>{t('viewInTheDiff')}</GitHubLink>}
+        {last && (
+          <GitHubLink class="review-thread__link" href={last.url}>
+            {t('viewInTheDiff')}
+          </GitHubLink>
+        )}
       </p>
       {earlier > 0 && (
         <p class="review-thread__earlier">{t('earlierComments', formatNumber(earlier))}</p>

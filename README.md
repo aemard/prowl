@@ -97,6 +97,17 @@ Details: [sign-in guide](docs/auth.md).
 - **Polite polling**: every 2 minutes by default (2 minutes minimum), rate-limit aware, with
   backoff on errors. Light and dark themes, full keyboard support.
 
+### A closer look
+
+<p align="center">
+  <img src="docs/screenshots/your-turn.png" alt="The Your turn section: four pull requests waiting on you, each with a chip saying what to do, under a summary of the queue" width="400" height="760">
+  <img src="docs/screenshots/local-ai.png" alt="An expanded card with a summary of the pull request written by Chrome's on-device AI" width="400" height="760">
+</p>
+<p align="center">
+  <img src="docs/screenshots/review-threads.png" alt="An expanded card listing two review conversations, each with its last comments, a reply box and a Resolve button" width="400" height="760">
+  <img src="docs/screenshots/merge-queue.png" alt="An expanded card in a merge queue at position 2, about 9 minutes, with a Remove from merge queue button" width="400" height="760">
+</p>
+
 ## Privacy
 
 **Prowl cannot see or change the pages you visit: it has no access to your tabs or their
