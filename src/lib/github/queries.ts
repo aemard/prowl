@@ -162,7 +162,7 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
                 pageInfo { hasNextPage endCursor }
                 nodes {
                   __typename
-                  ... on CheckRun { name status conclusion detailsUrl isRequired(pullRequestId: $id) }
+                  ... on CheckRun { name status conclusion detailsUrl url isRequired(pullRequestId: $id) }
                   ... on StatusContext { context state targetUrl isRequired(pullRequestId: $id) }
                 }
               }
@@ -305,6 +305,8 @@ export interface CheckRunNode {
   status: string;
   conclusion: string | null;
   detailsUrl: string | null;
+  /** The check run's page on GitHub (absent in older fixtures). */
+  url?: string | null;
   isRequired: boolean | null;
 }
 

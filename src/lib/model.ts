@@ -115,7 +115,7 @@ export interface PullRequest {
   updatedAt: string;
   /**
    * When the head commit was committed (`committedDate`). A rebase, an amend or "Update branch"
-   * renews it; comments, reviews and labels do not. What hides a PR with no recent commit.
+   * renews it; comments, reviews and labels do not.
    */
   lastCommitAt: string;
   checks: CheckSummary;

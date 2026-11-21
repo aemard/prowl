@@ -64,10 +64,8 @@ Details: [sign-in guide](docs/auth.md).
 - **Scope**: PRs you authored by default; add review requested (from you), team reviews
   (requests to your teams, found with `read:org`), mentioned, assigned, custom GitHub
   searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of
-  the panel, with its count. PRs with no
-  commit for 20 days (you choose) step aside behind a "Show hidden" button and still notify;
-  so can drafts and PRs opened by bots (Dependabot, Renovate), one switch each in Settings.
-  A further switch groups each tab's PRs under their repository, in collapsible groups.
+  the panel, with its count. Snooze a PR to set it aside in a "Snoozed" fold until the
+  time you pick. A switch groups each tab's PRs under their repository, in collapsible groups.
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.

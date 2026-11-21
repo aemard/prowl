@@ -33,7 +33,7 @@ Keep an eye on CI, reviews and merge readiness while you work. Catch changes tha
 - YOUR PR INBOX: follow pull requests you authored, personal and team review requests, mentions, assignments or a custom GitHub search.
 - CLEAR STATUS: see failing checks, approvals, requested changes, conflicts and merge readiness. Expand a PR to understand what blocks it.
 - ACTIONS BESIDE YOUR WORK: approve, request changes, comment, merge, manage auto-merge, update a branch or re-run failed checks.
-- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, snooze PRs and hide stale, draft or bot PRs.
+- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, and snooze PRs until you want them back.
 - YOUR PREFERRED VIEW: light and dark themes, keyboard navigation, repository grouping and optional settings sync.
 
 FREE AND OPEN SOURCE

@@ -18,6 +18,7 @@ import type {
   Reviewer,
   ReviewState,
 } from '../model';
+import { isGitHubUrl } from '../url';
 import type {
   CheckRunNode,
   ClosedPullRequestNode,
@@ -184,7 +185,7 @@ function mapConversation(node: PullRequestNode) {
       ({ requestedReviewer }) => requestedReviewer?.login ?? [],
     ),
     labels: present(node.labels).map(mapLabel),
-    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
+    // ponytail: counts the first 100 threads; `incomplete` then names conversations and the card shows N+.
     unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
     commentCount: node.totalCommentsCount ?? 0,
     lastComment: lastComment
@@ -287,12 +288,17 @@ function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
       ? (node.conclusion ?? '')
       : node.status
     : node.state;
-  const url = run ? node.detailsUrl : node.targetUrl;
+  // A third-party CI's details page is off GitHub, which the panel never opens: fall back to the
+  // check run's own GitHub page, which links to it. Commit statuses have no GitHub page.
+  const url = run
+    ? node.detailsUrl && isGitHubUrl(node.detailsUrl)
+      ? node.detailsUrl
+      : (node.url ?? node.detailsUrl)
+    : node.targetUrl;
   return {
     name: run ? node.name : node.context,
     state: BUCKET[state] ?? 'neutral',
-    // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
-    url: url !== null && HTTP_URL.test(url) ? url : null,
+    url: url && HTTP_URL.test(url) ? url : null,
     required: typeof node.isRequired === 'boolean' ? node.isRequired : null,
   };
 }

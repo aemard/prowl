@@ -257,7 +257,13 @@ function CardFooter({ pr, now }: Pick<PullRequestCardProps, 'pr' | 'now'>) {
           title={countMessage(pr.unresolvedThreads, 'unresolvedCountOne', 'unresolvedCountOther')}
         >
           <CommentDiscussionIcon size={12} />
-          {t('unresolved2', pr.unresolvedThreads)}
+          {t(
+            'unresolved2',
+            // More threads than the 100 read: the count is a lower bound.
+            pr.incomplete?.includes('conversations')
+              ? `${formatNumber(pr.unresolvedThreads)}+`
+              : formatNumber(pr.unresolvedThreads),
+          )}
         </span>
       )}
       <span class="pr-card__age" title={by ? t('openedBy', by) : undefined}>

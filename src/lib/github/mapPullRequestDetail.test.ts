@@ -110,6 +110,19 @@ describe('mapPullRequestDetail', () => {
     expect(detail.checks.map((c) => c.url)).toEqual([null, null, 'HTTPS://ci.example/c']);
   });
 
+  it("links a third-party CI's check run to its GitHub page", () => {
+    const page = 'https://github.com/acme/widgets/runs/7';
+    const detail = mapPullRequestDetail([
+      detailNode({
+        checks: [
+          checkRunNode('circle', 'FAILURE', { detailsUrl: 'https://circleci.com/x', url: page }),
+          checkRunNode('older', 'FAILURE', { detailsUrl: 'https://ci.example/y' }),
+        ],
+      }),
+    ]);
+    expect(detail.checks.map((c) => c.url)).toEqual([page, 'https://ci.example/y']);
+  });
+
   it('merges the checks of every page and reports the total of the first', () => {
     const all = Array.from({ length: 5 }, (_, i) => checkRunNode(`job-${i}`));
     const detail = mapPullRequestDetail([
