@@ -22,6 +22,6 @@ describe('Deployments', () => {
     expect(list.textContent).toContain('previewDeployed');
     expect(list.textContent).toContain('stagingDeploying');
     expect(screen.getByText('https://pr-1.example.dev').tagName).toBe('SPAN');
-    expect(screen.getByRole('link', { name: /github\.com/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'github.com' })).toBeTruthy();
   });
 });
