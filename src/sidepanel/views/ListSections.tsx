@@ -4,6 +4,7 @@ import { activityKey } from '../../lib/activity';
 import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
 import { sectionLabel } from '../../lib/sectionLabel';
+import { stackedOn } from '../../lib/stack';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import { turnIn } from '../../lib/turn/whoseTurn';
 import {
@@ -122,6 +123,7 @@ function ListCard({
       muted={isMuted(data.local, pr.id)}
       teams={data.snap.teamRequests?.[pr.id]}
       turn={turnIn(data.snap, pr)}
+      stackedOn={stackedOn(data.snap, pr)}
       grouped={grouped}
       snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
     />

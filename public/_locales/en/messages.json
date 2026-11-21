@@ -3113,5 +3113,75 @@
         "content": "$1"
       }
     }
+  },
+  "addToMergeQueue": {
+    "message": "Add to merge queue",
+    "description": "Extension text: Add to merge queue"
+  },
+  "removeFromMergeQueue": {
+    "message": "Remove from merge queue",
+    "description": "Extension text: Remove from merge queue"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "description": "Extension text: GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "In the merge queue: position $P1$",
+    "description": "Extension text: In the merge queue: position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "In the merge queue: position $P1$, about $P2$ min",
+    "description": "Extension text: In the merge queue: position $P1$, about $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Added to the merge queue",
+    "description": "Extension text: Added to the merge queue"
+  },
+  "removedFromMergeQueue": {
+    "message": "Removed from the merge queue",
+    "description": "Extension text: Removed from the merge queue"
+  },
+  "stackedOnChip": {
+    "message": "On #$P1$",
+    "description": "Extension text: On #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "Stacked on #$P1$ ($P2$): it merges after it",
+    "description": "Extension text: Stacked on #$P1$ ($P2$): it merges after it",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

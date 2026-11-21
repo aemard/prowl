@@ -19,10 +19,11 @@ export type StatusIcon =
   | 'eye'
   | 'alert'
   | 'merge'
-  | 'bell';
+  | 'bell'
+  | 'branch';
 
 export interface Status {
-  id: 'turn' | 'draft' | 'ci' | 'review' | 'merge';
+  id: 'turn' | 'stack' | 'draft' | 'ci' | 'review' | 'merge';
   tone: Tone;
   icon: StatusIcon;
   /** Short chip text. */
@@ -135,10 +136,24 @@ function turnStatus(turn: Turn | undefined, now: number): Status | null {
 }
 
 /** Chips in reading order: your turn, Draft, CI, review, then conflicts or ready to merge. */
-export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now()): Status[] {
+export function pullRequestStatuses(
+  pr: PullRequest,
+  turn?: Turn,
+  now = Date.now(),
+  stackedOn?: Pick<PullRequest, 'number' | 'title'>,
+): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
     turnStatus(turn, now),
+    stackedOn
+      ? {
+          id: 'stack',
+          tone: 'neutral',
+          icon: 'branch',
+          label: t('stackedOnChip', String(stackedOn.number)),
+          detail: t('stackedOnDetail', String(stackedOn.number), stackedOn.title),
+        }
+      : null,
     pr.isDraft
       ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,

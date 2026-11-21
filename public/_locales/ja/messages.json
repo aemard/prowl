@@ -2636,5 +2636,66 @@
         "content": "$1"
       }
     }
+  },
+  "addToMergeQueue": {
+    "message": "マージキューに追加"
+  },
+  "removeFromMergeQueue": {
+    "message": "マージキューから削除"
+  },
+  "addToMergeQueueDescription": {
+    "message": "キューの順番が来てチェックが通ると、GitHub が $P1$ を $P2$ にマージします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "マージキュー内: $P1$ 番目",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "マージキュー内: $P1$ 番目、約 $P2$ 分",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "マージキューに追加しました"
+  },
+  "removedFromMergeQueue": {
+    "message": "マージキューから削除しました"
+  },
+  "stackedOnChip": {
+    "message": "#$P1$ の上",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "#$P1$（$P2$）の上に積まれています。そのあとにマージされます",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

@@ -153,6 +153,8 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
         }
       }
       baseRef { branchProtectionRule { requiredApprovingReviewCount requiresConversationResolution } }
+      isMergeQueueEnabled
+      mergeQueueEntry { position state estimatedTimeToMerge }
       commits(last: 1) {
         nodes {
           commit {
@@ -327,6 +329,9 @@ export interface DetailPullRequestNode {
   reviewRequests: Nodes<{
     requestedReviewer: Partial<Login & { avatarUrl: string }> | null;
   }> | null;
+  /** The base branch merges through a queue; absent in older fixtures. */
+  isMergeQueueEnabled?: boolean;
+  mergeQueueEntry?: { position: number; state: string; estimatedTimeToMerge: number | null } | null;
   /** Null for a base branch without a rule, or when the token cannot see rules. */
   baseRef: {
     branchProtectionRule: {

@@ -361,3 +361,37 @@ export async function setAutoMerge(
     throw new GitHubError('server', t('githubDidNotConfirmChange'));
   }
 }
+
+/** Adds the pull request to its base branch's merge queue, pinned to the head the user saw. */
+export const ENQUEUE_MUTATION = /* GraphQL */ `
+mutation ProwlEnqueue($id: ID!, $oid: GitObjectID!) {
+  enqueuePullRequest(input: { pullRequestId: $id, expectedHeadOid: $oid }) {
+    mergeQueueEntry { position }
+  }
+}`;
+
+export const DEQUEUE_MUTATION = /* GraphQL */ `
+mutation ProwlDequeue($id: ID!) {
+  dequeuePullRequest(input: { id: $id }) { mergeQueueEntry { id } }
+}`;
+
+/** Queues the pull request for merging, unless its head is no longer `headSha`. */
+export async function enqueuePullRequest(
+  client: GitHubClient,
+  prId: string,
+  headSha: string,
+): Promise<void> {
+  const data = await client.graphql<{
+    enqueuePullRequest: { mergeQueueEntry: { position: number } | null } | null;
+  }>(ENQUEUE_MUTATION, { id: prId, oid: headSha });
+  if (!data.enqueuePullRequest?.mergeQueueEntry)
+    throw new GitHubError('server', t('githubDidNotConfirmTheMerge'));
+}
+
+/** Takes the pull request out of the merge queue. */
+export async function dequeuePullRequest(client: GitHubClient, prId: string): Promise<void> {
+  const data = await client.graphql<{ dequeuePullRequest: unknown }>(DEQUEUE_MUTATION, {
+    id: prId,
+  });
+  if (!data.dequeuePullRequest) throw new GitHubError('server', t('githubDidNotConfirmTheMerge'));
+}

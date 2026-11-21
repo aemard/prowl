@@ -169,6 +169,11 @@ export interface PullRequestDetail {
   requiresConversationResolution: boolean;
   /** Effective methods from readable branch rules; absent means not verified. */
   allowedMergeMethods?: MergeMethod[];
+  /**
+   * Present when the base branch merges through a merge queue: the PR's place in it, or null when
+   * it is not queued. Absent: no queue.
+   */
+  mergeQueue?: { position: number; estimatedSeconds: number | null } | null;
   warnings?: string[];
 }
 

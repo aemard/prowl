@@ -2636,5 +2636,66 @@
         "content": "$1"
       }
     }
+  },
+  "addToMergeQueue": {
+    "message": "加入合併佇列"
+  },
+  "removeFromMergeQueue": {
+    "message": "移出合併佇列"
+  },
+  "addToMergeQueueDescription": {
+    "message": "輪到它且檢查通過後，GitHub 會將 $P1$ 合併到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "在合併佇列中：第 $P1$ 位",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "在合併佇列中：第 $P1$ 位，約 $P2$ 分鐘",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "已加入合併佇列"
+  },
+  "removedFromMergeQueue": {
+    "message": "已移出合併佇列"
+  },
+  "stackedOnChip": {
+    "message": "基於 #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "堆疊在 #$P1$（$P2$）之上：需在其之後合併",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

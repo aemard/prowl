@@ -2636,5 +2636,66 @@
         "content": "$1"
       }
     }
+  },
+  "addToMergeQueue": {
+    "message": "Zur Merge-Warteschlange hinzufügen"
+  },
+  "removeFromMergeQueue": {
+    "message": "Aus der Merge-Warteschlange entfernen"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merged $P1$ in $P2$, sobald die Warteschlange es erreicht und die Checks bestehen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "In der Merge-Warteschlange: Position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "In der Merge-Warteschlange: Position $P1$, etwa $P2$ Min.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Zur Merge-Warteschlange hinzugefügt"
+  },
+  "removedFromMergeQueue": {
+    "message": "Aus der Merge-Warteschlange entfernt"
+  },
+  "stackedOnChip": {
+    "message": "Auf #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "Gestapelt auf #$P1$ ($P2$): wird danach gemergt",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

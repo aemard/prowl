@@ -433,6 +433,16 @@ order does not apply to it). Every card shows a "Your turn" chip with what to do
 "Answer feedback"...) and since when; the `turn` badge counts the same PRs and the `your_turn`
 event notifies when a PR becomes the viewer's move.
 
+### Stacks and merge queues
+
+`stackedOn(snapshot, pr)` (`src/lib/stack.ts`, pure) finds the open PR of the same repository
+whose head branch is `pr`'s base branch; the card shows "On #12" and its tooltip says it merges
+after it. Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with
+the card details), the merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to
+the head the user saw, behind a confirmation) or, for a queued PR, its position, GitHub's
+estimate and "Remove from merge queue" (`ProwlDequeue`). Direct merge and auto-merge are not
+offered there: GitHub refuses them.
+
 ### Badge
 
 The toolbar badge is a pure function of storage: `computeBadge(snapshot, prLocal, settings.badge,

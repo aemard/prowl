@@ -343,5 +343,15 @@ export function mapPullRequestDetail(
     ...(warnings.length ? { warnings } : {}),
     requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
     requiresConversationResolution: rule?.requiresConversationResolution ?? false,
+    ...(node.isMergeQueueEnabled
+      ? {
+          mergeQueue: node.mergeQueueEntry
+            ? {
+                position: node.mergeQueueEntry.position,
+                estimatedSeconds: node.mergeQueueEntry.estimatedTimeToMerge,
+              }
+            : null,
+        }
+      : {}),
   };
 }

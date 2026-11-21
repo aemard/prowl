@@ -2636,5 +2636,66 @@
         "content": "$1"
       }
     }
+  },
+  "addToMergeQueue": {
+    "message": "Ajouter à la file de merge"
+  },
+  "removeFromMergeQueue": {
+    "message": "Retirer de la file de merge"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merge $P1$ dans $P2$ quand la file l’atteint et que ses checks passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "Dans la file de merge : position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "Dans la file de merge : position $P1$, environ $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Ajoutée à la file de merge"
+  },
+  "removedFromMergeQueue": {
+    "message": "Retirée de la file de merge"
+  },
+  "stackedOnChip": {
+    "message": "Sur #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackedOnDetail": {
+    "message": "Empilée sur #$P1$ ($P2$) : elle se merge après",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

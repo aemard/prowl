@@ -52,3 +52,19 @@ describe('Your turn section', () => {
     expect(screen.queryByText('Your review')).toBeNull();
   });
 });
+
+describe('stacked pull requests', () => {
+  it('says which pull request a card is stacked on', () => {
+    withSections(['authored']);
+    snapshot.value = buildSnapshotOf({
+      authored: [
+        pr(1, { headRefName: 'part-1' }),
+        pr(2, { title: 'Part 2', headRefName: 'part-2', baseRefName: 'part-1' }),
+      ],
+    });
+    render(<ListView />);
+    expect(screen.getByText('On #1').closest('[title]')?.getAttribute('title')).toBe(
+      'Stacked on #1 (PR number 1): it merges after it',
+    );
+  });
+});

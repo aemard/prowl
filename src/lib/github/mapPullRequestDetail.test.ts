@@ -123,6 +123,16 @@ describe('mapPullRequestDetail', () => {
     expect(detail.checks.map((c) => c.url)).toEqual([page, 'https://ci.example/y']);
   });
 
+  it('reads the merge queue only where the base branch has one', () => {
+    expect(mapPullRequestDetail([detailNode()]).mergeQueue).toBeUndefined();
+    expect(mapPullRequestDetail([detailNode({ isMergeQueueEnabled: true })]).mergeQueue).toBeNull();
+    const entry = { position: 4, state: 'QUEUED', estimatedTimeToMerge: null };
+    expect(
+      mapPullRequestDetail([detailNode({ isMergeQueueEnabled: true, mergeQueueEntry: entry })])
+        .mergeQueue,
+    ).toEqual({ position: 4, estimatedSeconds: null });
+  });
+
   it('merges the checks of every page and reports the total of the first', () => {
     const all = Array.from({ length: 5 }, (_, i) => checkRunNode(`job-${i}`));
     const detail = mapPullRequestDetail([
