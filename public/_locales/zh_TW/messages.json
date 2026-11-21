@@ -2709,5 +2709,32 @@
   },
   "deployFailed": {
     "message": "失敗"
+  },
+  "turnSummaryWaiting": {
+    "message": "等你處理：$P1$ 個，最早的自 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "你有 $P1$ 個拉取請求已等待審查超過 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "你有 $P1$ 個拉取請求已等待審查超過 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

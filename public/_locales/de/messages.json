@@ -2709,5 +2709,32 @@
   },
   "deployFailed": {
     "message": "Fehlgeschlagen"
+  },
+  "turnSummaryWaiting": {
+    "message": "Wartet auf dich: $P1$, die älteste seit $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ deiner Pull Requests wartet seit über 2 Tagen auf Reviews.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ deiner Pull Requests warten seit über 2 Tagen auf Reviews.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

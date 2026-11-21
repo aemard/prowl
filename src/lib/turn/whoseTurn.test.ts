@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import type { PullRequest, Review } from '../model';
-import { whoseTurn, yourTurnIds } from './whoseTurn';
+import { turnSummary, whoseTurn, yourTurnIds } from './whoseTurn';
 
 const PUSHED = '2026-10-05T10:00:00.000Z';
 const BEFORE = '2026-10-05T09:00:00.000Z';
@@ -123,5 +123,27 @@ describe('yourTurnIds', () => {
       { viewer: { login: 'me', avatarUrl: '', name: null } },
     );
     expect(yourTurnIds(snapshot)).toEqual([older.id, newer.id]);
+  });
+});
+
+describe('turnSummary', () => {
+  it('counts what waits on you, the oldest wait, and your PRs stuck on reviewers', () => {
+    const asked = theirs({
+      number: 1,
+      requestedReviewers: ['me'],
+      createdAt: BEFORE,
+      lastCommitAt: BEFORE,
+    });
+    const stuck = mine({ number: 2, lastCommitAt: '2026-10-01T10:00:00.000Z' });
+    const fresh = mine({ number: 3 });
+    const snapshot = buildSnapshotOf(
+      { authored: [stuck, fresh], review_requested: [asked] },
+      { viewer: { login: 'me', avatarUrl: '', name: null } },
+    );
+    expect(turnSummary(snapshot, Date.parse(AFTER) + 1000)).toEqual({
+      waiting: 1,
+      oldest: BEFORE,
+      stuck: 1,
+    });
   });
 });

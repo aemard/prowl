@@ -3199,5 +3199,35 @@
   "deployFailed": {
     "message": "Failed",
     "description": "Extension text: Failed"
+  },
+  "turnSummaryWaiting": {
+    "message": "Waiting on you: $P1$, the oldest since $P2$.",
+    "description": "Extension text: Waiting on you: $P1$, the oldest since $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

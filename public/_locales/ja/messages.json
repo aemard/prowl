@@ -2709,5 +2709,32 @@
   },
   "deployFailed": {
     "message": "失敗"
+  },
+  "turnSummaryWaiting": {
+    "message": "あなたの対応待ち: $P1$ 件（最も古いもの: $P2$）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

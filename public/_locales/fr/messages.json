@@ -2709,5 +2709,32 @@
   },
   "deployFailed": {
     "message": "Échec"
+  },
+  "turnSummaryWaiting": {
+    "message": "En attente de votre part : $P1$, la plus ancienne depuis $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ de vos pull requests attend des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ de vos pull requests attendent des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -46,6 +46,14 @@ describe('Your turn section', () => {
     );
   });
 
+  it('sums up the queue above the list', () => {
+    render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Your turn/ }));
+    expect(document.querySelector('.turn-summary')?.textContent).toMatch(
+      /^Waiting on you: 2, the oldest since .+ ago\./,
+    );
+  });
+
   it('shows the chip on cards of the other sections too', () => {
     render(<ListView />);
     expect(screen.getByText('Fix CI')).toBeTruthy();

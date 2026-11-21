@@ -25,6 +25,7 @@ import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
+import { TurnSummary } from '../components/TurnSummary';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { pollState } from '../state/store';
@@ -298,6 +299,7 @@ export function SectionContent({
           }
         />
       )}
+      {data.selected.kind === 'your_turn' && <TurnSummary snapshot={data.snap} now={data.now} />}
       <ShownRequests data={data} />
       <SnoozedRequests data={data} open={snoozedOpen} setOpen={setSnoozedOpen} />
       <EmptySection data={data} filterInput={filterInput} />

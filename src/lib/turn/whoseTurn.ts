@@ -102,3 +102,25 @@ export function yourTurnIds(snapshot: Snapshot): string[] {
     .sort((a, b) => a.turn.since.localeCompare(b.turn.since))
     .map(({ pr }) => pr.id);
 }
+
+/** How long a PR may wait on reviewers before the summary calls it stuck. */
+export const STUCK_MS = 2 * 24 * 60 * 60 * 1000;
+
+/**
+ * The numbers above the "Your turn" list: how many PRs wait on the viewer and since when the
+ * oldest has, and how many of the viewer's own PRs have waited on reviewers for over two days.
+ */
+export function turnSummary(snapshot: Snapshot, now: number) {
+  const ids = new Set(Object.values(snapshot.sections).flat());
+  const turns = [...ids]
+    .flatMap((id) => snapshot.pullRequests[id] ?? [])
+    .map((pr) => turnIn(snapshot, pr));
+  const yours = turns.filter((turn) => turn.owner === 'you');
+  return {
+    waiting: yours.length,
+    oldest: yours.map((turn) => turn.since).sort()[0] ?? null,
+    stuck: turns.filter(
+      (turn) => turn.reason === 'waiting_on_reviewers' && now - Date.parse(turn.since) > STUCK_MS,
+    ).length,
+  };
+}
