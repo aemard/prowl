@@ -67,6 +67,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           }
         }
         reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
+        stackEntry { position stack { id number size baseRefName } }
         comments(last: 1) { nodes { createdAt author { login } } }
         commits(last: 1) {
           nodes {
@@ -188,6 +189,11 @@ export interface PullRequestNode {
     requestedReviewer: (Partial<Login> & { slug?: string; organization?: Login | null }) | null;
   }> | null;
   reviewThreads: Nodes<{ isResolved: boolean }>;
+  /** Null outside a GitHub stack; absent in older fixtures. */
+  stackEntry?: {
+    position: number;
+    stack: { id: string; number: number; size: number; baseRefName: string } | null;
+  } | null;
   comments: Nodes<{ createdAt: string; author: Login | null }>;
   commits: Nodes<{
     commit: {

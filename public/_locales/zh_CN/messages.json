@@ -2720,5 +2720,202 @@
   },
   "awaitingReview": {
     "message": "等待审查"
+  },
+  "stackHeading": {
+    "message": "$P1$ · 堆栈 #$P2$ · $P3$，合并到 $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$ 等 $P2$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "显示堆栈 #$P1$ 的拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "隐藏堆栈 #$P1$ 的拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "就绪"
+  },
+  "stackProgress": {
+    "message": "进行中"
+  },
+  "stackBlocked": {
+    "message": "受阻"
+  },
+  "stackDrafts": {
+    "message": "草稿"
+  },
+  "stackBar": {
+    "message": "堆栈 #$P1$，从下到上：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "底部 $P1$ 个现在可以合并",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "整个堆栈现在可以合并"
+  },
+  "stackMergeSome": {
+    "message": "合并 $P2$ 个中的 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "合并整个堆栈"
+  },
+  "stackMergeAria": {
+    "message": "合并堆栈 #$P2$ 底部已就绪的 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "合并 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "合并 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "$P2$ 中堆栈 #$P1$ 的底部，按此顺序合并到 $P3$。要么全部合并，要么都不合并。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "上方的 $P1$ 个保持打开，GitHub 会将它们变基到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "方式"
+  },
+  "stackMergeNow": {
+    "message": "立即合并"
+  },
+  "stackMergeQueue": {
+    "message": "加入合并队列"
+  },
+  "stackMerged": {
+    "message": "已合并"
+  },
+  "stackStillMerging": {
+    "message": "GitHub 仍在合并"
+  },
+  "stackMissing": {
+    "message": "此堆栈另有 $P1$ 个不在你的分区中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · 堆栈基础分支",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "堆栈 #$P3$ 中第 $P1$ / $P2$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "此堆栈另有 $P1$ 个不在你的分区中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

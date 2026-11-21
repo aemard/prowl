@@ -2720,5 +2720,202 @@
   },
   "awaitingReview": {
     "message": "レビュー待ち"
+  },
+  "stackHeading": {
+    "message": "$P1$ · スタック #$P2$ · $P4$ への $P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$ ほか $P2$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "スタック #$P1$ のプルリクエストを表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "スタック #$P1$ のプルリクエストを隠す",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "準備完了"
+  },
+  "stackProgress": {
+    "message": "進行中"
+  },
+  "stackBlocked": {
+    "message": "ブロック中"
+  },
+  "stackDrafts": {
+    "message": "下書き"
+  },
+  "stackBar": {
+    "message": "スタック #$P1$（下から上）: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "下の $P1$ 件は今すぐマージできます",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "スタック全体を今すぐマージできます"
+  },
+  "stackMergeSome": {
+    "message": "$P2$ 件中 $P1$ 件をマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "スタック全体をマージ"
+  },
+  "stackMergeAria": {
+    "message": "スタック #$P2$ の下にある準備済みの $P1$ 件をマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "$P1$ 件のプルリクエストをマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "$P1$ 件のプルリクエストをマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "$P2$ のスタック #$P1$ の下側を、この順に $P3$ へマージします。すべてマージされるか、何もマージされません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "上の $P1$ 件は開いたままです。GitHub が $P2$ にリベースします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "方法"
+  },
+  "stackMergeNow": {
+    "message": "今すぐマージ"
+  },
+  "stackMergeQueue": {
+    "message": "マージキューに追加"
+  },
+  "stackMerged": {
+    "message": "マージしました"
+  },
+  "stackStillMerging": {
+    "message": "GitHub がまだマージ中です"
+  },
+  "stackMissing": {
+    "message": "このスタックの残り $P1$ 件はあなたのセクションにありません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · スタックのベース",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "スタック #$P3$ の $P2$ 件中 $P1$ 番目",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "このスタックの残り $P1$ 件はあなたのセクションにありません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

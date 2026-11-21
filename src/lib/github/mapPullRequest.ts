@@ -186,6 +186,21 @@ function mapConversation(node: PullRequestNode) {
   };
 }
 
+/** GitHub's stack membership; nothing outside a stack. */
+function mapStack({ stackEntry: entry }: PullRequestNode): Pick<PullRequest, 'stack'> {
+  return entry?.stack
+    ? {
+        stack: {
+          id: entry.stack.id,
+          number: entry.stack.number,
+          size: entry.stack.size,
+          position: entry.position,
+          base: entry.stack.baseRefName,
+        },
+      }
+    : {};
+}
+
 /** A search result; its merge facts are unknown until `mapMergeState` fills them in. */
 export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>): PullRequest {
   const { repository: repo } = node;
@@ -199,6 +214,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
   });
   return {
     ...(incomplete.length ? { incomplete } : {}),
+    ...mapStack(node),
     id: node.id,
     number: node.number,
     title: node.title,

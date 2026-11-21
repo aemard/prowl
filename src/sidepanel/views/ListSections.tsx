@@ -4,6 +4,7 @@ import { activityKey } from '../../lib/activity';
 import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
 import { sectionLabel } from '../../lib/sectionLabel';
+import { listItems } from '../../lib/stacks';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import { turnIn } from '../../lib/turn/whoseTurn';
 import {
@@ -24,6 +25,7 @@ import type { IconComponent } from '../components/icons/Icon';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
+import { StackItem } from '../components/StackItem';
 import { TurnSummary } from '../components/TurnSummary';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -132,6 +134,15 @@ function ListCard({
 function ShownRequests({ data }: { data: LoadedListData }) {
   const { shown, selected, grouped, groups, isFolded } = data;
   const card = (pr: PullRequest) => <ListCard key={pr.id} pr={pr} data={data} grouped={grouped} />;
+  // A GitHub stack is one item holding its members; any other PR is a card of its own.
+  const items = (prs: PullRequest[]) =>
+    listItems(prs).map((item) =>
+      item.kind === 'pr' ? (
+        card(item.pr)
+      ) : (
+        <StackItem key={item.id} members={item.members} snapshot={data.snap} card={card} />
+      ),
+    );
   return (
     shown.length > 0 && (
       <ul class="pr-list" aria-label={t('pullRequests2', sectionLabel(selected))}>
@@ -144,10 +155,10 @@ function ShownRequests({ data }: { data: LoadedListData }) {
                 expanded={!isFolded(repo)}
                 onToggle={() => toggleFolded(foldKey(selected.id, repo))}
               >
-                {prs.map(card)}
+                {items(prs)}
               </RepoGroup>
             ))
-          : shown.map(card)}
+          : items(shown)}
       </ul>
     )
   );

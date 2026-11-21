@@ -453,13 +453,26 @@ event notifies when a PR becomes the viewer's move.
 
 ### Stacks and merge queues
 
-`stackedOn(snapshot, pr)` (`src/lib/stack.ts`, pure) finds the open PR of the same repository
-whose head branch is `pr`'s base branch; the card shows "On #12" and its tooltip says it merges
-after it. Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with
-the card details), the merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to
-the head the user saw, behind a confirmation) or, for a queued PR, its position, GitHub's
-estimate and "Remove from merge queue" (`ProwlDequeue`). Direct merge and auto-merge are not
-offered there: GitHub refuses them.
+Only GitHub's own stacked pull requests are stacks: the search reads `stackEntry { position
+stack { id number size baseRefName } }` into `PullRequest.stack`; PRs that merely target each
+other's branches stay separate cards. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
+turns a section's PRs into items: a lone PR, or one stack holding its members (bottom first),
+placed where the first member falls in the section's order. `StackItem` shows the stack's
+repository, number, size and base, the bottom PR's title, a bar and counts by `stackState`
+(ready, in progress, blocked, draft), one bell chip per reason it is the viewer's move, and,
+opened, the members as the usual cards (details, actions) on a rail numbered by position.
+`stackSummary` finds the ready run from position 1; "Merge K of N" (or "Merge the whole stack")
+confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
+GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
+pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
+`GET …/merge-async/{uuid}` for up to a minute. GitHub merges the run atomically or not at all;
+the GraphQL merge mutation refuses stacked PRs.
+
+Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
+details), a lone PR's merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to the
+head the user saw, behind a confirmation) or, for a queued PR, its position, GitHub's estimate
+and "Remove from merge queue" (`ProwlDequeue`). Direct merge and auto-merge are not offered
+there: GitHub refuses them.
 
 ### Badge
 

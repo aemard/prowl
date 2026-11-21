@@ -71,8 +71,11 @@ Details: [sign-in guide](docs/auth.md).
   answer, a merge to make), longest waiting first. No extra GitHub request.
 - **Deployments**: an expanded card lists where its head commit is deployed (preview, staging)
   and how that went.
-- **Stacks and merge queues**: a card stacked on another PR says so; on a branch with a merge
-  queue, add a PR to the queue (or take it out) and see its position.
+- **GitHub stacks**: a stack is one item of the list, with its progress (ready, in progress,
+  blocked, drafts), what waits on you, and its pull requests in merge order, each with its
+  details. Merge the ready bottom of the stack, or the whole stack, in one go, or queue it.
+- **Merge queues**: on a branch with a merge queue, add a PR to the queue (or take it out) and
+  see its position.
 - **Review conversations**: an expanded card lists the open review threads with their last
   comments; reply or resolve them without opening GitHub.
 - **Fast updates**: between polls, a free conditional check of your GitHub notifications (once a
@@ -106,6 +109,9 @@ Details: [sign-in guide](docs/auth.md).
 <p align="center">
   <img src="docs/screenshots/review-threads.png" alt="An expanded card listing two review conversations, each with its last comments, a reply box and a Resolve button" width="400" height="760">
   <img src="docs/screenshots/merge-queue.png" alt="An expanded card in a merge queue at position 2, about 9 minutes, with a Remove from merge queue button" width="400" height="760">
+</p>
+<p align="center">
+  <img src="docs/screenshots/stack.png" alt="A GitHub stack of six pull requests: progress bar, counts, chips for what waits on you, and its pull requests on a numbered rail" width="400" height="760">
 </p>
 
 ## Privacy

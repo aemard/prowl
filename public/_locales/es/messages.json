@@ -2720,5 +2720,202 @@
   },
   "awaitingReview": {
     "message": "Pendiente de revisión"
+  },
+  "stackHeading": {
+    "message": "$P1$ · pila #$P2$ · $P3$ hacia $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$, y $P2$ más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "Mostrar las pull requests de la pila #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "Ocultar las pull requests de la pila #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "Listas"
+  },
+  "stackProgress": {
+    "message": "En curso"
+  },
+  "stackBlocked": {
+    "message": "Bloqueadas"
+  },
+  "stackDrafts": {
+    "message": "Borradores"
+  },
+  "stackBar": {
+    "message": "Pila #$P1$, de abajo arriba: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "Las $P1$ de abajo ya pueden fusionarse",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "Toda la pila puede fusionarse ya"
+  },
+  "stackMergeSome": {
+    "message": "Fusionar $P1$ de $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "Fusionar toda la pila"
+  },
+  "stackMergeAria": {
+    "message": "Fusionar las $P1$ pull requests listas al fondo de la pila #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "Fusionar $P1$ pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "Fusionar $P1$ pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "La parte de abajo de la pila #$P1$ en $P2$, hacia $P3$, en este orden. Se fusionan todas o ninguna.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "Las $P1$ de arriba siguen abiertas. GitHub las rebasa sobre $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "Cómo"
+  },
+  "stackMergeNow": {
+    "message": "Fusionar ahora"
+  },
+  "stackMergeQueue": {
+    "message": "Añadir a la cola de merge"
+  },
+  "stackMerged": {
+    "message": "Fusionadas"
+  },
+  "stackStillMerging": {
+    "message": "GitHub sigue fusionando"
+  },
+  "stackMissing": {
+    "message": "$P1$ más de esta pila no están en tus secciones.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · base de la pila",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "$P1$ de $P2$ en la pila #$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "$P1$ más de esta pila no está en tus secciones.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

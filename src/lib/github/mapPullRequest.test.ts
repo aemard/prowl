@@ -298,3 +298,21 @@ it('reports nested connection limits instead of treating a bounded slice as comp
   );
   expect(pr.incomplete).toEqual(['reviews', 'review requests', 'conversations']);
 });
+
+describe('mapPullRequest stacks', () => {
+  it("reads GitHub's stack membership, and nothing outside a stack", () => {
+    const stacked = mapPullRequest(
+      prNode({
+        stackEntry: {
+          position: 2,
+          stack: { id: 'PRS_7', number: 7, size: 10, baseRefName: 'main' },
+        },
+      }),
+    );
+    expect(stacked.stack).toEqual({ id: 'PRS_7', number: 7, size: 10, position: 2, base: 'main' });
+    expect(mapPullRequest(prNode()).stack).toBeUndefined();
+    expect(
+      mapPullRequest(prNode({ stackEntry: { position: 1, stack: null } })).stack,
+    ).toBeUndefined();
+  });
+});

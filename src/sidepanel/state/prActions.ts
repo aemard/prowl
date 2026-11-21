@@ -31,7 +31,8 @@ export const prRef = ({ repo, number }: PullRequest) => `${repo.nameWithOwner}#$
 export async function runPrAction(
   pr: PullRequest,
   name: string,
-  done: string,
+  /** The toast's verb; a function when it depends on how the action ended. */
+  done: string | (() => string),
   run: (client: GitHubClient) => Promise<void>,
   onError?: (message: string) => void,
 ): Promise<boolean> {
@@ -42,7 +43,10 @@ export async function runPrAction(
   try {
     await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
     if (auth.value !== session) return false;
-    showToast({ message: t('message2', done, prRef(pr)), tone: 'success' });
+    showToast({
+      message: t('message2', typeof done === 'function' ? done() : done, prRef(pr)),
+      tone: 'success',
+    });
     void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
     return true;
   } catch (error) {

@@ -3212,5 +3212,229 @@
   "awaitingReview": {
     "message": "Awaiting review",
     "description": "Extension text: Awaiting review"
+  },
+  "stackHeading": {
+    "message": "$P1$ · stack #$P2$ · $P3$ into $P4$",
+    "description": "Extension text: $P1$ · stack #$P2$ · $P3$ into $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$, and $P2$ more",
+    "description": "Extension text: $P1$, and $P2$ more",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "Show the pull requests of stack #$P1$",
+    "description": "Extension text: Show the pull requests of stack #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "Hide the pull requests of stack #$P1$",
+    "description": "Extension text: Hide the pull requests of stack #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "Ready",
+    "description": "Extension text: Ready"
+  },
+  "stackProgress": {
+    "message": "In progress",
+    "description": "Extension text: In progress"
+  },
+  "stackBlocked": {
+    "message": "Blocked",
+    "description": "Extension text: Blocked"
+  },
+  "stackDrafts": {
+    "message": "Drafts",
+    "description": "Extension text: Drafts"
+  },
+  "stackBar": {
+    "message": "Stack #$P1$, bottom to top: $P2$",
+    "description": "Extension text: Stack #$P1$, bottom to top: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "Bottom $P1$ can merge now",
+    "description": "Extension text: Bottom $P1$ can merge now",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "The whole stack can merge now",
+    "description": "Extension text: The whole stack can merge now"
+  },
+  "stackMergeSome": {
+    "message": "Merge $P1$ of $P2$",
+    "description": "Extension text: Merge $P1$ of $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "Merge the whole stack",
+    "description": "Extension text: Merge the whole stack"
+  },
+  "stackMergeAria": {
+    "message": "Merge the $P1$ ready pull requests at the bottom of stack #$P2$",
+    "description": "Extension text: Merge the $P1$ ready pull requests at the bottom of stack #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "Merge $P1$ pull request",
+    "description": "Extension text: Merge $P1$ pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "Merge $P1$ pull requests",
+    "description": "Extension text: Merge $P1$ pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "The bottom of stack #$P1$ in $P2$, into $P3$, in this order. All of them merge, or none.",
+    "description": "Extension text: The bottom of stack #$P1$ in $P2$, into $P3$, in this order. All of them merge, or none.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "The $P1$ above stay open. GitHub rebases them onto $P2$.",
+    "description": "Extension text: The $P1$ above stay open. GitHub rebases them onto $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "How",
+    "description": "Extension text: How"
+  },
+  "stackMergeNow": {
+    "message": "Merge now",
+    "description": "Extension text: Merge now"
+  },
+  "stackMergeQueue": {
+    "message": "Add to the merge queue",
+    "description": "Extension text: Add to the merge queue"
+  },
+  "stackMerged": {
+    "message": "Merged",
+    "description": "Extension text: Merged"
+  },
+  "stackStillMerging": {
+    "message": "GitHub is still merging",
+    "description": "Extension text: GitHub is still merging"
+  },
+  "stackMissing": {
+    "message": "$P1$ more in this stack are not in your sections.",
+    "description": "Extension text: $P1$ more in this stack are not in your sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · base of the stack",
+    "description": "Extension text: $P1$ · base of the stack",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "$P1$ of $P2$ in stack #$P3$",
+    "description": "Extension text: $P1$ of $P2$ in stack #$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "$P1$ more in this stack is not in your sections.",
+    "description": "Extension text: $P1$ more in this stack is not in your sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import { t } from '../../lib/i18n';
 import type { PullRequest, Turn } from '../../lib/model';
+import { stackState } from '../../lib/stacks';
 import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { pollState } from '../state/store';
@@ -99,6 +100,8 @@ export function PullRequestCard({
     <li
       class="pr-card"
       ref={card}
+      data-stack-position={pr.stack?.position}
+      data-state={pr.stack ? stackState(pr) : undefined}
       data-activity={activity}
       inert={activity !== undefined && activity !== 'new'}
     >
@@ -134,6 +137,8 @@ export function PullRequestCard({
             {describePullRequest(pr, statuses, unseen, now)}
             {refreshingMerge && t('updatingMergeStatus2')}
             {teamRequest && `. ${teamRequest}`}
+            {pr.stack &&
+              `. ${t('stackPosition', String(pr.stack.position), String(pr.stack.size), String(pr.stack.number))}`}
           </span>
         </div>
         {expanded && <PullRequestDetails pr={pr} id={detailId} />}

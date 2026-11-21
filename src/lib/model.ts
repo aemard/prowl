@@ -136,6 +136,12 @@ export interface PullRequest {
   lastComment: { author: string; createdAt: string } | null;
   /** Set once the PR is merged or closed. */
   closedBy: string | null;
+  /**
+   * The GitHub stack this PR belongs to (GitHub's stacked pull requests, not a chain of branches
+   * someone built by hand): which one, how many PRs, this one's place (1 merges first, into
+   * `base`). Absent outside a stack.
+   */
+  stack?: { id: string; number: number; size: number; position: number; base: string };
   /** Merge methods the repository allows. */
   allowedMergeMethods: MergeMethod[];
   /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */

@@ -66,3 +66,4 @@ and a CI explanation from a fake of Chrome's `LanguageModel` / `Summarizer` (ins
 `context.addInitScript`, since the real model cannot run in CI), review conversations, and a merge
 queue position. Each passes axe and writes a screenshot (`your-turn`, `local-ai`,
 `review-threads`, `merge-queue`) shown in the README.
+`stacks.spec.ts` covers a GitHub stack of six as one list item, its members on the rail, the merge confirmation and the `merge-async` call, with axe, and writes the `stack` screenshot.

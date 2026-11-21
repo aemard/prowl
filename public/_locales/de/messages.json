@@ -2720,5 +2720,202 @@
   },
   "awaitingReview": {
     "message": "Wartet auf Review"
+  },
+  "stackHeading": {
+    "message": "$P1$ · Stack #$P2$ · $P3$ nach $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$ und $P2$ weitere",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "Pull Requests von Stack #$P1$ anzeigen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "Pull Requests von Stack #$P1$ ausblenden",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "Bereit"
+  },
+  "stackProgress": {
+    "message": "In Arbeit"
+  },
+  "stackBlocked": {
+    "message": "Blockiert"
+  },
+  "stackDrafts": {
+    "message": "Entwürfe"
+  },
+  "stackBar": {
+    "message": "Stack #$P1$, von unten nach oben: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "Die unteren $P1$ können jetzt gemergt werden",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "Der ganze Stack kann jetzt gemergt werden"
+  },
+  "stackMergeSome": {
+    "message": "$P1$ von $P2$ mergen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "Ganzen Stack mergen"
+  },
+  "stackMergeAria": {
+    "message": "Die $P1$ bereiten Pull Requests unten in Stack #$P2$ mergen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "$P1$ Pull Request mergen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "$P1$ Pull Requests mergen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "Der untere Teil von Stack #$P1$ in $P2$, nach $P3$, in dieser Reihenfolge. Alle werden gemergt oder keiner.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "Die $P1$ darüber bleiben offen. GitHub rebased sie auf $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "Wie"
+  },
+  "stackMergeNow": {
+    "message": "Jetzt mergen"
+  },
+  "stackMergeQueue": {
+    "message": "Zur Merge-Warteschlange hinzufügen"
+  },
+  "stackMerged": {
+    "message": "Gemergt"
+  },
+  "stackStillMerging": {
+    "message": "GitHub mergt noch"
+  },
+  "stackMissing": {
+    "message": "$P1$ weitere in diesem Stack sind nicht in deinen Bereichen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · Basis des Stacks",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "$P1$ von $P2$ in Stack #$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "$P1$ weiterer in diesem Stack ist nicht in deinen Bereichen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

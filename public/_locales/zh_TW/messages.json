@@ -2720,5 +2720,202 @@
   },
   "awaitingReview": {
     "message": "等待審查"
+  },
+  "stackHeading": {
+    "message": "$P1$ · 堆疊 #$P2$ · $P3$，合併到 $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackTitle": {
+    "message": "$P1$ 等 $P2$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "顯示堆疊 #$P1$ 的拉取請求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "隱藏堆疊 #$P1$ 的拉取請求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "就緒"
+  },
+  "stackProgress": {
+    "message": "進行中"
+  },
+  "stackBlocked": {
+    "message": "受阻"
+  },
+  "stackDrafts": {
+    "message": "草稿"
+  },
+  "stackBar": {
+    "message": "堆疊 #$P1$，由下到上：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "底部 $P1$ 個現在可以合併",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "整個堆疊現在可以合併"
+  },
+  "stackMergeSome": {
+    "message": "合併 $P2$ 個中的 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "合併整個堆疊"
+  },
+  "stackMergeAria": {
+    "message": "合併堆疊 #$P2$ 底部已就緒的 $P1$ 個拉取請求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "合併 $P1$ 個拉取請求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "合併 $P1$ 個拉取請求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "$P2$ 中堆疊 #$P1$ 的底部，依此順序合併到 $P3$。要麼全部合併，要麼都不合併。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "上方的 $P1$ 個保持開啟，GitHub 會將它們重定基底到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeHow": {
+    "message": "方式"
+  },
+  "stackMergeNow": {
+    "message": "立即合併"
+  },
+  "stackMergeQueue": {
+    "message": "加入合併佇列"
+  },
+  "stackMerged": {
+    "message": "已合併"
+  },
+  "stackStillMerging": {
+    "message": "GitHub 仍在合併"
+  },
+  "stackMissing": {
+    "message": "此堆疊另有 $P1$ 個不在你的區段中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · 堆疊基礎分支",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "堆疊 #$P3$ 中第 $P1$ / $P2$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "此堆疊另有 $P1$ 個不在你的區段中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }
