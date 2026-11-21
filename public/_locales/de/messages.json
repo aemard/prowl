@@ -2450,7 +2450,7 @@
     "message": "Zählt Pull Requests, bei denen du am Zug bist: Reviews, rote CI, offenes Feedback, fällige Merges."
   },
   "waitingOnYou": {
-    "message": "$P1$: $P2$ warten auf dich ($P3$)",
+    "message": "$P1$: $P2$, bei denen du dran bist ($P3$)",
     "placeholders": {
       "p1": {
         "content": "$1"

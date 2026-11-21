@@ -54,7 +54,7 @@ the interface sends no text to a translation service and requires no additional 
 - **`avatars.githubusercontent.com`:** when the panel shows a picture. It is a plain image
   request, with no token.
 
-When you turn on **On-device AI from Chrome** (Settings → List, off by default) and click
+When you turn on **On-device AI in Chrome** (Settings → List, off by default) and click
 Summarize or Explain the failure on a card, Prowl reads that pull request's description,
 latest comments and reviews and failing-check reports from `api.github.com`, and hands them to
 Gemini Nano, the model Chrome runs on your device. Chrome downloads the model once, after you

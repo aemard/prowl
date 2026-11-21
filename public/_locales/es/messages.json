@@ -2450,7 +2450,7 @@
     "message": "Cuenta las pull requests en las que te toca: revisiones, CI que arreglar, comentarios que atender, merges que hacer."
   },
   "waitingOnYou": {
-    "message": "$P1$: $P2$ te esperan ($P3$)",
+    "message": "$P1$: esperando tu acción: $P2$ ($P3$)",
     "placeholders": {
       "p1": {
         "content": "$1"

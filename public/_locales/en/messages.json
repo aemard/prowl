@@ -2939,8 +2939,8 @@
     }
   },
   "localAiLabel": {
-    "message": "On-device AI from Chrome",
-    "description": "Extension text: On-device AI from Chrome"
+    "message": "On-device AI in Chrome",
+    "description": "Extension text: On-device AI in Chrome"
   },
   "localAiDescription": {
     "message": "Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server.",

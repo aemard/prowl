@@ -13,7 +13,7 @@ describe('SettingsView on-device AI', () => {
 
   it('is off by default, and says when this browser cannot run it', async () => {
     await open();
-    const ai = toggle('On-device AI from Chrome');
+    const ai = toggle('On-device AI in Chrome');
     expect(ai.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(ai);
     await waitFor(async () => expect((await saved()).localAi).toBe(true));
