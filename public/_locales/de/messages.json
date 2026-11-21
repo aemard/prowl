@@ -2494,5 +2494,66 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "Chromes KI auf dem Gerät"
+  },
+  "localAiDescription": {
+    "message": "Fasst Pull Requests zusammen und erklärt fehlgeschlagene Checks mit Gemini Nano, das Chrome auf diesem Gerät ausführt. Nichts wird an einen Server gesendet."
+  },
+  "localAiAvailable": {
+    "message": "Auf diesem Gerät bereit."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome muss sein Modell einmal herunterladen (mehrere GB)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome lädt sein Modell herunter."
+  },
+  "localAiUnavailable": {
+    "message": "In diesem Browser oder auf diesem Gerät nicht verfügbar: Es braucht ein aktuelles Desktop-Chrome mit genug Arbeitsspeicher und freiem Speicherplatz."
+  },
+  "localAiDownload": {
+    "message": "Modell herunterladen"
+  },
+  "localAiProgress": {
+    "message": "Modell wird heruntergeladen: $P1$ %",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Zusammenfassen"
+  },
+  "aiExplainFailure": {
+    "message": "Fehler erklären"
+  },
+  "aiWorking": {
+    "message": "Wird auf deinem Gerät berechnet"
+  },
+  "aiGeneratedNote": {
+    "message": "Auf deinem Gerät von Chromes integrierter KI erstellt. Sie kann sich irren."
+  },
+  "aiFailed": {
+    "message": "Die KI auf dem Gerät konnte nicht antworten: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Zusammenfassung"
+  },
+  "aiExplanationHeading": {
+    "message": "Warum die Checks fehlschlagen"
+  },
+  "aiNothingToExplain": {
+    "message": "Die fehlgeschlagenen Checks haben keine Details gemeldet. Öffne sie auf GitHub."
+  },
+  "aiAssistant": {
+    "message": "KI auf dem Gerät"
   }
 }

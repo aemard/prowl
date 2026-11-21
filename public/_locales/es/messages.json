@@ -2494,5 +2494,66 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "IA de Chrome en el dispositivo"
+  },
+  "localAiDescription": {
+    "message": "Resume pull requests y explica las comprobaciones fallidas con Gemini Nano, que Chrome ejecuta en este dispositivo. No se envía nada a ningún servidor."
+  },
+  "localAiAvailable": {
+    "message": "Lista en este dispositivo."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome debe descargar su modelo una vez (varios GB)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome está descargando su modelo."
+  },
+  "localAiUnavailable": {
+    "message": "No disponible en este navegador o dispositivo: necesita un Chrome de escritorio reciente con suficiente memoria y espacio libre en disco."
+  },
+  "localAiDownload": {
+    "message": "Descargar el modelo"
+  },
+  "localAiProgress": {
+    "message": "Descargando el modelo: $P1$ %",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Resumir"
+  },
+  "aiExplainFailure": {
+    "message": "Explicar el fallo"
+  },
+  "aiWorking": {
+    "message": "Pensando en tu dispositivo"
+  },
+  "aiGeneratedNote": {
+    "message": "Generado en tu dispositivo por la IA integrada de Chrome. Puede equivocarse."
+  },
+  "aiFailed": {
+    "message": "La IA del dispositivo no pudo responder: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Resumen"
+  },
+  "aiExplanationHeading": {
+    "message": "Por qué fallan las comprobaciones"
+  },
+  "aiNothingToExplain": {
+    "message": "Las comprobaciones fallidas no dieron detalles que explicar. Ábrelas en GitHub."
+  },
+  "aiAssistant": {
+    "message": "IA en el dispositivo"
   }
 }

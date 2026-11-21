@@ -14,6 +14,7 @@ import { PR_LIMIT_ID, saveSettings, settingsFocus } from '../state/settings';
 import { settings } from '../state/store';
 import { AccountSettings } from './SettingsAccount';
 import { SettingsGroup, settingsGroupId } from './SettingsGroup';
+import { LocalAiSettings } from './SettingsLocalAi';
 import { BADGE_HINTS } from './SettingsModel';
 import { NotificationsSettings } from './SettingsNotifications';
 import { PrivacySettings } from './SettingsPrivacy';
@@ -112,6 +113,7 @@ function AppearanceSettings() {
         hint={BADGE_HINTS[badge]}
         onValueChange={(value) => void saveSettings({ badge: value })}
       />
+      <LocalAiSettings />
     </SettingsGroup>
   );
 }

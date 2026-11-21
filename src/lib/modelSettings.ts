@@ -92,6 +92,8 @@ export interface Settings {
   sort: SortOrder;
   /** The list groups each section's PRs under their repository (independent of `sort`). */
   groupByRepo: boolean;
+  /** Expanded cards offer summaries and CI explanations from Chrome's on-device AI. */
+  localAi: boolean;
   /** Legacy sync compatibility key, always normalized to 0. */
   hideStaleAfterDays: number;
   /** Legacy sync compatibility key, always normalized to false. */

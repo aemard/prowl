@@ -52,6 +52,12 @@ the interface sends no text to a translation service and requires no additional 
 - **`avatars.githubusercontent.com`:** when the panel shows a picture. It is a plain image
   request, with no token.
 
+When you turn on **On-device AI from Chrome** (Settings → List, off by default) and click
+Summarize or Explain the failure on a card, Prowl reads that pull request's description,
+latest comments and reviews and failing-check reports from `api.github.com`, and hands them to
+Gemini Nano, the model Chrome runs on your device. Chrome downloads the model once, after you
+click "Download the model"; the text and the answer stay on your device and are not stored.
+
 Your token only ever goes to `api.github.com`. When you open a pull request, Prowl opens its
 `github.com` page in a normal browser tab, and it opens nothing that is not on GitHub.
 

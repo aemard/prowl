@@ -40,6 +40,7 @@ describe('DEFAULT_SETTINGS', () => {
       language: 'system',
       sort: 'updated',
       groupByRepo: true,
+      localAi: false,
       hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,

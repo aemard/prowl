@@ -2937,5 +2937,83 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "On-device AI from Chrome",
+    "description": "Extension text: On-device AI from Chrome"
+  },
+  "localAiDescription": {
+    "message": "Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server.",
+    "description": "Extension text: Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server."
+  },
+  "localAiAvailable": {
+    "message": "Ready on this device.",
+    "description": "Extension text: Ready on this device."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome needs to download its model once (several GB).",
+    "description": "Extension text: Chrome needs to download its model once (several GB)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome is downloading its model.",
+    "description": "Extension text: Chrome is downloading its model."
+  },
+  "localAiUnavailable": {
+    "message": "Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space.",
+    "description": "Extension text: Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space."
+  },
+  "localAiDownload": {
+    "message": "Download the model",
+    "description": "Extension text: Download the model"
+  },
+  "localAiProgress": {
+    "message": "Downloading the model: $P1$%",
+    "description": "Extension text: Downloading the model: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Summarize",
+    "description": "Extension text: Summarize"
+  },
+  "aiExplainFailure": {
+    "message": "Explain the failure",
+    "description": "Extension text: Explain the failure"
+  },
+  "aiWorking": {
+    "message": "Thinking on your device",
+    "description": "Extension text: Thinking on your device"
+  },
+  "aiGeneratedNote": {
+    "message": "Generated on your device by Chrome’s built-in AI. It can be wrong.",
+    "description": "Extension text: Generated on your device by Chrome’s built-in AI. It can be wrong."
+  },
+  "aiFailed": {
+    "message": "The on-device AI could not answer: $P1$",
+    "description": "Extension text: The on-device AI could not answer: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Summary",
+    "description": "Extension text: Summary"
+  },
+  "aiExplanationHeading": {
+    "message": "Why the checks fail",
+    "description": "Extension text: Why the checks fail"
+  },
+  "aiNothingToExplain": {
+    "message": "The failing checks reported no details to explain. Open them on GitHub.",
+    "description": "Extension text: The failing checks reported no details to explain. Open them on GitHub."
+  },
+  "aiAssistant": {
+    "message": "On-device AI",
+    "description": "Extension text: On-device AI"
   }
 }

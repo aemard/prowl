@@ -4,6 +4,7 @@ import { countMessage, t } from '../../lib/i18n';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { detailKey, details, loadDetail } from '../state/prDetail';
+import { settings } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import {
   AlertIcon,
@@ -19,6 +20,7 @@ import {
   XIcon,
 } from './icons';
 import type { IconComponent } from './icons/Icon';
+import { LocalAi } from './LocalAi';
 import { MaintenanceActions } from './MaintenanceActions';
 import { MergeAction } from './MergeAction';
 import { type MergeLine, mergeReadiness } from './mergeReadiness';
@@ -295,6 +297,7 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
               <DetailSkeleton />
             )}
           </Group>
+          {settings.value.localAi && <LocalAi pr={pr} />}
           <Group id={`${id}-reviewers`} label={t('reviewers')}>
             {detail ? (
               <Reviewers reviewers={detail.reviewers} labelledBy={`${id}-reviewers`} />

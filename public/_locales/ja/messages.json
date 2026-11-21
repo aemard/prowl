@@ -2494,5 +2494,66 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "Chrome のオンデバイス AI"
+  },
+  "localAiDescription": {
+    "message": "Chrome がこのデバイス上で実行する Gemini Nano で、プルリクエストを要約し、失敗したチェックを説明します。サーバーには何も送信されません。"
+  },
+  "localAiAvailable": {
+    "message": "このデバイスで使用できます。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome がモデルを一度ダウンロードする必要があります（数 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome がモデルをダウンロードしています。"
+  },
+  "localAiUnavailable": {
+    "message": "このブラウザまたはデバイスでは使用できません。十分なメモリと空きディスク容量がある最新のデスクトップ版 Chrome が必要です。"
+  },
+  "localAiDownload": {
+    "message": "モデルをダウンロード"
+  },
+  "localAiProgress": {
+    "message": "モデルをダウンロード中: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "要約"
+  },
+  "aiExplainFailure": {
+    "message": "失敗を説明"
+  },
+  "aiWorking": {
+    "message": "デバイス上で処理中"
+  },
+  "aiGeneratedNote": {
+    "message": "Chrome の組み込み AI がデバイス上で生成しました。誤りを含む場合があります。"
+  },
+  "aiFailed": {
+    "message": "オンデバイス AI が応答できませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "要約"
+  },
+  "aiExplanationHeading": {
+    "message": "チェックが失敗する理由"
+  },
+  "aiNothingToExplain": {
+    "message": "失敗したチェックには説明できる詳細がありません。GitHub で開いてください。"
+  },
+  "aiAssistant": {
+    "message": "オンデバイス AI"
   }
 }

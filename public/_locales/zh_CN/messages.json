@@ -2494,5 +2494,66 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "Chrome 设备端 AI"
+  },
+  "localAiDescription": {
+    "message": "使用 Chrome 在此设备上运行的 Gemini Nano 总结拉取请求并解释失败的检查。不会向任何服务器发送内容。"
+  },
+  "localAiAvailable": {
+    "message": "已可在此设备上使用。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome 需要下载一次模型（数 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome 正在下载模型。"
+  },
+  "localAiUnavailable": {
+    "message": "此浏览器或设备不可用：需要较新的桌面版 Chrome，并有足够的内存和磁盘空间。"
+  },
+  "localAiDownload": {
+    "message": "下载模型"
+  },
+  "localAiProgress": {
+    "message": "正在下载模型：$P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "总结"
+  },
+  "aiExplainFailure": {
+    "message": "解释失败原因"
+  },
+  "aiWorking": {
+    "message": "正在你的设备上处理"
+  },
+  "aiGeneratedNote": {
+    "message": "由 Chrome 内置 AI 在你的设备上生成，可能有误。"
+  },
+  "aiFailed": {
+    "message": "设备端 AI 无法回答：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "摘要"
+  },
+  "aiExplanationHeading": {
+    "message": "检查失败的原因"
+  },
+  "aiNothingToExplain": {
+    "message": "失败的检查没有可解释的详情，请在 GitHub 上查看。"
+  },
+  "aiAssistant": {
+    "message": "设备端 AI"
   }
 }

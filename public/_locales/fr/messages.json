@@ -2494,5 +2494,66 @@
         "content": "$2"
       }
     }
+  },
+  "localAiLabel": {
+    "message": "IA locale de Chrome"
+  },
+  "localAiDescription": {
+    "message": "Résume les pull requests et explique les checks en échec avec Gemini Nano, que Chrome exécute sur cet appareil. Rien n’est envoyé à un serveur."
+  },
+  "localAiAvailable": {
+    "message": "Prête sur cet appareil."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome doit télécharger son modèle une fois (plusieurs Go)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome télécharge son modèle."
+  },
+  "localAiUnavailable": {
+    "message": "Indisponible dans ce navigateur ou sur cet appareil : il faut un Chrome récent pour ordinateur, avec assez de mémoire et d’espace disque libre."
+  },
+  "localAiDownload": {
+    "message": "Télécharger le modèle"
+  },
+  "localAiProgress": {
+    "message": "Téléchargement du modèle : $P1$ %",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Résumer"
+  },
+  "aiExplainFailure": {
+    "message": "Expliquer l’échec"
+  },
+  "aiWorking": {
+    "message": "Réflexion sur votre appareil"
+  },
+  "aiGeneratedNote": {
+    "message": "Généré sur votre appareil par l’IA intégrée de Chrome. Elle peut se tromper."
+  },
+  "aiFailed": {
+    "message": "L’IA locale n’a pas pu répondre : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Résumé"
+  },
+  "aiExplanationHeading": {
+    "message": "Pourquoi les checks échouent"
+  },
+  "aiNothingToExplain": {
+    "message": "Les checks en échec n’ont rapporté aucun détail à expliquer. Ouvrez-les sur GitHub."
+  },
+  "aiAssistant": {
+    "message": "IA locale"
   }
 }
