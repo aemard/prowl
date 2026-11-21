@@ -2433,5 +2433,66 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "À vous"
+  },
+  "yourTurnEmpty": {
+    "message": "Rien ne vous attend. Une pull request arrive ici quand c’est à vous d’agir : une review à faire, une CI à réparer, un retour à traiter ou un merge à faire."
+  },
+  "yourTurnPreset": {
+    "message": "Les pull requests de vos autres sections où c’est à vous d’agir"
+  },
+  "yourTurnEventDescription": {
+    "message": "Quand une pull request se met à vous attendre"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Compte les pull requests où c’est à vous d’agir : reviews à faire, CI à réparer, retours à traiter, merges à faire."
+  },
+  "waitingOnYou": {
+    "message": "$P1$ : $P2$ vous attendent ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Votre review"
+  },
+  "turnReReview": {
+    "message": "À revoir"
+  },
+  "turnCiFailed": {
+    "message": "CI à réparer"
+  },
+  "turnChangesRequested": {
+    "message": "Changements à faire"
+  },
+  "turnConflicts": {
+    "message": "Conflits à résoudre"
+  },
+  "turnFeedback": {
+    "message": "Retours à traiter"
+  },
+  "turnReadyToMerge": {
+    "message": "À merger"
+  },
+  "yourTurnSince": {
+    "message": "À vous : $P1$, depuis $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

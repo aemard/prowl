@@ -168,7 +168,8 @@ describe('poll', () => {
   });
 
   it('notifies and counts a draft opened by a bot despite legacy preferences', async () => {
-    await setItem('settings', { ...defaultSettings(), hideDrafts: true, hideBots: true });
+    const legacy = { hideDrafts: true, hideBots: true, badge: 'attention' as const };
+    await setItem('settings', { ...defaultSettings(), ...legacy });
     let checks: CheckState = 'pending';
     const dependabot = { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' };
     github(() =>

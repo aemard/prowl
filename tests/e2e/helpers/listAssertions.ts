@@ -8,7 +8,8 @@ import { expect } from '../fixtures';
 export const allSections = (): Section[] =>
   defaultSettings().sections.map((section) => ({
     ...section,
-    enabled: section.kind !== 'team_review_requested',
+    // "Your turn" has its own spec (your-turn.spec.ts); these lists follow the searched sections.
+    enabled: section.kind !== 'team_review_requested' && section.kind !== 'your_turn',
   }));
 
 /** Ids of the authored PRs, newest activity first (the default sort). */

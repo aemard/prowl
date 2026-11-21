@@ -2433,5 +2433,66 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "輪到你"
+  },
+  "yourTurnEmpty": {
+    "message": "沒有等你處理的事項。輪到你行動時（待審查、待修復 CI、待回覆意見或待合併），拉取請求會出現在這裡。"
+  },
+  "yourTurnPreset": {
+    "message": "你其他區段中輪到你行動的拉取請求"
+  },
+  "yourTurnEventDescription": {
+    "message": "當拉取請求開始等待你時"
+  },
+  "yourTurnBadgeHint": {
+    "message": "統計輪到你行動的拉取請求：待審查、待修復 CI、待回覆意見、待合併。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$：$P2$ 在等你（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "待你審查"
+  },
+  "turnReReview": {
+    "message": "再次審查"
+  },
+  "turnCiFailed": {
+    "message": "修復 CI"
+  },
+  "turnChangesRequested": {
+    "message": "處理修改意見"
+  },
+  "turnConflicts": {
+    "message": "解決衝突"
+  },
+  "turnFeedback": {
+    "message": "回覆意見"
+  },
+  "turnReadyToMerge": {
+    "message": "去合併"
+  },
+  "yourTurnSince": {
+    "message": "輪到你：$P1$，自 $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

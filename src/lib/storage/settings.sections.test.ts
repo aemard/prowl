@@ -46,6 +46,7 @@ describe('normalizeSettings sections', () => {
       { id: 'authored', kind: 'authored', label: 'Created by me', enabled: false },
       { id: 'assigned', kind: 'assigned', label: 'Assigned to me', enabled: false },
       ...presets().slice(1, 4),
+      ...presets().slice(5),
     ]);
   });
 
@@ -123,6 +124,7 @@ describe('normalizeSettings sections', () => {
       'team_review_requested',
       'mentioned',
       'assigned',
+      'your_turn',
     ]);
     expect(new Set(ids).size).toBe(ids.length);
   });

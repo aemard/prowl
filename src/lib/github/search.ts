@@ -10,7 +10,10 @@ import type { BuiltInSectionKind } from '../storage/settings';
 type RepoFilters = Pick<Settings, 'repoInclude' | 'repoExclude'>;
 
 /** `review-requested:@me` would also match the viewer's teams: they have their own section. */
-const PRESET_QUALIFIER: Record<Exclude<BuiltInSectionKind, 'team_review_requested'>, string> = {
+const PRESET_QUALIFIER: Record<
+  Exclude<BuiltInSectionKind, 'team_review_requested' | 'your_turn'>,
+  string
+> = {
   authored: 'author:@me',
   review_requested: 'user-review-requested:@me',
   mentioned: 'mentions:@me',
@@ -46,10 +49,13 @@ export function buildSearchQuery(section: Section, filters: RepoFilters): string
     scoped = OWN_SCOPE.test(query);
     parts.push(query);
   } else {
+    // "Your turn" is derived from the other sections and never searched (see fetchPullRequests).
     const who =
       section.kind === 'team_review_requested'
         ? 'team-review-requested-user:@me'
-        : PRESET_QUALIFIER[section.kind];
+        : section.kind === 'your_turn'
+          ? ''
+          : PRESET_QUALIFIER[section.kind];
     parts.push('is:open', who, 'archived:false');
   }
   if (!scoped) parts.push(...filters.repoInclude.map(scope));

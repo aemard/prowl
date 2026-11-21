@@ -2,6 +2,7 @@ import { type MessageKey, t } from './i18n';
 import type { Section } from './model';
 
 const LABELS: Record<Exclude<Section['kind'], 'custom'>, MessageKey> = {
+  your_turn: 'yourTurnSection',
   authored: 'createdByMe',
   review_requested: 'reviewRequestedSection',
   team_review_requested: 'teamReviews',

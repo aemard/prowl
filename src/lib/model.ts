@@ -177,6 +177,8 @@ export interface PullRequestDetail {
  * team the viewer belongs to (one viewer-team search, filtered by `Settings.unfollowedTeams`).
  */
 export type SectionKind =
+  /** Derived, never searched: the PRs of the other sections where it is the viewer's turn. */
+  | 'your_turn'
   | 'authored'
   | 'review_requested'
   | 'team_review_requested'
@@ -284,7 +286,9 @@ export type PrEventType =
   | 'comment_new'
   | 'ready_to_merge'
   | 'merged'
-  | 'closed';
+  | 'closed'
+  /** A PR became the viewer's turn (see `whoseTurn`) without another event saying why. */
+  | 'your_turn';
 
 export interface PrEvent {
   /** Deterministic: the same change always produces the same id (used for dedupe). */
@@ -351,78 +355,7 @@ export interface AuthState {
   expiresAt?: string | null;
 }
 
-/** Local-only per-PR state. Never sent anywhere. */
-export interface PrLocalState {
-  /** PR id -> ISO time the snooze ends. */
-  snoozed: Record<string, string>;
-  /** PR ids with notifications muted. */
-  muted: Record<string, true>;
-  /** PR id -> `updatedAt` value the user has seen. */
-  seen: Record<string, string>;
-  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
-  seenFacts?: Record<string, string>;
-}
-
-/** Local panel organization for one account; search text is deliberately session-only. */
-export interface PanelState {
-  login: string;
-  activeSectionId?: string;
-  foldedGroups: string[];
-}
-
-export interface QuietHours {
-  enabled: boolean;
-  /** Local time, `HH:MM`, 24h. A window may wrap past midnight (22:00 -> 07:00). */
-  start: string;
-  end: string;
-}
-
-export interface NotificationSettings {
-  enabled: boolean;
-  events: Record<PrEventType, boolean>;
-  quietHours: QuietHours;
-}
-
-/** `attention`: PRs that need you (CI failing, changes requested, conflicts, ready to merge). */
-export type BadgeMode = 'attention' | 'unseen' | 'off';
-
-export type Theme = 'system' | 'light' | 'dark';
-
-export type Language = 'system' | 'en' | 'ja' | 'zh-CN' | 'zh-TW' | 'fr' | 'de' | 'es';
-
-export type SortOrder = 'updated' | 'created' | 'repo';
-
-export interface Settings {
-  version: 2;
-  sections: Section[];
-  /** `owner/name` or `owner`. Empty = all repositories. */
-  repoInclude: string[];
-  /** `owner/name` or `owner`. Applied after include. */
-  repoExclude: string[];
-  /** Integer minutes, minimum 2, default 2. */
-  pollIntervalMinutes: number;
-  /** Results fetched per section, 1-100, default 50. */
-  maxPerSection: number;
-  notifications: NotificationSettings;
-  badge: BadgeMode;
-  theme: Theme;
-  /** `system` follows Chrome's interface language; an explicit choice overrides it. */
-  language: Language;
-  sort: SortOrder;
-  /** The list groups each section's PRs under their repository (independent of `sort`). */
-  groupByRepo: boolean;
-  /** Legacy sync compatibility key, always normalized to 0. */
-  hideStaleAfterDays: number;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideDrafts: boolean;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideBots: boolean;
-  /**
-   * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
-   * team is followed, and so is any team discovered later.
-   */
-  unfollowedTeams: string[];
-}
+export type * from './modelSettings';
 
 /** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 /**

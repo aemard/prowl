@@ -32,6 +32,7 @@ const SORTS: SelectOption<SortOrder>[] = [
 ];
 
 const BADGES: SelectOption<BadgeMode>[] = [
+  { value: 'turn', label: t('yourTurnSection') },
   { value: 'attention', label: t('needsAttention') },
   { value: 'unseen', label: t('unseenChanges') },
   { value: 'off', label: t('off') },

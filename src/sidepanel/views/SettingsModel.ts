@@ -4,6 +4,7 @@ import { countMessage, t, uiLocale } from '../../lib/i18n';
 import type { AuthState, BadgeMode, PrEventType, QuietHours, SectionKind } from '../../lib/model';
 
 export const PRESET_DESCRIPTIONS: Record<Exclude<SectionKind, 'custom'>, string> = {
+  your_turn: t('yourTurnPreset'),
   authored: t('pullRequestsYouOpened'),
   review_requested: t('pullRequestsThatAskYouForAReviewYour'),
   team_review_requested: t('reviewRequestsSentToYourTeams'),
@@ -21,9 +22,11 @@ export const EVENT_LABELS: Record<PrEventType, { label: string; description?: st
   ready_to_merge: { label: t('readyToMerge2') },
   merged: { label: t('merged') },
   closed: { label: t('closed') },
+  your_turn: { label: t('yourTurnSection'), description: t('yourTurnEventDescription') },
 };
 
 export const BADGE_HINTS: Record<BadgeMode, string> = {
+  turn: t('yourTurnBadgeHint'),
   attention: t('countsPullRequestsThatNeedYouFailingCiChanges'),
   unseen: t('countsPullRequestsWithChangesYouHaveNotLooked'),
   off: t('theToolbarIconShowsNoNumber'),

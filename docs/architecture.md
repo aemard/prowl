@@ -40,7 +40,8 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, team discovery (`teams.ts`), actions, auth (PAT validation, device flow) | **95%** |
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
-| `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, hide, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
+| `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
+| `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
@@ -344,6 +345,7 @@ case-insensitively.
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
+| `your_turn` | `whoseTurn` becomes `you` and no other event of this poll is about the PR (the more precise one already says why) | null | `next.fetchedAt` | reason + since |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
 worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
@@ -411,14 +413,36 @@ once that poll is done. `markSeen` stores the snapshot's `updatedAt` of each kno
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
 notification and the memory of what was reported.
 
+### Whose turn
+
+`whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)
+says who has to move. Closed PRs and drafts are nobody's. On the viewer's own PR, in order:
+failing CI, changes requested after the last push, conflicts, a review comment or an issue
+comment (not the viewer's, not a bot's) after the last push, then ready to merge with write
+access are the viewer's move; otherwise it waits on checks or reviewers. On someone else's PR:
+a review requested of the viewer, or a push after the viewer requested changes, is the
+viewer's move; a request to one of their teams is the team's; otherwise the author's. `since`
+is the push, review or comment that started the wait. "Last push" is the head commit's
+`committedDate`, so a force-push of an old commit can read as older than it is.
+
+The "Your turn" preset section (kind `your_turn`, on by default, last in the list) is never
+searched: `fetchPullRequests` skips it and the panel lists `yourTurnIds(snapshot)`, the PRs of
+every other section where it is the viewer's move, longest waiting first (the list's sort
+order does not apply to it). Every card shows a "Your turn" chip with what to do ("Your review", "Fix CI",
+"Answer feedback"...) and since when; the `turn` badge counts the same PRs and the `your_turn`
+event notifies when a PR becomes the viewer's move.
+
 ### Badge
 
 The toolbar badge is a pure function of storage: `computeBadge(snapshot, prLocal, settings.badge,
-settings, now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/badge.ts`), which reads
+now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/badge.ts`), which reads
 `snapshot`, `prLocal` and `settings` and sets the badge text, background color and tooltip
 (`action.setTitle`). Nothing is kept in memory, so any context may change those keys.
 
-- `attention` (default) counts the open PRs in a section with failing CI, requested changes,
+- `turn` (default) counts the PRs in a section where it is the viewer's move (`whoseTurn`, see
+  [Whose turn](#whose-turn)); danger when one of them is the viewer's own with failing CI or
+  changes requested; tooltip `Prowl: 3 pull requests waiting on you (2 Your review, 1 Fix CI)`.
+- `attention` counts the open PRs in a section with failing CI, requested changes,
   conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
   with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
   never seen counts; state does not matter);

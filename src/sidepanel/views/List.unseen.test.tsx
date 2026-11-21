@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { activityKey } from '../../lib/activity';
 import { computeBadge } from '../../lib/badge/computeBadge';
 import { buildSnapshotOf } from '../../test/panel';
-import { prLocal, settings, snapshot } from '../state/store';
+import { prLocal, snapshot } from '../state/store';
 import { ListView } from './List';
 import { NOW, observer, pr, withSections } from './List.test-support';
 
@@ -31,7 +31,7 @@ describe('unseen changes', () => {
       card.getAttribute('data-unseen'),
     );
     expect(dots).toEqual(['true', null, 'true']);
-    const badge = computeBadge(snapshot.value, prLocal.value, 'unseen', settings.value, NOW);
+    const badge = computeBadge(snapshot.value, prLocal.value, 'unseen', NOW);
     expect(badge.text).toBe(String(dots.filter(Boolean).length));
   });
 

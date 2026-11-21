@@ -2433,5 +2433,66 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "あなたの番"
+  },
+  "yourTurnEmpty": {
+    "message": "あなたを待っているものはありません。レビュー、CI の修正、フィードバックへの対応、マージなど、あなたが動く番になったプルリクエストがここに表示されます。"
+  },
+  "yourTurnPreset": {
+    "message": "ほかのセクションのうち、あなたが動く番のプルリクエスト"
+  },
+  "yourTurnEventDescription": {
+    "message": "プルリクエストがあなたの対応待ちになったとき"
+  },
+  "yourTurnBadgeHint": {
+    "message": "あなたが動く番のプルリクエストを数えます（レビュー、CI の修正、フィードバックへの対応、マージ）。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$: あなたを待っている $P2$（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "レビュー依頼"
+  },
+  "turnReReview": {
+    "message": "再レビュー"
+  },
+  "turnCiFailed": {
+    "message": "CI を修正"
+  },
+  "turnChangesRequested": {
+    "message": "変更に対応"
+  },
+  "turnConflicts": {
+    "message": "競合を解消"
+  },
+  "turnFeedback": {
+    "message": "フィードバックに対応"
+  },
+  "turnReadyToMerge": {
+    "message": "マージ"
+  },
+  "yourTurnSince": {
+    "message": "あなたの番: $P1$（$P2$ から）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

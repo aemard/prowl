@@ -22,11 +22,15 @@ export {
 } from '../state/listContext';
 
 import { activityKey } from '../../lib/activity';
+import { yourTurnIds } from '../../lib/turn/whoseTurn';
 import { activeSectionId, filterQuery, foldedGroups, foldKey } from '../state/listContext';
 
 const NOTHING: SectionParts = { shown: [], snoozed: [] };
-export const pullRequestsOf = (snap: Snapshot, sectionId: string) =>
-  (snap.sections[sectionId] ?? []).flatMap((id) => snap.pullRequests[id] ?? []);
+/** A section's PRs; "Your turn" is derived from the others (`yourTurnIds`). */
+export const pullRequestsOf = (snap: Snapshot, section: Section) =>
+  (section.kind === 'your_turn' ? yourTurnIds(snap) : (snap.sections[section.id] ?? [])).flatMap(
+    (id) => snap.pullRequests[id] ?? [],
+  );
 
 function currentSnapshot() {
   // Never show a snapshot left by another account when sign-out raced a poll.
@@ -48,10 +52,13 @@ function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: str
       section.id,
       snap
         ? splitSection(
-            sortPullRequests(
-              filterPullRequests(pullRequestsOf(snap, section.id), query),
-              current.sort,
-            ),
+            // "Your turn" keeps its own order: longest waiting first.
+            section.kind === 'your_turn'
+              ? filterPullRequests(pullRequestsOf(snap, section), query)
+              : sortPullRequests(
+                  filterPullRequests(pullRequestsOf(snap, section), query),
+                  current.sort,
+                ),
             local,
             current,
             clock,

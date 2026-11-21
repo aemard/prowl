@@ -5,6 +5,7 @@ import { toggleExpanded } from '../state/prDetail';
 import { auth } from '../state/store';
 import {
   AlertIcon,
+  BellIcon,
   BellSlashIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -40,6 +41,7 @@ const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
   eye: EyeIcon,
   alert: AlertIcon,
   merge: GitMergeIcon,
+  bell: BellIcon,
 };
 
 type CardHeadProps = Pick<

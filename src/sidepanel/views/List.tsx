@@ -135,7 +135,7 @@ function LoadedList({
 }) {
   const tabs = sectionTabs(data);
   const anyPullRequests = data.enabled.some(
-    (section) => pullRequestsOf(data.snap, section.id).length > 0,
+    (section) => pullRequestsOf(data.snap, section).length > 0,
   );
   // A lone section has no tabs. The panel is named by the section's full name rather than by its
   // tab, which is not there when the section is under "More".

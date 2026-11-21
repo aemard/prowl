@@ -31,10 +31,11 @@ describe('DEFAULT_SETTINGS', () => {
           ready_to_merge: true,
           merged: true,
           closed: true,
+          your_turn: true,
         },
         quietHours: { enabled: false, start: '22:00', end: '08:00' },
       },
-      badge: 'attention',
+      badge: 'turn',
       theme: 'system',
       language: 'system',
       sort: 'updated',
@@ -63,13 +64,14 @@ describe('DEFAULT_SETTINGS', () => {
 
   it('lists every event type and preset kind', () => {
     expect(PR_EVENT_TYPES).toEqual(Object.keys(DEFAULT_SETTINGS.notifications.events));
-    expect(PR_EVENT_TYPES).toHaveLength(9);
+    expect(PR_EVENT_TYPES).toHaveLength(10);
     expect(BUILT_IN_SECTION_KINDS).toEqual([
       'authored',
       'review_requested',
       'team_review_requested',
       'mentioned',
       'assigned',
+      'your_turn',
     ]);
   });
 });
@@ -221,11 +223,7 @@ describe('normalizeSettings', () => {
 
   it('falls back to the default badge, theme and sort for unknown values', () => {
     const settings = normalizeSettings({ badge: 'count', theme: 'toString', sort: 42 });
-    expect([settings.badge, settings.theme, settings.sort]).toEqual([
-      'attention',
-      'system',
-      'updated',
-    ]);
+    expect([settings.badge, settings.theme, settings.sort]).toEqual(['turn', 'system', 'updated']);
     const valid = normalizeSettings({ badge: 'off', theme: 'light', sort: 'created' });
     expect([valid.badge, valid.theme, valid.sort]).toEqual(['off', 'light', 'created']);
   });

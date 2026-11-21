@@ -4,6 +4,7 @@
  * or it simply left the search scope.
  */
 import type { PrEvent, PrEventType, PullRequest, ReviewState, Snapshot } from '../model';
+import { turnIn } from '../turn/whoseTurn';
 import { ciOutcome } from './checkTransitions';
 
 /** Dismissed reviews no longer count, so they are not news. */
@@ -83,6 +84,12 @@ export function diffSnapshots(
 
     if (before.state === 'open' && pr.state !== 'open' && !isViewer(pr.closedBy))
       add(pr.state, pr.headSha, pr.closedBy, pr.updatedAt);
+
+    // A PR that became the viewer's move says so, unless an event above already tells why.
+    const turn = turnIn(next, pr);
+    const told = [...events.keys()].some((id) => id.startsWith(`${prId}:`));
+    if (!told && turn.owner === 'you' && turnIn(prev, before).owner !== 'you')
+      add('your_turn', `${turn.reason}:${turn.since}`, null, next.fetchedAt);
   }
   return [...events.values()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 }

@@ -5,8 +5,10 @@ import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
 import { sectionLabel } from '../../lib/sectionLabel';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
+import { turnIn } from '../../lib/turn/whoseTurn';
 import {
   AlertIcon,
+  BellIcon,
   ClockIcon,
   EyeClosedIcon,
   EyeIcon,
@@ -38,6 +40,15 @@ import {
  * label) and the hint of its empty list. A new kind is one entry here.
  */
 export const KINDS: Record<SectionKind, { icon: IconComponent; short?: string; empty: string }> = {
+  your_turn: {
+    icon: BellIcon,
+    get short() {
+      return t('yourTurnSection');
+    },
+    get empty() {
+      return t('yourTurnEmpty');
+    },
+  },
   authored: {
     icon: GitPullRequestIcon,
     get short() {
@@ -110,6 +121,7 @@ function ListCard({
       unseen={!snoozed && !isSeen(data.local, pr.id, pr.updatedAt, activityKey(pr))}
       muted={isMuted(data.local, pr.id)}
       teams={data.snap.teamRequests?.[pr.id]}
+      turn={turnIn(data.snap, pr)}
       grouped={grouped}
       snoozedUntil={snoozed ? data.local.snoozed[pr.id] : undefined}
     />
@@ -190,7 +202,7 @@ function EmptySection({
   )
     return null;
   // Empty only because of the filter: the section itself has pull requests.
-  const filteredOut = pullRequestsOf(snap, selected.id).length > 0;
+  const filteredOut = pullRequestsOf(snap, selected).length > 0;
   return (
     <EmptyState
       icon={filteredOut ? <SearchIcon size={24} /> : <InboxIcon size={24} />}
@@ -235,9 +247,7 @@ export function SectionContent({
     data.shown.length === 0 &&
     matches > 0 &&
     !snoozedOpen &&
-    pullRequestsOf(data.snap, data.selected.id).every((pr) =>
-      isSnoozed(data.local, pr.id, data.now),
-    );
+    pullRequestsOf(data.snap, data.selected).every((pr) => isSnoozed(data.local, pr.id, data.now));
   const error = data.snap.sectionErrors?.[data.selected.id];
   const coverage = data.snap.sectionCoverage?.[data.selected.id];
   return (
@@ -262,7 +272,7 @@ export function SectionContent({
       {coverage && (
         <SectionCoverageNotice
           coverage={coverage}
-          count={pullRequestsOf(data.snap, data.selected.id).length}
+          count={pullRequestsOf(data.snap, data.selected).length}
         />
       )}
       {setAside && !searching(data) && (

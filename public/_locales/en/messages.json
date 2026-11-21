@@ -2862,5 +2862,80 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "Your turn",
+    "description": "Extension text: Your turn"
+  },
+  "yourTurnEmpty": {
+    "message": "Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make.",
+    "description": "Extension text: Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make."
+  },
+  "yourTurnPreset": {
+    "message": "Pull requests of your other sections where it is your move",
+    "description": "Extension text: Pull requests of your other sections where it is your move"
+  },
+  "yourTurnEventDescription": {
+    "message": "When a pull request starts waiting on you",
+    "description": "Extension text: When a pull request starts waiting on you"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make.",
+    "description": "Extension text: Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make."
+  },
+  "waitingOnYou": {
+    "message": "$P1$: $P2$ waiting on you ($P3$)",
+    "description": "Extension text: $P1$: $P2$ waiting on you ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Your review",
+    "description": "Extension text: Your review"
+  },
+  "turnReReview": {
+    "message": "Review again",
+    "description": "Extension text: Review again"
+  },
+  "turnCiFailed": {
+    "message": "Fix CI",
+    "description": "Extension text: Fix CI"
+  },
+  "turnChangesRequested": {
+    "message": "Address changes",
+    "description": "Extension text: Address changes"
+  },
+  "turnConflicts": {
+    "message": "Resolve conflicts",
+    "description": "Extension text: Resolve conflicts"
+  },
+  "turnFeedback": {
+    "message": "Answer feedback",
+    "description": "Extension text: Answer feedback"
+  },
+  "turnReadyToMerge": {
+    "message": "Merge it",
+    "description": "Extension text: Merge it"
+  },
+  "yourTurnSince": {
+    "message": "Your turn: $P1$, since $P2$",
+    "description": "Extension text: Your turn: $P1$, since $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

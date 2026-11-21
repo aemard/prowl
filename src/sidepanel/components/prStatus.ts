@@ -5,14 +5,24 @@
  */
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import { countMessage, t } from '../../lib/i18n';
-import type { CheckSummary, MergeMethod, PullRequest } from '../../lib/model';
+import type { CheckSummary, MergeMethod, PullRequest, Turn } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
+import { TURN_LABELS } from '../../lib/turn/whoseTurn';
 import type { Tone } from './ui/cx';
 
-export type StatusIcon = 'draft' | 'check' | 'x' | 'dot' | 'diff' | 'eye' | 'alert' | 'merge';
+export type StatusIcon =
+  | 'draft'
+  | 'check'
+  | 'x'
+  | 'dot'
+  | 'diff'
+  | 'eye'
+  | 'alert'
+  | 'merge'
+  | 'bell';
 
 export interface Status {
-  id: 'draft' | 'ci' | 'review' | 'merge';
+  id: 'turn' | 'draft' | 'ci' | 'review' | 'merge';
   tone: Tone;
   icon: StatusIcon;
   /** Short chip text. */
@@ -110,10 +120,25 @@ function reviewStatus(pr: PullRequest): Status | null {
   }
 }
 
-/** Chips in reading order: Draft, CI, review, then conflicts or ready to merge. */
-export function pullRequestStatuses(pr: PullRequest): Status[] {
+/** "Your turn" first, when it is the viewer's move, with what to do and since when. */
+function turnStatus(turn: Turn | undefined, now: number): Status | null {
+  const key = turn?.owner === 'you' ? TURN_LABELS[turn.reason] : undefined;
+  if (!turn || !key) return null;
+  const label = t(key);
+  return {
+    id: 'turn',
+    tone: 'accent',
+    icon: 'bell',
+    label,
+    detail: t('yourTurnSince', label, formatRelativeTime(turn.since, now)),
+  };
+}
+
+/** Chips in reading order: your turn, Draft, CI, review, then conflicts or ready to merge. */
+export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now()): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
+    turnStatus(turn, now),
     pr.isDraft
       ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,

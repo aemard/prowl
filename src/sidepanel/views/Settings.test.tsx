@@ -43,6 +43,7 @@ describe('SettingsView', () => {
         ['team_review_requested', false],
         ['mentioned', false],
         ['assigned', false],
+        ['your_turn', true],
       ]);
     });
 

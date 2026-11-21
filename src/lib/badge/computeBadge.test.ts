@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { headCommit, prNode, viewerNode } from '../../../tests/fixtures/github';
+import { headCommit, prNode, requestedReviewer, viewerNode } from '../../../tests/fixtures/github';
 import { activityKey } from '../activity';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
 import { emptyPrLocal, markSeen, mute, snooze } from '../storage/prLocal';
-import { DEFAULT_SETTINGS } from '../storage/settings';
 import { BADGE_TITLE, computeBadge, NO_BADGE } from './computeBadge';
 
 const NOW = Date.parse('2026-10-06T12:00:00Z');
@@ -31,7 +30,7 @@ function snapshot(prs: PullRequest[], sections = { authored: prs.map(({ id }) =>
 }
 
 const badge = (prs: PullRequest[], mode: BadgeMode = 'attention', local = emptyPrLocal()) =>
-  computeBadge(snapshot(prs), local, mode, DEFAULT_SETTINGS, NOW);
+  computeBadge(snapshot(prs), local, mode, NOW);
 
 it('counts old PRs while honoring snooze', () => {
   const pr = failing(1);
@@ -102,13 +101,7 @@ describe('computeBadge: attention', () => {
       PullRequest,
     ];
     const sections = { authored: [a.id, b.id], assigned: [b.id], custom: ['PR_gone'] };
-    const view = computeBadge(
-      snapshot([a, b, c], sections),
-      emptyPrLocal(),
-      'attention',
-      DEFAULT_SETTINGS,
-      NOW,
-    );
+    const view = computeBadge(snapshot([a, b, c], sections), emptyPrLocal(), 'attention', NOW);
     expect(view.text).toBe('2');
   });
 
@@ -117,9 +110,7 @@ describe('computeBadge: attention', () => {
     let local: PrLocalState = snooze(emptyPrLocal(), a.id, NOW + HOUR);
     local = mute(local, b.id);
     expect(badge([a, b], 'attention', local).text).toBe('1');
-    expect(
-      computeBadge(snapshot([a, b]), local, 'attention', DEFAULT_SETTINGS, NOW + 2 * HOUR).text,
-    ).toBe('2');
+    expect(computeBadge(snapshot([a, b]), local, 'attention', NOW + 2 * HOUR).text).toBe('2');
   });
 
   it('counts PRs regardless of commit age', () => {
@@ -130,27 +121,16 @@ describe('computeBadge: attention', () => {
       title: 'Prowl: 2 pull requests needing attention (2 CI failing)',
     });
     expect(badge([old], 'unseen').text).toBe('1');
-    const never = { ...DEFAULT_SETTINGS, hideStaleAfterDays: 0 };
-    expect(
-      computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', never, NOW).text,
-    ).toBe('2');
+    expect(computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', NOW).text).toBe('2');
   });
 
-  it('counts drafts and bots despite legacy hiding settings', () => {
+  it('counts drafts and bots', () => {
     const draft = quiet(1, { isDraft: true, commits: headCommit({ FAILURE: 1 }) });
     const bot = quiet(2, {
       author: { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' },
       commits: headCommit({ FAILURE: 1 }),
     });
-    const prs = [draft, bot, failing(3)];
-    const count = (hide: Partial<typeof DEFAULT_SETTINGS>, mode: BadgeMode = 'attention') =>
-      computeBadge(snapshot(prs), emptyPrLocal(), mode, { ...DEFAULT_SETTINGS, ...hide }, NOW).text;
-
-    expect(count({})).toBe('3');
-    expect(count({ hideDrafts: true })).toBe('3');
-    expect(count({ hideBots: true })).toBe('3');
-    expect(count({ hideDrafts: true, hideBots: true })).toBe('3');
-    expect(count({ hideDrafts: true, hideBots: true }, 'unseen')).toBe('3');
+    expect(badge([draft, bot, failing(3)]).text).toBe('3');
   });
 
   it('shows 99+ above 99', () => {
@@ -195,7 +175,32 @@ describe('computeBadge: unseen', () => {
 describe('computeBadge: off and signed out', () => {
   it('shows nothing', () => {
     expect(badge([failing(1)], 'off')).toEqual(NO_BADGE);
-    expect(computeBadge(undefined, emptyPrLocal(), 'attention', DEFAULT_SETTINGS, NOW)).toEqual(
+    expect(computeBadge(undefined, emptyPrLocal(), 'attention', NOW)).toEqual(NO_BADGE);
+  });
+});
+
+describe('turn badge', () => {
+  // Fixture PRs are the viewer's own (octocat); these are someone else's.
+  const login = viewerNode().login;
+  const bob = { __typename: 'User', login: 'bob', avatarUrl: 'a' } as const;
+  const theirs = (number: number, overrides: Node = {}) =>
+    quiet(number, { author: bob, ...overrides });
+
+  it('counts the PRs waiting on the viewer and says why', () => {
+    const asked = theirs(1, {
+      reviewRequests: { nodes: [requestedReviewer(login)] },
+    });
+    const red = failing(2);
+    const others = theirs(3, { commits: headCommit({ FAILURE: 1 }) });
+    expect(badge([asked, red, others], 'turn')).toEqual({
+      text: '2',
+      title: 'Prowl: 2 pull requests waiting on you (1 Your review, 1 Fix CI)',
+      danger: true,
+    });
+  });
+
+  it('shows nothing when nothing waits on the viewer', () => {
+    expect(badge([theirs(1, { commits: headCommit({ FAILURE: 1 }) }), quiet(2)], 'turn')).toEqual(
       NO_BADGE,
     );
   });

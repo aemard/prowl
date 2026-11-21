@@ -2433,5 +2433,66 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "Du bist dran"
+  },
+  "yourTurnEmpty": {
+    "message": "Nichts wartet auf dich. Ein Pull Request erscheint hier, sobald du am Zug bist: ein Review, eine rote CI, Feedback zum Beantworten oder ein Merge."
+  },
+  "yourTurnPreset": {
+    "message": "Pull Requests deiner anderen Bereiche, bei denen du am Zug bist"
+  },
+  "yourTurnEventDescription": {
+    "message": "Wenn ein Pull Request auf dich zu warten beginnt"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Zählt Pull Requests, bei denen du am Zug bist: Reviews, rote CI, offenes Feedback, fällige Merges."
+  },
+  "waitingOnYou": {
+    "message": "$P1$: $P2$ warten auf dich ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Dein Review"
+  },
+  "turnReReview": {
+    "message": "Erneut prüfen"
+  },
+  "turnCiFailed": {
+    "message": "CI reparieren"
+  },
+  "turnChangesRequested": {
+    "message": "Änderungen umsetzen"
+  },
+  "turnConflicts": {
+    "message": "Konflikte lösen"
+  },
+  "turnFeedback": {
+    "message": "Feedback beantworten"
+  },
+  "turnReadyToMerge": {
+    "message": "Mergen"
+  },
+  "yourTurnSince": {
+    "message": "Du bist dran: $P1$, seit $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

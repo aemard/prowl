@@ -138,10 +138,10 @@ const cases: Case[] = [
     [['ci_failed']],
   ],
   [
-    'nothing: approved, conflicting',
+    'your turn: approved, conflicting',
     {},
     { reviewDecision: 'approved', mergeable: 'conflicting' },
-    [],
+    [['your_turn']],
   ],
   [
     'nothing: approved, mergeable unknown',

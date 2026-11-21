@@ -2433,5 +2433,66 @@
         "content": "$1"
       }
     }
+  },
+  "yourTurnSection": {
+    "message": "Tu turno"
+  },
+  "yourTurnEmpty": {
+    "message": "Nada te espera. Una pull request aparece aquí cuando te toca: una revisión pendiente, una CI que arreglar, comentarios que atender o un merge que hacer."
+  },
+  "yourTurnPreset": {
+    "message": "Pull requests de tus otras secciones en las que te toca actuar"
+  },
+  "yourTurnEventDescription": {
+    "message": "Cuando una pull request empieza a esperarte"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Cuenta las pull requests en las que te toca: revisiones, CI que arreglar, comentarios que atender, merges que hacer."
+  },
+  "waitingOnYou": {
+    "message": "$P1$: $P2$ te esperan ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Tu revisión"
+  },
+  "turnReReview": {
+    "message": "Revisar de nuevo"
+  },
+  "turnCiFailed": {
+    "message": "Arreglar la CI"
+  },
+  "turnChangesRequested": {
+    "message": "Aplicar cambios"
+  },
+  "turnConflicts": {
+    "message": "Resolver conflictos"
+  },
+  "turnFeedback": {
+    "message": "Responder comentarios"
+  },
+  "turnReadyToMerge": {
+    "message": "Hacer merge"
+  },
+  "yourTurnSince": {
+    "message": "Tu turno: $P1$, desde $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

@@ -66,6 +66,9 @@ Details: [sign-in guide](docs/auth.md).
   searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of
   the panel, with its count. Snooze a PR to set it aside in a "Snoozed" fold until the
   time you pick. A switch groups each tab's PRs under their repository, in collapsible groups.
+- **Your turn**: a section, a chip on every card and the toolbar badge say which pull
+  requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
+  answer, a merge to make), longest waiting first. No extra GitHub request.
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
