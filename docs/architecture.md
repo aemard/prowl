@@ -34,7 +34,7 @@ in-memory updates that the next snapshot replaces.
 
 | Path | Purpose | Coverage gate |
 |---|---|---|
-| `src/lib/model.ts` | Domain types (the contract). Change with care. | n/a |
+| `src/lib/model.ts` | Domain types (the contract; re-exports the settings and local-state types of `modelSettings.ts`). Change with care. | n/a |
 | `src/lib/env.ts` | Build-time config (API URL, web URL, OAuth client id) | 80% |
 | `src/lib/storage/` | Typed `chrome.storage.local` access, settings defaults + validation + migrations, local PR state (snooze/mute/seen); see [Storage](#storage) | 80% |
 | `src/lib/github/` | HTTP client (GraphQL + REST), errors, rate limits, queries, mappers, search query builder, team discovery (`teams.ts`), actions, auth (PAT validation, device flow) | **95%** |
@@ -44,6 +44,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`, `fitInput` (trims an input to the model's measured quota, oldest discussion first). Panel only. | 80% |
 | `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
+| `src/lib/stacks.ts` | `listItems`, `stackState`, `stackSummary`: a section's PRs as list items, GitHub stacks grouped; see [Stacks and merge queues](#stacks-and-merge-queues). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`), the poll cadence policy (`cadence.ts`) | 80% |
 | `src/lib/i18n.ts`, `public/_locales/` | Typed Chrome messages, a saved language preference and English fallback; localized counts, numbers and dates. `sectionLabel.ts` translates built-in names without changing stored settings. | 80% |
