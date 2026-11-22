@@ -52,12 +52,20 @@ export type TurnReason =
   | 'changes_requested'
   | 'conflicts'
   | 'feedback'
+  /** Reviewed, but GitHub blocks it while review conversations are unresolved. */
+  | 'unresolved_threads'
+  /** Reviewed, but the base moved on and strict status checks need the branch updated. */
+  | 'update_branch'
   | 'ready_to_merge'
   | 'waiting_on_reviewers'
   | 'waiting_on_checks'
   | 'waiting_on_author'
   /** Ready, with auto-merge on: GitHub merges it on its own. */
   | 'auto_merge'
+  /** In GitHub's merge queue: it merges once the queue reaches it. */
+  | 'in_merge_queue'
+  /** GitHub's merge facts are not read yet for this head: nobody's move until they are. */
+  | 'merge_unknown'
   | 'draft'
   | 'closed';
 

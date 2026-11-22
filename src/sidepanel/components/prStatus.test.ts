@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CheckSummary } from '../../lib/model';
+import { fakeChrome } from '../../test/chrome';
 import { buildPullRequest } from '../../test/panel';
 import { ciStatus, describePullRequest, pullRequestStatuses } from './prStatus';
 
@@ -103,6 +104,30 @@ describe('pullRequestStatuses', () => {
     expect(
       pullRequestStatuses(asked, { owner: 'them', reason: 'waiting_on_author', since }, now),
     ).toHaveLength(1);
+  });
+
+  it('says a branch to update with the update action’s words, and a queued PR as queued', () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const behind = buildPullRequest({ reviewDecision: 'approved', mergeStateStatus: 'behind' });
+    const update = pullRequestStatuses(behind, { owner: 'you', reason: 'update_branch', since });
+    expect(update.map(({ id, label }) => [id, label])).toEqual([
+      ['turn', 'Update branch'],
+      ['review', 'Approved'],
+    ]);
+    const queued = buildPullRequest({
+      reviewDecision: 'approved',
+      mergeStateStatus: 'clean',
+      inMergeQueue: true,
+    });
+    expect(labels(queued)).toEqual(['In merge queue']);
+  });
+
+  it('joins the turn and the fact as sentences of the language', () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const conflicting = buildPullRequest({ mergeable: 'conflicting' });
+    fakeChrome().__state.locale = 'ja';
+    const [chip] = pullRequestStatuses(conflicting, { owner: 'you', reason: 'conflicts', since });
+    expect(chip?.detail).toContain('。');
   });
 
   it('folds "approved" into "ready to merge", and keeps it when something blocks the merge', () => {

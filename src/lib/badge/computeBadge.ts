@@ -4,8 +4,8 @@
  * service worker (`src/background/badge.ts`) paints the result.
  */
 import { activityKey } from '../activity';
-import { isReadyToMerge } from '../diff/diffSnapshots';
-import { countMessage, formatNumber, type MessageKey, t } from '../i18n';
+import { countMessage, type MessageKey, t } from '../i18n';
+import { awaitsMerge } from '../mergeEligibility';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot, TurnReason } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
 import { turnIn } from '../turn/whoseTurn';
@@ -22,16 +22,41 @@ export interface BadgeView {
 export const BADGE_TITLE = 'Prowl';
 const MAX_SHOWN = 99;
 
+interface Reason {
+  /** How the tooltip counts it, singular and plural: "1 with failing CI", "2 with conflicts". */
+  one: MessageKey;
+  other: MessageKey;
+  red: boolean;
+  applies: (pr: PullRequest) => boolean;
+}
+
 /** Why an open PR needs attention, in the order the tooltip lists them. */
-const REASONS: { label: MessageKey; red: boolean; applies: (pr: PullRequest) => boolean }[] = [
-  { label: 'ciFailing', red: true, applies: (pr) => pr.checks.state === 'failure' },
+const REASONS: Reason[] = [
   {
-    label: 'changesRequested',
+    one: 'badgeCiFailedOne',
+    other: 'badgeCiFailedOther',
+    red: true,
+    applies: (pr) => pr.checks.state === 'failure',
+  },
+  {
+    one: 'badgeChangesRequestedOne',
+    other: 'badgeChangesRequestedOther',
     red: true,
     applies: (pr) => pr.reviewDecision === 'changes_requested',
   },
-  { label: 'conflictsLower', red: false, applies: (pr) => pr.mergeable === 'conflicting' },
-  { label: 'readyToMerge', red: false, applies: isReadyToMerge },
+  {
+    one: 'badgeConflictsOne',
+    other: 'badgeConflictsOther',
+    red: false,
+    applies: (pr) => pr.mergeable === 'conflicting',
+  },
+  // Auto-merge or the merge queue merges it: nothing to attend to.
+  {
+    one: 'badgeReadyToMergeOne',
+    other: 'badgeReadyToMergeOther',
+    red: false,
+    applies: awaitsMerge,
+  },
 ];
 
 /** A cleared badge: no text, the plain tooltip. */
@@ -53,6 +78,8 @@ const TURN_COUNTS: [TurnReason, MessageKey, MessageKey][] = [
   ['changes_requested', 'badgeChangesRequestedOne', 'badgeChangesRequestedOther'],
   ['conflicts', 'badgeConflictsOne', 'badgeConflictsOther'],
   ['feedback', 'badgeFeedbackOne', 'badgeFeedbackOther'],
+  ['unresolved_threads', 'badgeUnresolvedThreadsOne', 'badgeUnresolvedThreadsOther'],
+  ['update_branch', 'badgeUpdateBranchOne', 'badgeUpdateBranchOther'],
   ['ready_to_merge', 'badgeReadyToMergeOne', 'badgeReadyToMergeOther'],
 ];
 
@@ -106,11 +133,11 @@ export function computeBadge(
   const count = counted.length;
   const pulls = countMessage(count, 'pullCountOne', 'pullCountOther');
   const why = REASONS.map((reason) => ({
-    label: t(reason.label),
+    reason,
     n: counted.filter((pr) => reasonsOf(pr).includes(reason)).length,
   }))
     .filter(({ n }) => n > 0)
-    .map(({ label, n }) => `${formatNumber(n)} ${label}`);
+    .map(({ reason, n }) => countMessage(n, reason.one, reason.other));
   return {
     text: count > MAX_SHOWN ? `${MAX_SHOWN}+` : String(count),
     title:

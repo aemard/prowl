@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome 同期で設定を保存できませんでした。設定はこのデバイスに保存されています。"
   },
-  "ciFailing": {
-    "message": "CI 失敗"
-  },
-  "changesRequested": {
-    "message": "変更要求あり"
-  },
-  "readyToMerge": {
-    "message": "マージ可能"
-  },
   "withUnseenChanges": {
     "message": "$P1$: 未確認の変更がある $P2$",
     "placeholders": {
@@ -1693,9 +1684,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "競合"
-  },
   "include": {
     "message": "含める"
   },
@@ -3065,5 +3053,78 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "会話を解決"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "未解決の会話あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "未解決の会話あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "ベースブランチより遅れ $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "ベースブランチより遅れ $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "マージキュー内"
+  },
+  "turnChipDetail": {
+    "message": "$P1$。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "あなたの番: 再レビュー"
+  },
+  "notifyTurnCiFailed": {
+    "message": "あなたの番: CI を修正"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "あなたの番: 依頼された変更に対応"
+  },
+  "notifyTurnConflicts": {
+    "message": "あなたの番: 競合を解消"
+  },
+  "notifyTurnFeedback": {
+    "message": "あなたの番: フィードバックに返答"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "あなたの番: 会話を解決"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "あなたの番: ブランチを更新"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "あなたの番: マージする"
   }
 }

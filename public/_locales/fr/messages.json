@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome Sync n’a pas enregistré vos paramètres. Ils restent sur cet appareil."
   },
-  "ciFailing": {
-    "message": "CI en échec"
-  },
-  "changesRequested": {
-    "message": "modifications demandées"
-  },
-  "readyToMerge": {
-    "message": "prêt à fusionner"
-  },
   "withUnseenChanges": {
     "message": "$P1$ : $P2$ avec des modifications non vues",
     "placeholders": {
@@ -1693,9 +1684,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "conflits"
-  },
   "include": {
     "message": "Inclure"
   },
@@ -3065,5 +3053,78 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Conversations à résoudre"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ avec des conversations à résoudre",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ avec des conversations à résoudre",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ en retard sur sa branche de base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ en retard sur leur branche de base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "Dans la file de fusion"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "À vous : relire à nouveau"
+  },
+  "notifyTurnCiFailed": {
+    "message": "À vous : corriger la CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "À vous : traiter les modifications demandées"
+  },
+  "notifyTurnConflicts": {
+    "message": "À vous : résoudre les conflits"
+  },
+  "notifyTurnFeedback": {
+    "message": "À vous : répondre aux retours"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "À vous : résoudre les conversations"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "À vous : mettre à jour la branche"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "À vous : la fusionner"
   }
 }

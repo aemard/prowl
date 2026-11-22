@@ -89,8 +89,9 @@ describe('diffSnapshots on pull requests new to the previous poll', () => {
       mergeable: 'conflicting',
       updatedAt: ASKED,
     });
-    expect(types(poll([known], SEEN), poll([known, conflicting], POLLED))).toEqual([
-      ['your_turn', 3],
+    const events = diffSnapshots(poll([known], SEEN), poll([known, conflicting], POLLED), VIEWER);
+    expect(events.map(({ type, number, reason }) => [type, number, reason])).toEqual([
+      ['your_turn', 3, 'conflicts'],
     ]);
     const notYours = asked({ requestedReviewers: [] });
     expect(types(poll([known], SEEN), poll([known, notYours], POLLED))).toEqual([]);

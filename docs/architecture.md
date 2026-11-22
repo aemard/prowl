@@ -43,6 +43,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
 | `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`, `fitInput` (trims an input to the model's measured quota, oldest discussion first). Panel only. | 80% |
 | `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
+| `src/lib/mergeEligibility.ts` | `isReadyToMerge(pr)` (GitHub's verdict lets it merge now), `mergesItself(pr)` (auto-merge or the merge queue merges it) and `awaitsMerge(pr)`: the one merge rule the diff, whose turn, the badge, stacks and cards share, in its own module so `diff` and `turn` do not import each other. Pure. | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
 | `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`), the poll cadence policy (`cadence.ts`) | 80% |
@@ -363,10 +364,10 @@ viewer made are left out; logins compare case-insensitively.
 | `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
-| `ready_to_merge` | auto-merge is off and `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
+| `ready_to_merge` | auto-merge is off, the PR is not in a merge queue (`isInMergeQueue`, read by the search) and `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 | `review_requested` | `whoseTurn` becomes `you` for `review_requested` (a review asked of the viewer), on a known or an arrived PR, and no other event of this poll is about it | null | `updatedAt` | `updatedAt` (each request is its own) |
-| `your_turn` | `whoseTurn` becomes `you` for any other reason, same conditions | null | `next.fetchedAt` | reason + since |
+| `your_turn` | `whoseTurn` becomes `you` for any other reason, same conditions; the event carries the `reason`, and the notification title says what to do ("Your turn: resolve conflicts", one catalog message per reason) | null | `next.fetchedAt` | reason + since |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
 worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
@@ -494,11 +495,18 @@ asks for a `panel` poll when it opens or becomes visible (`refreshIfStale`,
 `whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)
 says who has to move. Closed PRs and drafts are nobody's. On the viewer's own PR, in order:
 failing CI, changes requested after the last push (a bot's too: they block the merge), conflicts,
-a review comment or an issue comment after the last push that is neither the viewer's nor a
-bot's (`isBot`, from GraphQL: Copilot code review and CodeRabbit comment after every push), then
-ready to merge with write access are the viewer's move, unless auto-merge is on: a ready PR with
-`autoMerge` is nobody's move (`auto_merge`), GitHub merges it; otherwise it waits on checks or reviewers. On someone else's PR:
-a review requested of the viewer, or a push after the viewer requested changes, is the
+then unanswered feedback: a review comment or an issue comment that is neither the viewer's nor a
+bot's (`isBot`, from GraphQL: Copilot code review and CodeRabbit comment after every push) and is
+newer than both the last push and the viewer's own latest review or issue comment (a reply hands
+the move back as a push does; `since` is the oldest unanswered one). Then who merges it: a PR in
+the merge queue (`in_merge_queue`) or ready with auto-merge on (`auto_merge`) is nobody's move,
+GitHub merges it; ready with write access is the viewer's (`ready_to_merge`). Reviewed (approved,
+or no review required) but held back, it is still the viewer's: `behind` with strict status
+checks and `viewerCanUpdate` asks for `update_branch`, `blocked` with unresolved conversations for
+`unresolved_threads`. Otherwise it waits on running checks, or, when GitHub's merge facts are not
+read for this head (`unknown`), on nothing known yet (`merge_unknown`, owner `none`, never counted
+as stuck); only then on reviewers (`waiting_on_reviewers`, "stuck" after two days). On someone
+else's PR: a review requested of the viewer, or a push after the viewer requested changes, is the
 viewer's move; a request to one of their teams is the team's; otherwise the author's. `since`
 is the push, review or comment that started the wait. "Last push" is the head commit's
 `committedDate`, so a force-push of an old commit can read as older than it is.
@@ -507,7 +515,7 @@ The "Your turn" preset section (kind `your_turn`, on by default, last in the lis
 searched: `fetchPullRequests` skips it and the panel lists `yourTurnIds(snapshot)`, the PRs of
 every other section where it is the viewer's move, longest waiting first (the list's sort
 order does not apply to it). When it is the viewer's move, the card's chip for that fact becomes
-the action (one chip per fact: "Review", "Fix CI · 1 failing", "Merge it"...) with since when; the
+the action (one chip per fact: "Review", "Fix CI · 1 failing", "Merge it"; reasons without a fact chip, such as "Answer feedback", "Update branch" or "Resolve conversations", add one up front) with since when, the two sentences joined by a catalog message (`turnChipDetail`, `。` in Japanese and Chinese); a queued PR's merge chip says "In merge queue"; the
 `turn` badge counts the same PRs, and the `review_requested` and `your_turn` events notify when a
 PR becomes the viewer's move or arrives as it (see [Diff engine](#diff-engine)).
 
@@ -564,7 +572,8 @@ now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/bad
   failing CI)`: each reason has its own singular and plural noun phrase (`TURN_COUNTS`,
   `countMessage`), never the cards' imperative chip labels.
 - `attention` counts the open PRs in a section with failing CI, requested changes,
-  conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
+  conflicts (`mergeable: conflicting`) or `awaitsMerge` (ready, and neither auto-merge nor the
+  merge queue merges it); `unseen` counts the PRs in a section
   with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
   never seen counts; state does not matter);
   `off` shows nothing. A PR counts once, however many reasons it has. Snoozed PRs never count,
@@ -573,8 +582,8 @@ now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/bad
 - Text is the count, empty for 0 and `99+` above 99. The color is `--color-danger-solid`
   (`#c2272d`) when a counted PR has failing CI or requested changes, else `--color-accent-solid`
   (`#007a6d`); a unit test keeps the two constants equal to the tokens. The tooltip is
-  `Prowl: 3 pull requests needing attention (2 CI failing, 1 ready to merge)` (reasons are
-  counted separately, so they can add up to more than the count), `Prowl: 2 pull requests with
+  `Prowl: 3 pull requests needing attention (2 with failing CI, 1 ready to merge)` (the same
+  singular and plural noun phrases as `turn`; reasons are counted separately, so they can add up to more than the count), `Prowl: 2 pull requests with
   unseen changes` in `unseen` mode, and plain `Prowl` when empty.
 - It repaints after every poll that ran (end of `runPoll`), at worker startup (a browser restart
   drops the badge, and the poll that follows may be skipped), and on every change of `snapshot`,
