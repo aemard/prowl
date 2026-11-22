@@ -457,10 +457,15 @@ Only GitHub's own stacked pull requests are stacks: the search reads `stackEntry
 stack { id number size baseRefName } }` into `PullRequest.stack`; PRs that merely target each
 other's branches stay separate cards. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
 turns a section's PRs into items: a lone PR, or one stack holding its members (bottom first),
-placed where the first member falls in the section's order. `StackItem` shows the stack's
-repository, number, size and base, the bottom PR's title, a bar and counts by `stackState`
-(ready, in progress, blocked, draft), one bell chip per reason it is the viewer's move, and,
-opened, the members as the usual cards (details, actions) on a rail numbered by position.
+placed where the first member falls in the section's order. `StackItem` (loaded on first use,
+like `TurnSummary`) shows the stack's repository, number, size and base, the bottom PR's title
+as a link to it (with "and N more" as text beside it), and, counted over every member Prowl
+knows from all sections (`stackMembers(snapshot.pullRequests, id)`), a bar and counts by
+`stackState` (ready, in progress, blocked, draft), one bell chip per reason it is the viewer's
+move ("Your turn:" for screen readers, since the chip reads like an action), and Merge.
+Opened, it lists the members this section shows (after the filter) as the usual cards on a rail
+numbered by position, then how many are elsewhere (another section or the filter) and how many
+are in none of the viewer's sections.
 `stackSummary` finds the ready run from position 1; "Merge K of N" (or "Merge the whole stack")
 confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
 GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,

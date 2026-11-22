@@ -41,8 +41,10 @@ function turnChips(snapshot: Snapshot, members: PullRequest[]) {
 }
 
 export interface StackItemProps {
-  /** Bottom (position 1) to top, as `listItems` gives them. */
+  /** Every member Prowl knows, from all sections, bottom (position 1) to top (`stackMembers`). */
   members: PullRequest[];
+  /** The members this section shows (after the filter), as `listItems` gives them. */
+  shown: PullRequest[];
   snapshot: Snapshot;
   /** Renders one member as the list's card. */
   card: (pr: PullRequest) => JSX.Element;
@@ -50,10 +52,11 @@ export interface StackItemProps {
 
 /**
  * A GitHub stack as one item of the list: what it is, how far it got, what waits on you, and
- * Merge for the ready run at the bottom. Opened, it lists its members top to bottom, each the
- * usual card with its details, on a numbered rail down to the base branch.
+ * Merge for the ready run at the bottom, all counted over every member Prowl knows. Opened, it
+ * lists the members this section shows top to bottom, each the usual card with its details, on
+ * a numbered rail down to the base branch, and says how many are elsewhere or unknown.
  */
-export function StackItem({ members, snapshot, card }: StackItemProps) {
+export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
   const listId = useId();
   const first = members[0];
   if (!first?.stack) return null;
@@ -89,9 +92,11 @@ export function StackItem({ members, snapshot, card }: StackItemProps) {
           {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
         </IconButton>
       </div>
-      <GitHubLink class="stack-item__title" href={first.url}>
-        {size > 1 ? t('stackTitle', first.title, formatNumber(size - 1)) : first.title}
-      </GitHubLink>
+      {/* The link opens the bottom PR, so it is named by that PR alone. */}
+      <p class="stack-item__title">
+        <GitHubLink href={first.url}>{first.title}</GitHubLink>
+        {size > 1 && t('stackAndMore', formatNumber(size - 1))}
+      </p>
       <div class="stack-item__bar" role="img" aria-label={t('stackBar', String(number), summary)}>
         {members.map((pr) => (
           <span key={pr.id} data-state={stackState(pr)} />
@@ -109,8 +114,13 @@ export function StackItem({ members, snapshot, card }: StackItemProps) {
       {open && (
         <>
           <ol id={listId} class="pr-list stack-item__list" reversed>
-            {[...members].reverse().map(card)}
+            {[...shown].reverse().map(card)}
           </ol>
+          {members.length > shown.length && (
+            <p class="stack-item__note">
+              {countMessage(members.length - shown.length, 'stackElsewhereOne', 'stackElsewhere')}
+            </p>
+          )}
           {members.length < size && (
             <p class="stack-item__note">
               {countMessage(size - members.length, 'stackMissingOne', 'stackMissing')}
@@ -137,6 +147,8 @@ function TurnChips({ snapshot, members }: { snapshot: Snapshot; members: PullReq
           icon={<BellIcon size={12} />}
           title={t('yourTurnSection')}
         >
+          {/* The chip is a status, not a button: it says whose move it is. */}
+          <span class="sr-only">{t('yourTurnPrefix')} </span>
           {text}
         </Badge>
       ))}

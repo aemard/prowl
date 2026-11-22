@@ -2732,17 +2732,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ 等 $P2$ 個",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "顯示堆疊 #$P1$ 的拉取請求",
     "placeholders": {
@@ -2937,5 +2926,32 @@
   },
   "aiExplainAgain": {
     "message": "重新解釋"
+  },
+  "stackAndMore": {
+    "message": " 等 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "此堆疊另有 $P1$ 個未在此顯示：在其他區段中，或被篩選隱藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "此堆疊另有 $P1$ 個未在此顯示：在其他區段中，或被篩選隱藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "輪到你："
   }
 }

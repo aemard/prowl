@@ -2732,17 +2732,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, et $P2$ autres",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Afficher les pull requests de la pile #$P1$",
     "placeholders": {
@@ -2937,5 +2926,32 @@
   },
   "aiExplainAgain": {
     "message": "Expliquer à nouveau"
+  },
+  "stackAndMore": {
+    "message": ", et $P1$ autres",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ autre de cette pile n’est pas affichée ici : une autre section ou le filtre l’écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ autres de cette pile ne sont pas affichées ici : une autre section ou le filtre les écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "À vous :"
   }
 }

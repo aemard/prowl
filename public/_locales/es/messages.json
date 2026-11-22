@@ -2732,17 +2732,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, y $P2$ más",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Mostrar las pull requests de la pila #$P1$",
     "placeholders": {
@@ -2937,5 +2926,32 @@
   },
   "aiExplainAgain": {
     "message": "Explicar de nuevo"
+  },
+  "stackAndMore": {
+    "message": ", y $P1$ más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ más de esta pila no se muestra aquí: está en otra sección o la oculta el filtro.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ más de esta pila no se muestran aquí: están en otra sección o las oculta el filtro.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Tu turno:"
   }
 }

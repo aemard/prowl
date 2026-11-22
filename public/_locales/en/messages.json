@@ -3223,18 +3223,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, and $P2$ more",
-    "description": "Extension text: $P1$, and $P2$ more",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Show the pull requests of stack #$P1$",
     "description": "Extension text: Show the pull requests of stack #$P1$",
@@ -3376,8 +3364,8 @@
     "description": "Extension text: Merge now"
   },
   "stackMergeQueue": {
-    "message": "Add to the merge queue",
-    "description": "Extension text: Add to the merge queue"
+    "message": "Add to merge queue",
+    "description": "Extension text: Add to merge queue"
   },
   "stackMerged": {
     "message": "Merged",
@@ -3460,5 +3448,36 @@
   "aiExplainAgain": {
     "message": "Explain again",
     "description": "Extension text: Explain again"
+  },
+  "stackAndMore": {
+    "message": ", and $P1$ more",
+    "description": "Extension text: , and $P1$ more",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ more in this stack is not shown here: another section or the filter has it.",
+    "description": "Extension text: $P1$ more in this stack is not shown here: another section or the filter has it.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ more in this stack are not shown here: another section or the filter has them.",
+    "description": "Extension text: $P1$ more in this stack are not shown here: another section or the filter has them.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Your turn:",
+    "description": "Extension text: Your turn:"
   }
 }

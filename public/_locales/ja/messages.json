@@ -2732,17 +2732,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ ほか $P2$ 件",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "スタック #$P1$ のプルリクエストを表示",
     "placeholders": {
@@ -2937,5 +2926,32 @@
   },
   "aiExplainAgain": {
     "message": "もう一度説明"
+  },
+  "stackAndMore": {
+    "message": " ほか $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "あなたの番："
   }
 }

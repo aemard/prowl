@@ -4,7 +4,7 @@ import { activityKey } from '../../lib/activity';
 import { t } from '../../lib/i18n';
 import type { PullRequest, SectionKind } from '../../lib/model';
 import { sectionLabel } from '../../lib/sectionLabel';
-import { listItems } from '../../lib/stacks';
+import { listItems, stackMembers } from '../../lib/stacks';
 import { isMuted, isSeen, isSnoozed } from '../../lib/storage/prLocal';
 import { turnIn } from '../../lib/turn/whoseTurn';
 import {
@@ -22,11 +22,10 @@ import {
   SearchIcon,
 } from '../components/icons';
 import type { IconComponent } from '../components/icons/Icon';
+import { lazy } from '../components/lazy';
 import { PullRequestCard } from '../components/PullRequestCard';
 import { RepoGroup } from '../components/RepoGroup';
 import { SectionCoverageNotice } from '../components/SectionCoverageNotice';
-import { StackItem } from '../components/StackItem';
-import { TurnSummary } from '../components/TurnSummary';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { pollState } from '../state/store';
@@ -37,6 +36,10 @@ import {
   pullRequestsOf,
   toggleFolded,
 } from './ListState';
+
+// Not every list has a stack or shows Your turn: both load on first use, out of the startup chunk.
+const StackItem = lazy(() => import('../components/StackItem').then((m) => m.StackItem));
+const TurnSummary = lazy(() => import('../components/TurnSummary').then((m) => m.TurnSummary));
 
 /**
  * Per section kind: its icon and short name in the section bar (a custom section shows its own
@@ -140,7 +143,13 @@ function ShownRequests({ data }: { data: LoadedListData }) {
       item.kind === 'pr' ? (
         card(item.pr)
       ) : (
-        <StackItem key={item.id} members={item.members} snapshot={data.snap} card={card} />
+        <StackItem
+          key={item.id}
+          members={stackMembers(Object.values(data.snap.pullRequests), item.id)}
+          shown={item.members}
+          snapshot={data.snap}
+          card={card}
+        />
       ),
     );
   return (

@@ -2732,17 +2732,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ 等 $P2$ 个",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "显示堆栈 #$P1$ 的拉取请求",
     "placeholders": {
@@ -2937,5 +2926,32 @@
   },
   "aiExplainAgain": {
     "message": "重新解释"
+  },
+  "stackAndMore": {
+    "message": " 等 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "轮到你："
   }
 }
