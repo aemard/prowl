@@ -344,7 +344,7 @@ case-insensitively.
 | `ci_passed` | checks `success` after CI last concluded `failure` (pending polls in between, see below) | null | `next.fetchedAt` | head SHA + CI outcome ordinal |
 | `approved`, `changes_requested`, `review_new` | a review id not in prev, state approved / changes requested / commented (dismissed: nothing), not by the viewer | reviewer | `submittedAt` | review id |
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
-| `ready_to_merge` | `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
+| `ready_to_merge` | auto-merge is off and `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
 | `your_turn` | `whoseTurn` becomes `you` and no other event of this poll is about the PR (the more precise one already says why) | null | `next.fetchedAt` | reason + since |
 
@@ -439,7 +439,8 @@ says who has to move. Closed PRs and drafts are nobody's. On the viewer's own PR
 failing CI, changes requested after the last push (a bot's too: they block the merge), conflicts,
 a review comment or an issue comment after the last push that is neither the viewer's nor a
 bot's (`isBot`, from GraphQL: Copilot code review and CodeRabbit comment after every push), then
-ready to merge with write access are the viewer's move; otherwise it waits on checks or reviewers. On someone else's PR:
+ready to merge with write access are the viewer's move, unless auto-merge is on: a ready PR with
+`autoMerge` is nobody's move (`auto_merge`), GitHub merges it; otherwise it waits on checks or reviewers. On someone else's PR:
 a review requested of the viewer, or a push after the viewer requested changes, is the
 viewer's move; a request to one of their teams is the team's; otherwise the author's. `since`
 is the push, review or comment that started the wait. "Last push" is the head commit's
