@@ -298,7 +298,9 @@ empty instead of failing reviewers and rules; a PR that is gone or hidden throws
 
 ## Actions
 
-`src/lib/github/actions.ts` holds what the panel changes on GitHub, as named operations so the E2E
+`src/lib/github/reviewActions.ts` (reviews and comments), `mergeActions.ts` (merge, auto-merge,
+merge queue) and `maintenanceActions.ts` (re-run, draft toggle, update branch) hold what the panel
+changes on GitHub, as named operations so the E2E
 mock can dispatch on them and each request's variables say what it does. Each function takes the
 client and a PR node id, resolves once GitHub confirmed and throws `GitHubError` otherwise.
 
@@ -895,7 +897,7 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
 
 ## Re-run, draft toggle and local actions
 
-- **Re-run failed checks** (`rerunFailedChecks`, `src/lib/github/actions.ts`): `query
+- **Re-run failed checks** (`rerunFailedChecks`, `src/lib/github/maintenanceActions.ts`): `query
   ProwlFailedSuites` lists the head commit's check suites; failed suites (FAILURE, TIMED_OUT,
   STARTUP_FAILURE) that belong to an Actions run get `POST /repos/{o}/{r}/actions/runs/{id}/
   rerun-failed-jobs` (one per run), other apps' suites `POST .../check-suites/{id}/rerequest`.

@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { jsonResponse } from '../../../tests/fixtures/http';
-import { rerunFailedChecks } from './actions';
 import { createGitHubClient } from './client';
+import { rerunFailedChecks } from './maintenanceActions';
 
 it('reads every check-suite page before restarting failed runs', async () => {
   let reads = 0;

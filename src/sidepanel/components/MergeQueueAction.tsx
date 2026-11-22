@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { dequeuePullRequest, enqueuePullRequest } from '../../lib/github/actions';
+import { dequeuePullRequest, enqueuePullRequest } from '../../lib/github/mergeActions';
 import { formatNumber, t } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
