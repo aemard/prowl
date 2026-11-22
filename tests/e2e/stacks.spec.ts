@@ -1,11 +1,5 @@
 import { defaultSettings } from '../../src/lib/storage/settings';
-import {
-  detailNode,
-  detailResponse,
-  headCommit,
-  prNode,
-  searchResponse,
-} from '../fixtures/github';
+import { detailNode, detailResponse, headCommit, prNode, searchResponse } from '../fixtures/github';
 import { expect, saveScreenshot, test } from './fixtures';
 
 const TITLES = [
