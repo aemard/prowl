@@ -85,8 +85,12 @@ in-memory updates that the next snapshot replaces.
    currently on screen, other unsnoozed PRs, and snoozed PRs; otherwise oldest reads win.
    Deferred PRs keep their previous facts and the date they were read, and are listed in
    `snapshot.mergeStateDue`; new PRs have unknown merge facts until read. Search updates
-   continue for all PRs. Facts and their date never cross a change of the PR's search data (a new
-   head, review, check, comment): such a PR starts unknown, and `ProwlMergeState` selects
+   continue for all PRs. A date never crosses a change of the PR's search data: such a PR is read
+   again. Its facts cross only a change that cannot move GitHub's verdict (a comment, a label, the
+   title, requested reviewers: `carriedMergeFacts`), so a ready PR does not leave "Your turn" and
+   come back as news while its read is pending; a new head, base, check, review, conversation
+   count or draft flag starts it unknown. A same-head answer GitHub is still computing (`UNKNOWN`)
+   keeps the carried facts and leaves the PR due. `ProwlMergeState` selects
    `headRefOid` so facts computed for another head are dropped (the poll leaves that PR
    unknown and unread, a card refresh keeps what the card had).
 4. Open PRs present in the previous snapshot but missing now are fetched by id
@@ -1074,8 +1078,8 @@ link opens through `GitHubLink`, so only `env.webUrl` URLs; no diff is fetched i
 `mergeStateAt` is the date the PR's merge facts were actually read; facts carried over from the
 previous poll keep it. `mergeStateDue` lists the PRs whose facts are aged, deferred or unknown,
 without inventing a date; it labels cards, while facts and dates alone decide what a poll reads.
-A read (poll or card) clears its due id; neither facts nor date cross a change of the search data,
-the head included. Two of the 20 merge-read slots are reserved for the oldest pending facts so
+A read (poll or card) clears its due id; a date never crosses a change of the search data, and
+facts cross only changes that cannot move GitHub's verdict (see the poll steps above). Two of the 20 merge-read slots are reserved for the oldest pending facts so
 continuous visible hints cannot starve all other PRs. These are budgets, not refresh guarantees.
 The header names list freshness; expanded details omit routine merge verification age and cached/due narration. Detail cache keys include the head and base, and old-head details are
 not presented as the current checks while a replacement loads or fails. Search-cache comparisons

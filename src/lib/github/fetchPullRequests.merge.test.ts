@@ -83,7 +83,7 @@ describe('fetchPullRequests', () => {
       expect(next.mergeStateDue).toBeUndefined();
     });
 
-    it('drops the facts and the date of a PR whose search facts changed, read or not', async () => {
+    it('keeps the facts of a PR whose title changed, without their date, until it is read', async () => {
       const nodes = Array.from({ length: 21 }, (_, i) => prNode({ number: i + 1 }));
       const previous = {
         pullRequests: Object.fromEntries(
@@ -93,7 +93,8 @@ describe('fetchPullRequests', () => {
       };
       const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': nodes }) });
       const first = await fetchPullRequests(client, settings(), previous);
-      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe('unknown');
+      // A title cannot move GitHub's verdict: a ready PR stays ready while its read is pending.
+      expect(first.pullRequests[prId(21)]?.mergeStateStatus).toBe('blocked');
       expect(first.mergeStateAt[prId(21)]).toBeUndefined();
       expect(first.mergeStateDue).toEqual([prId(21)]);
     });
@@ -179,6 +180,19 @@ describe('fetchPullRequests', () => {
       const result = await fetchPullRequests(client, settings(), previous);
       expect(result.pullRequests[node.id]?.mergeStateStatus).toBe('behind');
       expect(result.mergeStateAt).toEqual({});
+    });
+
+    it('keeps the facts of a ready PR GitHub is still computing for the same head', async () => {
+      const node = prNode({ number: 1, mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN' });
+      const ready = { ...mapped(node), mergeable: 'mergeable', mergeStateStatus: 'clean' } as const;
+      const { client } = setup({ ProwlSearch: bySearch({ 'author:@me': [node] }) });
+      const result = await fetchPullRequests(client, settings(), {
+        pullRequests: { [node.id]: { ...ready, title: 'Before a comment' } },
+        mergeStateAt: {},
+      });
+      expect(result.pullRequests[node.id]).toMatchObject({ mergeStateStatus: 'clean' });
+      expect(result.mergeStateAt[node.id]).toBeUndefined();
+      expect(result.mergeStateDue).toEqual([node.id]);
     });
 
     it('fails the poll on a rejected token', async () => {
