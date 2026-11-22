@@ -55,6 +55,8 @@ test('a rejected token: banner with a way back in, the list stays readable', asy
 }) => {
   const panel = await openPanel();
   await expect(card(panel)).toBeVisible();
+  // Settle the poll that opening the panel may start: an explicit poll joins one in flight.
+  await poll();
   await expect(panel.getByRole('alert')).toHaveCount(0);
 
   failWith({ status: 401, body: { message: 'Bad credentials' } });
@@ -124,6 +126,8 @@ test('rate limited: banner with the reset time, no retry, the list stays readabl
 }) => {
   const panel = await openPanel();
   await expect(card(panel)).toBeVisible();
+  // Settle the poll that opening the panel may start: an explicit poll joins one in flight.
+  await poll();
 
   const reset = Math.floor(Date.now() / 1000) + 25 * 60;
   failWith({
@@ -150,6 +154,8 @@ test('a GitHub error: banner with its message, and Retry now recovers', async ({
 }) => {
   const panel = await openPanel();
   await expect(card(panel)).toBeVisible();
+  // Settle the poll that opening the panel may start: an explicit poll joins one in flight.
+  await poll();
 
   failWith({ status: 502, body: { message: 'Bad gateway' } });
   await poll();
@@ -176,6 +182,8 @@ test('offline: banner counts down to the retry, the list stays readable', async 
 }) => {
   const panel = await openPanel();
   await expect(card(panel)).toBeVisible();
+  // Settle the poll that opening the panel may start: an explicit poll joins one in flight.
+  await poll();
 
   // Stopping the mock closes its port: the next request is refused, as with no connection.
   await github.stop();
