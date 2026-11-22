@@ -45,7 +45,7 @@ function useMergeControls(pr: PullRequest) {
     );
     setConfirming(false);
     if (merged) setTitle(null);
-    else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
+    else void sendToBackground({ type: 'poll', reason: 'change' });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
     const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>

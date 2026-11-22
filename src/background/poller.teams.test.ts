@@ -128,7 +128,7 @@ describe('poll', () => {
         consecutiveFailures: 1,
         nextAllowedAt: at(reset),
       });
-      await poll({ force: true });
+      await poll({ reason: 'user' });
       expect(teamCalls).toBe(1);
       later(20 * MINUTE);
       await poll();

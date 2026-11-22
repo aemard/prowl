@@ -110,27 +110,37 @@ export const BUCKET: Record<string, CheckItemState> = {
 };
 
 /**
+ * Pending states that mean the check executes now (or waits for a runner): `IN_PROGRESS` and
+ * `QUEUED` check runs, `PENDING` commit statuses (a CI service reports one when it starts). A
+ * `PENDING`, `WAITING` or `REQUESTED` check run (concurrency, a deployment review, a fork
+ * workflow awaiting approval) and an `EXPECTED` status (a required check nothing reported yet)
+ * wait on something that may never come.
+ */
+const RUNNING_RUNS = ['IN_PROGRESS', 'QUEUED'];
+const RUNNING_STATUSES = ['PENDING'];
+
+/**
  * Summary of the head commit's checks, from the per-state counts. The state is derived from
  * the counts rather than read from `statusCheckRollup.state`, which reports a cancelled run
  * as a failure and changes when `contexts` is selected in the same query.
  */
-function mapChecks(counts: StateCount[]): CheckSummary {
-  const summary: CheckSummary = {
-    state: 'none',
-    total: 0,
-    passed: 0,
-    failed: 0,
-    pending: 0,
-    neutral: 0,
+function mapChecks(runs: StateCount[], statuses: StateCount[]): CheckSummary {
+  const summary = { total: 0, passed: 0, failed: 0, pending: 0, neutral: 0 };
+  let running = 0;
+  const add = (counts: StateCount[], runningStates: string[]) => {
+    for (const { state, count } of counts) {
+      summary[BUCKET[state] ?? 'neutral'] += count;
+      summary.total += count;
+      if (runningStates.includes(state)) running += count;
+    }
   };
-  for (const { state, count } of counts) {
-    summary[BUCKET[state] ?? 'neutral'] += count;
-    summary.total += count;
-  }
-  if (summary.failed > 0) summary.state = 'failure';
-  else if (summary.pending > 0) summary.state = 'pending';
-  else if (summary.total > 0) summary.state = 'success';
-  return summary;
+  add(runs, RUNNING_RUNS);
+  add(statuses, RUNNING_STATUSES);
+  let state: CheckSummary['state'] = 'none';
+  if (summary.failed > 0) state = 'failure';
+  else if (summary.pending > 0) state = 'pending';
+  else if (summary.total > 0) state = 'success';
+  return { ...summary, state, running };
 }
 
 const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
@@ -251,10 +261,10 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
     // A head commit that failed to load counts as the last activity: a read error alone never
     // hides a PR that something recently happened on.
     lastCommitAt: head?.committedDate ?? node.updatedAt,
-    checks: mapChecks([
-      ...(contexts?.checkRunCountsByState ?? []),
-      ...(contexts?.statusContextCountsByState ?? []),
-    ]),
+    checks: mapChecks(
+      contexts?.checkRunCountsByState ?? [],
+      contexts?.statusContextCountsByState ?? [],
+    ),
     ...mapMergeState(node),
     ...mapConversation(node),
     // A search result does not carry the ClosedEvent: closed PRs get their closer from

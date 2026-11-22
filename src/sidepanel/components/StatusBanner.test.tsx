@@ -81,7 +81,7 @@ describe('StatusBanner', () => {
     expect(status.textContent).not.toContain('Last updated');
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', reason: 'user' });
   });
 
   it('shows a busy retry while a poll runs and counts down as time passes', () => {

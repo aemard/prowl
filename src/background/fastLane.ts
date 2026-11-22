@@ -1,73 +1,100 @@
 /**
- * Near-real-time news between polls, from the `inbox` alarm (every minute):
- * - a conditional read of the notifications inbox (`checkInbox`); a change in a pull request
- *   thread starts a poll at once. Off for tokens that cannot read the inbox (fine-grained ones,
- *   or a 403/404) for the browser session.
- * - while CI runs on a listed pull request, a poll every minute, so a red or green build shows
- *   up within a minute (third-party CI never reaches the inbox).
- * Also a poll when Chrome comes back to the foreground after the list aged past the interval.
+ * Near-real-time news between polls, from the `inbox` alarm (every minute). It only asks for
+ * polls; whether one runs is the cadence policy's call (`pollVerdict`), like every other trigger.
+ * - a conditional read of the notifications inbox (`checkInbox`), no more often than GitHub's
+ *   `X-Poll-Interval`; a pull request thread updated since the last check asks for an `inbox`
+ *   poll. Off for tokens that cannot read the inbox (fine-grained ones, or a 403/404) for the
+ *   browser session.
+ * - while CI runs on a listed pull request that changed in the last hour (`ciWatched`), a `ci`
+ *   poll, so a red or green build shows up within a minute (third-party CI never reaches the
+ *   inbox).
+ * Also a `focus` poll when Chrome comes back to the foreground.
  */
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
-import { GitHubError } from '../lib/github/errors';
+import { GitHubError, isPollBudgetFailure } from '../lib/github/errors';
 import { checkInbox } from '../lib/github/notifications';
-import type { AuthState, Snapshot } from '../lib/model';
+import type { AuthState, PollState } from '../lib/model';
+import { withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
-import { getItems } from '../lib/storage/storage';
-import { INBOX_ALARM, poll } from './poller';
-
-export { INBOX_ALARM };
+import { getItems, withLock } from '../lib/storage/storage';
+import { isWaiting } from '../lib/time/backoff';
+import { ciWatched, pollVerdict } from '../lib/time/cadence';
+import { poll } from './poller';
+import { clearAlarms, IDLE, iso, recordPollFailure } from './pollState';
 
 const STATE = 'inbox';
-/** CI-driven polls run when the list is at least this old (alarms fire about once a minute). */
-const CI_POLL_MS = 50_000;
 
-type InboxState = { lastModified: string | null; off?: true };
+/**
+ * `chrome.storage.session` key `inbox`: GitHub's `Last-Modified` of the last answer, when the
+ * next check may run (`X-Poll-Interval` after the last one), and whether the lane is off.
+ */
+type InboxState = { lastModified: string | null; nextAt?: string; off?: true };
 
-async function inboxChanged(auth: AuthState): Promise<boolean> {
+interface LaneContext {
+  auth: AuthState;
+  state: PollState;
+  interval: number;
+  /** When the alarm was due: `X-Poll-Interval` counts from there, so alarm jitter never skips. */
+  at: number;
+}
+
+async function inboxChanged({ auth, state, interval, at }: LaneContext): Promise<boolean> {
   if (auth.tokenType === 'fine_grained') return false;
   const stored = (await chrome.storage.session.get<{ [STATE]?: InboxState }>(STATE))[STATE];
-  if (stored?.off) return false;
+  // `isWaiting` ignores a wait over an hour long: the clock went back since it was stored.
+  if (stored?.off || isWaiting(stored?.nextAt ?? null, at)) return false;
   try {
     const client = createGitHubClient({ token: auth.token, apiUrl: env.apiUrl });
-    const { changed, lastModified } = await checkInbox(client, stored?.lastModified ?? null);
-    await chrome.storage.session.set({ [STATE]: { lastModified } });
+    const { changed, lastModified, pollSeconds } = await checkInbox(
+      client,
+      stored?.lastModified ?? null,
+    );
+    await chrome.storage.session.set({
+      [STATE]: { lastModified, nextAt: iso(at + pollSeconds * 1000) },
+    });
     return changed;
   } catch (error) {
+    if (!(error instanceof GitHubError)) throw error;
     // A token without inbox access stops asking for this browser session.
-    if (error instanceof GitHubError && ['forbidden', 'not_found'].includes(error.kind))
+    if (['forbidden', 'not_found'].includes(error.kind))
       await chrome.storage.session.set({ [STATE]: { lastModified: null, off: true } });
+    // A rejected token or an exhausted budget holds every poll, as if a poll had met it.
+    if (isPollBudgetFailure(error.kind))
+      await withLock('prowl:poll', async () => {
+        await withSignedIn(auth, () => recordPollFailure(error, state, Date.now(), interval));
+      });
     return false;
   }
 }
 
-const listed = (snapshot: Snapshot) =>
-  [...new Set(Object.values(snapshot.sections).flat())].flatMap(
-    (id) => snapshot.pullRequests[id] ?? [],
-  );
-
-/** CI is running on a listed open pull request, and the list is a minute old. */
-function ciRunning(snapshot: Snapshot | undefined, now: number): boolean {
-  if (!snapshot || now - Date.parse(snapshot.fetchedAt) < CI_POLL_MS) return false;
-  return listed(snapshot).some((pr) => pr.state === 'open' && pr.checks.state === 'pending');
-}
-
-/** Runs on the `inbox` alarm. Never rejects. */
-export async function checkFastLane(): Promise<void> {
+/** Runs on the `inbox` alarm (`at`: its scheduled time). Never rejects. */
+export async function checkFastLane(at = Date.now()): Promise<void> {
   try {
-    const { auth, snapshot } = await getItems(['auth', 'snapshot']);
+    const { auth, snapshot, pollState, settings } = await getItems([
+      'auth',
+      'snapshot',
+      'pollState',
+      'settings',
+    ]);
     if (!auth) return;
-    if ((await inboxChanged(auth)) || ciRunning(snapshot, Date.now()))
-      await poll({ afterCurrent: true });
+    const state = pollState ?? IDLE;
+    const interval = normalizeSettings(settings).pollIntervalMinutes;
+    // Ask GitHub nothing while no poll may run; a rejected token also stops this alarm (it
+    // outlived the poll alarm on versions that cleared only that one).
+    const verdict = pollVerdict('inbox', state, null, interval, Date.now());
+    if (!verdict.run) {
+      if (verdict.why === 'unauthorized') await withSignedIn(auth, clearAlarms);
+      return;
+    }
+    if (await inboxChanged({ auth, state, interval, at })) await poll({ reason: 'inbox' });
+    else if (ciWatched(snapshot, Date.now())) await poll({ reason: 'ci' });
   } catch (error) {
     console.error('Prowl: the fast lane failed', error);
   }
 }
 
-/** A Chrome window got focus: poll when the list is older than the poll interval. */
+/** A Chrome window got focus: a `focus` poll (it runs when the list is older than the interval). */
 export async function onChromeFocused(windowId: number): Promise<void> {
-  if (windowId === chrome.windows.WINDOW_ID_NONE) return;
-  const { snapshot, settings } = await getItems(['snapshot', 'settings']);
-  const age = Date.now() - Date.parse(snapshot?.fetchedAt ?? '');
-  if (!(age < normalizeSettings(settings).pollIntervalMinutes * 60_000)) await poll();
+  if (windowId !== chrome.windows.WINDOW_ID_NONE) await poll({ reason: 'focus' });
 }

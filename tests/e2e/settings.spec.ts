@@ -224,7 +224,7 @@ test.describe('notifications', () => {
     const panel = await openPanel('#/settings');
     await panel.getByRole('switch', { name: 'Desktop notifications' }).click();
     const poll = () =>
-      panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
+      panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
     await poll();
 
     const ciFails = panel.getByRole('switch', { name: 'CI fails' });

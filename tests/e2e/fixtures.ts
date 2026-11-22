@@ -33,7 +33,7 @@ export interface ExtensionFixtures {
   seedStorage: (items: Record<string, unknown>) => Promise<void>;
   /** Stores `auth` for octocat (with `overrides`), as a sign-in would, and returns it. */
   signIn: (overrides?: Partial<AuthState>) => Promise<AuthState>;
-  /** Sends `{ type: 'poll', force: true }` from an extension page; resolves once it is done. */
+  /** Sends `{ type: 'poll', reason: 'user' }` from an extension page; resolves once it is done. */
   poll: () => Promise<void>;
 }
 
@@ -129,7 +129,7 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
     // Otherwise startup can overwrite seeded timestamps or make unexpected GitHub requests.
     const startup = await context.newPage();
     await startup.goto(`chrome-extension://${new URL(worker.url()).host}/sidepanel/index.html`);
-    await startup.evaluate(() => chrome.runtime.sendMessage({ type: 'poll' }));
+    await startup.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'panel' }));
     await startup.close();
     const settings = defaultSettings();
     settings.sections = settings.sections.map((section) => ({
@@ -183,7 +183,7 @@ export const test = base.extend<ExtensionFixtures, { github: MockGitHub }>({
         sender = await context.newPage();
         await sender.goto(`chrome-extension://${extensionId}/sidepanel/index.html#/`);
       }
-      await sender.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
+      await sender.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
     });
     await sender?.close();
   },

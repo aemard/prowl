@@ -54,7 +54,7 @@ export function StatusBanner() {
           onClick={() =>
             action.type === 'reauthenticate'
               ? navigate('onboarding')
-              : void sendToBackground({ type: 'poll', force: true })
+              : void sendToBackground({ type: 'poll', reason: 'user' })
           }
         >
           {action.label}

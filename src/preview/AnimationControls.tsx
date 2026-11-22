@@ -25,10 +25,10 @@ export function AnimationControls() {
     try {
       if (!simulatePullRequest(kind)) {
         simulatePullRequest('new');
-        await poll({ force: true });
+        await poll({ reason: 'user' });
         simulatePullRequest(kind);
       }
-      await poll({ force: true });
+      await poll({ reason: 'user' });
     } catch {
       setError(t('previewUpdateFailed'));
     } finally {

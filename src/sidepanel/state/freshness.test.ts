@@ -3,8 +3,6 @@ import { buildAuth, buildPollState, buildSnapshot } from '../../test/panel';
 import { refreshIfStale } from './freshness';
 import { auth, pollState, snapshot } from './store';
 
-const NOW = Date.parse('2026-10-06T12:00:00.000Z');
-
 describe('refreshIfStale', () => {
   afterEach(() => {
     auth.value = undefined;
@@ -18,27 +16,20 @@ describe('refreshIfStale', () => {
     return () => send.mock.calls.map(([message]) => message);
   };
 
-  it('forces a poll when the list is missing or older than a minute', () => {
+  it('asks for a panel poll, never a forced one: the worker decides whether it runs', () => {
     const calls = sent();
     auth.value = buildAuth();
-    refreshIfStale(NOW);
     snapshot.value = buildSnapshot('2026-10-04T12:00:00.000Z');
-    refreshIfStale(NOW);
-    expect(calls()).toEqual([
-      { type: 'poll', force: true },
-      { type: 'poll', force: true },
-    ]);
+    refreshIfStale();
+    expect(calls()).toEqual([{ type: 'poll', reason: 'panel' }]);
   });
 
-  it('leaves a fresh list, a running poll and a signed-out panel alone', () => {
+  it('leaves a running poll and a signed-out panel alone', () => {
     const calls = sent();
-    refreshIfStale(NOW);
+    refreshIfStale();
     auth.value = buildAuth();
-    snapshot.value = buildSnapshot('2026-10-06T11:59:30.000Z');
-    refreshIfStale(NOW);
-    snapshot.value = undefined;
     pollState.value = { ...buildPollState(), inFlight: true };
-    refreshIfStale(NOW);
+    refreshIfStale();
     expect(calls()).toEqual([]);
   });
 });

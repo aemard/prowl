@@ -125,7 +125,7 @@ test('a changed check becomes unseen without changing the PR activity date', asy
   github.onGraphQL('ProwlSearch', (variables) =>
     searchResponse([{ ...pr, commits: headCommit({ FAILURE: 1 }) }], variables),
   );
-  await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
+  await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
   await expect(card).toHaveAttribute('data-unseen', 'true');
   await expect(card.locator('time').first()).toHaveAttribute('datetime', pr.updatedAt);
   await expectNoA11yViolations(panel);

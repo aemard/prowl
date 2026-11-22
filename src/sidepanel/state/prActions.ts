@@ -47,7 +47,7 @@ export async function runPrAction(
       message: t('message2', typeof done === 'function' ? done() : done, prRef(pr)),
       tone: 'success',
     });
-    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
+    void sendToBackground({ type: 'poll', reason: 'change' });
     return true;
   } catch (error) {
     if (auth.value !== session) return false;
