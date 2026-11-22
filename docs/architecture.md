@@ -510,7 +510,9 @@ PR becomes the viewer's move or arrives as it (see [Diff engine](#diff-engine)).
 ### Stacks and merge queues
 
 Only GitHub's own stacked pull requests are stacks: the search reads `stackEntry { position
-stack { id number size baseRefName } }` into `PullRequest.stack`; PRs that merely target each
+stack { id number size baseRefName entries(first: 20) { … pullRequest { state } } } }` into
+`PullRequest.stack` (with `open` and `bottom`, the count and lowest position of its open entries,
+when all were listed); PRs that merely target each
 other's branches stay separate cards. Should GitHub refuse the search because the field is
 gone, `fetchSearch.ts` repeats it without the selection (`withoutStacks`) and the PRs list as
 outside any stack, so a change to that feature costs the stacks, never the list. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
@@ -524,7 +526,9 @@ move ("Your turn:" for screen readers, since the chip reads like an action), and
 Opened, it lists the members this section shows (after the filter) as the usual cards on a rail
 numbered by position, then how many are elsewhere (another section or the filter) and how many
 are in none of the viewer's sections.
-`stackSummary` finds the ready run from position 1; "Merge K of N" (or "Merge the whole stack")
+Members are the open ones (a PR merged a poll ago stays in the snapshot with its `stack`);
+`stackSummary` finds the ready run from the lowest open position (`bottom`, else 1), none
+missing, since GitHub merges every open PR below the one it is asked for; "Merge K of N" (or "Merge the whole stack")
 confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
 GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
 pinned to its head, `direct_merge` with a method or `merge_queue`) and follows

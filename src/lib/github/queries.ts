@@ -16,11 +16,16 @@
 
 const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
 
+/** Entries read per stack: a longer stack's open bottom is not known (`PullRequest.stack.bottom`). */
+const STACK_ENTRIES = 20;
+
 /**
  * GitHub stacks are recent: should GitHub rename or drop the field, `withoutStacks` lets the
- * searches go on without it (`fetchSearch.ts`) instead of failing every section.
+ * searches go on without it (`fetchSearch.ts`) instead of failing every section. The entries'
+ * states say where the open part of the stack starts, whatever Prowl's sections hold.
  */
-const STACK_ENTRY = 'stackEntry { position stack { id number size baseRefName } }';
+const STACK_ENTRY = `stackEntry { position stack { id number size baseRefName
+  entries(first: ${STACK_ENTRIES}) { totalCount nodes { position pullRequest { state } } } } }`;
 
 /**
  * One page of a section's search, without the merge facts of `MERGE_STATE_QUERY`. Team reviewers
@@ -206,7 +211,17 @@ export interface PullRequestNode {
   /** Null outside a GitHub stack; absent in older fixtures. */
   stackEntry?: {
     position: number;
-    stack: { id: string; number: number; size: number; baseRefName: string } | null;
+    stack: {
+      id: string;
+      number: number;
+      size: number;
+      baseRefName: string;
+      /** Absent in older fixtures. */
+      entries?: {
+        totalCount: number;
+        nodes: ({ position: number; pullRequest: { state: string } | null } | null)[] | null;
+      };
+    } | null;
   } | null;
   comments: Nodes<{ createdAt: string; author: TypedLogin | null }>;
   commits: Nodes<{

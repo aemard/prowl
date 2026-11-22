@@ -149,9 +149,18 @@ export interface PullRequest {
   /**
    * The GitHub stack this PR belongs to (GitHub's stacked pull requests, not a chain of branches
    * someone built by hand): which one, how many PRs, this one's place (1 merges first, into
-   * `base`). Absent outside a stack.
+   * `base`). Absent outside a stack. `open` and `bottom` (the lowest open position) come from
+   * GitHub's list of the stack's entries, absent when it was cut: a merged PR may keep its place.
    */
-  stack?: { id: string; number: number; size: number; position: number; base: string };
+  stack?: {
+    id: string;
+    number: number;
+    size: number;
+    position: number;
+    base: string;
+    open?: number;
+    bottom?: number;
+  };
   /** Merge methods the repository allows. */
   allowedMergeMethods: MergeMethod[];
   /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */

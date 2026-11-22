@@ -60,13 +60,14 @@ export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
   const listId = useId();
   const first = members[0];
   if (!first?.stack) return null;
-  const { id, number, size, base } = first.stack;
+  const { id, base } = first.stack;
+  const number = formatNumber(first.stack.number);
   const open = openStacks.value.includes(id);
-  const { counts, mergeable } = stackSummary(members);
+  const { counts, mergeable, total } = stackSummary(members);
   const top = mergeable.at(-1);
-  const summary = STATES.map(
-    ({ state, label }) => `${formatNumber(counts[state])} ${t(label)}`,
-  ).join(', ');
+  const summary = STATES.map(({ state, label }) =>
+    t('stackStateCount', formatNumber(counts[state]), t(label)),
+  ).join(t('listSeparator'));
   return (
     <li class="stack-item" data-stack-id={id}>
       <div class="stack-item__head">
@@ -77,14 +78,14 @@ export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
           {t(
             'stackHeading',
             first.repo.nameWithOwner,
-            String(number),
-            countMessage(size, 'pullCountOne', 'pullCountOther'),
+            number,
+            countMessage(total, 'pullCountOne', 'pullCountOther'),
             base,
           )}
         </span>
         <IconButton
           size="sm"
-          label={t(open ? 'stackHide' : 'stackShow', String(number))}
+          label={t(open ? 'stackHide' : 'stackShow', number)}
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           onClick={() => toggleStack(id)}
@@ -95,9 +96,9 @@ export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
       {/* The link opens the bottom PR, so it is named by that PR alone. */}
       <p class="stack-item__title">
         <GitHubLink href={first.url}>{first.title}</GitHubLink>
-        {size > 1 && t('stackAndMore', formatNumber(size - 1))}
+        {total > 1 && t('stackAndMore', formatNumber(total - 1))}
       </p>
-      <div class="stack-item__bar" role="img" aria-label={t('stackBar', String(number), summary)}>
+      <div class="stack-item__bar" role="img" aria-label={t('stackBar', number, summary)}>
         {members.map((pr) => (
           <span key={pr.id} data-state={stackState(pr)} />
         ))}
@@ -121,15 +122,15 @@ export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
               {countMessage(members.length - shown.length, 'stackElsewhereOne', 'stackElsewhere')}
             </p>
           )}
-          {members.length < size && (
+          {members.length < total && (
             <p class="stack-item__note">
-              {countMessage(size - members.length, 'stackMissingOne', 'stackMissing')}
+              {countMessage(total - members.length, 'stackMissingOne', 'stackMissing')}
             </p>
           )}
           <p class="stack-item__base">{t('stackBase', base)}</p>
         </>
       )}
-      {top?.viewerCanMerge && <StackMerge members={mergeable} top={top} size={size} />}
+      {top?.viewerCanMerge && <StackMerge members={mergeable} top={top} size={total} />}
     </li>
   );
 }
@@ -174,7 +175,7 @@ function StackMerge({
     <div class="stack-item__merge">
       <span id={why}>{all ? t('stackCanMergeAll') : t('stackCanMerge', count)}</span>
       <span id={`${why}-what`} hidden>
-        {t('stackMergeAria', count, String(top.stack?.number))}
+        {t('stackMergeAria', count, formatNumber(top.stack?.number ?? 0))}
       </span>
       <Button
         variant="primary"

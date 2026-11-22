@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildPullRequest } from '../test/panel';
 import type { PullRequest } from './model';
-import { listItems, stackState, stackSummary } from './stacks';
+import { listItems, stackMembers, stackState, stackSummary } from './stacks';
 
 const member = (position: number, overrides: Partial<PullRequest> = {}) =>
   buildPullRequest({
@@ -43,6 +43,26 @@ describe('stackSummary', () => {
     expect(stackSummary(members)).toEqual({
       counts: { ready: 3, progress: 0, blocked: 1, draft: 0 },
       mergeable: members.slice(0, 2),
+      total: 4,
+    });
+  });
+
+  it('leaves out a member that just merged and runs from the lowest open position', () => {
+    const stack = { id: 'S7', number: 7, size: 4, base: 'main', open: 3, bottom: 2 };
+    const merged = member(1, { ...ready, state: 'merged', stack: { ...stack, position: 1 } });
+    const second = member(2, { ...ready, stack: { ...stack, position: 2 } });
+    const third = member(3, { ...ready, stack: { ...stack, position: 3 } });
+    const members = stackMembers([third, merged, second], 'S7');
+    expect(members).toEqual([second, third]);
+    expect(stackSummary(members)).toMatchObject({ mergeable: [second, third], total: 3 });
+  });
+
+  it('merges nothing when GitHub says a lower open member is not in the list', () => {
+    const stack = { id: 'S7', number: 7, size: 4, base: 'main', open: 4, bottom: 1 };
+    expect(stackSummary([member(2, { ...ready, stack: { ...stack, position: 2 } })])).toEqual({
+      counts: { ready: 1, progress: 0, blocked: 0, draft: 0 },
+      mergeable: [],
+      total: 4,
     });
   });
 

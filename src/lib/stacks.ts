@@ -36,12 +36,14 @@ export function listItems(prs: readonly PullRequest[]): ListItem[] {
 }
 
 /**
- * Every pull request of stack `id` that Prowl knows, from all sections (`Snapshot.pullRequests`),
- * bottom to top: a section shows only some of them, the stack's progress counts them all.
+ * Every open pull request of stack `id` that Prowl knows, from all sections
+ * (`Snapshot.pullRequests`), bottom to top: a section shows only some of them, the stack's
+ * progress counts them all. One just merged or closed stays in the snapshot for a poll, still
+ * with its `stack`: it is no longer part of what is left to merge.
  */
 export function stackMembers(prs: Iterable<PullRequest>, id: string): PullRequest[] {
   return [...prs]
-    .filter((pr) => pr.stack?.id === id)
+    .filter((pr) => pr.stack?.id === id && pr.state === 'open')
     .sort((a, b) => (a.stack?.position ?? 0) - (b.stack?.position ?? 0));
 }
 
@@ -59,16 +61,20 @@ export function stackState(pr: PullRequest): StackState {
 }
 
 /**
- * The stack's counts, and the members that can merge now: the ready run from the bottom
- * (positions 1, 2, ... with none missing), which GitHub merges in one go by merging the top one.
+ * The stack's counts, how many of its pull requests are open (`total`), and the members that can
+ * merge now: the ready run from the lowest open position (GitHub's `bottom`, else 1) with none
+ * missing, which GitHub merges in one go by merging the top one. A bottom Prowl does not know
+ * (in none of the viewer's sections) merges nothing: GitHub would merge it unseen.
  */
 export function stackSummary(members: readonly PullRequest[]) {
   const counts: Record<StackState, number> = { ready: 0, progress: 0, blocked: 0, draft: 0 };
   for (const pr of members) counts[stackState(pr)] += 1;
+  const stack = members[0]?.stack;
+  const bottom = stack?.bottom ?? 1;
   const mergeable: PullRequest[] = [];
   for (const pr of members) {
-    if (pr.stack?.position !== mergeable.length + 1 || stackState(pr) !== 'ready') break;
+    if (pr.stack?.position !== bottom + mergeable.length || stackState(pr) !== 'ready') break;
     mergeable.push(pr);
   }
-  return { counts, mergeable };
+  return { counts, mergeable, total: stack?.open ?? stack?.size ?? members.length };
 }

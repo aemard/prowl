@@ -3605,5 +3605,21 @@
         "content": "$1"
       }
     }
+  },
+  "stackStateCount": {
+    "message": "$P1$ $P2$",
+    "description": "Extension text: $P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": ", ",
+    "description": "Extension text: , "
   }
 }

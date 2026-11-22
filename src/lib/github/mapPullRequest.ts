@@ -212,6 +212,20 @@ function mapConversation(node: PullRequestNode) {
   };
 }
 
+/**
+ * How many of the stack's pull requests are open and the lowest open position, when GitHub
+ * listed every entry. An entry whose pull request the token cannot see counts as open.
+ */
+function openEntries(stack: NonNullable<NonNullable<PullRequestNode['stackEntry']>['stack']>) {
+  const nodes = stack.entries?.nodes;
+  if (!nodes || nodes.length !== stack.entries?.totalCount || nodes.some((node) => !node))
+    return {};
+  const open = nodes.flatMap((node) =>
+    node && (node.pullRequest?.state ?? 'OPEN') === 'OPEN' ? [node.position] : [],
+  );
+  return open.length > 0 ? { open: open.length, bottom: Math.min(...open) } : { open: 0 };
+}
+
 /** GitHub's stack membership; nothing outside a stack. */
 function mapStack({ stackEntry: entry }: PullRequestNode): Pick<PullRequest, 'stack'> {
   return entry?.stack
@@ -222,6 +236,7 @@ function mapStack({ stackEntry: entry }: PullRequestNode): Pick<PullRequest, 'st
           size: entry.stack.size,
           position: entry.position,
           base: entry.stack.baseRefName,
+          ...openEntries(entry.stack),
         },
       }
     : {};

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
-import { t } from '../../lib/i18n';
+import { formatNumber, t } from '../../lib/i18n';
 import type { PullRequest, Turn } from '../../lib/model';
 import { stackState } from '../../lib/stacks';
 import type { ActivityKind } from '../state/prActivity';
@@ -138,7 +138,7 @@ export function PullRequestCard({
             {refreshingMerge && t('updatingMergeStatus2')}
             {teamRequest && `. ${teamRequest}`}
             {pr.stack &&
-              `. ${t('stackPosition', String(pr.stack.position), String(pr.stack.size), String(pr.stack.number))}`}
+              `. ${t('stackPosition', formatNumber(pr.stack.position), formatNumber(pr.stack.size), formatNumber(pr.stack.number))}`}
           </span>
         </div>
         {expanded && <PullRequestDetails pr={pr} id={detailId} />}
