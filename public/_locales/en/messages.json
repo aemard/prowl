@@ -3709,5 +3709,9 @@
   "moreConversationsOnGitHub": {
     "message": "This pull request has more conversations than Prowl reads; open ones may be only on GitHub.",
     "description": "Extension text: This pull request has more conversations than Prowl reads; open ones may be only on GitHub."
+  },
+  "aiNeedsClick": {
+    "message": "Chrome downloads the on-device model only right after a click. Click again to download it.",
+    "description": "Extension text: Chrome downloads the on-device model only right after a click. Click again to download it."
   }
 }

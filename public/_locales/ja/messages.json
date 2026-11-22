@@ -3157,5 +3157,8 @@
   },
   "moreConversationsOnGitHub": {
     "message": "このプルリクエストには Prowl が読み込める以上の会話があります。未解決の会話が GitHub にのみある可能性があります。"
+  },
+  "aiNeedsClick": {
+    "message": "Chrome はクリックの直後にのみオンデバイスモデルをダウンロードします。もう一度クリックしてダウンロードしてください。"
   }
 }

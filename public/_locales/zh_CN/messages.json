@@ -3157,5 +3157,8 @@
   },
   "moreConversationsOnGitHub": {
     "message": "此拉取请求的对话多于 Prowl 读取的数量；未解决的对话可能只在 GitHub 上。"
+  },
+  "aiNeedsClick": {
+    "message": "Chrome 仅在点击后立即下载设备端模型。请再次点击以下载。"
   }
 }

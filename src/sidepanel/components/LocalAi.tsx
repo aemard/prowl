@@ -1,7 +1,9 @@
 import { useEffect } from 'preact/hooks';
+import { taskAvailability } from '../../lib/ai/builtInAi';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { type AiTask, aiAnswers, aiState, answerKey, checkAi, runAi } from '../state/localAi';
+import { detailOf } from '../state/prDetail';
 import { Button } from './ui/Button';
 import './LocalAi.css';
 
@@ -11,7 +13,7 @@ const HEADINGS: Record<AiTask, 'aiSummaryHeading' | 'aiExplanationHeading'> = {
 };
 
 function Answer({ pr, task }: { pr: PullRequest; task: AiTask }) {
-  const answer = aiAnswers.value[answerKey(pr, task)];
+  const answer = aiAnswers.value[answerKey(pr, task, detailOf(pr).detail)];
   if (!answer || answer.loading) return null;
   if (answer.error)
     return (
@@ -31,27 +33,41 @@ function Answer({ pr, task }: { pr: PullRequest; task: AiTask }) {
 
 /**
  * Summaries and CI explanations from Chrome's on-device AI, in an expanded card, when the user
- * turned it on in Settings and Chrome has the model ready. Nothing leaves the device but the
- * GitHub read of the PR's own text.
+ * turned it on in Settings and Chrome has a model ready. Each button shows when the model of its
+ * task is on the device or can be downloaded (`taskAvailability`): a click downloads it then.
+ * Nothing leaves the device but the GitHub read of the PR's own text.
  */
 export function LocalAi({ pr }: { pr: PullRequest }) {
-  const { availability } = aiState.value;
+  const { availability, models } = aiState.value;
+  const { detail } = detailOf(pr);
   useEffect(() => {
     if (availability === undefined) void checkAi();
   }, [availability]);
-  if (availability !== 'available') return null;
-  const loading = (task: AiTask) => aiAnswers.value[answerKey(pr, task)]?.loading === true;
+  if (availability !== 'available' || !models) return null;
+  const offered = (task: AiTask) => taskAvailability(task, models) !== 'unavailable';
+  const entry = (task: AiTask) => aiAnswers.value[answerKey(pr, task, detail)];
+  const loading = (task: AiTask) => entry(task)?.loading === true;
   // An answer for the PR as it is now can be asked for again: the model may answer better.
-  const answered = (task: AiTask) => aiAnswers.value[answerKey(pr, task)]?.text !== undefined;
+  const answered = (task: AiTask) => entry(task)?.text !== undefined;
   const busy = loading('summary') || loading('failure');
   return (
     <div class="local-ai" aria-busy={busy}>
       <fieldset class="local-ai__actions" aria-label={t('aiAssistant')}>
-        <Button size="sm" loading={loading('summary')} onClick={() => void runAi(pr, 'summary')}>
-          {answered('summary') ? t('aiSummarizeAgain') : t('aiSummarize')}
-        </Button>
-        {pr.checks.state === 'failure' && (
-          <Button size="sm" loading={loading('failure')} onClick={() => void runAi(pr, 'failure')}>
+        {offered('summary') && (
+          <Button
+            size="sm"
+            loading={loading('summary')}
+            onClick={() => void runAi(pr, 'summary', detail)}
+          >
+            {answered('summary') ? t('aiSummarizeAgain') : t('aiSummarize')}
+          </Button>
+        )}
+        {pr.checks.state === 'failure' && offered('failure') && (
+          <Button
+            size="sm"
+            loading={loading('failure')}
+            onClick={() => void runAi(pr, 'failure', detail)}
+          >
             {answered('failure') ? t('aiExplainAgain') : t('aiExplainFailure')}
           </Button>
         )}

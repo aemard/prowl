@@ -3157,5 +3157,8 @@
   },
   "moreConversationsOnGitHub": {
     "message": "Cette pull request a plus de conversations que Prowl n'en lit ; certaines ouvertes ne sont peut-être que sur GitHub."
+  },
+  "aiNeedsClick": {
+    "message": "Chrome ne télécharge le modèle sur l'appareil que juste après un clic. Cliquez à nouveau pour le télécharger."
   }
 }

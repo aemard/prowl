@@ -104,4 +104,48 @@ describe('LocalAi', () => {
     expect(screen.queryByRole('region', { name: 'Summary' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Summarize' })).toBeTruthy();
   });
+
+  it('offers the explanation only where its model can run, and downloads it from the click', async () => {
+    const create = vi.fn(async () => ({ prompt: async () => 'Flaky test.', destroy: () => {} }));
+    g.Summarizer = {
+      availability: async () => 'available',
+      create: async () => ({ summarize: async () => '', destroy: () => {} }),
+    };
+    g.LanguageModel = { availability: async () => 'unavailable', create };
+    const view = render(<LocalAi pr={buildPullRequest({ checks: failing })} />);
+    await screen.findByRole('button', { name: 'Summarize' });
+    expect(screen.queryByRole('button', { name: 'Explain the failure' })).toBeNull();
+    view.unmount();
+
+    // The Prompt API can be downloaded: the click creates the session, before GitHub answers.
+    g.LanguageModel = { availability: async () => 'downloadable', create };
+    aiState.value = {};
+    let answer: (response: Response) => void = () => {};
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>((resolve) => (answer = resolve))),
+    );
+    render(<LocalAi pr={buildPullRequest({ checks: failing })} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Explain the failure' }));
+    expect(create).toHaveBeenCalledTimes(1);
+    answer(jsonResponse({ data: { node: textNode({}, [failingRunText()]) } }));
+    expect(
+      (await screen.findByRole('region', { name: 'Why the checks fail' })).textContent,
+    ).toContain('Flaky test.');
+    delete g.Summarizer;
+  });
+
+  it('says to click again when Chrome wants a gesture for the download', async () => {
+    g.LanguageModel = {
+      availability: async () => 'available',
+      create: async () => {
+        throw new DOMException('Requires a user gesture', 'NotAllowedError');
+      },
+    };
+    render(<LocalAi pr={buildPullRequest()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Summarize' }));
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Chrome downloads the on-device model only right after a click. Click again to download it.',
+    );
+  });
 });
