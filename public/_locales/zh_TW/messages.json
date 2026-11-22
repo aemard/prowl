@@ -2836,15 +2836,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "方式"
-  },
-  "stackMergeNow": {
-    "message": "立即合併"
-  },
-  "stackMergeQueue": {
-    "message": "加入合併佇列"
-  },
   "stackMerged": {
     "message": "已合併"
   },
@@ -3079,5 +3070,70 @@
   },
   "listSeparator": {
     "message": "、"
+  },
+  "stackMergeLater": {
+    "message": "位於堆疊 #$P1$：當它及其下方的所有提取要求都就緒後，從堆疊合併。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "合併到此處"
+  },
+  "stackMergeUpToAria": {
+    "message": "將堆疊 #$P2$ 合併到 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "將 $P1$ 個提取要求加入合併佇列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "將 $P1$ 個提取要求加入合併佇列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "開啟後堆疊已變更。請檢查上面的提取要求，然後再次確認。"
+  },
+  "stackMergeChecking": {
+    "message": "正在檢查 $P1$ 的合併方式…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl 無法從這裡將此堆疊合併到 $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ 透過合併佇列合併：它們按此順序加入佇列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

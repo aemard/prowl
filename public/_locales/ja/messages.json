@@ -2836,15 +2836,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "方法"
-  },
-  "stackMergeNow": {
-    "message": "今すぐマージ"
-  },
-  "stackMergeQueue": {
-    "message": "マージキューに追加"
-  },
   "stackMerged": {
     "message": "マージしました"
   },
@@ -3079,5 +3070,70 @@
   },
   "listSeparator": {
     "message": "、"
+  },
+  "stackMergeLater": {
+    "message": "スタック #$P1$ 内: このプルリクエストと下のすべてのプルリクエストの準備ができたら、スタックからマージされます。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "ここまでマージ"
+  },
+  "stackMergeUpToAria": {
+    "message": "スタック #$P2$ を $P1$ までマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "$P1$ 件のプルリクエストをマージキューに追加",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "$P1$ 件のプルリクエストをマージキューに追加",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "開いた後にスタックが変更されました。上のプルリクエストを確認して、もう一度確定してください。"
+  },
+  "stackMergeChecking": {
+    "message": "$P1$ のマージ方法を確認しています…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl からはこのスタックを $P1$ にマージできません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ はマージキューでマージされます。この順番でキューに入ります。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -6,7 +6,7 @@
  */
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
 import { countMessage, t } from '../../lib/i18n';
-import type { PullRequest, PullRequestDetail } from '../../lib/model';
+import type { MergeMethod, PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 
 export interface MergeLine {
@@ -152,7 +152,7 @@ export type MergePlacement = 'merge' | 'auto' | 'all';
  * offered only when ready (the queue is no way around the rules), and auto-merge is GitHub's
  * "Merge when ready", which queues the PR once its requirements pass. Unverified merge facts
  * offer nothing until a refresh fills them in. GitHub still has the last word; a refusal shows
- * its reason in a toast and requests a refresh.
+ * its reason in the dialog and requests a refresh.
  */
 export function mergeOptions(pr: PullRequest, placement: MergePlacement = 'all', queue = false) {
   const ready = isReadyToMerge(pr);
@@ -173,3 +173,11 @@ export function mergeOptions(pr: PullRequest, placement: MergePlacement = 'all',
       pr.viewerCanEnableAutoMerge === true,
   };
 }
+
+/**
+ * The method a merge goes with: the first of `preferred` that `methods` allows (the user's pick,
+ * then the repository's default), else the first allowed one. `methods` are the detail's, which
+ * the base branch's rules narrowed (`PullRequestDetail.allowedMergeMethods`), where known.
+ */
+export const pickMethod = (methods: MergeMethod[], ...preferred: (MergeMethod | undefined)[]) =>
+  [...preferred, ...methods].find((m): m is MergeMethod => m !== undefined && methods.includes(m));

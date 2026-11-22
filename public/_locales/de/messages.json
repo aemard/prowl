@@ -2836,15 +2836,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "Wie"
-  },
-  "stackMergeNow": {
-    "message": "Jetzt mergen"
-  },
-  "stackMergeQueue": {
-    "message": "Zur Merge-Warteschlange hinzufügen"
-  },
   "stackMerged": {
     "message": "Gemergt"
   },
@@ -3079,5 +3070,70 @@
   },
   "listSeparator": {
     "message": ", "
+  },
+  "stackMergeLater": {
+    "message": "In Stack #$P1$: Er wird über den Stack zusammengeführt, sobald er und alle Pull Requests darunter bereit sind.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "Bis hierhin zusammenführen"
+  },
+  "stackMergeUpToAria": {
+    "message": "Stack #$P2$ bis $P1$ zusammenführen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "$P1$ Pull Request zur Merge-Warteschlange hinzufügen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "$P1$ Pull Requests zur Merge-Warteschlange hinzufügen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "Der Stack hat sich seit dem Öffnen geändert. Prüfen Sie die Pull Requests oben und bestätigen Sie erneut."
+  },
+  "stackMergeChecking": {
+    "message": "Prüfe, wie $P1$ zusammenführt …",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl kann diesen Stack von hier aus nicht in $P1$ zusammenführen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ wird über eine Merge-Warteschlange zusammengeführt: Sie kommen in dieser Reihenfolge hinein.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

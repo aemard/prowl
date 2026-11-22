@@ -2,7 +2,8 @@
  * Merging the bottom of a GitHub stack. Only GitHub's asynchronous merge API merges stacked pull
  * requests: asked to merge one, it merges it with every open pull request below it, atomically,
  * or adds them all to the merge queue. Prowl asks for the top of the ready part, pinned to the
- * head the user saw, then follows the operation until GitHub says how it ended. Both endpoints
+ * head the user saw (the API pins no other: `StackMergeDialog` checks the lower heads against the
+ * snapshot), then follows the operation until GitHub says how it ended. Both endpoints
  * are documented under REST version 2026-03-10 only, so they ask for it.
  */
 import { t } from '../i18n';

@@ -2,8 +2,9 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/pre
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import type { PullRequest } from '../../lib/model';
-import { buildAuth, buildSnapshotOf } from '../../test/panel';
+import { buildAuth, buildDetail, buildSnapshotOf } from '../../test/panel';
 import { toasts } from '../components/ui/Toast';
+import { detailKey, details } from '../state/prDetail';
 import { openStacks } from '../state/stacks';
 import { auth, snapshot } from '../state/store';
 import { ListView } from './List';
@@ -33,6 +34,7 @@ describe('GitHub stacks in the list', () => {
   afterEach(() => {
     openStacks.value = [];
     toasts.value = [];
+    details.value = {};
     auth.value = undefined;
     vi.unstubAllGlobals();
   });
@@ -71,6 +73,9 @@ describe('GitHub stacks in the list', () => {
   it('merges the ready bottom of the stack through GitHub, after a confirmation', async () => {
     const fetch = vi.fn(async () => jsonResponse({ status: 'merged' }));
     vi.stubGlobal('fetch', fetch);
+    // The top's detail, as read for the dialog: no merge queue on main.
+    const top = member(2, ready);
+    details.value = { [top.id]: { key: detailKey(top), loading: false, detail: buildDetail() } };
     render(<ListView />);
     fireEvent.click(
       await screen.findByRole('button', {

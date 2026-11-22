@@ -2836,15 +2836,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "Comment"
-  },
-  "stackMergeNow": {
-    "message": "Merger maintenant"
-  },
-  "stackMergeQueue": {
-    "message": "Ajouter à la file de merge"
-  },
   "stackMerged": {
     "message": "Mergées"
   },
@@ -3079,5 +3070,70 @@
   },
   "listSeparator": {
     "message": ", "
+  },
+  "stackMergeLater": {
+    "message": "Dans la pile #$P1$ : elle se fusionne depuis la pile quand elle et toutes les pull requests en dessous sont prêtes.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "Fusionner jusqu'ici"
+  },
+  "stackMergeUpToAria": {
+    "message": "Fusionner la pile #$P2$ jusqu'à $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "Ajouter $P1$ pull request à la file de fusion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "Ajouter $P1$ pull requests à la file de fusion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "La pile a changé depuis l'ouverture. Vérifiez les pull requests ci-dessus, puis confirmez à nouveau."
+  },
+  "stackMergeChecking": {
+    "message": "Vérification du mode de fusion de $P1$…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl ne peut pas fusionner cette pile dans $P1$ d'ici.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ fusionne via une file de fusion : elles y entrent dans cet ordre.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

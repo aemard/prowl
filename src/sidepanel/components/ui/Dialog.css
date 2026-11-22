@@ -64,6 +64,18 @@
   overflow-wrap: anywhere;
 }
 
+.ui-dialog__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--color-danger-fg);
+}
+
+.ui-dialog__error > svg {
+  flex: none;
+  margin-top: 2px;
+}
+
 .ui-dialog__footer {
   display: flex;
   flex-wrap: wrap;

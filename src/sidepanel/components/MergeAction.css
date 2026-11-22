@@ -18,3 +18,9 @@
   flex: none;
   margin-top: var(--space-0-5);
 }
+
+/* Why a stacked PR's card has no Merge of its own yet. */
+.merge-action__note {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}

@@ -43,6 +43,7 @@ export function MergeQueueAction({ pr, queue, placement, method }: MergeQueueAct
         </span>
         <Button
           size="sm"
+          aria-label={t('message2', t('removeFromMergeQueue'), prRef(pr))}
           disabled={busy}
           onClick={() =>
             void runPrAction(pr, t('removeFromMergeQueue'), t('removedFromMergeQueue'), (c) =>
@@ -80,7 +81,7 @@ export function MergeQueueAction({ pr, queue, placement, method }: MergeQueueAct
   );
 }
 
-/** A button that confirms `label` in a dialog, then runs it as the PR's action. */
+/** A button that confirms `label` in a dialog, then runs it as the PR's action; a refusal stays in the dialog. */
 function Confirmed({
   pr,
   label,
@@ -95,9 +96,16 @@ function Confirmed({
   run: (client: GitHubClient) => Promise<void>;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string>();
   const pending = pendingActions.value[pr.id];
+  const close = () => {
+    if (pending !== undefined) return;
+    setConfirming(false);
+    setError(undefined);
+  };
   const confirm = async () => {
-    if (await runPrAction(pr, label, done, run)) setConfirming(false);
+    setError(undefined);
+    if (await runPrAction(pr, label, done, run, setError)) setConfirming(false);
   };
   return (
     <>
@@ -113,12 +121,13 @@ function Confirmed({
       </Button>
       <Dialog
         open={confirming}
-        onClose={() => pending === undefined && setConfirming(false)}
+        onClose={close}
         title={label}
         description={description}
+        error={error}
         footer={
           <>
-            <Button disabled={pending !== undefined} onClick={() => setConfirming(false)}>
+            <Button disabled={pending !== undefined} onClick={close}>
               {t('cancel')}
             </Button>
             <Button variant="primary" loading={pending === label} onClick={() => void confirm()}>

@@ -3339,18 +3339,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "How",
-    "description": "Extension text: How"
-  },
-  "stackMergeNow": {
-    "message": "Merge now",
-    "description": "Extension text: Merge now"
-  },
-  "stackMergeQueue": {
-    "message": "Add to merge queue",
-    "description": "Extension text: Add to merge queue"
-  },
   "stackMerged": {
     "message": "Merged",
     "description": "Extension text: Merged"
@@ -3621,5 +3609,79 @@
   "listSeparator": {
     "message": ", ",
     "description": "Extension text: , "
+  },
+  "stackMergeLater": {
+    "message": "In stack #$P1$: it merges from the stack once it and every pull request below it are ready.",
+    "description": "Extension text: In stack #$P1$: it merges from the stack once it and every pull request below it are ready.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "Merge up to here",
+    "description": "Extension text: Merge up to here"
+  },
+  "stackMergeUpToAria": {
+    "message": "Merge stack #$P2$ up to $P1$",
+    "description": "Extension text: Merge stack #$P2$ up to $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "Add $P1$ pull request to the merge queue",
+    "description": "Extension text: Add $P1$ pull request to the merge queue",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "Add $P1$ pull requests to the merge queue",
+    "description": "Extension text: Add $P1$ pull requests to the merge queue",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "The stack changed since this opened. Check the pull requests above, then confirm again.",
+    "description": "Extension text: The stack changed since this opened. Check the pull requests above, then confirm again."
+  },
+  "stackMergeChecking": {
+    "message": "Checking how $P1$ merges…",
+    "description": "Extension text: Checking how $P1$ merges…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl cannot merge this stack into $P1$ from here.",
+    "description": "Extension text: Prowl cannot merge this stack into $P1$ from here.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ merges through a merge queue: they join it in this order.",
+    "description": "Extension text: $P1$ merges through a merge queue: they join it in this order.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

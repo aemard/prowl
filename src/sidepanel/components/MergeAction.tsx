@@ -1,14 +1,16 @@
 import { setAutoMerge } from '../../lib/github/mergeActions';
-import { t } from '../../lib/i18n';
-import type { MergeMethod, PullRequest } from '../../lib/model';
+import { formatNumber, t } from '../../lib/i18n';
+import type { PullRequest } from '../../lib/model';
+import { stackMembers, stackSummary } from '../../lib/stacks';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
 import { detailOf } from '../state/prDetail';
-import { auth } from '../state/store';
+import { auth, snapshot } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import { GitMergeIcon } from './icons';
 import { MergeDialog, type MergeDialogProps, useMergeControls } from './MergeDialog';
 import { MergeQueueAction } from './MergeQueueAction';
-import { type MergePlacement, mergeOptions } from './mergeReadiness';
+import { type MergePlacement, mergeOptions, pickMethod } from './mergeReadiness';
+import { StackMergeButton } from './StackMergeDialog';
 import { Button } from './ui/Button';
 import './MergeAction.css';
 
@@ -17,7 +19,9 @@ import './MergeAction.css';
  * Merge before the review actions, auto-merge after them (`placement`). Nothing shows until the
  * card's detail says whether the base branch merges through a merge queue: a direct Merge there
  * is one GitHub refuses. With a queue, `MergeQueueAction` takes over; when the detail cannot be
- * read, a link to merge on GitHub stands in.
+ * read, a link to merge on GitHub stands in. A stacked PR merges only with its stack, through
+ * GitHub's asynchronous merge API (the GraphQL merge and auto-merge mutations refuse it), so its
+ * card offers `StackRoute` instead.
  */
 export function MergeAction({
   pr,
@@ -28,6 +32,13 @@ export function MergeAction({
 }) {
   const { detail, failed } = detailOf(pr);
   if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
+  if (pr.stack)
+    return (
+      <>
+        {placement !== 'auto' && <StackRoute pr={pr} />}
+        {placement !== 'merge' && <TurnOffAutoMerge pr={pr} />}
+      </>
+    );
   if (!detail)
     return failed && placement !== 'auto' ? (
       <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
@@ -40,7 +51,7 @@ export function MergeAction({
           pr={pr}
           queue={detail.mergeQueue}
           placement={placement}
-          method={pick(methods, pr.defaultMergeMethod)}
+          method={pickMethod(methods, pr.defaultMergeMethod)}
         />
       ) : methods.length > 0 ? (
         <DirectMerge pr={pr} detail={detail} methods={methods} placement={placement} />
@@ -52,10 +63,6 @@ export function MergeAction({
   );
 }
 
-/** The first of `preferred` that `methods` allows, else the first allowed one. */
-const pick = (methods: MergeMethod[], ...preferred: (MergeMethod | undefined)[]) =>
-  [...preferred, ...methods].find((m): m is MergeMethod => m !== undefined && methods.includes(m));
-
 /** Merge (or "Merge without waiting", or "Enable auto-merge") and its confirmation. */
 function DirectMerge({
   pr,
@@ -64,7 +71,7 @@ function DirectMerge({
   placement,
 }: Omit<MergeDialogProps, 'method' | 'controls'>) {
   const controls = useMergeControls(pr, detail);
-  const method = pick(methods, controls.picked, pr.defaultMergeMethod);
+  const method = pickMethod(methods, controls.picked, pr.defaultMergeMethod);
   const { pending, setConfirming } = controls;
   const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
   if (!method || (!canMerge && !offerAutoMerge)) return null;
@@ -94,6 +101,32 @@ function DirectMerge({
         />
       )}
     </>
+  );
+}
+
+/**
+ * A stacked PR's Merge: GitHub's "merge up to here", which merges it with every open PR below it.
+ * Offered when it is part of the stack's ready run from the bottom; otherwise says why not.
+ */
+function StackRoute({ pr }: { pr: PullRequest }) {
+  const stack = pr.stack;
+  if (!stack) return null;
+  const members = stackMembers(Object.values(snapshot.value?.pullRequests ?? {}), stack.id);
+  const { mergeable, total } = stackSummary(members);
+  const upTo = mergeable.findIndex((member) => member.id === pr.id);
+  const top = mergeable[upTo];
+  const number = formatNumber(stack.number);
+  if (!top) return <span class="merge-action__note">{t('stackMergeLater', number)}</span>;
+  return (
+    <StackMergeButton
+      members={mergeable.slice(0, upTo + 1)}
+      top={top}
+      size={total}
+      icon={<GitMergeIcon size={12} />}
+      aria-label={t('stackMergeUpToAria', prRef(pr), number)}
+    >
+      {t('stackMergeUpTo')}
+    </StackMergeButton>
   );
 }
 

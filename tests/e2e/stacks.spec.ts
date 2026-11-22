@@ -1,5 +1,11 @@
 import { defaultSettings } from '../../src/lib/storage/settings';
-import { headCommit, prNode, searchResponse } from '../fixtures/github';
+import {
+  detailNode,
+  detailResponse,
+  headCommit,
+  prNode,
+  searchResponse,
+} from '../fixtures/github';
 import { expect, saveScreenshot, test } from './fixtures';
 
 const TITLES = [
@@ -49,6 +55,8 @@ test('a GitHub stack is one item: counts, members on a rail, and Merge for the r
       variables,
     ),
   );
+  // The base branch merges directly (no merge queue) with the repository's methods.
+  github.onGraphQL('ProwlPullRequestDetail', () => detailResponse(detailNode()));
   let merged: unknown;
   github.on('PUT', /^\/repos\/acme\/web\/pulls\/2472\/merge-async$/, ({ body }) => {
     merged = body;
@@ -76,9 +84,17 @@ test('a GitHub stack is one item: counts, members on a rail, and Merge for the r
   await expectNoA11yViolations(panel);
   await saveScreenshot(panel, 'stack');
 
+  // A member's own card merges only through the stack, up to itself.
+  await stack.getByRole('button', { name: 'Details for Add the payment session client' }).click();
+  await stack.getByRole('button', { name: 'Merge stack #7 up to acme/web#2471' }).click();
+  const upTo = panel.getByRole('dialog', { name: 'Merge 2 pull requests' });
+  await expect(upTo).toContainText('The 4 above stay open');
+  await upTo.getByRole('button', { name: 'Cancel' }).click();
+
   await stack.getByRole('button', { name: 'Merge 3 of 6' }).click();
   const dialog = panel.getByRole('dialog', { name: 'Merge 3 pull requests' });
   await expect(dialog).toContainText('The 3 above stay open');
+  await expect(dialog.getByRole('combobox', { name: 'Merge method' })).toBeVisible();
   await expectNoA11yViolations(panel);
   await dialog.getByRole('button', { name: 'Merge 3 pull requests' }).click();
   await expect(panel.getByText('Merged acme/web#2472')).toBeVisible();

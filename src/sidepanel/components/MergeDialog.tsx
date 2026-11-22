@@ -39,28 +39,47 @@ export function useMergeControls(pr: PullRequest, detail: PullRequestDetail) {
   const [picked, setPicked] = useState<MergeMethod>();
   // Per method, only once the user edits it: untouched, the field shows GitHub's own title.
   const [edited, setEdited] = useState<Partial<Record<MergeMethod, string>>>({});
+  // Why GitHub refused, shown in the dialog, which stays open to try again or cancel.
+  const [error, setError] = useState<string>();
   const pending = pendingActions.value[pr.id];
   const titleFor = (method: MergeMethod) =>
     edited[method] ?? defaultCommitTitle(pr, detail, method);
   const setTitle = (method: MergeMethod, title: string) =>
     setEdited((all) => ({ ...all, [method]: title }));
   // What is being sent cannot be taken back by closing the dialog.
-  const close = () => pending === undefined && setConfirming(false);
-  const merge = async (method: MergeMethod) => {
-    const merged = await runPrAction(pr, t('merge'), t('merged'), (client) =>
-      // Untouched, GitHub applies its own default, which is what the field showed.
-      mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title: edited[method] }),
-    );
+  const close = () => {
+    if (pending !== undefined) return;
     setConfirming(false);
-    if (merged) setEdited({});
+    setError(undefined);
+  };
+  const done = () => {
+    setConfirming(false);
+    setEdited({});
+  };
+  const merge = async (method: MergeMethod) => {
+    setError(undefined);
+    const merged = await runPrAction(
+      pr,
+      t('merge'),
+      t('merged'),
+      (client) =>
+        // Untouched, GitHub applies its own default, which is what the field showed.
+        mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title: edited[method] }),
+      setError,
+    );
+    if (merged) done();
     else void sendToBackground({ type: 'poll', reason: 'change' });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
-    const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>
-      setAutoMerge(client, pr.id, method, pr.headSha, edited[method]),
+    setError(undefined);
+    const enabled = await runPrAction(
+      pr,
+      t('enableAutoMerge'),
+      t('autoMergeIsOnFor'),
+      (client) => setAutoMerge(client, pr.id, method, pr.headSha, edited[method]),
+      setError,
     );
-    setConfirming(false);
-    if (enabled) setEdited({});
+    if (enabled) done();
   };
   return {
     confirming,
@@ -70,6 +89,7 @@ export function useMergeControls(pr: PullRequest, detail: PullRequestDetail) {
     titleFor,
     setTitle,
     pending,
+    error,
     close,
     merge,
     enableAutoMerge,
@@ -90,7 +110,7 @@ export interface MergeDialogProps {
 /** Confirms a direct merge or auto-merge: the blockers it skips, the method and commit title. */
 export function MergeDialog(props: MergeDialogProps) {
   const { pr, detail, methods, method, controls, placement } = props;
-  const { pending, close, merge, enableAutoMerge } = controls;
+  const { pending, error, close, merge, enableAutoMerge } = controls;
   const ref = prRef(pr);
   const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
   // The modal hides the blockers listed above the button: the dialog repeats them.
@@ -112,6 +132,7 @@ export function MergeDialog(props: MergeDialogProps) {
             ? t('mergeIntoNowOrLetGithubMergeItOnce', ref, pr.baseRefName)
             : t('mergeInto', ref, pr.baseRefName)
       }
+      error={error}
       footer={
         <MergeFooter
           methodLabel={methods.length === 1 ? METHODS[method] : t('merge')}

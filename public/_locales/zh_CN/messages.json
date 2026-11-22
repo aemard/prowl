@@ -2836,15 +2836,6 @@
       }
     }
   },
-  "stackMergeHow": {
-    "message": "方式"
-  },
-  "stackMergeNow": {
-    "message": "立即合并"
-  },
-  "stackMergeQueue": {
-    "message": "加入合并队列"
-  },
   "stackMerged": {
     "message": "已合并"
   },
@@ -3079,5 +3070,70 @@
   },
   "listSeparator": {
     "message": "、"
+  },
+  "stackMergeLater": {
+    "message": "位于堆栈 #$P1$：当它及其下方的所有拉取请求都就绪后，从堆栈合并。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "合并到此处"
+  },
+  "stackMergeUpToAria": {
+    "message": "将堆栈 #$P2$ 合并到 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "将 $P1$ 个拉取请求加入合并队列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "将 $P1$ 个拉取请求加入合并队列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "打开后堆栈已更改。请检查上面的拉取请求，然后再次确认。"
+  },
+  "stackMergeChecking": {
+    "message": "正在检查 $P1$ 的合并方式…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl 无法从这里将此堆栈合并到 $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ 通过合并队列合并：它们按此顺序加入队列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

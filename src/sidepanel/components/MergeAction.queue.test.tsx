@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { jsonResponse } from '../../../tests/fixtures/http';
+import { graphqlError, jsonResponse } from '../../../tests/fixtures/http';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { detailKey, details } from '../state/prDetail';
 import { MergeAction } from './MergeAction';
@@ -50,6 +50,22 @@ describe('merge queue', () => {
     expect(sent).toEqual([
       { operation: 'ProwlEnqueue', variables: { id: pr.id, oid: pr.headSha } },
     ]);
+  });
+
+  it('keeps the confirmation open with the reason when GitHub refuses', async () => {
+    stubGitHub(() =>
+      jsonResponse({ data: null, errors: [graphqlError('UNPROCESSABLE', 'Queue is full')] }),
+    );
+    onQueue(null);
+    fireEvent.click(screen.getByRole('button', { name: 'Add to merge queue acme/widgets#1' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add to merge queue' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add to merge queue' }));
+    await waitFor(() =>
+      expect(within(dialog).getByRole('alert').textContent).toBe('Queue is full'),
+    );
+    expect(toastTexts()).toEqual([]);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('can be cancelled, sending nothing', () => {
@@ -131,7 +147,7 @@ describe('merge queue', () => {
     expect(screen.getByRole('status').textContent).toBe(
       'In the merge queue: position 2, about 3 min',
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Remove from merge queue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove from merge queue acme/widgets#1' }));
     await waitFor(() => expect(sent.map((s) => s.operation)).toEqual(['ProwlDequeue']));
   });
 

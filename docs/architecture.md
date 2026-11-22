@@ -536,7 +536,16 @@ pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
 version that documents them. A 200 (already merged or queued) ends there; a 409 (a merge request
 is already pending, from another tab or device) names that operation's uuid, which Prowl follows
 as its own. GitHub merges the run atomically or not at all; the GraphQL merge mutation refuses
-stacked PRs.
+stacked PRs. The dialog reads the top's detail (`loadDetail`) like the card's Merge: with a merge
+queue on the base it only queues; otherwise it merges now with the methods the base branch's
+rules leave (`detail.allowedMergeMethods`, `pickMethod`); until the detail loads it waits, and
+when it cannot be read it links to GitHub. `merge-async` pins only the top's head (`sha`), so
+before sending the dialog compares every member's head with what it listed when it opened and,
+when one moved in the snapshot, shows the new list and asks to confirm again. Residual risk: a
+push to a lower member after the last poll merges as GitHub has it (its rules and checks still
+apply). A stacked PR's own card has no Merge, auto-merge or queue control of its own (all
+GraphQL, which refuses stacked PRs): it offers "Merge up to here", the same dialog for the
+ready run up to that PR, or says it merges from the stack once the PRs below it are ready.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
 details), a lone PR's merge control (`MergeQueueAction`) follows the readiness rules of Merge
@@ -866,8 +875,11 @@ signal (`state/store.ts`).
   GitHub's own for the method; an edit belongs to the method it was written for (switching shows
   the other method's title, switching back restores the edit). Multiple methods show a select;
   one method is named in confirmation, with focus on the first available field.
-  Mutations use the last polled `headSha`; GitHub refusals close the dialog, toast the reason,
-  preserve the choices and force a refresh. Successful merges toast and refresh as well.
+  Mutations use the last polled `headSha`; a GitHub refusal stays in the dialog (`Dialog`'s
+  `error`, a `role="alert"` above the footer: a toast would sit under the inert modal), keeps
+  the choices and forces a refresh; the merge queue confirmations and the stack merge do the
+  same. Successful merges close, toast and refresh. A dialog cannot be dismissed while its
+  action is sent.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
   reset when the token changes or goes away. `loadDetail(pr)` (`state/loadDetail.ts`, in the

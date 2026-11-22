@@ -232,20 +232,16 @@ test.describe('merge', () => {
     const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
     await dialog.getByRole('combobox', { name: 'Merge method' }).selectOption('squash');
     await dialog.getByRole('button', { name: 'Merge', exact: true }).click();
-    // The dialog closes so the toast is not hidden behind it.
-    await expect(dialog).toHaveCount(0);
-    await expect(toasts(panel)).toContainText(
-      'Merge failed: Head branch was modified. Review and try the merge again.',
+    // The reason stays in the dialog: a toast would sit under the modal.
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'Head branch was modified. Review and try the merge again.',
     );
     await expect(card(panel, API.title)).toHaveCount(1);
-    await expect(opener).toBeEnabled();
-    await expect(opener).not.toHaveAttribute('aria-busy', 'true');
     // The head moved, so the panel asks for a fresh copy of the pull request.
     await expect.poll(() => github.requestsFor(SEARCH).length).toBeGreaterThan(polls);
 
     // Trying again keeps the method that was chosen, and now works.
     refuse = false;
-    await opener.click();
     await expect(dialog.getByRole('combobox', { name: 'Merge method' })).toHaveValue('squash');
     await dialog.getByRole('button', { name: 'Merge', exact: true }).click();
     await expect(toasts(panel)).toContainText(`Merged ${API.ref}`);

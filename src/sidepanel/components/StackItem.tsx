@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useId, useState } from 'preact/hooks';
+import { useId } from 'preact/hooks';
 import { countMessage, formatNumber, type MessageKey, t } from '../../lib/i18n';
 import type { PullRequest, Snapshot, TurnReason } from '../../lib/model';
 import { type StackState, stackState, stackSummary } from '../../lib/stacks';
@@ -8,9 +8,8 @@ import { openStacks, toggleStack } from '../state/stacks';
 import { GitHubLink } from './GitHubLink';
 import { BellIcon, ChevronDownIcon, ChevronUpIcon } from './icons';
 import { StackIcon } from './icons/StackIcon';
-import { StackMergeDialog } from './StackMergeDialog';
+import { StackMergeButton, type StackMergeTarget } from './StackMergeDialog';
 import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
 import { IconButton } from './ui/IconButton';
 import './StackItem.css';
 
@@ -158,16 +157,7 @@ function TurnChips({ snapshot, members }: { snapshot: Snapshot; members: PullReq
 }
 
 /** The ready run at the bottom: how many can merge, and Merge behind its confirmation. */
-function StackMerge({
-  members,
-  top,
-  size,
-}: {
-  members: PullRequest[];
-  top: PullRequest;
-  size: number;
-}) {
-  const [merging, setMerging] = useState(false);
+function StackMerge({ members, top, size }: StackMergeTarget) {
   const why = useId();
   const all = members.length === size;
   const count = formatNumber(members.length);
@@ -177,22 +167,9 @@ function StackMerge({
       <span id={`${why}-what`} hidden>
         {t('stackMergeAria', count, formatNumber(top.stack?.number ?? 0))}
       </span>
-      <Button
-        variant="primary"
-        size="sm"
-        aria-describedby={`${why}-what`}
-        onClick={() => setMerging(true)}
-      >
+      <StackMergeButton members={members} top={top} size={size} aria-describedby={`${why}-what`}>
         {all ? t('stackMergeAll') : t('stackMergeSome', count, formatNumber(size))}
-      </Button>
-      {merging && (
-        <StackMergeDialog
-          members={members}
-          top={top}
-          size={size}
-          onClose={() => setMerging(false)}
-        />
-      )}
+      </StackMergeButton>
     </div>
   );
 }
