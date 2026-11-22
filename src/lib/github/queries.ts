@@ -17,6 +17,12 @@
 const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
 
 /**
+ * GitHub stacks are recent: should GitHub rename or drop the field, `withoutStacks` lets the
+ * searches go on without it (`fetchSearch.ts`) instead of failing every section.
+ */
+const STACK_ENTRY = 'stackEntry { position stack { id number size baseRefName } }';
+
+/**
  * One page of a section's search, without the merge facts of `MERGE_STATE_QUERY`. Team reviewers
  * are left out on purpose: every `Team` field needs the `read:org` scope, and selecting one fails
  * the whole query for a `repo`-only token.
@@ -67,7 +73,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           }
         }
         reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
-        stackEntry { position stack { id number size baseRefName } }
+        ${STACK_ENTRY}
         comments(last: 1) { nodes { createdAt author { __typename login } } }
         commits(last: 1) {
           nodes {
@@ -93,6 +99,9 @@ export const TEAM_SEARCH_QUERY = SEARCH_QUERY.replace(
   '... on User { login }',
   '... on User { login } ... on Team { slug organization { login } }',
 );
+
+/** `query` without its stack selection: pull requests then read as outside any stack. */
+export const withoutStacks = (query: string) => query.replace(STACK_ENTRY, '');
 
 /** The merge facts of open PRs: what GitHub computes per PR on every read (see the top). */
 export const MERGE_STATE_QUERY = /* GraphQL */ `

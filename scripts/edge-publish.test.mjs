@@ -67,4 +67,17 @@ describe('publishToEdge', () => {
       'answered 401',
     );
   });
+
+  it('fails clearly when Partner Center gives no operation id', async () => {
+    const upload = fakeCenter({ status: 202 });
+    await expect(run(upload)).rejects.toThrow('The upload was accepted without an operation id');
+    expect(upload.requests).toHaveLength(1);
+    const submission = fakeCenter(
+      { status: 202, location: 'op-1' },
+      { json: { status: 'Succeeded' } },
+      { status: 202 },
+    );
+    await expect(run(submission)).rejects.toThrow('The submission was accepted without');
+    expect(submission.requests.map(({ url }) => url)).not.toContain(`${BASE}/operations/null`);
+  });
 });

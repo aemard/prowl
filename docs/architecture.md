@@ -301,7 +301,9 @@ empty instead of failing reviewers and rules; a PR that is gone or hidden throws
 
 ## Actions
 
-`src/lib/github/actions.ts` holds what the panel changes on GitHub, as named operations so the E2E
+`src/lib/github/reviewActions.ts` (reviews and comments), `mergeActions.ts` (merge, auto-merge,
+merge queue) and `maintenanceActions.ts` (re-run, draft toggle, update branch) hold what the panel
+changes on GitHub, as named operations so the E2E
 mock can dispatch on them and each request's variables say what it does. Each function takes the
 client and a PR node id, resolves once GitHub confirmed and throws `GitHubError` otherwise.
 
@@ -467,7 +469,9 @@ PR becomes the viewer's move or arrives as it (see [Diff engine](#diff-engine)).
 
 Only GitHub's own stacked pull requests are stacks: the search reads `stackEntry { position
 stack { id number size baseRefName } }` into `PullRequest.stack`; PRs that merely target each
-other's branches stay separate cards. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
+other's branches stay separate cards. Should GitHub refuse the search because the field is
+gone, `fetchSearch.ts` repeats it without the selection (`withoutStacks`) and the PRs list as
+outside any stack, so a change to that feature costs the stacks, never the list. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
 turns a section's PRs into items: a lone PR, or one stack holding its members (bottom first),
 placed where the first member falls in the section's order. `StackItem` shows the stack's
 repository, number, size and base, the bottom PR's title, a bar and counts by `stackState`
@@ -893,6 +897,10 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
 ## Testing
 
 - Unit: Vitest + happy-dom + `src/test/chrome.ts`. Colocated `*.test.ts(x)`.
+- Contract: `tests/unit/githubSchema.test.ts` validates every GraphQL operation exported from
+  `src/lib/github/**` against GitHub's published schema, pinned in
+  `tests/fixtures/github-schema.graphql` (`pnpm schema:update` refreshes it; the weekly
+  `github-schema.yml` workflow checks the live one). Deprecated fields fail it.
 - E2E: `pnpm e2e` builds `dist/` and `dist-e2e/` (only `permissions.spec.ts` loads `dist/`, to
   check the manifest that ships). Playwright loads `dist-e2e/` (`vite build --mode e2e`) whose API and web URLs point to
   the mock server on `http://127.0.0.1:4010`. Seed auth/settings with the `seedStorage(items)`
@@ -907,7 +915,7 @@ deliberate change (the `commands` key of US-040, say) edits the lock, `docs/priv
 
 ## Re-run, draft toggle and local actions
 
-- **Re-run failed checks** (`rerunFailedChecks`, `src/lib/github/actions.ts`): `query
+- **Re-run failed checks** (`rerunFailedChecks`, `src/lib/github/maintenanceActions.ts`): `query
   ProwlFailedSuites` lists the head commit's check suites; failed suites (FAILURE, TIMED_OUT,
   STARTUP_FAILURE) that belong to an Actions run get `POST /repos/{o}/{r}/actions/runs/{id}/
   rerun-failed-jobs` (one per run), other apps' suites `POST .../check-suites/{id}/rerequest`.

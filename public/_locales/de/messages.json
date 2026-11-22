@@ -1197,9 +1197,6 @@
   "pullRequestsPerSection": {
     "message": "PRs pro Bereich"
   },
-  "appearance": {
-    "message": "Darstellung"
-  },
   "theme": {
     "message": "Design"
   },
@@ -1226,9 +1223,6 @@
   },
   "privacy": {
     "message": "Datenschutz"
-  },
-  "about": {
-    "message": "Über Prowl"
   },
   "settingsSections": {
     "message": "Einstellungsbereiche"
@@ -2568,9 +2562,6 @@
         "content": "$1"
       }
     }
-  },
-  "loadingConversations": {
-    "message": "Unterhaltungen werden geladen"
   },
   "noOpenConversations": {
     "message": "Keine offenen Unterhaltungen."

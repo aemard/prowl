@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
-import { mergePullRequest, setAutoMerge } from '../../lib/github/actions';
+import { mergePullRequest, setAutoMerge } from '../../lib/github/mergeActions';
 import { t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';

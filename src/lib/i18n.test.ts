@@ -35,6 +35,20 @@ describe('shipped message catalogs', () => {
       messages.add?.message.toLowerCase(),
     );
   });
+
+  it('ships only messages the code uses', () => {
+    const sources = import.meta.glob<string>(['../**/*.{ts,tsx}', '!../**/*.test.{ts,tsx}'], {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+    const code = Object.values(sources).join('\n');
+    // A key is used as a string literal (`t('key')`, a map of keys) or as `__MSG_key__`.
+    const unused = Object.keys(english).filter(
+      (key) => !new RegExp(`['"\`_]${key}['"\`_]`).test(code),
+    );
+    expect(unused).toEqual([]);
+  });
 });
 
 describe('Chrome internationalization', () => {

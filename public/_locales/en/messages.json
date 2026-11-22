@@ -1465,10 +1465,6 @@
     "message": "Pull requests per section",
     "description": "Extension text: Pull requests per section"
   },
-  "appearance": {
-    "message": "Appearance",
-    "description": "Extension text: Appearance"
-  },
   "theme": {
     "message": "Theme",
     "description": "Extension text: Theme"
@@ -1504,10 +1500,6 @@
   "privacy": {
     "message": "Privacy",
     "description": "Extension text: Privacy"
-  },
-  "about": {
-    "message": "About",
-    "description": "Extension text: About"
   },
   "settingsSections": {
     "message": "Settings sections",
@@ -3029,10 +3021,6 @@
         "content": "$1"
       }
     }
-  },
-  "loadingConversations": {
-    "message": "Loading conversations",
-    "description": "Extension text: Loading conversations"
   },
   "noOpenConversations": {
     "message": "No open conversations.",

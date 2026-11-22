@@ -4,9 +4,9 @@
  */
 import { t } from '../i18n';
 import type { ReviewThread } from '../model';
-import { messageOf } from './actions';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
+import { messageOf } from './reviewActions';
 
 export const THREADS_QUERY = /* GraphQL */ `
 query ProwlReviewThreads($id: ID!) {
