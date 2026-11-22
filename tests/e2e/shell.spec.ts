@@ -140,7 +140,7 @@ test.describe('signed in', () => {
     await expect(panel.getByRole('button', { name: 'Refresh' })).not.toHaveAttribute('aria-busy');
   });
 
-  test('refresh asks the service worker for a forced poll', async ({
+  test('refresh asks the service worker for an explicit poll', async ({
     openPanel,
     serviceWorker,
   }) => {
@@ -148,15 +148,15 @@ test.describe('signed in', () => {
       const received: unknown[] = [];
       Object.assign(globalThis, { received });
       chrome.runtime.onMessage.addListener((message) => {
-        // Visibility hints may accompany rendering; only a poll starts a refresh.
-        if (message?.type === 'poll') received.push(message);
+        // Opening the panel also asks for a `panel` poll, which the worker may skip.
+        if (message?.type === 'poll' && message.reason !== 'panel') received.push(message);
       });
     });
     const panel = await openPanel();
     await panel.getByRole('button', { name: 'Refresh' }).click();
     await expect
       .poll(() => serviceWorker.evaluate(() => (globalThis as { received?: unknown[] }).received))
-      .toEqual([{ type: 'poll', force: true }]);
+      .toEqual([{ type: 'poll', reason: 'user' }]);
   });
 
   test('opening the panel on a list older than a minute refreshes it at once', async ({

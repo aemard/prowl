@@ -4,7 +4,7 @@ import { mapPullRequest } from '../lib/github/mapPullRequest';
 import { defaultSettings } from '../lib/storage/settings';
 import { setItem, updateItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
-import { POLL_ALARM, scheduleAlarm } from './poller';
+import { POLL_ALARM, scheduleAlarms } from './pollState';
 import { registerBackground } from './register';
 
 const alarm = () => fakeChrome().__state.alarms.get(POLL_ALARM);
@@ -16,7 +16,7 @@ describe('registerBackground', () => {
   it('opens the side panel on action click and polls after install and startup', async () => {
     const spy = vi.spyOn(chrome.sidePanel, 'setPanelBehavior');
     registerBackground();
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     fakeChrome().runtime.onInstalled.emit({ reason: 'install' } as chrome.runtime.InstalledDetails);
     fakeChrome().runtime.onStartup.emit();
     expect(spy).toHaveBeenCalledTimes(2);
@@ -28,7 +28,7 @@ describe('registerBackground', () => {
 
   it('polls when the poll alarm fires', async () => {
     registerBackground();
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     fakeChrome().alarms.onAlarm.emit({ name: 'other' } as chrome.alarms.Alarm);
     await settle();
     expect(alarm()).toBeDefined();
@@ -79,7 +79,7 @@ describe('registerBackground', () => {
     await setItem('settings', { ...defaultSettings(), pollIntervalMinutes: 5 });
     await settle();
     expect(alarm()).toBeUndefined();
-    await scheduleAlarm(5);
+    await scheduleAlarms(5);
     await updateItem('settings', (settings) => ({
       ...defaultSettings(),
       ...settings,

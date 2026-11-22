@@ -58,7 +58,7 @@ describe('poll', () => {
       nextAllowedAt: at(NOW + 12 * MINUTE),
     });
 
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect(requests).toHaveLength(3);
     expect(await pollState()).toMatchObject({ consecutiveFailures: 3 });
   });
@@ -100,11 +100,11 @@ describe('poll', () => {
     });
 
     later(10 * MINUTE);
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect(requests).toHaveLength(1);
     later(10 * MINUTE);
     github();
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect(await pollState()).toMatchObject({ lastError: null, nextAllowedAt: null });
   });
 
@@ -120,7 +120,7 @@ describe('poll', () => {
       lastError: null,
       rateLimit: { remaining: 99 },
     });
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect(requests).toHaveLength(1);
   });
 
@@ -140,7 +140,7 @@ describe('poll', () => {
     expect(alarm()).toBeUndefined();
 
     github();
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect(await pollState()).toMatchObject({ lastError: null });
     expect(alarm()).toBeDefined();
   });
@@ -198,11 +198,11 @@ describe('poll', () => {
         ? { nodes: [closedNode(PR, { state: 'OPEN' })], rateLimit: graphqlRateLimit() }
         : searchResponse([]),
     );
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect((await getItem('snapshot'))?.pullRequests[PR]).toBeUndefined();
     expect(await getItem('prLocal')).toEqual(local);
     github();
-    await poll({ force: true });
+    await poll({ reason: 'user' });
     expect((await getItem('snapshot'))?.pullRequests[PR]).toBeDefined();
     expect(await getItem('prLocal')).toEqual(local);
   });

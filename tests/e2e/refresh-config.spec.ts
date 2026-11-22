@@ -35,7 +35,7 @@ test('applies a scope change made while the current search is blocked', async ({
   await serviceWorker.evaluate(() => {
     Object.assign(globalThis, { trailingRequested: false });
     chrome.runtime.onMessage.addListener((message) => {
-      if (message.type === 'poll' && message.afterCurrent)
+      if (message.type === 'poll' && message.reason === 'change')
         Object.assign(globalThis, { trailingRequested: true });
     });
   });

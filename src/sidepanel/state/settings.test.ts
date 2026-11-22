@@ -50,7 +50,7 @@ describe('saveSettings', () => {
 
     await vi.advanceTimersByTimeAsync(100);
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true, afterCurrent: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', reason: 'change' });
   });
 
   it('says so, and does not refresh, when storage refuses the write', async () => {

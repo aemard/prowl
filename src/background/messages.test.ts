@@ -6,7 +6,7 @@ import { getItem, getItems, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState, buildPullRequest, buildSnapshot } from '../test/panel';
 import { handleMessage } from './messages';
-import { POLL_ALARM, scheduleAlarm } from './poller';
+import { POLL_ALARM, scheduleAlarms } from './pollState';
 
 /** Delivers `message` and resolves once it is answered; false when the router ignored it. */
 function send(
@@ -19,8 +19,10 @@ function send(
 }
 
 describe('handleMessage', () => {
-  it('rejects malformed trailing-refresh flags', async () => {
-    expect(await send({ type: 'poll', afterCurrent: 'true' })).toBe(false);
+  it('accepts only the poll reasons a page may give', async () => {
+    for (const reason of [undefined, 'schedule', 'inbox', 'ci', 'focus', 'startup', true])
+      expect(await send({ type: 'poll', reason })).toBe(false);
+    expect(await send({ type: 'poll', force: true })).toBe(false);
   });
 
   it('ignores other extensions and messages it does not know', async () => {
@@ -30,7 +32,7 @@ describe('handleMessage', () => {
       null,
       'poll',
       { type: 'nope' },
-      { type: 'poll', force: 'yes' },
+      { type: 'poll', reason: 'yes' },
       { type: 'markSeen', prIds: 'PR_1' },
       { type: 'markSeen', prIds: [1] },
       { type: 'markSeen', prIds: [], versions: { PR_1: 5 } },
@@ -41,7 +43,7 @@ describe('handleMessage', () => {
       expect(await send(message)).toBe(false);
   });
 
-  it('runs a forced poll and answers once it is done', async () => {
+  it('runs an explicit poll and answers once it is done', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     await setItems({
@@ -52,11 +54,12 @@ describe('handleMessage', () => {
       }),
     });
     fetch.mockRejectedValue(new TypeError('Failed to fetch'));
-    expect(await send({ type: 'poll', force: true })).toBe(true);
+    expect(await send({ type: 'poll', reason: 'user' })).toBe(true);
     expect(fetch).toHaveBeenCalledOnce();
     expect(await getItem('pollState')).toMatchObject({ lastError: { kind: 'network' } });
 
-    expect(await send({ type: 'poll' })).toBe(true);
+    // A panel poll never retries through the backoff the explicit one left.
+    expect(await send({ type: 'poll', reason: 'panel' })).toBe(true);
     expect(fetch).toHaveBeenCalledOnce();
   });
 
@@ -168,7 +171,7 @@ describe('handleMessage', () => {
   });
 
   it('stops polling and clears the badge on sign-out', async () => {
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     await setItems({ pollState: buildPollState() });
     await chrome.action.setBadgeText({ text: '3' });
     expect(await send({ type: 'signedOut' })).toBe(true);

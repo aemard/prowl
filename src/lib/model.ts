@@ -16,6 +16,13 @@ export interface CheckSummary {
   passed: number;
   failed: number;
   pending: number;
+  /**
+   * Of `pending`, the checks that actually run: check runs in progress or queued for a runner,
+   * commit statuses a CI service reported as started. The rest wait on something that may never
+   * come (a required check never reported, a workflow awaiting approval, a deployment waiting
+   * for a reviewer). Absent in snapshots stored before Prowl told them apart.
+   */
+  running?: number;
   /** Skipped, neutral and cancelled-by-user checks. */
   neutral: number;
 }
@@ -414,9 +421,19 @@ export const STORAGE_KEYS = {
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
+/**
+ * Why a poll is asked for; the worker's cadence policy (`src/lib/time/cadence.ts`) decides from
+ * it whether the poll may run now. The worker's own: `schedule` (the poll alarm), `startup`,
+ * `inbox` (a pull request thread changed), `ci` (CI runs on a listed PR), `focus` (a Chrome
+ * window came back). The panel's (`PanelPollReason`): `panel` (opened or shown again), `user`
+ * (an explicit Refresh or retry), `change` (settings saved, an action done, signed in).
+ */
+export type PollReason = 'schedule' | 'startup' | 'inbox' | 'ci' | 'focus' | PanelPollReason;
+export type PanelPollReason = 'panel' | 'user' | 'change';
+
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
-  | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
+  | { type: 'poll'; reason: PanelPollReason }
   | {
       type: 'markSeen';
       prIds: string[];

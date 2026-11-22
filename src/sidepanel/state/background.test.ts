@@ -4,8 +4,8 @@ import { sendToBackground } from './background';
 describe('sendToBackground', () => {
   it('sends the typed message to the service worker', async () => {
     const send = vi.spyOn(chrome.runtime, 'sendMessage');
-    await sendToBackground({ type: 'poll', force: true });
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    await sendToBackground({ type: 'poll', reason: 'user' });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', reason: 'user' });
   });
 
   it('tolerates a missing receiver', async () => {
