@@ -711,7 +711,7 @@ signal (`state/store.ts`).
   compose them. One CSS file per component, tokens only (no raw colors).
 - List (`views/List.tsx`): sections come from `settings.sections` (enabled ones; a single one has
   no section bar), each item of the bar at the bottom shows its number of PRs that match the
-  quick filter; `KINDS` in `views/ListSections.tsx` maps each `SectionKind` to its bar icon, short name and empty-list hint.
+  quick filter; `KINDS` in `views/sectionKinds.ts` maps each `SectionKind` to its bar icon, short name and empty-list hint.
   PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
   split by `splitSection` into cards (what the bar counts) and snoozed PRs. The selected tab,
