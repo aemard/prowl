@@ -31,9 +31,13 @@ Prowl is a free, open source Chrome extension for managing GitHub pull requests 
 Keep an eye on CI, reviews and merge readiness while you work. Catch changes that need your attention and act without switching tabs.
 
 - YOUR PR INBOX: follow pull requests you authored, personal and team review requests, mentions, assignments or a custom GitHub search.
+- YOUR TURN: one section and the toolbar badge show which pull requests wait on you and why: a review, CI to fix, feedback to answer, a merge to make.
 - CLEAR STATUS: see failing checks, approvals, requested changes, conflicts and merge readiness. Expand a PR to understand what blocks it.
-- ACTIONS BESIDE YOUR WORK: approve, request changes, comment, merge, manage auto-merge, update a branch or re-run failed checks.
-- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, and snooze PRs until you want them back.
+- ACTIONS BESIDE YOUR WORK: approve, request changes, comment, reply to and resolve review conversations, merge, manage auto-merge, update a branch or re-run failed checks.
+- STACKS AND MERGE QUEUES: see a GitHub stack as one item and merge its ready pull requests in one go; add a PR to the merge queue and follow its position.
+- FAST UPDATES: a free check of your GitHub notifications every minute brings new reviews and comments between refreshes.
+- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours with one digest afterwards, and snooze PRs until you want them back.
+- OPTIONAL ON-DEVICE AI: summarize a pull request or explain failing checks with Gemini Nano, which Chrome runs on your device. Off by default.
 - YOUR PREFERRED VIEW: light and dark themes, keyboard navigation, repository grouping and optional settings sync.
 
 FREE AND OPEN SOURCE
