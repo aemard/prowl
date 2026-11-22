@@ -168,6 +168,7 @@ describe('poll', () => {
   });
 
   it('notifies and counts a draft opened by a bot despite legacy preferences', async () => {
+    // Keys an older version stored: normalization drops them.
     const legacy = { hideDrafts: true, hideBots: true, badge: 'attention' as const };
     await setItem('settings', { ...defaultSettings(), ...legacy });
     let checks: CheckState = 'pending';

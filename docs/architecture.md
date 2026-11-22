@@ -1111,8 +1111,9 @@ ends each section; cards show "Snoozed until <date>" and offer Unsnooze. An all-
 section says "All loaded pull requests are snoozed", "They return here when the snooze ends."
 and "Show snoozed" opens that fold. Snoozed PRs do not count in tabs or the badge; mute only
 silences notifications. Repository filters and custom queries control fetching, not hiding.
-Settings version stays 1; legacy hideStaleAfterDays / hideDrafts / hideBots keys are kept but
-forced to 0 / false / false on read, save and sync ingress. normalizePrLocal drops alwaysShown
+Settings version stays 1; the legacy hideStaleAfterDays / hideDrafts / hideBots keys are gone
+from `Settings` (normalization drops them on read) and live only in the copy written to Chrome
+sync, forced to 0 / false / false, for older Prowl versions on other devices. normalizePrLocal drops alwaysShown
 and retains snooze, mute, seen and seen facts. Notifications still diff every loaded PR, so
 removing hiding causes no notification burst. Only snoozed merge facts get lower enrichment
 priority and the one-hour cache; the 20-PR merge-state cap remains.

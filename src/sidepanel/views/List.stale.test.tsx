@@ -5,12 +5,8 @@ import { snapshot } from '../state/store';
 import { ListView } from './List';
 import { cardTitles, pr, withSections } from './List.test-support';
 
-it('shows stale drafts and bots despite legacy hiding settings, without a counts line', () => {
-  withSections(['authored', 'review_requested'], {
-    hideDrafts: true,
-    hideBots: true,
-    hideStaleAfterDays: 20,
-  });
+it('shows stale drafts and bots, without a counts line', () => {
+  withSections(['authored', 'review_requested']);
   const old = pr(1, {
     isDraft: true,
     author: { login: 'bot', avatarUrl: '', isBot: true },

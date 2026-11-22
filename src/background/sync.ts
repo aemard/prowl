@@ -14,6 +14,11 @@ import { getItem, subscribe, updateItem } from '../lib/storage/storage';
 
 /** The only key Prowl writes to `chrome.storage.sync`. */
 export const SYNCED_KEY = 'settings';
+/**
+ * Hiding settings Prowl dropped, kept off in the synced copy only: an older Prowl on another
+ * device reads them, and takes a missing stale key for "hide after 20 days".
+ */
+const LEGACY_HIDING_OFF = { hideStaleAfterDays: 0, hideDrafts: false, hideBots: false };
 /** `chrome.storage.sync.QUOTA_BYTES_PER_ITEM`, which counts the key and the JSON value. */
 const MAX_ITEM_BYTES = 8192;
 
@@ -26,16 +31,17 @@ const recordError = (error: string | null) =>
 
 /** Writes this device's settings to Chrome sync, unless they are already there. */
 export async function pushSettings(settings: Settings): Promise<void> {
-  settings = normalizeSettings(settings);
-  await setLanguage(settings.language);
-  if (jsonEqual(await remoteSettings(), settings)) return recordError(null).then(() => undefined);
-  const bytes = new TextEncoder().encode(SYNCED_KEY + JSON.stringify(settings)).length;
+  const normalized = normalizeSettings(settings);
+  await setLanguage(normalized.language);
+  const synced = { ...normalized, ...LEGACY_HIDING_OFF };
+  if (jsonEqual(await remoteSettings(), synced)) return recordError(null).then(() => undefined);
+  const bytes = new TextEncoder().encode(SYNCED_KEY + JSON.stringify(synced)).length;
   let error: string | null = null;
   if (bytes > MAX_ITEM_BYTES) {
     error = t('yourSettingsTakeKbMoreThanThe8Kb', Math.ceil(bytes / 1024));
   } else {
     try {
-      await chrome.storage.sync.set({ [SYNCED_KEY]: settings });
+      await chrome.storage.sync.set({ [SYNCED_KEY]: synced });
     } catch {
       error = t('chromeSyncDidNotTakeYourSettingsTheyStay');
     }

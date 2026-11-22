@@ -110,12 +110,6 @@ export interface Settings {
    * cannot trigger them. Default true.
    */
   singleKeyShortcuts: boolean;
-  /** Legacy sync compatibility key, always normalized to 0. */
-  hideStaleAfterDays: number;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideDrafts: boolean;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideBots: boolean;
   /**
    * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
    * team is followed, and so is any team discovered later.

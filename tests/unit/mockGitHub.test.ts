@@ -35,9 +35,6 @@ it('serves ProwlSearch, ProwlNodes and, by default, ProwlMergeState over HTTP', 
     repoExclude: [],
     maxPerSection: 50,
     unfollowedTeams: [],
-    hideDrafts: false,
-    hideBots: false,
-    hideStaleAfterDays: 0,
   };
 
   const first = await fetchPullRequests(client, {

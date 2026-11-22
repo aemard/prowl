@@ -107,9 +107,6 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   groupByRepo: true,
   localAi: false,
   singleKeyShortcuts: true,
-  hideStaleAfterDays: 0,
-  hideDrafts: false,
-  hideBots: false,
   unfollowedTeams: [],
 });
 
@@ -209,10 +206,6 @@ export function normalizeSettings(value: unknown): Settings {
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
     localAi: bool(raw.localAi, DEFAULT_SETTINGS.localAi),
     singleKeyShortcuts: bool(raw.singleKeyShortcuts, DEFAULT_SETTINGS.singleKeyShortcuts),
-    // Keep explicit off values for older synced installs (missing stale keys default to 20).
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
     unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }
