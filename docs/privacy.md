@@ -28,8 +28,9 @@ your browser profile can read your token.
 - **Quiet-hours digest:** the events quiet hours held back (pull request title, number and what
   happened), until the digest shows them. Dropped after a day; removed when you sign out.
 - **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
-  notification choices and quiet hours. Removed when you uninstall Prowl.
-- **Local choices:** which pull requests you snoozed, muted, always show or have seen, by pull
+  notification choices, quiet hours and display preferences (language, theme, sort, grouping,
+  badge, shortcuts, on-device AI). Removed when you uninstall Prowl.
+- **Local choices:** which pull requests you snoozed, muted or have seen, by pull
   request id. Removed when you uninstall Prowl.
 - **Observed activity:** the useful CI/review facts seen then, for detecting activity changes.
   Removed when you sign out or replace your token.
