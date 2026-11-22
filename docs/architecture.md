@@ -113,15 +113,24 @@ in-memory updates that the next snapshot replaces.
 
 ## GitHub API usage
 
-- GraphQL for reads (search, PR state, repo merge settings) and most writes
-  (`addPullRequestReview`, `addComment`, `mergePullRequest`, `markPullRequestReadyForReview`,
-  `convertPullRequestToDraft`, `updatePullRequestBranch`, `enablePullRequestAutoMerge`,
-  `disablePullRequestAutoMerge`; the branch update, merge and auto-merge pass the polled head as
-  `expectedHeadOid`, so GitHub refuses them if the branch moved since).
-- REST for re-running checks (`POST /repos/{o}/{r}/actions/runs/{id}/rerun-failed-jobs`,
-  `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
-  (`GET /user`, header `x-oauth-scopes`), and listing the viewer's teams (`GET /user/teams`:
-  GraphQL has no "my teams" across organizations, and any `Team` field there needs `read:org`).
+- GraphQL reads, every one a named operation: `ProwlSearch`, `ProwlMergeState` and `ProwlNodes`
+  (the poll, `queries.ts`), `ProwlPullRequestDetail` (an expanded card, `detailQuery.ts`),
+  `ProwlReviewThreads` (`threads.ts`), `ProwlPullRequestText` (the AI panel's input,
+  `fetchPullRequestText.ts`), `ProwlFailedSuites` (before a re-run) and `ProwlViewer` (sign-in).
+- GraphQL writes: `addPullRequestReview`, `addComment`, `mergePullRequest`,
+  `enablePullRequestAutoMerge`, `disablePullRequestAutoMerge`, `enqueuePullRequest`,
+  `dequeuePullRequest`, `markPullRequestReadyForReview`, `convertPullRequestToDraft`,
+  `updatePullRequestBranch`, `resolveReviewThread` and `addPullRequestReviewThreadReply`. The
+  merge, auto-merge, enqueue and branch update pass the polled head as `expectedHeadOid`, so
+  GitHub refuses them if the branch moved since.
+- REST where GraphQL has no equivalent: token scopes (`GET /user`, header `x-oauth-scopes`), the
+  viewer's teams (`GET /user/teams`: GraphQL has no "my teams" across organizations, and any
+  `Team` field there needs `read:org`), the inbox fast lane (`GET /notifications`, conditional on
+  `If-Modified-Since`), the rulesets of a base branch on expand
+  (`GET /repos/{o}/{r}/rules/branches/{branch}`), re-running checks
+  (`POST /repos/{o}/{r}/actions/runs/{id}/rerun-failed-jobs`,
+  `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and merging a stack
+  (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`, then `GET` on the operation it returns).
 - Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version` for REST (2022-11-28 by
   default, `API_VERSION`; a request passes `apiVersion` for an endpoint documented only under a
   newer version: `merge-async` asks for 2026-03-10), 20 s timeout, `cache: 'no-store'`. A request
@@ -624,8 +633,8 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   only for values that actually changed.
 - `settings.ts`: `DEFAULT_SETTINGS` (frozen), `normalizeSettings(unknown)` which repairs any
   stored value (migrations first, then defaults for missing or invalid fields, clamping, unknown
-  keys dropped), `loadSettings`, `updateSettings(patch | updater)`, `ensureSettings` (persist
-  migrated settings, for `runtime.onInstalled`) and `subscribeSettings`.
+  keys dropped), `loadSettings`, `updateSettings(patch | updater)` and `subscribeSettings`. Stored settings are
+  migrated on read; the next `updateSettings` persists the migrated shape.
   - Presets (`authored`, `review_requested`, `team_review_requested`, `mentioned`, `assigned`)
     always exist exactly once with `id === kind` and a fixed label; they are enabled or
     disabled, never deleted. A missing preset is appended with its default (off), except

@@ -30,8 +30,7 @@ minute asks the service worker for a poll, which renders when it lands). Locally
   framework, no icon font (inline SVG icons).
 - **Lazy chunks.** Settings, a card's expanded part (checks, reviewers, actions, dialogs, the
   detail query), stack rows and the turn summary are separate chunks loaded on first use
-  (`src/sidepanel/components/lazy.tsx`). The service worker
-  never uses dynamic `import()`.
+  (`src/sidepanel/components/lazy.tsx`). The service worker never uses dynamic `import()`.
 - **Cheap polling.** One GraphQL search per enabled section (pages of 25 PRs, about 2 points
   each), merge facts only for PRs that changed, check counts instead of check lists, details
   fetched only on expand.
