@@ -41,16 +41,18 @@ export function LocalAi({ pr }: { pr: PullRequest }) {
   }, [availability]);
   if (availability !== 'available') return null;
   const loading = (task: AiTask) => aiAnswers.value[answerKey(pr, task)]?.loading === true;
+  // An answer for the PR as it is now can be asked for again: the model may answer better.
+  const answered = (task: AiTask) => aiAnswers.value[answerKey(pr, task)]?.text !== undefined;
   const busy = loading('summary') || loading('failure');
   return (
     <div class="local-ai" aria-busy={busy}>
       <fieldset class="local-ai__actions" aria-label={t('aiAssistant')}>
         <Button size="sm" loading={loading('summary')} onClick={() => void runAi(pr, 'summary')}>
-          {t('aiSummarize')}
+          {answered('summary') ? t('aiSummarizeAgain') : t('aiSummarize')}
         </Button>
         {pr.checks.state === 'failure' && (
           <Button size="sm" loading={loading('failure')} onClick={() => void runAi(pr, 'failure')}>
-            {t('aiExplainFailure')}
+            {answered('failure') ? t('aiExplainAgain') : t('aiExplainFailure')}
           </Button>
         )}
       </fieldset>

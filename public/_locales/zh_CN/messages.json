@@ -2928,5 +2928,14 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "即使缩短，这个拉取请求对设备端 AI 来说仍然太长。"
+  },
+  "aiSummarizeAgain": {
+    "message": "重新总结"
+  },
+  "aiExplainAgain": {
+    "message": "重新解释"
   }
 }

@@ -2928,5 +2928,14 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "Dieser Pull Request ist selbst gekürzt zu lang für die KI auf dem Gerät."
+  },
+  "aiSummarizeAgain": {
+    "message": "Neu zusammenfassen"
+  },
+  "aiExplainAgain": {
+    "message": "Neu erklären"
   }
 }

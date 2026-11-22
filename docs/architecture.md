@@ -41,7 +41,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`. Panel only. | 80% |
+| `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`, `fitInput` (trims an input to the model's measured quota, oldest discussion first). Panel only. | 80% |
 | `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |

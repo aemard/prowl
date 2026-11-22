@@ -2928,5 +2928,14 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "このプルリクエストは、短くしてもデバイス上の AI には長すぎます。"
+  },
+  "aiSummarizeAgain": {
+    "message": "もう一度要約"
+  },
+  "aiExplainAgain": {
+    "message": "もう一度説明"
   }
 }

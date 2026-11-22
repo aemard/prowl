@@ -2928,5 +2928,14 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "即使縮短，這個提取要求對裝置端 AI 來說仍然太長。"
+  },
+  "aiSummarizeAgain": {
+    "message": "重新摘要"
+  },
+  "aiExplainAgain": {
+    "message": "重新解釋"
   }
 }

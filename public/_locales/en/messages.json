@@ -3448,5 +3448,17 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "This pull request is too long for the on-device AI, even shortened.",
+    "description": "Extension text: This pull request is too long for the on-device AI, even shortened."
+  },
+  "aiSummarizeAgain": {
+    "message": "Summarize again",
+    "description": "Extension text: Summarize again"
+  },
+  "aiExplainAgain": {
+    "message": "Explain again",
+    "description": "Extension text: Explain again"
   }
 }

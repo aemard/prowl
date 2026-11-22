@@ -2928,5 +2928,14 @@
         "content": "$2"
       }
     }
+  },
+  "aiTooLong": {
+    "message": "Esta pull request es demasiado larga para la IA del dispositivo, incluso acortada."
+  },
+  "aiSummarizeAgain": {
+    "message": "Resumir de nuevo"
+  },
+  "aiExplainAgain": {
+    "message": "Explicar de nuevo"
   }
 }

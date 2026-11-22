@@ -45,12 +45,27 @@ export interface AiAnswer {
   text?: string;
   error?: string;
 }
-/** `<pr id>:<task>:<head sha>` -> answer; a new push asks again. */
+/** `answerKey` -> answer. */
 export const aiAnswers = signal<Record<string, AiAnswer>>({});
-export const answerKey = (pr: PullRequest, task: AiTask) => `${pr.id}:${task}:${pr.headSha}`;
+/**
+ * What an answer was given for: a summary for the PR's text as last updated (a comment, review or
+ * edit moves `updatedAt`, a push without new words too), an explanation for the head commit and
+ * its failing checks. Anything else changed, the answer is no longer shown and the button asks again.
+ */
+export const answerKey = (pr: PullRequest, task: AiTask) =>
+  task === 'summary'
+    ? `${pr.id}:summary:${pr.updatedAt}`
+    : `${pr.id}:failure:${pr.headSha}:${pr.checks.failed}`;
 
 const FAILURE_INSTRUCTION =
   'From these reports of failing CI checks, explain in at most four short sentences what failed and the most likely fix. Name files and lines when the reports give them.';
+
+/** What the panel says when an answer failed: Chrome's own words are English and technical. */
+function aiError(error: unknown): string {
+  if (error instanceof GitHubError) return t('aiFailed', error.message);
+  if (error instanceof DOMException && error.name === 'QuotaExceededError') return t('aiTooLong');
+  return t('aiFailed', error instanceof Error ? error.message : String(error));
+}
 
 /** Reads the PR's text from GitHub, then asks the on-device model; one request per key. */
 export async function runAi(pr: PullRequest, task: AiTask): Promise<void> {
@@ -67,16 +82,14 @@ export async function runAi(pr: PullRequest, task: AiTask): Promise<void> {
       pr.id,
     );
     const language = uiLocale();
-    if (task === 'failure' && !text.failures)
+    if (task === 'failure' && text.failures.length === 0)
       return put({ loading: false, text: t('aiNothingToExplain') });
     const answer =
       task === 'summary'
-        ? await summarize(text.discussion, language)
-        : await ask(FAILURE_INSTRUCTION, text.failures, language);
+        ? await summarize({ lead: text.description, items: text.discussion }, language)
+        : await ask(FAILURE_INSTRUCTION, { lead: '', items: text.failures }, language);
     put({ loading: false, text: answer.trim() });
   } catch (error) {
-    const reason =
-      error instanceof GitHubError ? error.message : String((error as Error)?.message ?? error);
-    put({ loading: false, error: t('aiFailed', reason) });
+    put({ loading: false, error: aiError(error) });
   }
 }
