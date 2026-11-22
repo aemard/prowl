@@ -28,7 +28,7 @@ let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 function refreshSoon(): void {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
-    void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
+    void sendToBackground({ type: 'poll', reason: 'change' });
   }, REFRESH_DELAY_MS);
 }
 

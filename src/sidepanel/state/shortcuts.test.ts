@@ -71,6 +71,6 @@ describe('requestRefresh', () => {
     requestRefresh();
     expect(refreshRequested.value).toBeTypeOf('number');
     await Promise.resolve();
-    expect(sent).toEqual([{ type: 'poll', force: true }]);
+    expect(sent).toEqual([{ type: 'poll', reason: 'user' }]);
   });
 });

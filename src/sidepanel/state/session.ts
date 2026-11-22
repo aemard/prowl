@@ -31,7 +31,7 @@ export async function completeSignIn(
     await removeItems(STORAGE_KEYS.teams);
     await setItem(STORAGE_KEYS.auth, auth);
   });
-  void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
+  void sendToBackground({ type: 'poll', reason: 'change' });
   navigate('list');
   if (warning) {
     showToast({ message: t('signedInAs', auth.viewer.login, warning), durationMs: 15_000 });

@@ -1,7 +1,7 @@
 /**
- * Background polling: the `poll` alarm, single-flight polls, backoff and rate-limit waits.
- * Nothing that matters lives in memory (the worker can stop at any time): the schedule is
- * the alarm, everything else is `pollState` and `snapshot` in storage.
+ * Background polling: single-flight polls, each asked for a `PollReason` that the cadence policy
+ * (`pollVerdict`) admits or skips. Nothing that matters lives in memory (the worker can stop at
+ * any time): the schedule is the alarms, everything else is `pollState` and `snapshot` in storage.
  */
 import { carryCiOutcomes } from '../lib/diff/checkTransitions';
 import { carrySettledChecks, diffSnapshots } from '../lib/diff/diffSnapshots';
@@ -10,7 +10,15 @@ import { createGitHubClient } from '../lib/github/client';
 import { type FetchResult, fetchPullRequests } from '../lib/github/fetchPullRequests';
 import { discoverTeams, teamsDue } from '../lib/github/teams';
 import { setLanguage } from '../lib/i18n';
-import type { AuthState, PollState, PrEvent, RateLimit, Snapshot, TeamsState } from '../lib/model';
+import type {
+  AuthState,
+  PollReason,
+  PollState,
+  PrEvent,
+  RateLimit,
+  Snapshot,
+  TeamsState,
+} from '../lib/model';
 import {
   baselineSeenFacts,
   forgetSeenFacts,
@@ -28,32 +36,19 @@ import {
   setItems,
   withLock,
 } from '../lib/storage/storage';
-import { isWaiting, LOW_RATE_LIMIT, rateLimitedUntil } from '../lib/time/backoff';
+import { LOW_RATE_LIMIT, rateLimitedUntil } from '../lib/time/backoff';
+import { isExplicit, isTrailing, pollVerdict } from '../lib/time/cadence';
 import { clearBadge, updateBadge } from './badge';
 import { clearMergePriority, mergePriority } from './mergeState';
 import { forgetNotified, notifyEvents } from './notifier';
-
-/** The `inbox` alarm of fastLane.ts (named here: fastLane imports the poller). */
-export const INBOX_ALARM = 'inbox';
-
-import { IDLE, iso, POLL_ALARM, recordPollFailure } from './pollState';
+import { clearAlarms, IDLE, iso, recordPollFailure, scheduleAlarms } from './pollState';
 
 export { refreshMergeState, setMergePriority } from './mergeState';
-export { POLL_ALARM } from './pollState';
 
 /** What a poll that ran produced: the stored snapshot and the changes since the previous one. */
 export interface PollResult {
   snapshot: Snapshot;
   events: PrEvent[];
-}
-
-/** (Re)creates the alarm unless it already has this period; `ifScheduled`: only change one. */
-export async function scheduleAlarm(minutes: number, ifScheduled = false): Promise<void> {
-  const alarm = await chrome.alarms.get(POLL_ALARM);
-  if (alarm ? alarm.periodInMinutes === minutes : ifScheduled) return;
-  await chrome.alarms.create(POLL_ALARM, { delayInMinutes: minutes, periodInMinutes: minutes });
-  // The inbox check (fastLane.ts) runs every minute while polls are scheduled.
-  await chrome.alarms.create(INBOX_ALARM, { periodInMinutes: 1 });
 }
 
 /**
@@ -67,8 +62,7 @@ export async function clearSignedOut(): Promise<void> {
     clearMergePriority();
     const shown = await chrome.notifications.getAll();
     await Promise.all([
-      chrome.alarms.clear(POLL_ALARM),
-      chrome.alarms.clear(INBOX_ALARM),
+      clearAlarms(),
       removeItems('pollState'),
       clearBadge(),
       forgetNotified(),
@@ -79,38 +73,41 @@ export async function clearSignedOut(): Promise<void> {
 
 let current: Promise<PollResult | null> | null = null;
 let queued: Promise<PollResult | null> | null = null;
-let queuedForce = false;
+let queuedReason: PollReason | null = null;
 let queuedTeams = false;
+
+/** The reason a shared trailing poll runs for: an explicit one wins, then news from the inbox. */
+const stronger = (a: PollReason | null, b: PollReason): PollReason =>
+  a === null || isExplicit(b) || (!isExplicit(a) && b === 'inbox') ? b : a;
+
 /**
- * Polls GitHub unless signed out, stopped by a rejected token, or waiting (backoff, rate
- * limit). `force` (a user action) skips the backoff and retries a rejected token, never a
- * rate-limit wait; `refreshTeams` discovers the viewer's teams again even when they are not
- * due. Ordinary triggers share the current poll; `afterCurrent` (a settings change, action or
- * sign-in) and team refreshes share one trailing poll, which reads the latest configuration.
- * Resolves to null when the poll was skipped, failed (see `pollState.lastError`) or was dropped
- * by a sign-out; never rejects.
+ * Polls GitHub when signed in and the cadence policy admits `reason` (see `pollVerdict`: a
+ * rejected token, a backoff, a rate-limit wait or a list fresh enough for that reason skip it);
+ * `refreshTeams` discovers the viewer's teams again even when they are not due. Ordinary reasons
+ * share the poll in flight; trailing ones (`isTrailing`: inbox news, a change) and team refreshes
+ * share one poll after it, which reads the latest configuration. Resolves to null when the poll
+ * was skipped, failed (see `pollState.lastError`) or was dropped by a sign-out; never rejects.
  */
 export function poll({
-  force = false,
+  reason = 'schedule',
   refreshTeams = false,
-  afterCurrent = false,
 }: {
-  force?: boolean;
+  reason?: PollReason;
   refreshTeams?: boolean;
-  afterCurrent?: boolean;
 } = {}): Promise<PollResult | null> {
-  if (current && (afterCurrent || refreshTeams)) {
-    queuedForce ||= force;
+  if (current && (isTrailing(reason) || refreshTeams)) {
+    queuedReason = stronger(queuedReason, reason);
     queuedTeams ||= refreshTeams;
     queued ??= current.then(() => {
-      const next = { force: queuedForce, refreshTeams: queuedTeams };
-      queuedForce = queuedTeams = false;
+      const next = { reason: queuedReason ?? reason, refreshTeams: queuedTeams };
+      queuedReason = null;
+      queuedTeams = false;
       queued = null;
-      return poll({ ...next, afterCurrent: true });
+      return poll(next);
     });
     return queued;
   }
-  current ??= withLock('prowl:poll', () => runPoll(force, refreshTeams))
+  current ??= withLock('prowl:poll', () => runPoll(reason, refreshTeams))
     .catch((error: unknown) => {
       console.error('Prowl: poll failed', error);
       return null;
@@ -121,12 +118,12 @@ export function poll({
   return current;
 }
 
-async function preparePoll(force: boolean) {
-  const stored = await getItems(['auth', 'pollState', 'settings', 'teams', 'prLocal']);
+async function preparePoll(reason: PollReason) {
+  const stored = await getItems(['auth', 'pollState', 'settings', 'teams', 'prLocal', 'snapshot']);
   const { auth } = stored;
   if (!auth) {
     await withLock(SESSION_LOCK, async () => {
-      if (!(await getItem('auth'))) await chrome.alarms.clear(POLL_ALARM);
+      if (!(await getItem('auth'))) await clearAlarms();
     });
     return null;
   }
@@ -134,17 +131,23 @@ async function preparePoll(force: boolean) {
   const settings = normalizeSettings(stored.settings);
   await setLanguage(settings.language);
   const now = Date.now();
-  // A rejected token cleared the alarm: only a forced poll (re-auth, refresh) tries again.
-  if (state.lastError?.kind === 'unauthorized' && !force) return null;
+  // Another account's snapshot is no baseline, and its PRs are not this account's business.
+  const previous = stored.snapshot?.viewer.login === auth.viewer.login ? stored.snapshot : null;
+  const verdict = pollVerdict(
+    reason,
+    state,
+    previous?.fetchedAt ?? null,
+    settings.pollIntervalMinutes,
+    now,
+  );
+  // A rejected token cleared the alarms: only an explicit poll (re-auth, Refresh) tries again.
+  if (!verdict.run && verdict.why === 'unauthorized') return null;
   const active = await withSignedIn(auth, async () => {
-    await scheduleAlarm(settings.pollIntervalMinutes);
+    await scheduleAlarms(settings.pollIntervalMinutes);
     return true;
   });
-  if (!active) return preparePoll(force);
-  // A wait after another error is a backoff; any other one (after a rate limit, or a success
-  // that left a low budget) is for the rate limit, which even a forced poll respects.
-  const backoff = state.lastError !== null && state.lastError.kind !== 'rate_limited';
-  if (isWaiting(state.nextAllowedAt, now) && !(force && backoff)) {
+  if (!active) return preparePoll(reason);
+  if (!verdict.run) {
     // In flight here means a worker stopped mid-poll: no other poll runs beside this one.
     if (state.inFlight)
       await withSignedIn(auth, () => setItem('pollState', { ...state, inFlight: false }));
@@ -157,10 +160,7 @@ async function preparePoll(force: boolean) {
       return true;
     }))
   )
-    return preparePoll(force);
-  const stale = await getItem('snapshot');
-  // Another account's snapshot is no baseline, and its PRs are not this account's business.
-  const previous = stale?.viewer.login === auth.viewer.login ? stale : null;
+    return preparePoll(reason);
   return { stored, auth, state, settings, now, attempt, previous };
 }
 
@@ -207,8 +207,8 @@ function progressPublisher({ auth, previous, attempt, settings }: PollAttempt) {
   return { events, publish };
 }
 
-async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult | null> {
-  const prepared = await preparePoll(force);
+async function runPoll(reason: PollReason, refreshTeams = false): Promise<PollResult | null> {
+  const prepared = await preparePoll(reason);
   if (!prepared) return null;
   const { stored, auth, state, settings, now, attempt, previous } = prepared;
   const { events, publish } = progressPublisher(prepared);
@@ -236,13 +236,13 @@ async function runPoll(force: boolean, refreshTeams = false): Promise<PollResult
       await recordPollFailure(error, attempt, now, settings.pollIntervalMinutes);
       return true;
     });
-    return handled ? null : restartOrStop(force);
+    return handled ? null : restartOrStop(reason);
   }
   const finished = await withSignedIn(auth, async () => {
     await finishPoll(prepared, snapshot, discover ? teams : undefined, rateLimit);
     return true;
   });
-  if (!finished) return restartOrStop(force);
+  if (!finished) return restartOrStop(reason);
   // Every progressive publication has already updated the badge and delivered its events.
   return { snapshot, events };
 }
@@ -295,8 +295,8 @@ async function finishPoll(
 }
 
 /** The poll's account is gone: start over for whoever signed in, or clean up after sign-out. */
-async function restartOrStop(force: boolean): Promise<PollResult | null> {
-  if (await getItem('auth')) return runPoll(force);
+async function restartOrStop(reason: PollReason): Promise<PollResult | null> {
+  if (await getItem('auth')) return runPoll(reason);
   await clearSignedOut();
   return null;
 }

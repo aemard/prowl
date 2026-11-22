@@ -1,7 +1,7 @@
 /** Routes the side panel's `BackgroundRequest`s. Answers (with nothing) once one is handled. */
 
 import { activityKey } from '../lib/activity';
-import type { BackgroundRequest } from '../lib/model';
+import type { BackgroundRequest, PanelPollReason } from '../lib/model';
 import { isDateString, isRecord } from '../lib/storage/guards';
 import { loadLanguage } from '../lib/storage/language';
 import { markSeen, updatePrLocal } from '../lib/storage/prLocal';
@@ -9,15 +9,15 @@ import { withSignedIn } from '../lib/storage/session';
 import { getItem } from '../lib/storage/storage';
 import { clearSignedOut, poll, refreshMergeState, setMergePriority } from './poller';
 
+/** The poll reasons a page may give; the worker's own (schedule, inbox...) are not its to claim. */
+const PANEL_REASONS: readonly PanelPollReason[] = ['panel', 'user', 'change'];
+
 /** A message this worker understands, from this extension's own pages. */
 function isRequest(message: unknown): message is BackgroundRequest {
   if (!isRecord(message)) return false;
   switch (message.type) {
     case 'poll':
-      return (
-        (message.force === undefined || typeof message.force === 'boolean') &&
-        (message.afterCurrent === undefined || typeof message.afterCurrent === 'boolean')
-      );
+      return PANEL_REASONS.includes(message.reason as PanelPollReason);
     case 'refreshMergeState':
       return (
         typeof message.prId === 'string' &&
@@ -52,7 +52,7 @@ async function route(request: BackgroundRequest, document: string): Promise<void
   await loadLanguage();
   switch (request.type) {
     case 'poll':
-      await poll({ force: request.force === true, afterCurrent: request.afterCurrent === true });
+      await poll({ reason: request.reason });
       return;
     case 'refreshMergeState':
       await refreshMergeState(request.prId, request.headSha);
@@ -81,7 +81,7 @@ async function route(request: BackgroundRequest, document: string): Promise<void
       return;
     }
     case 'refreshTeams':
-      await poll({ force: true, refreshTeams: true });
+      await poll({ reason: 'user', refreshTeams: true });
       return;
     case 'signedOut':
       await clearSignedOut();
@@ -90,7 +90,7 @@ async function route(request: BackgroundRequest, document: string): Promise<void
 
 /**
  * `runtime.onMessage` listener. Anything that is not a request from this extension is left to
- * other listeners. Requests are answered once handled (a forced poll: once it is done), so a
+ * other listeners. Requests are answered once handled (a poll: once it is done), so a
  * sender that awaits `sendMessage` knows the work is finished.
  */
 export function handleMessage(

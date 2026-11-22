@@ -203,6 +203,30 @@ describe('rest', () => {
     });
   });
 
+  it('sends a newer API version only to the request that asks for it', async () => {
+    const { client, fetch } = setup(jsonResponse({}), jsonResponse({}));
+    await client.rest('GET', '/a', undefined, { apiVersion: '2026-03-10' });
+    await client.rest('GET', '/b');
+    const versions = fetch.mock.calls.map(
+      ([, init]) => (init.headers as Record<string, string>)['X-GitHub-Api-Version'],
+    );
+    expect(versions).toEqual(['2026-03-10', '2022-11-28']);
+  });
+
+  it('answers with an accepted status instead of failing, and only that one', async () => {
+    const { client } = setup(
+      jsonResponse({ details: { uuid: 'u' } }, { status: 409 }),
+      jsonResponse({ message: 'gone' }, { status: 410 }),
+    );
+    expect(await client.restResponse('PUT', '/x', {}, { accept: [409] })).toMatchObject({
+      status: 409,
+      data: { details: { uuid: 'u' } },
+    });
+    await expect(client.restResponse('PUT', '/x', {}, { accept: [409] })).rejects.toMatchObject({
+      kind: 'not_found',
+    });
+  });
+
   it('sends a JSON body', async () => {
     const { client, fetch } = setup(jsonResponse({}, { status: 201 }));
     await client.rest('POST', '/repos/o/r/actions/runs/1/rerun-failed-jobs', { enable: true });

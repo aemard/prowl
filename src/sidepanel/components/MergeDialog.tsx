@@ -53,7 +53,7 @@ export function useMergeControls(pr: PullRequest, detail: PullRequestDetail) {
     );
     setConfirming(false);
     if (merged) setEdited({});
-    else void sendToBackground({ type: 'poll', force: true, afterCurrent: true });
+    else void sendToBackground({ type: 'poll', reason: 'change' });
   };
   const enableAutoMerge = async (method: MergeMethod) => {
     const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>

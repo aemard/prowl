@@ -81,7 +81,7 @@ describe('Header', () => {
     render(<Header />);
     const refresh = screen.getByRole('button', { name: 'Refresh' });
     fireEvent.click(refresh);
-    expect(send).toHaveBeenCalledWith({ type: 'poll', force: true });
+    expect(send).toHaveBeenCalledWith({ type: 'poll', reason: 'user' });
     expect(refresh.getAttribute('aria-busy')).toBeNull();
 
     act(() => {

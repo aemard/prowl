@@ -26,7 +26,7 @@ Prowl is a Manifest V3 Chrome extension with no backend. The only remote host is
 | Side panel `src/sidepanel/` | Rendering from storage, onboarding/auth, settings, user actions (approve, merge, ...) | Poll on a timer |
 | `src/lib/*` | Unit-tested logic shared by both | Touch `chrome.*` except `src/lib/storage` and `src/lib/i18n.ts` |
 
-After a user action succeeds, the panel sends `{ type: 'poll', force: true }` so the service
+After a user action succeeds, the panel sends `{ type: 'poll', reason: 'change' }` so the service
 worker refreshes the snapshot. The panel never writes `snapshot` itself, except optimistic
 in-memory updates that the next snapshot replaces.
 
@@ -45,7 +45,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
-| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`) | 80% |
+| `src/lib/time/` | Relative time (`formatRelativeTime`), quiet hours (`quietHours.ts`), backoff (`backoff.ts`), the poll cadence policy (`cadence.ts`) | 80% |
 | `src/lib/i18n.ts`, `public/_locales/` | Typed Chrome messages, a saved language preference and English fallback; localized counts, numbers and dates. `sectionLabel.ts` translates built-in names without changing stored settings. | 80% |
 | `src/background/` | Service worker wiring: `register.ts` (listeners), `poller.ts` (poll orchestration), `mergeState.ts` (consulted-card refresh and priority hints), `pollState.ts` (auth guards and failure state), `messages.ts` (router), notifier, badge; see [Service worker](#service-worker) | 80% |
 | `src/sidepanel/` | UI: `App.tsx`, `state/`, `views/`, `components/`, `components/ui/` (design system) | 80% |
@@ -58,12 +58,14 @@ in-memory updates that the next snapshot replaces.
 ## Data flow of a poll
 
 1. `chrome.alarms` fires `poll` every `settings.pollIntervalMinutes` (min 2, default 2). The
-   worker also polls on `runtime.onInstalled` / `onStartup`, and a forced poll on the panel's
-   `{ type: 'poll', force: true }`.
-2. The poller skips if no auth (and clears the alarm), if the token was rejected (unless
-   forced), or if `pollState.nextAllowedAt` is in the future: a forced poll skips a backoff
-   but never a rate-limit wait. Concurrent triggers share the poll in flight (single-flight);
-   settings changes, actions and sign-in request one trailing poll (see
+   worker also asks for polls on `runtime.onInstalled` / `onStartup`, from the inbox fast lane,
+   on window focus and on the panel's `{ type: 'poll', reason }` (see
+   [Service worker](#service-worker): every trigger names a `PollReason`).
+2. The poller skips if no auth (and clears both alarms); otherwise the cadence policy
+   (`pollVerdict`) decides: a rejected token or a backoff holds all but explicit reasons, a
+   rate-limit wait holds every reason, and the panel, focus and CI reasons skip a list that is
+   still fresh for them. Concurrent triggers share the poll in flight (single-flight); inbox
+   news, settings changes, actions and sign-in request one trailing poll (see
    [Refresh and session ordering](#refresh-and-session-ordering)).
 3. The viewer's teams are discovered first when due (see [Teams](#teams)): stored teams of
    another account or none, older than 24 h (1 h after a failed attempt), or a
@@ -120,8 +122,11 @@ in-memory updates that the next snapshot replaces.
   `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
   (`GET /user`, header `x-oauth-scopes`), and listing the viewer's teams (`GET /user/teams`:
   GraphQL has no "my teams" across organizations, and any `Team` field there needs `read:org`).
-- Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version: 2022-11-28` for REST,
-  20 s timeout, `cache: 'no-store'`. Errors never include the token.
+- Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version` for REST (2022-11-28 by
+  default, `API_VERSION`; a request passes `apiVersion` for an endpoint documented only under a
+  newer version: `merge-async` asks for 2026-03-10), 20 s timeout, `cache: 'no-store'`. A request
+  lists the statuses outside 2xx that answer it (`accept`: 304 for the inbox, 409 for
+  `merge-async`); every other one is a `GitHubError`. Errors never include the token.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
   `statusContextCountsByState` so the list query stays cheap; individual check runs are
   fetched only when a PR is expanded (`query ProwlPullRequestDetail`, see
@@ -329,7 +334,7 @@ The panel runs them through `runPrAction(pr, name, done, run, onError?)`
 (`src/sidepanel/state/prActions.ts`): it builds a client for the signed-in token, marks
 `pendingActions[pr.id] = name` (the signal that disables the PR's other action buttons; one action
 per PR at a time), and shows a success toast (`<done> owner/name#n`) followed by `{ type: 'poll',
-force: true }`, or a danger toast `<name> failed: <GitHub's message>` (any error that is not a
+reason: 'change' }`, or a danger toast `<name> failed: <GitHub's message>` (any error that is not a
 `GitHubError` becomes "Something went wrong."), or calls `onError(message)` instead of the toast
 when the caller shows it itself. It resolves to whether it worked and never rejects; an outcome
 that arrives after another account signed in is dropped (no toast, no poll, `false`).
@@ -381,20 +386,45 @@ failure -> pending -> success gives one `ci_passed`, success -> pending -> succe
 ## Service worker
 
 `register.ts` adds every listener synchronously at startup: install / startup (side panel
-behavior, then `poll()`), the `poll` alarm, `runtime.onMessage` (`messages.ts`) and settings
-changes (a new `pollIntervalMinutes` replaces a running alarm; nothing is scheduled while
-signed out or stopped) and the badge's own storage listeners (`watchBadge`).
+behavior, then a `startup` poll), the `poll` and `inbox` alarms, window focus, `runtime.onMessage`
+(`messages.ts`) and settings changes (a new `pollIntervalMinutes` replaces a running alarm;
+nothing is scheduled while signed out or stopped) and the badge's own storage listeners
+(`watchBadge`).
+
+**One cadence policy.** Everything that may call GitHub on its own asks `poll({ reason })`, and
+`pollVerdict(reason, pollState, snapshot.fetchedAt, interval, now)` (`src/lib/time/cadence.ts`,
+pure) decides whether it runs now:
+
+| Reason | Who asks | Runs when the list is older than | Through a backoff / rejected token |
+|---|---|---|---|
+| `schedule` | the `poll` alarm (the interval) | always | no |
+| `startup` | install, browser start | always | no |
+| `inbox` | the fast lane: a PR thread updated since the last check | always (trailing) | no |
+| `ci` | the fast lane: CI runs on a listed PR (`ciWatched`) | 50 s | no |
+| `focus` | a Chrome window got focus | the poll interval | no |
+| `panel` | the panel opened or became visible | 1 min | no |
+| `user` | Refresh, the shortcut, the banner's retry, team refresh | always | yes |
+| `change` | settings saved, an action done, sign-in | always (trailing) | yes |
+
+A rate-limit wait (after a rate limit, or a success that left fewer than 100 points) holds every
+reason, explicit ones included. A list dated in the future (the clock went back) counts as stale.
+The fast lane consults the same verdict before it reads the inbox, so nothing calls GitHub while
+polls may not.
 
 `poller.ts`:
 
-- `poll({ force, refreshTeams, afterCurrent })` runs at most one poll at a time (an in-memory
-  promise; concurrent callers share it, except `refreshTeams` and `afterCurrent`, which share
-  one trailing poll that starts when the one in flight ends) and never rejects. It resolves to
+- `poll({ reason, refreshTeams })` runs at most one poll at a time (an in-memory promise;
+  concurrent callers share it, except trailing reasons (`isTrailing`: `inbox`, `change`) and
+  `refreshTeams`, which share one trailing poll that starts when the one in flight ends, for the
+  strongest reason asked: explicit, then `inbox`) and never rejects. It resolves to
   `{ snapshot, events }` when a poll ran and stored a snapshot, null otherwise. The badge and
   notifications update at each progressive publication inside the poll; callers sharing it do
   not repeat those events.
-- Every poll that is not skipped for sign-out or a rejected token ensures the alarm exists
-  with the current period (`scheduleAlarm`): Chrome may drop alarms on browser restart.
+- Every poll that is not skipped for sign-out or a rejected token ensures both alarms exist
+  (`scheduleAlarms`, `pollState.ts`: the `poll` alarm with the current period, recreated only
+  when the period differs, and the minute `inbox` alarm): Chrome may drop alarms on browser
+  restart, and an install upgraded from a version without the inbox alarm gets it at its first
+  poll. Sign-out and a rejected token clear both (`clearAlarms`).
 - `pollState` is written twice: `inFlight: true` with `lastAttemptAt` before fetching, then
   the outcome. Single-flight lives in memory, so a stored `inFlight: true` seen by a poll that
   is skipped is stale (the worker stopped mid-poll) and is reset.
@@ -404,10 +434,10 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
   |---|---|---|
   | success | `rateLimit.resetAt` when fewer than 100 points remain, else null | failures 0, `lastError` null, `lastSuccessAt` |
   | `rate_limited` | later of `resetAt` and now + `retryAfterSeconds` | failures + 1 |
-  | `unauthorized` | null | alarm cleared: only a forced poll (re-auth, refresh) tries again |
+  | `unauthorized` | null | both alarms cleared: only an explicit poll (re-auth, Refresh) tries again |
   | any other error | now + `interval × 2^failures` (this failure included), at most 30 min, minus up to 25% jitter | failures + 1 |
 
-  A wait after an error other than `rate_limited` is a backoff, which a forced poll skips; a
+  A wait after an error other than `rate_limited` is a backoff, which an explicit poll skips; a
   wait after a rate limit or a low-budget success is not. Waits are capped at one hour, and a
   stored wait longer than that is ignored (the clock went back). A failure of something other
   than GitHub (a bug) is stored as `server` with a generic message; details go to the console.
@@ -420,28 +450,40 @@ signed out or stopped) and the badge's own storage listeners (`watchBadge`).
 
 `messages.ts` accepts `BackgroundRequest`s from this extension only (`sender.id`), validates
 their shape, and answers (with nothing) once handled, so `await sendMessage(...)` resolves when
-a forced poll is done. `refreshTeams` is `poll({ force: true, refreshTeams: true })`, answered
-once that poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
+a poll is done. A page may only give the reasons `panel`, `user` and `change`; the worker's own
+are refused. `refreshTeams` is `poll({ reason: 'user', refreshTeams: true })`, answered once
+that poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
 notification and the memory of what was reported.
 
 ### Inbox fast lane
 
-Between polls, the `inbox` alarm (every minute, created with the `poll` alarm and cleared with
-it) runs `checkFastLane()` (`src/background/fastLane.ts`): `checkInbox` (`src/lib/github/notifications.ts`)
-sends `GET /notifications` with the last `Last-Modified` as `If-Modified-Since`. GitHub answers
-304, which does not count against the rate limit, until something changes; when a pull request
-thread changed, a poll runs at once (`poll({ afterCurrent: true })`, which still honors backoff
-and rate-limit waits). The first check of a browser session only records the date. Fine-grained
-tokens cannot read the inbox, and a 403 or 404 turns the lane off until the browser restarts
-(`chrome.storage.session` key `inbox`); polls keep their schedule either way. The client treats
-304 as success only for a request that sent `If-Modified-Since`.
+Between polls, the `inbox` alarm (every minute, kept with the `poll` alarm by `scheduleAlarms`
+and cleared with it) runs `checkFastLane(scheduledTime)` (`src/background/fastLane.ts`). It
+first asks the cadence policy: during a backoff, a rate-limit wait or after a rejected token it
+asks GitHub nothing (and a rejected token also clears an inbox alarm that outlived it). Then
+`checkInbox` (`src/lib/github/notifications.ts`) sends `GET /notifications` with the last
+`Last-Modified` as `If-Modified-Since`. GitHub answers 304, which does not count against the
+rate limit, until something changes. The inbox lists every unread thread, so a 200 after an
+issue comment (or a thread marked read) also carries old pull request threads: only a pull
+request thread whose `updated_at` is after the previous `Last-Modified` asks for an `inbox`
+poll. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
+the alarm's scheduled time so alarm jitter does not skip a minute. The first check of a browser
+session only records the date. Fine-grained tokens cannot read the inbox, and a 403 or 404 turns
+the lane off until the browser restarts (`chrome.storage.session` key `inbox`); polls keep their
+schedule either way. A 401 or a rate limit met by the inbox is recorded like a poll's
+(`recordPollFailure`): a rejected token stops both alarms and shows the banner.
 
-The same alarm also polls while CI runs (`checks.state` pending) on a listed open PR and the list
-is at least 50 s old, for every token type: third-party CI never reaches the inbox. A Chrome
-window that regains focus (`chrome.windows.onFocusChanged`, `onChromeFocused`) polls when the
-list is older than the poll interval, and the panel itself forces a poll when it opens or
-becomes visible on a list older than a minute (`refreshIfStale`, `src/sidepanel/state/freshness.ts`).
+The same alarm also asks for a `ci` poll while CI runs on a listed open PR (`ciWatched`: the
+`running` count, check runs in progress or queued and commit statuses reported pending, not
+checks that only wait: `EXPECTED`, `WAITING`, `REQUESTED` or a concurrency-pending run) that
+changed (push, comment, review: `max(lastCommitAt, updatedAt)`) within the last hour, for every
+token type: third-party CI never reaches the inbox. A required check nobody reports, a fork
+workflow awaiting approval or a deployment waiting for a reviewer therefore never polls every
+minute, and a runner that never picks a job up stops after an hour. A Chrome window that regains
+focus (`chrome.windows.onFocusChanged`, `onChromeFocused`) asks for a `focus` poll, and the panel
+asks for a `panel` poll when it opens or becomes visible (`refreshIfStale`,
+`src/sidepanel/state/freshness.ts`); neither forces anything.
 
 ### Whose turn
 
@@ -486,8 +528,11 @@ are in none of the viewer's sections.
 confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
 GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
 pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
-`GET …/merge-async/{uuid}` for up to a minute. GitHub merges the run atomically or not at all;
-the GraphQL merge mutation refuses stacked PRs.
+`GET …/merge-async/{uuid}` for up to a minute, both with `X-GitHub-Api-Version: 2026-03-10`, the
+version that documents them. A 200 (already merged or queued) ends there; a 409 (a merge request
+is already pending, from another tab or device) names that operation's uuid, which Prowl follows
+as its own. GitHub merges the run atomically or not at all; the GraphQL merge mutation refuses
+stacked PRs.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
 details), a lone PR's merge control (`MergeQueueAction`) follows the readiness rules of Merge
@@ -649,7 +694,7 @@ signal (`state/store.ts`).
   into the text onboarding shows inline (never the token: the client masks it in GitHub's
   messages and our own messages do not contain it).
 - **After validation** (`src/sidepanel/state/session.ts`): `completeSignIn(auth, warning)` stores
-  `auth`, sends `{ type: 'poll', force: true }` and navigates to the list; a warning is shown as a
+  `auth`, sends `{ type: 'poll', reason: 'change' }` and navigates to the list; a warning is shown as a
   toast ("Signed in as octocat. ..."), for PAT and device sign-ins alike; it also removes `teams`
   so the first poll discovers them with the new token. `signOut()` (account menu, after a confirmation dialog) removes
   `auth`, `snapshot`, `pollState` and `teams` and sends `{ type: 'signedOut' }`; the worker clears alarms,
@@ -716,7 +761,7 @@ signal (`state/store.ts`).
   updates the hash and the signal synchronously. After a route change `<main>` takes focus
   (labelled with the view's name), but not on first load. Expanded PR state is local UI state.
 - `Header`: brand, "Updated 2 min ago" (`snapshot.fetchedAt`, ticks every 15 s), refresh
-  (`sendToBackground({ type: 'poll', force: true })`, spinner while `pollState.inFlight`),
+  (`sendToBackground({ type: 'poll', reason: 'user' })`, spinner while `pollState.inFlight`),
   settings / back toggle and the account menu (avatar: GitHub profile, Sign out behind the
   `SignOutDialog` confirmation that Settings reuses). Signed out or before hydration it is the
   brand alone.
@@ -1001,7 +1046,7 @@ closure, never merely because a PR left a bounded search or the selected scope.
 
 ## Refresh and session ordering
 
-Panel setting changes, completed mutations and sign-in request `poll` with `afterCurrent`.
+Panel setting changes, completed mutations and sign-in request a `change` poll (trailing).
 While a poll is active, these requests share one trailing promise, using the latest saved
 configuration; further changes during that trailing run can schedule one more run. Ordinary
 refreshes still share the current poll. Team rediscovery is coalesced into the trailing request.

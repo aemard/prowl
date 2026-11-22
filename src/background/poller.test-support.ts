@@ -14,7 +14,7 @@ import { defaultSettings } from '../lib/storage/settings';
 import { getItem, setItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth } from '../test/panel';
-import { POLL_ALARM } from './poller';
+import { POLL_ALARM } from './pollState';
 
 export const NOW = Date.parse('2026-10-06T12:00:00.000Z');
 export const MINUTE = 60_000;

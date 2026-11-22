@@ -1,21 +1,18 @@
 /**
- * Opening the panel (or coming back to it) refreshes a list older than a minute at once, instead
- * of showing it until the next scheduled poll: after days with Chrome closed or the computer
- * asleep, the user sees current data within seconds. A forced poll still honours rate limits.
+ * Opening the panel (or coming back to it) asks the worker for a `panel` poll instead of showing
+ * the list until the next scheduled one: after days with Chrome closed or the computer asleep,
+ * the user sees current data within seconds. The worker's cadence policy decides: it polls a
+ * list older than a minute, and never through a backoff, a rate-limit wait or a rejected token
+ * (only an explicit Refresh does that).
  */
 import { useEffect } from 'preact/hooks';
 import { sendToBackground } from './background';
-import { auth, pollState, snapshot } from './store';
+import { auth, pollState } from './store';
 
-/** A list younger than this is fresh enough to show without asking GitHub again. */
-export const FRESH_MS = 60_000;
-
-/** Asks the worker for a poll when signed in and the list is missing or older than `FRESH_MS`. */
-export function refreshIfStale(now = Date.now()): void {
+/** Asks the worker for a `panel` poll when signed in and no poll runs. */
+export function refreshIfStale(): void {
   if (!auth.value || pollState.value?.inFlight) return;
-  const fetchedAt = snapshot.value?.fetchedAt;
-  if (fetchedAt && now - Date.parse(fetchedAt) < FRESH_MS) return;
-  void sendToBackground({ type: 'poll', force: true });
+  void sendToBackground({ type: 'poll', reason: 'panel' });
 }
 
 /** On mount and each time the panel becomes visible again. */

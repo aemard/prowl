@@ -37,7 +37,7 @@ async function start() {
   const { registerBackground } = await import('../background/register');
   const { poll } = await import('../background/poller');
   registerBackground();
-  await poll({ force: true });
+  await poll({ reason: 'user' });
   await import('../sidepanel/main');
   const { render, h } = await import('preact');
   const { AnimationControls } = await import('./AnimationControls');

@@ -140,5 +140,5 @@ export const refreshRequested = signal<number | null>(null);
 /** Refresh now (button or `r`): a forced poll whose outcome the announcer reads out. */
 export function requestRefresh(): void {
   refreshRequested.value = Date.now();
-  void sendToBackground({ type: 'poll', force: true });
+  void sendToBackground({ type: 'poll', reason: 'user' });
 }

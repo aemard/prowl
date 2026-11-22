@@ -132,7 +132,7 @@ test.describe('expanding a card', () => {
 
     // A poll that changes nothing the detail depends on: still open, nothing refetched.
     const refresh = () =>
-      panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', force: true }));
+      panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
     await refresh();
     await expect(panel.locator('.pr-card__summary').first()).toBeVisible();
     await expect(toggle(checkout)).toHaveAttribute('aria-expanded', 'true');
