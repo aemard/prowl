@@ -47,6 +47,8 @@ export interface Review {
   /** GraphQL node id; used to detect new reviews between polls. */
   id: string;
   author: string;
+  /** Posted by an app account (Copilot code review, CodeRabbit...), as for `Actor.isBot`. */
+  isBot: boolean;
   state: ReviewState;
   submittedAt: string;
 }
@@ -133,7 +135,8 @@ export interface PullRequest {
   incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
-  lastComment: { author: string; createdAt: string } | null;
+  /** The latest issue comment; `isBot` as for `Actor.isBot`. */
+  lastComment: { author: string; isBot: boolean; createdAt: string } | null;
   /** Set once the PR is merged or closed. */
   closedBy: string | null;
   /**

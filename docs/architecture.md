@@ -238,12 +238,12 @@ Mapping (`mapPullRequest`):
 |---|---|
 | `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
 | enums | Lower-cased when the model knows the value; otherwise `unknown` (`reviewDecision`, `mergeable`, `mergeStateStatus`) or `open` (`state`). `reviewDecision` is `none` when GitHub sends null (no review required), so a missing or unrecognized value is never read as "no requirement". |
-| `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. |
+| `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. Each carries `isBot` from `author.__typename`, as for `author` below (Copilot code review and CodeRabbit are `Bot`s). |
 | `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
 | `labels` | Color lower-cased when it is six hex digits, else `NEUTRAL_LABEL_COLOR` (`ededed`). |
 | `unresolvedThreads` | Unresolved among the first 100 review threads. |
 | `author` | `{ login, avatarUrl, isBot }`, null for a deleted account. `isBot`: `author.__typename` is `Bot` (GraphQL gives a bot's login without a suffix), or the login ends with `[bot]` (REST's spelling), so a `Mannequin` or a person called "bot" is not one. Cost: none (`__typename` is free). |
-| `lastComment` | Latest issue comment. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
+| `lastComment` | Latest issue comment, with `isBot` as for `reviews`. Deleted accounts: `author: null`; review and comment authors become `ghost`. |
 | `closedBy` | `mergedBy` in search results; `ProwlNodes` adds the `ClosedEvent` actor. |
 | `lastCommitAt` | Head commit (`commits(last: 1)`) `committedDate`: the committer date, which a rebase, an amend or "Update branch" renews and comments do not. `updatedAt` when the commit did not load (a hole in a partial read). |
 | `allowedMergeMethods` | Repository `mergeCommitAllowed`, `squashMergeAllowed`, `rebaseMergeAllowed`. |
@@ -436,9 +436,10 @@ becomes visible on a list older than a minute (`refreshIfStale`, `src/sidepanel/
 
 `whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)
 says who has to move. Closed PRs and drafts are nobody's. On the viewer's own PR, in order:
-failing CI, changes requested after the last push, conflicts, a review comment or an issue
-comment (not the viewer's, not a bot's) after the last push, then ready to merge with write
-access are the viewer's move; otherwise it waits on checks or reviewers. On someone else's PR:
+failing CI, changes requested after the last push (a bot's too: they block the merge), conflicts,
+a review comment or an issue comment after the last push that is neither the viewer's nor a
+bot's (`isBot`, from GraphQL: Copilot code review and CodeRabbit comment after every push), then
+ready to merge with write access are the viewer's move; otherwise it waits on checks or reviewers. On someone else's PR:
 a review requested of the viewer, or a push after the viewer requested changes, is the
 viewer's move; a request to one of their teams is the team's; otherwise the author's. `since`
 is the push, review or comment that started the wait. "Last push" is the head commit's

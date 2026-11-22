@@ -55,7 +55,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         autoMergeRequest { mergeMethod enabledBy { login } }
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
-        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { login } } }
+        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { __typename login } } }
         reviewRequests(first: 20) {
           totalCount pageInfo { hasNextPage }
           nodes {
@@ -68,7 +68,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         }
         reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
         stackEntry { position stack { id number size baseRefName } }
-        comments(last: 1) { nodes { createdAt author { login } } }
+        comments(last: 1) { nodes { createdAt author { __typename login } } }
         commits(last: 1) {
           nodes {
             commit {
@@ -142,6 +142,11 @@ export interface Login {
   login: string;
 }
 
+/** An `Actor` with its GraphQL type: `Bot` for an app account (Copilot, CodeRabbit, Dependabot). */
+export interface TypedLogin extends Login {
+  __typename: string;
+}
+
 export interface StateCount {
   state: string;
   count: number;
@@ -159,7 +164,7 @@ export interface PullRequestNode {
   headRefOid: string;
   createdAt: string;
   updatedAt: string;
-  author: (Login & { __typename: string; avatarUrl: string }) | null;
+  author: (TypedLogin & { avatarUrl: string }) | null;
   mergedBy: Login | null;
   repository: {
     name: string;
@@ -182,7 +187,7 @@ export interface PullRequestNode {
     id: string;
     state: string;
     submittedAt: string | null;
-    author: Login | null;
+    author: TypedLogin | null;
   }> | null;
   /** `{}` for a team (not selected, see `SEARCH_QUERY`). */
   reviewRequests: Nodes<{
@@ -194,7 +199,7 @@ export interface PullRequestNode {
     position: number;
     stack: { id: string; number: number; size: number; baseRefName: string } | null;
   } | null;
-  comments: Nodes<{ createdAt: string; author: Login | null }>;
+  comments: Nodes<{ createdAt: string; author: TypedLogin | null }>;
   commits: Nodes<{
     commit: {
       /** Committer date (set by git, renewed by a rebase or amend). */

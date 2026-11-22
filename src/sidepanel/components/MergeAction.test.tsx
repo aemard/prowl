@@ -100,7 +100,13 @@ describe('the confirmation', () => {
       viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       reviews: [
-        { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },
+        {
+          id: 'R_1',
+          author: 'alice',
+          isBot: false,
+          state: 'changes_requested',
+          submittedAt: pr.updatedAt,
+        },
       ],
       mergeable: 'conflicting',
       mergeStateStatus: 'dirty',

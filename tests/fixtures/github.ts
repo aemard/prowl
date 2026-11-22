@@ -87,7 +87,7 @@ export function reviewNode(
     id: `PRR_${login ?? 'ghost'}_${state}_${submittedAt ?? 'pending'}`,
     state,
     submittedAt,
-    author: login === null ? null : { login },
+    author: login === null ? null : { __typename: 'User', login },
   };
 }
 

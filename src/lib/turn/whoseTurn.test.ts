@@ -10,6 +10,7 @@ const me = { login: 'Me', avatarUrl: '', isBot: false };
 const review = (author: string, state: Review['state'], submittedAt: string): Review => ({
   id: `R_${author}_${submittedAt}`,
   author,
+  isBot: false,
   state,
   submittedAt,
 });
@@ -42,7 +43,11 @@ describe('whoseTurn on your own pull requests', () => {
       { reviews: [review('bob', 'commented', AFTER)] },
       'feedback',
     ],
-    ['a comment after the push', { lastComment: { author: 'bob', createdAt: AFTER } }, 'feedback'],
+    [
+      'a comment after the push',
+      { lastComment: { author: 'bob', isBot: false, createdAt: AFTER } },
+      'feedback',
+    ],
     [
       'ready to merge',
       {
@@ -59,17 +64,29 @@ describe('whoseTurn on your own pull requests', () => {
   it('hands the move back to reviewers once you pushed after their feedback', () => {
     const pr = mine({
       reviews: [review('bob', 'changes_requested', BEFORE)],
-      lastComment: { author: 'bob', createdAt: BEFORE },
+      lastComment: { author: 'bob', isBot: false, createdAt: BEFORE },
     });
     expect(turn(pr)).toEqual({ owner: 'them', reason: 'waiting_on_reviewers', since: PUSHED });
   });
 
   it('ignores your own and bots’ comments, and waits on running checks', () => {
-    expect(turn(mine({ lastComment: { author: 'me', createdAt: AFTER } })).owner).toBe('them');
-    expect(turn(mine({ lastComment: { author: 'codecov-bot', createdAt: AFTER } })).owner).toBe(
-      'them',
-    );
+    const comment = (author: string, isBot: boolean) => ({ author, isBot, createdAt: AFTER });
+    expect(turn(mine({ lastComment: comment('me', false) })).owner).toBe('them');
+    expect(turn(mine({ lastComment: comment('github-actions', true) })).owner).toBe('them');
+    // GraphQL says who is a bot: a person whose login ends in "bot" still asks you something.
+    expect(turn(mine({ lastComment: comment('talbot', false) })).reason).toBe('feedback');
     expect(turn(mine({ checks: running })).reason).toBe('waiting_on_checks');
+  });
+
+  it('takes a bot’s review comments for no feedback, its requested changes for some', () => {
+    const bot = (state: Review['state']) => ({ ...review('copilot', state, AFTER), isBot: true });
+    expect(turn(mine({ reviews: [bot('commented')] }))).toMatchObject({
+      owner: 'them',
+      reason: 'waiting_on_reviewers',
+    });
+    expect(turn(mine({ reviews: [bot('changes_requested')] })).reason).toBe('changes_requested');
+    const both = mine({ reviews: [bot('commented'), review('bob', 'commented', AFTER)] });
+    expect(turn(both).reason).toBe('feedback');
   });
 
   it('is not your move to merge without write access', () => {

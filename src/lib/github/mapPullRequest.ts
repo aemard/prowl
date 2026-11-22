@@ -20,12 +20,16 @@ import type {
   Nodes,
   PullRequestNode,
   StateCount,
+  TypedLogin,
 } from './queries';
 
 /** GitHub's name for a deleted account. */
 export const GHOST = 'ghost';
 /** REST spells a bot's login `dependabot[bot]`; GraphQL gives `dependabot` and `__typename: Bot`. */
 const BOT_SUFFIX = '[bot]';
+/** An app account, by what GraphQL says it is (the suffix covers REST-shaped logins). */
+const isBot = (author: TypedLogin) =>
+  author.__typename === 'Bot' || author.login.endsWith(BOT_SUFFIX);
 /** Used when a label color is not six hex digits. */
 export const NEUTRAL_LABEL_COLOR = 'ededed';
 const HEX_COLOR = /^[0-9a-f]{6}$/i;
@@ -169,7 +173,15 @@ function mapConversation(node: PullRequestNode) {
       .flatMap(({ id, state, submittedAt, author }) => {
         const mapped = pick(REVIEW_STATES, state, null);
         return mapped && submittedAt
-          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
+          ? [
+              {
+                id,
+                author: author?.login ?? GHOST,
+                isBot: author ? isBot(author) : false,
+                state: mapped,
+                submittedAt,
+              },
+            ]
           : [];
       })
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
@@ -181,7 +193,11 @@ function mapConversation(node: PullRequestNode) {
     unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
     commentCount: node.totalCommentsCount ?? 0,
     lastComment: lastComment
-      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
+      ? {
+          author: lastComment.author?.login ?? GHOST,
+          isBot: lastComment.author ? isBot(lastComment.author) : false,
+          createdAt: lastComment.createdAt,
+        }
       : null,
   };
 }
@@ -223,7 +239,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
     author: node.author && {
       login: node.author.login,
       avatarUrl: node.author.avatarUrl,
-      isBot: node.author.__typename === 'Bot' || node.author.login.endsWith(BOT_SUFFIX),
+      isBot: isBot(node.author),
     },
     state: pick(PR_STATES, node.state, 'open'),
     isDraft: node.isDraft,
