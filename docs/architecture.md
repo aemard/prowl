@@ -785,7 +785,8 @@ signal (`state/store.ts`).
   preserve the choices and force a refresh. Successful merges toast and refresh as well.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
-  reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`
+  reset when the token changes or goes away. `loadDetail(pr)` (`state/loadDetail.ts`, in the
+  details chunk with the detail query) runs when `PullRequestDetails`
   mounts and whenever `detailKey(pr)` changes (activity, check counts, merge facts: a finished
   check does not always touch `updatedAt`); a poll that changes none of them costs nothing. The
   previous detail stays on screen while a newer one loads, an answer overtaken by a newer request

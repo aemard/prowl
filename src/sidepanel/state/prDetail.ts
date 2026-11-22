@@ -1,7 +1,8 @@
 /**
  * Expanded cards and their details. Module signals, like the list's tab and filter, so an
  * expanded card stays open across background refreshes, tab switches and a visit to Settings.
- * Details are fetched when a card is expanded (never polled) and kept in memory only.
+ * Details are fetched when a card is expanded (never polled; `loadDetail`, with the details
+ * chunk) and kept in memory only.
  */
 import { computed, effect, signal } from '@preact/signals';
 import { env } from '../../lib/env';
@@ -43,6 +44,16 @@ export const detailKey = (pr: PullRequest) =>
       pr.checks.failed,
       pr.checks.pending,
       pr.checks.neutral,
+/**
+ * What is known of `pr`'s detail as the PR is now: the loaded detail, or that reading it failed;
+ * neither while it loads (an older detail does not count: the PR changed since).
+ */
+export function detailOf(pr: PullRequest): { detail?: PullRequestDetail; failed: boolean } {
+  const entry = details.value[pr.id];
+  if (entry?.key !== detailKey(pr) || entry.loading) return { failed: false };
+  return entry.error === undefined ? { detail: entry.detail, failed: false } : { failed: true };
+}
+
     ],
     pr.reviews.map((review) => [review.id, review.state, review.submittedAt, review.author]),
     pr.requestedReviewers,
