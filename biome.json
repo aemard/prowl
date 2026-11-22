@@ -16,6 +16,7 @@
       "!**/playwright-report",
       "!**/test-results",
       "!pnpm-lock.yaml",
+      "!tests/fixtures/github-schema.graphql",
       "!.release-please-manifest.json",
       "!**/*.md",
       "!**/*.yml",

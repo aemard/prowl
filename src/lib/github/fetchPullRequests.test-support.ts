@@ -19,11 +19,14 @@ type Handler = (variables: Record<string, unknown>) => Response | Error | object
  */
 export function setup(handlers: Record<string, Handler>) {
   const calls: { operation: string; variables: Record<string, unknown> }[] = [];
+  /** The query text of each search, in order. */
+  const searchTexts: string[] = [];
   const searched = new Map<string, FullPullRequestNode>();
   const fetch = vi.fn<FetchLike>(async (_url, init) => {
     const { query, variables } = JSON.parse(String(init.body));
     const operation = /query (\w+)/.exec(query)?.[1] ?? '';
     calls.push({ operation, variables });
+    if (operation === 'ProwlSearch') searchTexts.push(query);
     const handler =
       handlers[operation] ??
       (operation === 'ProwlMergeState'
@@ -44,7 +47,7 @@ export function setup(handlers: Record<string, Handler>) {
     fetch,
   });
   const queries = () => calls.filter((c) => c.operation === 'ProwlSearch').map((c) => c.variables);
-  return { client, calls, queries };
+  return { client, calls, queries, searchTexts };
 }
 
 export const section = (kind: Section['kind'], extra: Partial<Section> = {}): Section => ({

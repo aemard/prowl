@@ -39,6 +39,7 @@ watcher with manual extension reload.
 | `pnpm verify:fast` | Lint, types and unit tests. Use it while you work. |
 | `pnpm verify` | Everything CI runs: lint, types, unit tests with coverage gates, build, size budget and end-to-end tests. |
 | `pnpm lint:fix` | Formats the code with Biome and applies its safe fixes. |
+| `pnpm schema:update` | Downloads GitHub's GraphQL schema into `tests/fixtures/github-schema.graphql`, which the contract test checks every operation against. Commit it in its own pull request. |
 
 A pull request needs a green `pnpm verify`. Tests never call the real GitHub API: they use the
 builders in `tests/fixtures/` and the mock GitHub server of the end-to-end suite. The end-to-end
