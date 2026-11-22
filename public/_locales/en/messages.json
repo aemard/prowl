@@ -3479,5 +3479,17 @@
   "yourTurnPrefix": {
     "message": "Your turn:",
     "description": "Extension text: Your turn:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Single-key shortcuts",
+    "description": "Extension text: Single-key shortcuts"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work.",
+    "description": "Extension text: j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Single-key shortcuts are off. Turn them on in Settings → List.",
+    "description": "Extension text: Single-key shortcuts are off. Turn them on in Settings → List."
   }
 }

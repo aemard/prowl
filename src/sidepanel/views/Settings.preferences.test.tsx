@@ -66,6 +66,14 @@ describe('SettingsView', () => {
       await waitFor(async () => expect(await saved()).toMatchObject({ groupByRepo: false }));
     });
 
+    it('turns single-key shortcuts off and on (WCAG 2.1.4), on by default', async () => {
+      await open();
+      const shortcuts = toggle('Single-key shortcuts', group('List'));
+      expect(shortcuts.getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(shortcuts);
+      await waitFor(async () => expect(await saved()).toMatchObject({ singleKeyShortcuts: false }));
+    });
+
     it('offers every value the settings know', async () => {
       await open();
       const options = (label: string) =>

@@ -2953,5 +2953,14 @@
   },
   "yourTurnPrefix": {
     "message": "Du bist dran:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Tastenkürzel mit einer Taste"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / und ? steuern die Liste. Schalte sie aus, wenn du Spracheingabe nutzt oder versehentlich Tasten drückst; Pfeiltasten und Eingabe funktionieren weiter."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Tastenkürzel mit einer Taste sind aus. Schalte sie unter Einstellungen → Liste ein."
   }
 }

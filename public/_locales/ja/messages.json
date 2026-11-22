@@ -2953,5 +2953,14 @@
   },
   "yourTurnPrefix": {
     "message": "あなたの番："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "1 キーのショートカット"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/、? でリストを操作します。音声入力を使う場合や誤ってキーを押してしまう場合はオフにしてください。矢印キーと Enter は引き続き使えます。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "1 キーのショートカットはオフです。設定 → リストでオンにできます。"
   }
 }

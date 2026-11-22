@@ -94,6 +94,12 @@ export interface Settings {
   groupByRepo: boolean;
   /** Expanded cards offer summaries and CI explanations from Chrome's on-device AI. */
   localAi: boolean;
+  /**
+   * The list's single-key shortcuts (j, k, o, s, t, r, /, ?) are on. Off, only keys with a
+   * modifier and the focused control's own keys work (WCAG 2.1.4): speech input and stray keys
+   * cannot trigger them. Default true.
+   */
+  singleKeyShortcuts: boolean;
   /** Legacy sync compatibility key, always normalized to 0. */
   hideStaleAfterDays: number;
   /** Legacy sync compatibility key, always normalized to false. */

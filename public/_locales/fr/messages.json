@@ -2953,5 +2953,14 @@
   },
   "yourTurnPrefix": {
     "message": "À vous :"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Raccourcis à une touche"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / et ? agissent sur la liste. Désactivez-les si vous utilisez la saisie vocale ou appuyez sur des touches par erreur ; les flèches et Entrée fonctionnent toujours."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Les raccourcis à une touche sont désactivés. Activez-les dans Paramètres → Liste."
   }
 }

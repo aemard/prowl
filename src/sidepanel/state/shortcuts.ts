@@ -94,9 +94,17 @@ interface KeyLike {
 const isEditable = (el: Element) =>
   el.matches('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
 
-/** What `event` asks for, or null when the key is not a shortcut there (typing, a menu...). */
-export function shortcutFor(event: KeyLike): Shortcut | null {
+/** The character keys (WCAG 2.1.4's single-key shortcuts), which the user can turn off. */
+const CHARACTER_KEYS = new Set(['j', 'k', 'o', 's', 't', 'r', '/', '?']);
+
+/**
+ * What `event` asks for, or null when the key is not a shortcut there (typing, a menu...).
+ * With `singleKeys` off (Settings), only the arrows of the list remain: speech input or a stray
+ * key cannot move, snooze or refresh.
+ */
+export function shortcutFor(event: KeyLike, singleKeys = true): Shortcut | null {
   if (event.ctrlKey || event.metaKey || event.altKey) return null;
+  if (!singleKeys && CHARACTER_KEYS.has(event.key)) return null;
   const target = event.target instanceof Element ? event.target : null;
   if (target && (isEditable(target) || target.closest('[role="menu"], dialog'))) return null;
   const inList = target?.closest('.pr-list') != null;

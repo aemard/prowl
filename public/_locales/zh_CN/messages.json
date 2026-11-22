@@ -2953,5 +2953,14 @@
   },
   "yourTurnPrefix": {
     "message": "轮到你："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "单键快捷键"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/ 和 ? 用于操作列表。如果你使用语音输入或常误按按键，请关闭它们；方向键和回车键仍可使用。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "单键快捷键已关闭。可在“设置 → 列表”中开启。"
   }
 }
