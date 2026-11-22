@@ -49,7 +49,7 @@ test('counts the pull requests waiting on you, red while your CI fails', async (
   expect(await icon(serviceWorker)).toEqual({
     text: '2',
     color: DANGER,
-    title: 'Prowl: 2 pull requests waiting on you (1 Fix CI, 1 Merge it)',
+    title: 'Prowl: 2 pull requests waiting on you (1 with failing CI, 1 ready to merge)',
   });
 
   state.failing = false;
@@ -57,7 +57,7 @@ test('counts the pull requests waiting on you, red while your CI fails', async (
   expect(await icon(serviceWorker)).toEqual({
     text: '1',
     color: ACCENT,
-    title: 'Prowl: 1 pull request waiting on you (1 Merge it)',
+    title: 'Prowl: 1 pull request waiting on you (1 ready to merge)',
   });
 });
 

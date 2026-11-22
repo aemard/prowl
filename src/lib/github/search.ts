@@ -8,6 +8,10 @@ import type { PullRequest, Section, Settings } from '../model';
 import type { BuiltInSectionKind } from '../storage/settings';
 
 type RepoFilters = Pick<Settings, 'repoInclude' | 'repoExclude'>;
+type ScopeSettings = Pick<
+  Settings,
+  'sections' | 'repoInclude' | 'repoExclude' | 'maxPerSection' | 'unfollowedTeams'
+>;
 
 /** `review-requested:@me` would also match the viewer's teams: they have their own section. */
 const PRESET_QUALIFIER: Record<
@@ -131,4 +135,24 @@ export function validateCustomQuery(query: string): string[] {
     errors.push(t('searchWordsLimit', MAX_TEXT_LENGTH, text.length));
   }
   return errors;
+}
+
+/**
+ * Section id -> what its search asks GitHub for (query, filters, limit, unfollowed teams), for
+ * every section a poll searches. Equal across two polls: a PR new to the section is new on
+ * GitHub, not brought in by a section turned on or a query or filter changed (see the diff).
+ */
+export function sectionScopes(settings: ScopeSettings): Record<string, string> {
+  const searched = settings.sections.filter((s) => s.enabled && s.kind !== 'your_turn');
+  return Object.fromEntries(
+    searched.map((section) => [
+      section.id,
+      JSON.stringify([
+        buildSearchQuery(section, settings),
+        settings.repoInclude,
+        settings.maxPerSection,
+        section.kind === 'team_review_requested' ? settings.unfollowedTeams : [],
+      ]),
+    ]),
+  );
 }

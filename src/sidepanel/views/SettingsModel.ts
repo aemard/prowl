@@ -22,6 +22,10 @@ export const EVENT_LABELS: Record<PrEventType, { label: string; description?: st
   ready_to_merge: { label: t('readyToMerge2') },
   merged: { label: t('merged') },
   closed: { label: t('closed') },
+  review_requested: {
+    label: t('reviewRequested'),
+    description: t('reviewRequestedEventDescription'),
+  },
   your_turn: { label: t('yourTurnSection'), description: t('yourTurnEventDescription') },
 };
 

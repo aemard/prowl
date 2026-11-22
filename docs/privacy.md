@@ -25,6 +25,8 @@ your browser profile can read your token.
   sign out.
 - **Notification record:** the ids of events already reported, in `chrome.storage.session`.
   Removed when you sign out or Chrome closes.
+- **Quiet-hours digest:** the events quiet hours held back (pull request title, number and what
+  happened), until the digest shows them. Dropped after a day; removed when you sign out.
 - **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
   notification choices and quiet hours. Removed when you uninstall Prowl.
 - **Local choices:** which pull requests you snoozed, muted, always show or have seen, by pull

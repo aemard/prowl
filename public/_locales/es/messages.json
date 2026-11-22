@@ -190,9 +190,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot"
-  },
   "someone": {
     "message": "Alguien"
   },
@@ -2953,5 +2950,120 @@
   },
   "singleKeyShortcutsOff": {
     "message": "Los atajos de una sola tecla están desactivados. Actívalos en Ajustes → Lista."
+  },
+  "reviewRequestedEventDescription": {
+    "message": "Cuando se solicita tu revisión, también en una pull request nueva en la lista"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "$P1$ revisión solicitada",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "$P1$ revisiones solicitadas",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "$P1$ por revisar de nuevo",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "$P1$ por revisar de nuevo",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "$P1$ con CI fallida",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "$P1$ con CI fallida",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "$P1$ con cambios solicitados",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "$P1$ con cambios solicitados",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "$P1$ con conflictos",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "$P1$ con conflictos",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "$P1$ con comentarios por responder",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "$P1$ con comentarios por responder",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "$P1$ lista para fusionar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "$P1$ listas para fusionar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

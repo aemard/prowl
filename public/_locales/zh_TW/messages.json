@@ -190,9 +190,6 @@
       }
     }
   },
-  "bot": {
-    "message": "機器人"
-  },
   "someone": {
     "message": "有人"
   },
@@ -2953,5 +2950,120 @@
   },
   "singleKeyShortcutsOff": {
     "message": "單鍵快速鍵已關閉。可在「設定 → 清單」中開啟。"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "要求你審查時，包括清單中新出現的拉取請求"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "審查請求 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "審查請求 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "待再次審查 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "待再次審查 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "CI 失敗 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "CI 失敗 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "被要求變更 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "被要求變更 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "存在衝突 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "存在衝突 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "待回覆意見 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "待回覆意見 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "可合併 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "可合併 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

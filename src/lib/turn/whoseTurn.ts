@@ -7,13 +7,7 @@ import { isReadyToMerge } from '../diff/diffSnapshots';
 import type { MessageKey } from '../i18n';
 import type { PullRequest, Snapshot, Turn, TurnReason } from '../model';
 
-/**
- * ponytail: GraphQL drops the `[bot]` suffix, so app accounts are recognized by name; a human
- * whose login ends in "bot" is taken for one, which only means their comment does not ask you.
- */
-const BOT_LOGIN = /(?:\[bot\]|bot|^github-actions)$/i;
-
-/** The short words for each reason it is the viewer's move: card chip and badge tooltip. */
+/** The short words for each reason it is the viewer's move, on cards (the badge counts its own way). */
 export const TURN_LABELS: Partial<Record<TurnReason, MessageKey>> = {
   review_requested: 'turnReviewRequested',
   re_review: 'turnReReview',
@@ -30,22 +24,29 @@ function authorTurn(pr: PullRequest, viewer: string): Turn {
   const pushed = pr.lastCommitAt;
   if (pr.checks.state === 'failure') return { owner: 'you', reason: 'ci_failed', since: pushed };
   const others = pr.reviews.filter((r) => r.author.toLowerCase() !== viewer);
-  // Changes asked after the last push: the author's move. A push since hands it back.
+  // Changes asked after the last push: the author's move. A push since hands it back. A bot's
+  // count too: they block the merge like anyone's.
   const asked = others.find((r) => r.state === 'changes_requested' && r.submittedAt > pushed);
   if (asked) return { owner: 'you', reason: 'changes_requested', since: asked.submittedAt };
   if (pr.mergeable === 'conflicting')
     return { owner: 'you', reason: 'conflicts', since: pr.updatedAt };
-  const reviewed = others.find((r) => r.state === 'commented' && r.submittedAt > pushed);
+  // Bots (Copilot code review, CodeRabbit, CI reports) comment after every push: not feedback.
+  const reviewed = others.find(
+    (r) => r.state === 'commented' && !r.isBot && r.submittedAt > pushed,
+  );
   const comment = pr.lastComment;
   const commented =
     comment &&
     comment.createdAt > pushed &&
     comment.author.toLowerCase() !== viewer &&
-    !BOT_LOGIN.test(comment.author)
+    !comment.isBot
       ? comment.createdAt
       : null;
   const feedback = reviewed?.submittedAt ?? commented;
   if (feedback) return { owner: 'you', reason: 'feedback', since: feedback };
+  // Auto-merge is on: GitHub merges it now, nobody has to.
+  if (isReadyToMerge(pr) && pr.autoMerge)
+    return { owner: 'none', reason: 'auto_merge', since: pushed };
   if (isReadyToMerge(pr) && pr.viewerCanMerge) {
     const approved = others.find((r) => r.state === 'approved')?.submittedAt ?? pushed;
     return { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) };

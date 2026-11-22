@@ -51,6 +51,7 @@ export async function signOut(): Promise<void> {
       STORAGE_KEYS.pollState,
       STORAGE_KEYS.teams,
       STORAGE_KEYS.panelState,
+      STORAGE_KEYS.quietHeld,
     );
   });
   await sendToBackground({ type: 'signedOut' });

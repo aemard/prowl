@@ -89,10 +89,11 @@ Details: [sign-in guide](docs/auth.md).
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
-- **Notifications**: your turn, CI failed, CI passed after a failure, new review, approved,
-  changes requested, new comment, ready to merge, merged or closed by someone else, with Open and
-  Snooze 1 h buttons. Per-event toggles, quiet hours (what happens during them arrives as one
-  digest afterwards), and a toolbar badge counting PRs that need you.
+- **Notifications**: your turn, review requested (new pull requests included), CI failed, CI
+  passed after a failure, new review, approved, changes requested, new comment, ready to merge,
+  merged or closed by someone else, with Open and Snooze 1 h buttons. Per-event toggles, quiet
+  hours (what happens during them arrives as one digest afterwards, even after Chrome was
+  closed), and a toolbar badge counting PRs that need you.
 - **Actions**: approve, request changes and merge (with confirmation; only the merge methods the
   repository allows, and GitHub's own commit title to start from), turn auto-merge on or off, update a branch that is behind (merge or
   rebase), comment, re-run failed checks, ready for review / convert to draft, snooze, mute,

@@ -49,6 +49,7 @@ const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
   ready_to_merge: true,
   merged: true,
   closed: true,
+  review_requested: true,
   your_turn: true,
 };
 

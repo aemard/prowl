@@ -47,6 +47,8 @@ export interface Review {
   /** GraphQL node id; used to detect new reviews between polls. */
   id: string;
   author: string;
+  /** Posted by an app account (Copilot code review, CodeRabbit...), as for `Actor.isBot`. */
+  isBot: boolean;
   state: ReviewState;
   submittedAt: string;
 }
@@ -133,7 +135,8 @@ export interface PullRequest {
   incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
-  lastComment: { author: string; createdAt: string } | null;
+  /** The latest issue comment; `isBot` as for `Actor.isBot`. */
+  lastComment: { author: string; isBot: boolean; createdAt: string } | null;
   /** Set once the PR is merged or closed. */
   closedBy: string | null;
   /**
@@ -276,6 +279,11 @@ export interface Snapshot {
   /** Sections not yet searched in a progressive publication. */
   sectionsPending?: string[];
   /**
+   * Section id -> fingerprint of what its search asked for (`sectionScopes`); a pending section
+   * keeps the previous poll's. Absent (older snapshots) means unknown: nothing counts as new.
+   */
+  sectionScopes?: Record<string, string>;
+  /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
    * section's missing scope, no team, or failed team searches (it keeps the PRs of the teams that
@@ -317,6 +325,8 @@ export type PrEventType =
   | 'ready_to_merge'
   | 'merged'
   | 'closed'
+  /** A review was asked of the viewer (`whoseTurn` reason `review_requested`), new PRs included. */
+  | 'review_requested'
   /** A PR became the viewer's turn (see `whoseTurn`) without another event saying why. */
   | 'your_turn';
 
@@ -332,6 +342,13 @@ export interface PrEvent {
   /** Who caused it, when known. */
   actor: string | null;
   at: string;
+}
+
+/** An event quiet hours silenced, waiting for the digest (`quietHeld`). */
+export interface HeldEvent {
+  event: PrEvent;
+  /** When it was held (ISO): the digest drops what waited over a day. */
+  heldAt: string;
 }
 
 export interface RateLimit {
@@ -410,6 +427,8 @@ export const STORAGE_KEYS = {
   prLocal: 'prLocal',
   teams: 'teams',
   panelState: 'panelState',
+  /** Events quiet hours hold for the digest; removed at sign-out. */
+  quietHeld: 'quietHeld',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

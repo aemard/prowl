@@ -40,9 +40,12 @@ export const panelState = signal<PanelState | undefined>(undefined);
 /** False until the first read of storage has been applied: show a skeleton, not a guess. */
 export const hydrated = signal(false);
 
+/** What the panel shows; the quiet-hours digest (`quietHeld`) is the worker's alone. */
+type PanelKey = Exclude<StorageKey, 'quietHeld'>;
+
 // Settings and prLocal are normalized on every read; auth, snapshot, pollState and teams are
 // only written by Prowl, so their stored shape is trusted.
-const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
+const BINDINGS: Record<PanelKey, (raw: unknown) => void> = {
   [STORAGE_KEYS.settings]: (raw) => {
     settings.value = normalizeSettings(raw);
   },
@@ -68,7 +71,7 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
     panelState.value = normalizePanelState(raw);
   },
 };
-const KEYS = Object.keys(BINDINGS) as StorageKey[];
+const KEYS = Object.keys(BINDINGS) as PanelKey[];
 
 /**
  * Reads every key into the signals, then keeps them in sync. Returns the function that stops
@@ -77,14 +80,14 @@ const KEYS = Object.keys(BINDINGS) as StorageKey[];
  */
 export async function hydrateStore(): Promise<() => void> {
   hydrated.value = false;
-  const changed = new Set<StorageKey>();
+  const changed = new Set<PanelKey>();
   const stops = KEYS.map((key) =>
     subscribe(key, (value) => {
       changed.add(key);
       BINDINGS[key](value);
     }),
   );
-  const stored: Partial<Record<StorageKey, unknown>> = await getItems(KEYS);
+  const stored: Partial<Record<PanelKey, unknown>> = await getItems(KEYS);
   batch(() => {
     for (const key of KEYS) if (!changed.has(key)) BINDINGS[key](stored[key]);
     hydrated.value = true;

@@ -10,6 +10,7 @@ import { graphqlError, graphqlRateLimit, jsonResponse } from '../../../tests/fix
 import type { PullRequest } from '../model';
 import { fetchPullRequests } from './fetchPullRequests';
 import { bySearch, mapped, section, settings, setup } from './fetchPullRequests.test-support';
+import { sectionScopes } from './search';
 
 describe('bounded and partial section coverage', () => {
   it.each([49, 50, 51])('reports extra results only when GitHub has more (%s)', async (count) => {
@@ -162,6 +163,8 @@ describe('bounded and partial section coverage', () => {
               sections: { authored: [mine.id], mentioned: [cached.id] },
               pending: ['mentioned'],
               cards: [mine.id, cached.id],
+              // The cached section keeps the scope it was searched with.
+              scopes: { authored: scopes.authored, mentioned: 'searched before' },
             },
           ]);
           return searchResponse([], variables);
@@ -170,21 +173,29 @@ describe('bounded and partial section coverage', () => {
       },
       ProwlNodes: ({ ids }) => nodesResponse(ids, [closedNode(cached.id, { state: 'OPEN' })]),
     });
+    const scope = settings({ sections: [section('authored'), section('mentioned')] });
+    const scopes = sectionScopes(scope);
     const result = await fetchPullRequests(
       client,
-      settings({ sections: [section('authored'), section('mentioned')] }),
-      { pullRequests: { [cached.id]: mapped(cached) }, sections: { mentioned: [cached.id] } },
+      scope,
+      {
+        pullRequests: { [cached.id]: mapped(cached) },
+        sections: { mentioned: [cached.id] },
+        sectionScopes: { mentioned: 'searched before' },
+      },
       null,
       undefined,
-      async ({ sections, sectionsPending, pullRequests }) => {
+      async ({ sections, sectionsPending, pullRequests, sectionScopes }) => {
         publications.push({
           sections: { ...sections },
           pending: sectionsPending && [...sectionsPending],
           cards: Object.keys(pullRequests),
+          scopes: { ...sectionScopes },
         });
       },
     );
     expect(result.sections).toEqual({ authored: [mine.id], mentioned: [] });
+    expect(result.sectionScopes).toEqual(scopes);
     expect(result.sectionsPending).toBeUndefined();
   });
 });

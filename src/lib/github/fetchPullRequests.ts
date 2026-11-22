@@ -10,12 +10,14 @@ import { isNode, readMergeState } from './fetchMergeState';
 import { SearchContext } from './fetchSearch';
 import { mapClosedState } from './mapPullRequest';
 import { NODES_QUERY, type NodesData } from './queries';
-import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
+import { buildSearchQuery, filterByRepo, sectionScopes, validateCustomQuery } from './search';
 export interface FetchResult
   extends Pick<
     Snapshot,
     'pullRequests' | 'sections' | 'sectionCoverage' | 'sectionsPending' | 'mergeStateDue'
   > {
+  /** What each searched section asked for (see `Snapshot.sectionScopes`). */
+  sectionScopes: Record<string, string>;
   /** PR id -> when its merge facts were read (see `Snapshot.mergeStateAt`). */
   mergeStateAt: Record<string, string>;
   /** Sections that were skipped or loaded in part, section id -> readable reason. */
@@ -53,7 +55,7 @@ export async function fetchPullRequests(
   settings: FetchSettings,
   previous:
     | (Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
-        Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests'>>)
+        Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests' | 'sectionScopes'>>)
     | null = null,
   teams: Pick<TeamsState, 'teams' | 'error' | 'incomplete'> | null = null,
   local: PrLocalState = { snoozed: {}, muted: {}, seen: {} },
@@ -66,6 +68,7 @@ export async function fetchPullRequests(
     sectionErrors: {},
     teamRequests: {},
     mergeStateAt: {},
+    sectionScopes: sectionScopes(settings),
     rateLimit: null,
   };
   const context = new SearchContext(client, settings, previous, teams, result);
@@ -136,11 +139,16 @@ function pendingPublication(context: SearchContext, pending: Set<string>): Fetch
     pullRequests: { ...result.pullRequests },
     sections: { ...result.sections },
     teamRequests: { ...result.teamRequests },
+    sectionScopes: { ...result.sectionScopes },
     sectionsPending: [...pending],
   };
   for (const id of pending) {
     const ids = previous?.sections?.[id] ?? [];
     publishing.sections[id] = ids;
+    // Searched as the previous poll did, if at all: what this poll's search finds is new to it.
+    const scope = previous?.sectionScopes?.[id];
+    if (scope === undefined) delete publishing.sectionScopes[id];
+    else publishing.sectionScopes[id] = scope;
     for (const prId of ids) {
       const pr = previous?.pullRequests[prId];
       if (pr && !publishing.pullRequests[prId]) publishing.pullRequests[prId] = pr;

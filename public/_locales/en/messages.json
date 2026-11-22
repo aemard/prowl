@@ -231,10 +231,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot",
-    "description": "Extension text: Bot"
-  },
   "someone": {
     "message": "Someone",
     "description": "Extension text: Someone"
@@ -3479,5 +3475,135 @@
   "singleKeyShortcutsOff": {
     "message": "Single-key shortcuts are off. Turn them on in Settings → List.",
     "description": "Extension text: Single-key shortcuts are off. Turn them on in Settings → List."
+  },
+  "reviewRequestedEventDescription": {
+    "message": "When your review is asked for, also on a pull request new to the list",
+    "description": "Extension text: When your review is asked for, also on a pull request new to the list"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "$P1$ review requested",
+    "description": "Extension text: $P1$ review requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "$P1$ reviews requested",
+    "description": "Extension text: $P1$ reviews requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "$P1$ to review again",
+    "description": "Extension text: $P1$ to review again",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "$P1$ to review again",
+    "description": "Extension text: $P1$ to review again",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "$P1$ with failing CI",
+    "description": "Extension text: $P1$ with failing CI",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "$P1$ with failing CI",
+    "description": "Extension text: $P1$ with failing CI",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "$P1$ with changes requested",
+    "description": "Extension text: $P1$ with changes requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "$P1$ with changes requested",
+    "description": "Extension text: $P1$ with changes requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "$P1$ with conflicts",
+    "description": "Extension text: $P1$ with conflicts",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "$P1$ with conflicts",
+    "description": "Extension text: $P1$ with conflicts",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "$P1$ with feedback to answer",
+    "description": "Extension text: $P1$ with feedback to answer",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "$P1$ with feedback to answer",
+    "description": "Extension text: $P1$ with feedback to answer",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "$P1$ ready to merge",
+    "description": "Extension text: $P1$ ready to merge",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "$P1$ ready to merge",
+    "description": "Extension text: $P1$ ready to merge",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -189,7 +189,11 @@ test('every kind of change by someone else notifies with its own event', async (
         (one = {
           ...one,
           totalCommentsCount: 1,
-          comments: { nodes: [{ createdAt: '2026-10-06T09:00:00Z', author: { login: 'dave' } }] },
+          comments: {
+            nodes: [
+              { createdAt: '2026-10-06T09:00:00Z', author: { __typename: 'User', login: 'dave' } },
+            ],
+          },
         }),
     ),
   ).toEqual(['comment_new']);

@@ -6,8 +6,8 @@ import { t } from '../lib/i18n';
  * stable per change, see the diff engine) and tells a click where to go; a notification for
  * one event has that event's id as its id. A summary of several events is recorded under its
  * own id too, pointing at the viewer's pull requests on GitHub. Events silenced only by quiet
- * hours wait under `quietHeld` and become one digest notification at the first poll after the
- * window ends.
+ * hours wait in `chrome.storage.local` under `quietHeld` (Chrome is often closed overnight) and
+ * become one digest notification at the first poll after the window ends.
  */
 
 import { env } from '../lib/env';
@@ -19,14 +19,13 @@ import {
   quietDigestContent,
   summaryContent,
 } from '../lib/notify/messages';
+import { freshHeld, holdEvents } from '../lib/notify/quietDigest';
 import { snooze, updatePrLocal } from '../lib/storage/prLocal';
+import { getItem, removeItems, setItem } from '../lib/storage/storage';
 import { isQuietNow } from '../lib/time/quietHours';
 import { isGitHubUrl } from '../lib/url';
 
 const NOTIFIED = 'notified';
-const HELD = 'quietHeld';
-/** Events kept for the quiet-hours digest; older ones are dropped first. */
-const MAX_HELD = 50;
 /** Ids remembered; older ones are forgotten first. */
 const MAX_NOTIFIED = 300;
 /** More events than this in one poll become one summary notification. */
@@ -43,14 +42,9 @@ async function readNotified(): Promise<Notified> {
   return stored[NOTIFIED] ?? {};
 }
 
-async function readHeld(): Promise<PrEvent[]> {
-  const stored = await chrome.storage.session.get<{ [HELD]?: PrEvent[] }>(HELD);
-  return stored[HELD] ?? [];
-}
-
 /** Forgets what was reported and what waits for the digest (sign-out). */
-export function forgetNotified(): Promise<void> {
-  return chrome.storage.session.remove([NOTIFIED, HELD]);
+export async function forgetNotified(): Promise<void> {
+  await Promise.all([chrome.storage.session.remove(NOTIFIED), removeItems('quietHeld')]);
 }
 
 /** Keeps the events quiet hours silenced (and nothing else would have) for the digest. */
@@ -58,10 +52,8 @@ async function hold(events: PrEvent[], settings: NotificationSettings, local: Pr
   const audible = { ...settings, quietHours: { ...settings.quietHours, enabled: false } };
   const kept = filterEvents(events, audible, local);
   if (kept.length === 0) return;
-  const held = await readHeld();
-  const ids = new Set(held.map((event) => event.id));
-  const next = [...held, ...kept.filter((event) => !ids.has(event.id))].slice(-MAX_HELD);
-  await chrome.storage.session.set({ [HELD]: next });
+  const now = Date.now();
+  await setItem('quietHeld', holdEvents(freshHeld(await getItem('quietHeld'), now), kept, now));
 }
 
 /** After quiet hours: one digest of what waited, still enabled, unmuted and not yet reported. */
@@ -70,9 +62,10 @@ async function flushHeld(
   settings: NotificationSettings,
   local: PrLocalState,
 ): Promise<[string, string][]> {
-  const held = await readHeld();
-  if (held.length === 0) return [];
-  await chrome.storage.session.remove(HELD);
+  const stored = await getItem('quietHeld');
+  if (stored === undefined) return [];
+  await removeItems('quietHeld');
+  const held = freshHeld(stored, Date.now()).map(({ event }) => event);
   const due = filterEvents(held, settings, local).filter((e) => !Object.hasOwn(notified, e.id));
   if (due.length === 0) return [];
   const id = `digest:${Date.now()}`;

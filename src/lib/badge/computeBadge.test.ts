@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { headCommit, prNode, requestedReviewer, viewerNode } from '../../../tests/fixtures/github';
+import { fakeChrome } from '../../test/chrome';
 import { activityKey } from '../activity';
 import { mapPullRequest } from '../github/mapPullRequest';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot } from '../model';
@@ -194,9 +195,23 @@ describe('turn badge', () => {
     const others = theirs(3, { commits: headCommit({ FAILURE: 1 }) });
     expect(badge([asked, red, others], 'turn')).toEqual({
       text: '2',
-      title: 'Prowl: 2 pull requests waiting on you (1 Review, 1 Fix CI)',
+      title: 'Prowl: 2 pull requests waiting on you (1 review requested, 1 with failing CI)',
       danger: true,
     });
+  });
+
+  it('counts each reason with a noun phrase and its plural, in Chrome’s language', () => {
+    const asked = (number: number) =>
+      theirs(number, { reviewRequests: { nodes: [requestedReviewer(login)] } });
+    const ready = quiet(3, { mergeStateStatus: 'CLEAN', reviewDecision: 'APPROVED' });
+    const prs = [asked(1), asked(2), ready];
+    expect(badge(prs, 'turn').title).toBe(
+      'Prowl: 3 pull requests waiting on you (2 reviews requested, 1 ready to merge)',
+    );
+    fakeChrome().__state.locale = 'fr';
+    expect(badge(prs, 'turn').title).toBe(
+      'Prowl : en attente de votre part : 3 PR (2 revues demandées, 1 prête à fusionner)',
+    );
   });
 
   it('shows nothing when nothing waits on the viewer', () => {
