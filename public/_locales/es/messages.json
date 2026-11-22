@@ -2914,5 +2914,19 @@
   },
   "commitTitle": {
     "message": "Título del commit"
+  },
+  "mergeWhenReady": {
+    "message": "Fusionar cuando esté lista"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub añade $P1$ a la cola de fusión de $P2$ en cuanto pasen sus checks y revisiones.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

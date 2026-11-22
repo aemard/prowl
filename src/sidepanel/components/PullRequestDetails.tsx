@@ -4,7 +4,7 @@ import { countMessage, t } from '../../lib/i18n';
 import type { CheckItem, CheckItemState, PullRequest, Reviewer } from '../../lib/model';
 import { sendToBackground } from '../state/background';
 import { loadDetail } from '../state/loadDetail';
-import { detailKey, details } from '../state/prDetail';
+import { detailKey, detailOf, details } from '../state/prDetail';
 import { settings } from '../state/store';
 import { Deployments } from './Deployments';
 import { GitHubLink } from './GitHubLink';
@@ -252,7 +252,7 @@ export function PullRequestDetails({ pr, id }: PullRequestDetailsProps) {
   }, [key]);
 
   const entry = details.value[pr.id];
-  const detail = entry?.key === key && !entry.loading && !entry.error ? entry.detail : undefined;
+  const { detail } = detailOf(pr);
   const waiting = !detail && !entry?.error;
   return (
     <div id={id} class="pr-detail">

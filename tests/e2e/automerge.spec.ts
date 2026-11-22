@@ -1,7 +1,14 @@
 /** Update branch and auto-merge (US-039), from the Actions row of an expanded card. */
 import type { Locator, Page } from '@playwright/test';
 import { defaultSettings } from '../../src/lib/storage/settings';
-import { headCommit, prNode, repositoryNode, searchResponse } from '../fixtures/github';
+import {
+  detailNode,
+  detailResponse,
+  headCommit,
+  prNode,
+  repositoryNode,
+  searchResponse,
+} from '../fixtures/github';
 import { expect, test } from './fixtures';
 import { mockDetail } from './helpers/detailData';
 import { MOCK_ORIGIN } from './mock-github/server';
@@ -108,4 +115,40 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
   await card.getByRole('button', { name: 'Turn off auto-merge of acme/widgets#2' }).click();
   await expect(toasts(panel)).toContainText('Auto-merge is off for acme/widgets#2');
   await expect(card.getByTitle(/^Auto-merge on/)).toHaveCount(0);
+});
+
+test('on a merge-queue branch, a PR still waiting merges when ready instead', async ({
+  github,
+  seedStorage,
+  signIn,
+  poll,
+  openPanel,
+  expectNoA11yViolations,
+}) => {
+  github.onGraphQL('ProwlSearch', (variables) => searchResponse([waiting], variables));
+  github.onGraphQL('ProwlPullRequestDetail', () =>
+    detailResponse(detailNode({ isMergeQueueEnabled: true, mergeQueueEntry: null })),
+  );
+  github.onGraphQL('ProwlEnableAutoMerge', () => ({
+    enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: { mergeMethod: 'MERGE' } } },
+  }));
+  await seedStorage({ settings: SETTINGS });
+  await signIn();
+  await poll();
+
+  const panel = await openPanel();
+  const card = await expand(panel, 'Waiting on a review, acme/widgets#2');
+  await card.getByRole('button', { name: 'Merge when ready acme/widgets#2' }).click();
+  // Not ready yet: no way to queue it now, and no direct merge GitHub would refuse.
+  await expect(card.getByRole('button', { name: /^(Add to merge queue|Merge acme)/ })).toHaveCount(
+    0,
+  );
+  const dialog = panel.getByRole('dialog', { name: 'Merge when ready' });
+  await expect(dialog).toContainText('to the merge queue of main once its checks and reviews pass');
+  await expectNoA11yViolations(panel);
+  await dialog.getByRole('button', { name: 'Merge when ready' }).click();
+  await expect(toasts(panel)).toContainText('Auto-merge is on for acme/widgets#2');
+  expect(github.requestsFor('ProwlEnableAutoMerge')[0]?.body).toMatchObject({
+    variables: { id: waiting.id, oid: waiting.headRefOid },
+  });
 });

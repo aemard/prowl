@@ -2914,5 +2914,19 @@
   },
   "commitTitle": {
     "message": "Titre du commit"
+  },
+  "mergeWhenReady": {
+    "message": "Merger dès que prête"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub ajoute $P1$ à la file de merge de $P2$ dès que ses checks et ses revues passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

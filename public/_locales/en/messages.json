@@ -3432,5 +3432,21 @@
   "commitTitle": {
     "message": "Commit title",
     "description": "Extension text: Commit title"
+  },
+  "mergeWhenReady": {
+    "message": "Merge when ready",
+    "description": "Extension text: Merge when ready"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "description": "Extension text: GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

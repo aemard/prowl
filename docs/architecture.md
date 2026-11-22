@@ -469,10 +469,17 @@ pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
 the GraphQL merge mutation refuses stacked PRs.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
-details), a lone PR's merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to the
-head the user saw, behind a confirmation) or, for a queued PR, its position, GitHub's estimate
-and "Remove from merge queue" (`ProwlDequeue`). Direct merge and auto-merge are not offered
-there: GitHub refuses them.
+details), a lone PR's merge control (`MergeQueueAction`) follows the readiness rules of Merge
+(`mergeOptions` in `components/mergeReadiness.ts`): a ready PR offers "Add to merge queue"
+(`ProwlEnqueue`, pinned to the head the user saw, behind a confirmation); one that is not ready
+yet offers GitHub's "Merge when ready", which is auto-merge on a queue branch
+(`ProwlEnableAutoMerge`: GitHub queues the PR once its checks and reviews pass; the queue's own
+settings decide the method and message, so the dialog asks for neither); a queued PR shows its
+position, GitHub's estimate and "Remove from merge queue" (`ProwlDequeue`). Red CI, conflicts,
+requested changes or unverified merge facts offer no queue action, and the queue is no bypass:
+"Merge without waiting" is not offered there. Until the card's detail has loaded, the merge
+control shows nothing, since only the detail says whether a queue applies; if the detail cannot
+be read, a "Merge on GitHub" link stands in.
 
 ### Badge
 
@@ -779,7 +786,9 @@ signal (`state/store.ts`).
   only with `viewerCanDisableAutoMerge`. Missing cached permission values mean false.
   These permissions are fetched by `ProwlMergeState`, cached with the merge facts and cleared
   when the head OID changes. Dialogs use only allowed methods, default to `defaultMergeMethod`
-  (else the first allowed), and omit the commit title for rebase. Multiple methods show a select;
+  (else the first allowed), and omit the commit title for rebase. The commit title starts on
+  GitHub's own for the method; an edit belongs to the method it was written for (switching shows
+  the other method's title, switching back restores the edit). Multiple methods show a select;
   one method is named in confirmation, with focus on the first available field.
   Mutations use the last polled `headSha`; GitHub refusals close the dialog, toast the reason,
   preserve the choices and force a refresh. Successful merges toast and refresh as well.

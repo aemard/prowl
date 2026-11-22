@@ -74,8 +74,8 @@ Details: [sign-in guide](docs/auth.md).
 - **GitHub stacks**: a stack is one item of the list, with its progress (ready, in progress,
   blocked, drafts), what waits on you, and its pull requests in merge order, each with its
   details. Merge the ready bottom of the stack, or the whole stack, in one go, or queue it.
-- **Merge queues**: on a branch with a merge queue, add a PR to the queue (or take it out) and
-  see its position.
+- **Merge queues**: on a branch with a merge queue, add a ready PR to the queue, or let GitHub
+  queue it when ready, take it out, and see its position.
 - **Review conversations**: an expanded card lists the open review threads with their last
   comments; reply or resolve them without opening GitHub.
 - **Fast updates**: between polls, a free conditional check of your GitHub notifications (once a

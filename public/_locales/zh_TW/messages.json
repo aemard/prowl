@@ -2914,5 +2914,19 @@
   },
   "commitTitle": {
     "message": "提交標題"
+  },
+  "mergeWhenReady": {
+    "message": "就緒後合併"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "檢查與審查通過後，GitHub 會將 $P1$ 加入 $P2$ 的合併佇列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

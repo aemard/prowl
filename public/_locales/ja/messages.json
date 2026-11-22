@@ -2914,5 +2914,19 @@
   },
   "commitTitle": {
     "message": "コミットのタイトル"
+  },
+  "mergeWhenReady": {
+    "message": "準備ができたらマージ"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "チェックとレビューが通ると、GitHub が $P1$ を $P2$ のマージキューに追加します。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }
