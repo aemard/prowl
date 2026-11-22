@@ -273,14 +273,14 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 
 | Query | Requests | Points |
 |---|---|---|
-| `ProwlSearch`, page of 50 | 1 + 50 x 7 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts) = 351 | about 4 |
+| `ProwlSearch`, page of 25 (`PAGE_SIZE`, `fetchSearch.ts`) | 1 + 25 x 7 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts) = 176 | about 2 |
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
 | `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
 
 Team reviews runs one `ProwlSearch`, like any section; `/user/teams` uses the REST core budget,
 refreshed once a day, independent of the GraphQL search.
-The default settings (one section, 50 PRs, every 2 minutes) cost about 120 points an hour (2.4%) of
-the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
+The default settings (two searched sections, Your turn needs none; 50 PRs each, every 2 minutes) cost
+about 240 points an hour (4.8%) of the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
 about a point per 10 changed PRs.
 
 ## Pull request detail
@@ -315,18 +315,27 @@ empty instead of failing reviewers and rules; a PR that is gone or hidden throws
 
 ## Actions
 
-`src/lib/github/reviewActions.ts` (reviews and comments), `mergeActions.ts` (merge, auto-merge,
-merge queue) and `maintenanceActions.ts` (re-run, draft toggle, update branch) hold what the panel
-changes on GitHub, as named operations so the E2E
-mock can dispatch on them and each request's variables say what it does. Each function takes the
-client and a PR node id, resolves once GitHub confirmed and throws `GitHubError` otherwise.
+These files in `src/lib/github/` hold what the panel changes on GitHub, as named operations so
+the E2E mock can dispatch on them and each request's variables say what it does:
+`reviewActions.ts` (reviews and comments), `mergeActions.ts` (merge, auto-merge, merge queue),
+`maintenanceActions.ts` (re-run, draft toggle, update branch), `threads.ts` (review threads) and
+`stackMerge.ts` (a stack at once). Each function takes the client, resolves once GitHub confirmed
+and throws `GitHubError` otherwise.
 
 | Function | Operation | GitHub call |
 |---|---|---|
-| `approve(client, prId, body?)` | `mutation ProwlApprove` | `addPullRequestReview`, variable `event: APPROVE`, optional note |
-| `requestChanges(client, prId, body)` | `mutation ProwlRequestChanges` | `addPullRequestReview`, `event: REQUEST_CHANGES`, message required |
+| `approve(client, prId, body?, headSha?)` | `mutation ProwlApprove` | `addPullRequestReview`, `event: APPROVE`, `commitOID: headSha`, optional note |
+| `requestChanges(client, prId, body, headSha?)` | `mutation ProwlRequestChanges` | `addPullRequestReview`, `event: REQUEST_CHANGES`, message required |
 | `comment(client, prId, body)` | `mutation ProwlComment` | `addComment` on the PR's node id: a conversation comment, not a review |
 | `mergePullRequest(client, prId, { method, headSha, title? })` | `mutation ProwlMerge` | `mergePullRequest` with `mergeMethod` (`MERGE`, `SQUASH`, `REBASE`), `expectedHeadOid: headSha` and, for a merge or squash commit, `commitHeadline` |
+| `setAutoMerge(client, prId, method \| null, headSha, title?)` | `mutation ProwlEnableAutoMerge` / `ProwlDisableAutoMerge` | `enablePullRequestAutoMerge` (with `expectedHeadOid`) or, for `null`, `disablePullRequestAutoMerge` |
+| `enqueuePullRequest(client, prId, headSha)` / `dequeuePullRequest(client, prId)` | `mutation ProwlEnqueue` / `ProwlDequeue` | `enqueuePullRequest` (with `expectedHeadOid`) / `dequeuePullRequest` |
+| `rerunFailedChecks(client, prId)` | `query ProwlFailedSuites`, then REST | `rerun-failed-jobs` for each failed Actions run, `rerequest` for every other failed suite of the head; resolves to how many restarted |
+| `setDraft(client, prId, draft)` | `mutation ProwlConvertToDraft` / `ProwlMarkReady` | `convertPullRequestToDraft` / `markPullRequestReadyForReview` |
+| `updateBranch(client, prId, headSha, method)` | `mutation ProwlUpdateBranch` | `updatePullRequestBranch`, `updateMethod` `MERGE` or `REBASE`, `expectedHeadOid` |
+| `fetchReviewThreads(client, prId)` | `query ProwlReviewThreads` | The PR's review threads (read on expand) |
+| `resolveThread(client, threadId)` / `replyToThread(client, threadId, body)` | `mutation ProwlResolveThread` / `ProwlReplyThread` | `resolveReviewThread` / `addPullRequestReviewThreadReply` |
+| `mergeStackUpTo(client, top, { method, queue })` | REST | `PUT .../pulls/{n}/merge-async` (API version 2026-03-10), then polls the operation; resolves to `merged`, `enqueued` or `pending` |
 
 Messages are trimmed; an empty one (and one over GitHub's 65,536 characters) fails as `validation`
 before any request is sent. A payload without the new review or comment (no `errors`, but nothing
@@ -336,8 +345,7 @@ required: GitHub refuses with "Head branch was modified. Review and try the merg
 head moved since the panel last saw it, so commits nobody looked at are never merged; the other
 refusals (not mergeable, conflicts, required checks or reviews, a merge queue) arrive the same way
 and are shown as GitHub words them. A payload whose pull request is not `merged` is a `server`
-error. A rebase has no commit of its own, so its `commitHeadline` is dropped. Re-run and the draft
-toggle (US-017) add their functions here.
+error. A rebase has no commit of its own, so its `commitHeadline` is dropped.
 
 The panel runs them through `runPrAction(pr, name, done, run, onError?)`
 (`src/sidepanel/state/prActions.ts`): it builds a client for the signed-in token, marks
@@ -635,13 +643,14 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   stored value (migrations first, then defaults for missing or invalid fields, clamping, unknown
   keys dropped), `loadSettings`, `updateSettings(patch | updater)` and `subscribeSettings`. Stored settings are
   migrated on read; the next `updateSettings` persists the migrated shape.
-  - Presets (`authored`, `review_requested`, `team_review_requested`, `mentioned`, `assigned`)
-    always exist exactly once with `id === kind` and a fixed label; they are enabled or
-    disabled, never deleted. A missing preset is appended with its default (off), except
+  - Presets (`authored`, `review_requested`, `team_review_requested`, `mentioned`, `assigned`,
+    `your_turn`; `settingsSections.ts`) always exist exactly once with `id === kind` and a fixed
+    label; they are enabled or disabled, never deleted. A missing preset is appended with its
+    default (on for Created by me, Review requested and Your turn, off for the others), except
     `team_review_requested`, which takes the state of `review_requested`: before US-037 that
     section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
-  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `groupByRepo` is a boolean (default off), `singleKeyShortcuts` a boolean (default on); the legacy hiding keys are always normalized off, quiet hours are `HH:MM`, repo filters are `owner` or
+  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `groupByRepo` (default on), `localAi` (default off) and `singleKeyShortcuts` (default on) are booleans; the legacy hiding keys are always normalized off, quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
     (`org/slug`, lowercased, deduplicated; default empty = follow every team, new ones
     included). A field added later needs no migration: a
@@ -904,12 +913,12 @@ signal (`state/store.ts`).
     so two quick additions both survive.
   - `refresh: true` (sections, repository lists, results per section) sends one forced poll 800 ms
     after the last change, so the list does not wait for the next alarm. An interval change
-    sends nothing: `registerBackground` subscribes to settings and `scheduleAlarm(minutes, true)`
+    sends nothing: `registerBackground` subscribes to settings and `scheduleAlarms(minutes, true)`
     recreates the alarm (E2E reads `chrome.alarms.get('poll').periodInMinutes`).
   - `NumberField` saves valid whole numbers as typed (interval 2–60, loaded PRs 1–100).
     The maximum loaded PRs stays visible. “Change limit” records a one-shot focus request
     consumed after lazy Settings mount; the shell preserves that focus on later visits too.
-    Refresh shows the interval and one line: more pull requests and shorter intervals use more of GitHub's hourly limit. List contains theme, sort, repository grouping and badge.
+    Refresh shows the interval and one line: more pull requests and shorter intervals use more of GitHub's hourly limit. List contains language, theme, sort, repository grouping, badge, single-key shortcuts and on-device AI (`SettingsLocalAi.tsx`).
   - Notifications: master switch (reveals the event switches, quiet hours and the test button only while on; saved choices survive switching off),
     one switch per `PrEventType`, quiet hours with two `<input type="time">` (a window may cross
     midnight; the note only appears for that or an empty window), and "Send test notification",
@@ -941,7 +950,7 @@ signal (`state/store.ts`).
   calling `chrome.sidePanel.open({ windowId })` before any await (the shortcut is the user gesture
   it needs). A notification about one event gets the buttons "Open" (same as a click) and
   "Snooze 1 h" (`onNotificationButtonClicked`: snoozes the PR, whose id starts the event id, and
-  clears it); a summary gets none. About in Settings shows the live shortcut
+  clears it); a summary gets none. Settings → Account shows the live shortcut
   (`commands.getAll`).
 - The section bar (`components/SectionTabs.tsx`) is fixed at the bottom of the list: up to five
   sections as tabs, past five the first four and a "More" menu with the rest. While it is shown
@@ -1107,7 +1116,7 @@ ends each section; cards show "Snoozed until <date>" and offer Unsnooze. An all-
 section says "All loaded pull requests are snoozed", "They return here when the snooze ends."
 and "Show snoozed" opens that fold. Snoozed PRs do not count in tabs or the badge; mute only
 silences notifications. Repository filters and custom queries control fetching, not hiding.
-Settings version stays 1; legacy hideStaleAfterDays / hideDrafts / hideBots keys are kept but
+Removing hiding needed no settings migration (the version is 2 since the language setting); legacy hideStaleAfterDays / hideDrafts / hideBots keys are kept but
 forced to 0 / false / false on read, save and sync ingress. normalizePrLocal drops alwaysShown
 and retains snooze, mute, seen and seen facts. Notifications still diff every loaded PR, so
 removing hiding causes no notification burst. Only snoozed merge facts get lower enrichment
@@ -1132,8 +1141,8 @@ is unchanged; no glass styles or reflection code are included.
 ### First run (2026-11-09)
 
 Sign-in always opens the list with its full header and no note. There is no setup route,
-install-local onboarding marker or Account rerun. Defaults remain Created by me and Review
-requested on, notifications off, two-minute refresh. The skeleton remains visible during
+install-local onboarding marker or Account rerun. Defaults remain Created by me, Review
+requested and Your turn on, notifications off, two-minute refresh. The skeleton remains visible during
 loading. The preview hash `#onboarding` starts signed out and mocks ProwlViewer for sign-in.
 
 Expanded cards name the status list “Merge status”, then show one “Actions for #N” fieldset,
