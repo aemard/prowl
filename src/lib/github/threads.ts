@@ -9,10 +9,11 @@ import { GitHubError } from './errors';
 import { messageOf } from './reviewActions';
 
 export const THREADS_QUERY = /* GraphQL */ `
-query ProwlReviewThreads($id: ID!) {
+query ProwlReviewThreads($id: ID!, $after: String) {
   node(id: $id) {
     ... on PullRequest {
-      reviewThreads(first: 100) {
+      reviewThreads(first: 100, after: $after) {
+        pageInfo { hasNextPage endCursor }
         nodes {
           id isResolved isOutdated path line viewerCanResolve viewerCanReply
           comments(last: 3) { totalCount nodes { author { login } bodyText createdAt url } }
@@ -56,7 +57,22 @@ interface ThreadNode {
   };
 }
 export interface ThreadsData {
-  node: { reviewThreads?: { nodes: (ThreadNode | null)[] | null } } | null;
+  node: {
+    reviewThreads?: {
+      pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+      nodes: (ThreadNode | null)[] | null;
+    };
+  } | null;
+}
+
+/** Pages of 100 threads read at most: resolved ones fill them too, so open ones can be further. */
+const MAX_PAGES = 5;
+
+/** The open conversations Prowl read, and whether those are all of them. */
+export interface OpenThreads {
+  threads: ReviewThread[];
+  /** False when GitHub has more threads than `MAX_PAGES` pages: some may be open. */
+  complete: boolean;
 }
 
 /** Maps one thread; exported for tests. */
@@ -86,16 +102,28 @@ export function mapThread(node: ThreadNode): ReviewThread {
   };
 }
 
-/** The unresolved conversations of pull request `id`, current ones before outdated ones. */
-export async function fetchReviewThreads(
-  client: GitHubClient,
-  id: string,
-): Promise<ReviewThread[]> {
-  const { node } = await client.graphql<ThreadsData>(THREADS_QUERY, { id }, { partial: true });
-  if (!node?.reviewThreads) throw new GitHubError('not_found', t('thisPullRequestIsNotAvailable'));
-  return (node.reviewThreads.nodes ?? [])
-    .flatMap((thread) => (thread && !thread.isResolved ? [mapThread(thread)] : []))
-    .sort((a, b) => Number(a.outdated) - Number(b.outdated));
+/**
+ * The unresolved conversations of pull request `id`, current ones before outdated ones, read page
+ * by page (GitHub lists resolved threads too, oldest first) up to `MAX_PAGES`.
+ */
+export async function fetchReviewThreads(client: GitHubClient, id: string): Promise<OpenThreads> {
+  const threads: ReviewThread[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const data: ThreadsData = await client.graphql<ThreadsData>(
+      THREADS_QUERY,
+      { id, after },
+      { partial: true },
+    );
+    const list = data.node?.reviewThreads;
+    if (!list) throw new GitHubError('not_found', t('thisPullRequestIsNotAvailable'));
+    for (const thread of list.nodes ?? [])
+      if (thread && !thread.isResolved) threads.push(mapThread(thread));
+    after = list.pageInfo?.hasNextPage ? list.pageInfo.endCursor : null;
+    if (!after) break;
+  }
+  threads.sort((a, b) => Number(a.outdated) - Number(b.outdated));
+  return { threads, complete: after === null };
 }
 
 /** Marks the conversation resolved. */
@@ -104,7 +132,7 @@ export async function resolveThread(client: GitHubClient, threadId: string): Pro
     resolveReviewThread: { thread: { isResolved: boolean } | null } | null;
   }>(RESOLVE_THREAD_MUTATION, { id: threadId });
   if (!data.resolveReviewThread?.thread?.isResolved)
-    throw new GitHubError('server', t('githubDidNotConfirmTheComment'));
+    throw new GitHubError('server', t('githubDidNotConfirmTheResolve'));
 }
 
 /** Replies in the conversation, as the signed-in user. */

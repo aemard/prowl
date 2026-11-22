@@ -3135,5 +3135,27 @@
         "content": "$1"
       }
     }
+  },
+  "sendReplyOn": {
+    "message": "Antwort auf $P1$ senden",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "Unterhaltung zu $P1$ auflösen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub hat nicht bestätigt, dass die Unterhaltung aufgelöst ist."
+  },
+  "moreConversationsOnGitHub": {
+    "message": "Dieser Pull Request hat mehr Unterhaltungen, als Prowl liest; offene sind eventuell nur auf GitHub."
   }
 }

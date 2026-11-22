@@ -4,9 +4,9 @@
  * Details are fetched when a card is expanded (never polled; `loadDetail`, with the details
  * chunk) and kept in memory only.
  */
-import { computed, effect, signal } from '@preact/signals';
+import { signal } from '@preact/signals';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
-import { auth } from './store';
+import { onAccountChange } from './store';
 
 export interface DetailEntry {
   /** What the entry was fetched for (`detailKey`); another key means the PR has changed since. */
@@ -63,11 +63,8 @@ export function collapse(id: string): void {
   expandedIds.value = expandedIds.value.filter((other) => other !== id);
 }
 
-// Another account (or none) must not see what the previous one expanded. The computed only
-// changes with the token itself, not with every rewrite of `auth`.
-const signedInAs = computed(() => auth.value?.token);
-effect(() => {
-  void signedInAs.value;
+// Another account (or none) must not see what the previous one expanded.
+onAccountChange(() => {
   expandedIds.value = [];
   details.value = {};
 });

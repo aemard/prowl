@@ -56,3 +56,17 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* Why a reply or resolve failed, under the thread's buttons. */
+.review-thread__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--color-danger-fg);
+  font-size: var(--text-sm);
+}
+
+.review-thread__error .icon {
+  flex: none;
+  margin-top: var(--space-0-5);
+}

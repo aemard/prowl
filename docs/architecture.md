@@ -264,7 +264,7 @@ rounds; `rateLimit.cost` in each response gives the real figure):
 
 | Query | Requests | Points |
 |---|---|---|
-| `ProwlSearch`, page of 50 | 1 + 50 x 7 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts) = 351 | about 4 |
+| `ProwlSearch`, page of 50 | 1 + 50 x 8 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts, stack entries) = 401 | about 4 |
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
 | `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
 

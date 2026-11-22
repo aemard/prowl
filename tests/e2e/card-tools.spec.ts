@@ -131,7 +131,10 @@ test.describe('card tools', () => {
     await checkout.getByRole('button', { name: /^Show 4 conversations/ }).click();
     const list = checkout.getByRole('list', { name: 'Conversations' });
     await expect(list).toContainText('src/checkout/session.ts:42');
-    await expect(list.getByRole('button', { name: 'Resolve' })).toHaveCount(2);
+    await expect(list.getByRole('button', { name: /^Resolve conversation on / })).toHaveCount(2);
+    await expect(
+      list.getByRole('button', { name: 'Resolve conversation on src/checkout/reducers.ts:8' }),
+    ).toBeVisible();
     await expectNoA11yViolations(panel);
     await list.scrollIntoViewIfNeeded();
     await saveScreenshot(panel, 'review-threads');

@@ -4,7 +4,7 @@
  * as a new snapshot, show up without any message). The panel only reads these; the service
  * worker owns `snapshot` and `pollState`.
  */
-import { batch, computed, signal } from '@preact/signals';
+import { batch, computed, effect, signal, untracked } from '@preact/signals';
 import {
   type AuthState,
   type PanelState,
@@ -27,6 +27,21 @@ export const settings = signal<Settings>(defaultSettings());
 export const auth = signal<AuthState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
+
+// Changes only with the token itself, not with every rewrite of `auth`.
+const signedInAs = computed(() => auth.value?.token);
+
+/**
+ * Runs `reset` now and whenever another account (or none) signs in: what the panel read for one
+ * account (details, conversations, AI answers) must not show to the next. Loaders also check, as
+ * they publish, that `auth.value` is still the session they started in.
+ */
+export function onAccountChange(reset: () => void): void {
+  effect(() => {
+    void signedInAs.value;
+    untracked(reset);
+  });
+}
 /** The global loader covers searching only; merge batches carry their own card indicators. */
 export const listRefreshing = computed(
   () => pollState.value?.inFlight === true && pollState.value.mergePending === undefined,

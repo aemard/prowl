@@ -3135,5 +3135,27 @@
         "content": "$1"
       }
     }
+  },
+  "sendReplyOn": {
+    "message": "Enviar respuesta en $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "Resolver la conversación en $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub no confirmó que la conversación esté resuelta."
+  },
+  "moreConversationsOnGitHub": {
+    "message": "Esta pull request tiene más conversaciones de las que Prowl lee; puede haber abiertas solo en GitHub."
   }
 }

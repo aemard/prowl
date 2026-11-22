@@ -3135,5 +3135,27 @@
         "content": "$1"
       }
     }
+  },
+  "sendReplyOn": {
+    "message": "$P1$ に返信を送信",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "$P1$ の会話を解決",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub は会話の解決を確認しませんでした。"
+  },
+  "moreConversationsOnGitHub": {
+    "message": "このプルリクエストには Prowl が読み込める以上の会話があります。未解決の会話が GitHub にのみある可能性があります。"
   }
 }

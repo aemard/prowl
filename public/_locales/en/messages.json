@@ -3683,5 +3683,31 @@
         "content": "$1"
       }
     }
+  },
+  "sendReplyOn": {
+    "message": "Send reply on $P1$",
+    "description": "Extension text: Send reply on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "Resolve conversation on $P1$",
+    "description": "Extension text: Resolve conversation on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub did not confirm that the conversation is resolved.",
+    "description": "Extension text: GitHub did not confirm that the conversation is resolved."
+  },
+  "moreConversationsOnGitHub": {
+    "message": "This pull request has more conversations than Prowl reads; open ones may be only on GitHub.",
+    "description": "Extension text: This pull request has more conversations than Prowl reads; open ones may be only on GitHub."
   }
 }

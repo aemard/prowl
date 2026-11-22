@@ -36,7 +36,30 @@ describe('loadThreads', () => {
     expect(reviewThreads.value[pr.id]).toMatchObject({ loading: true, threads: [{ id: '1' }] });
     release(jsonResponse({ data: threadsResponse([]) }));
     await reloading;
-    expect(reviewThreads.value[pr.id]).toEqual({ loading: false, threads: [] });
+    expect(reviewThreads.value[pr.id]).toEqual({
+      key: pr.updatedAt,
+      loading: false,
+      threads: [],
+      complete: true,
+    });
+  });
+
+  it('publishes only the latest of two requests', async () => {
+    let first: (response: Response) => void = () => {};
+    answer.mockImplementationOnce(() => new Promise((resolve) => (first = resolve)));
+    const older = loadThreads(pr);
+    answer.mockResolvedValueOnce(jsonResponse({ data: threadsResponse([threadNode('2')]) }));
+    await loadThreads(pr);
+    first(jsonResponse({ data: threadsResponse([threadNode('1')]) }));
+    await older;
+    expect(reviewThreads.value[pr.id]?.threads?.map((thread) => thread.id)).toEqual(['2']);
+  });
+
+  it('forgets every list when another account signs in', async () => {
+    answer.mockResolvedValueOnce(jsonResponse({ data: threadsResponse([threadNode('1')]) }));
+    await loadThreads(pr);
+    auth.value = { ...buildAuth(), token: 'ghp_other' };
+    expect(reviewThreads.value).toEqual({});
   });
 
   it("keeps the previous list after a failure, with GitHub's reason", async () => {
@@ -70,6 +93,7 @@ describe('loadThreads', () => {
     auth.value = { ...buildAuth(), token: 'ghp_other' };
     release(jsonResponse({ data: threadsResponse([threadNode('1')]) }));
     await loading;
-    expect(reviewThreads.value[pr.id]).toEqual({ loading: true, threads: undefined });
+    // The new account starts from nothing, and the old answer does not land in it.
+    expect(reviewThreads.value).toEqual({});
   });
 });

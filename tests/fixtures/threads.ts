@@ -25,7 +25,9 @@ export function threadNode(id: string, overrides: Record<string, unknown> = {}) 
   };
 }
 
-/** The `data` of a `ProwlReviewThreads` answer. */
-export const threadsResponse = (threads: unknown[]) => ({
-  node: { reviewThreads: { nodes: threads } },
+/** The `data` of a `ProwlReviewThreads` answer; `endCursor` when GitHub has another page. */
+export const threadsResponse = (threads: unknown[], endCursor: string | null = null) => ({
+  node: {
+    reviewThreads: { pageInfo: { hasNextPage: endCursor !== null, endCursor }, nodes: threads },
+  },
 });

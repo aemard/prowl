@@ -3135,5 +3135,27 @@
         "content": "$1"
       }
     }
+  },
+  "sendReplyOn": {
+    "message": "发送对 $P1$ 的回复",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "解决 $P1$ 上的对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub 未确认对话已解决。"
+  },
+  "moreConversationsOnGitHub": {
+    "message": "此拉取请求的对话多于 Prowl 读取的数量；未解决的对话可能只在 GitHub 上。"
   }
 }
