@@ -57,4 +57,66 @@ describe('ReviewThreads', () => {
     await waitFor(() => expect(screen.getAllByRole('listitem').length).toBeLessThan(5));
     await waitFor(() => expect(reviewThreads.value[pr.id]?.threads).toHaveLength(1));
   });
+
+  it('offers Try again after a failed first load, and loads on it', async () => {
+    const pr = buildPullRequest({ unresolvedThreads: 2 });
+    reviewThreads.value = { [pr.id]: { loading: false, error: 'Could not load: offline' } };
+    render(<ReviewThreads pr={pr} id="d" />);
+    expect(screen.getByRole('alert').textContent).toContain('Could not load: offline');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('list', { name: 'Conversations' })).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('says when every conversation was resolved meanwhile', () => {
+    const pr = buildPullRequest({ unresolvedThreads: 1 });
+    reviewThreads.value = { [pr.id]: { loading: false, threads: [] } };
+    render(<ReviewThreads pr={pr} id="d" />);
+    expect(screen.getByText('No open conversations.')).toBeTruthy();
+  });
+
+  it('counts the earlier comments, and lets only the replies that may be sent through', async () => {
+    open = [
+      threadNode('3', {
+        line: null,
+        viewerCanResolve: false,
+        comments: { ...threadNode('3').comments, totalCount: 4 },
+      }),
+      threadNode('4', { path: 'README.md', viewerCanReply: false, viewerCanResolve: false }),
+    ];
+    const pr = buildPullRequest({ unresolvedThreads: 2 });
+    render(<ReviewThreads pr={pr} id="d" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show 2 conversations' }));
+    await screen.findByRole('list', { name: 'Conversations' });
+    expect(screen.getByText('3 earlier comments on GitHub')).toBeTruthy();
+    // One reply box, for the thread that takes replies; a path without a line names the file.
+    const box = screen.getByRole('textbox', { name: 'Reply on src/widget.ts' });
+    const reply = screen.getByRole('button', { name: 'Reply' }) as HTMLButtonElement;
+    expect(reply.disabled).toBe(true);
+    fireEvent.input(box, { target: { value: '   ' } });
+    expect(reply.disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Resolve' })).toBeNull();
+  });
+
+  it('shows a refused reply beside its field, and clears it when the text changes', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit) =>
+        String(init.body).includes('ProwlReplyThread')
+          ? jsonResponse({ data: null, errors: [{ type: 'FORBIDDEN', message: 'Locked' }] })
+          : jsonResponse({ data: threadsResponse([threadNode('5')]) }),
+      ),
+    );
+    const pr = buildPullRequest({ unresolvedThreads: 1 });
+    render(<ReviewThreads pr={pr} id="d" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show 1 conversation' }));
+    const box = await screen.findByRole('textbox', { name: 'Reply on src/widget.ts:12' });
+    fireEvent.input(box, { target: { value: 'Done' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
+    await waitFor(() => expect(box.getAttribute('aria-invalid')).toBe('true'));
+    expect(document.getElementById(String(box.getAttribute('aria-describedby')))).toBeTruthy();
+    fireEvent.input(box, { target: { value: 'Done.' } });
+    expect(box.getAttribute('aria-invalid')).not.toBe('true');
+    expect(toasts.value).toEqual([]);
+  });
 });
