@@ -126,6 +126,7 @@ export function prNode(
     viewerCanEnableAutoMerge: true,
     viewerCanDisableAutoMerge: true,
     autoMergeRequest: null,
+    isInMergeQueue: false,
     totalCommentsCount: 0,
     labels: { nodes: [] },
     latestReviews: { nodes: [] },

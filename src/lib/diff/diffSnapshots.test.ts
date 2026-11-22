@@ -135,6 +135,7 @@ const cases: Case[] = [
     ready({ autoMerge: { method: 'merge', enabledBy: null } }),
     [],
   ],
+  ['nothing: ready, the merge queue merges it', {}, ready({ inMergeQueue: true }), []],
   ['nothing: draft', {}, { isDraft: true, reviewDecision: 'approved' }, []],
   ['nothing: approved, checks pending', {}, { reviewDecision: 'approved', ...ci('pending') }, []],
   [

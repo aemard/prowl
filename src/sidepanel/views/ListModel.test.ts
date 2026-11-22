@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { emptyPrLocal, snooze } from '../../lib/storage/prLocal';
-import { DEFAULT_SETTINGS } from '../../lib/storage/settings';
 import { buildPullRequest } from '../../test/panel';
 import { filterPullRequests, groupByRepo, sortPullRequests, splitSection } from './ListModel';
 
@@ -117,28 +116,21 @@ const all = [stale, recent, staleSnoozed, snoozed];
 
 describe('splitSection', () => {
   it('sets aside only snoozed PRs and preserves order', () => {
-    expect(splitSection(all, local, DEFAULT_SETTINGS, NOW)).toEqual({
+    expect(splitSection(all, local, NOW)).toEqual({
       shown: [stale, recent],
       snoozed: [staleSnoozed, snoozed],
     });
-    expect(splitSection(all, local, DEFAULT_SETTINGS, NOW + 7_200_000)).toEqual({
+    expect(splitSection(all, local, NOW + 7_200_000)).toEqual({
       shown: all,
       snoozed: [],
     });
   });
-  it('ignores legacy hiding settings for drafts and bots', () => {
+  it('never hides drafts, bots or stale PRs', () => {
     const pr = buildPullRequest({
       isDraft: true,
       author: { login: 'bot', avatarUrl: '', isBot: true },
       lastCommitAt: '2020-01-01T00:00:00Z',
     });
-    expect(
-      splitSection(
-        [pr],
-        emptyPrLocal(),
-        { ...DEFAULT_SETTINGS, hideDrafts: true, hideBots: true, hideStaleAfterDays: 20 },
-        NOW,
-      ).shown,
-    ).toEqual([pr]);
+    expect(splitSection([pr], emptyPrLocal(), NOW).shown).toEqual([pr]);
   });
 });

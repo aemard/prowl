@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isReadyToMerge } from './diffSnapshots';
-import { pr, ready } from './diffSnapshots.test-support';
+import { pr, ready } from './diff/diffSnapshots.test-support';
+import { isReadyToMerge } from './mergeEligibility';
 
 describe('isReadyToMerge', () => {
   it.each(['blocked', 'behind', 'dirty', 'draft', 'unknown'] as const)(

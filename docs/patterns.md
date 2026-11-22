@@ -61,7 +61,8 @@ appending a newer one.
 - Searches: `buildSearchQuery`, `filterByRepo` and `validateCustomQuery` (`search.ts`).
   `fetchPullRequests` is the only reader of raw PR JSON (via `mapPullRequest`); every PR it finds
   goes through `put`, and `preserve` restores cached members only after a cut scan or a refused
-  search.
+  search. Merge facts carry over with their date while `sameSearchFacts` holds and without it
+  while `carriedMergeFacts` (`fetchMergeState.ts`) says the change cannot move GitHub's verdict.
 - Writes: `reviewActions.ts`, `mergeActions.ts`, `maintenanceActions.ts`, `threads.ts`,
   `stackMerge.ts` (the table is in architecture.md, Actions). A stack merges through
   `mergeStackUpTo` (REST `merge-async`), never `mergePullRequest`.
@@ -90,6 +91,9 @@ appending a newer one.
 - Never call `chrome.storage.local` directly: use `getItem` / `setItem` / `subscribe`,
   `loadSettings` / `updateSettings`, `updatePrLocal(fn)`. Reads are normalized; read-modify-write
   goes through `updateItem` (a Web Lock shared by panel and worker).
+- The legacy hiding keys (`hideStaleAfterDays`, `hideDrafts`, `hideBots`) are not settings:
+  normalization drops them, and only `pushSettings` (`src/background/sync.ts`) still writes them,
+  off, into the sync copy for older Prowl versions on other devices.
 - Compare stored values with `jsonEqual` (Chrome reorders object keys). Optional snapshot fields
   (`sectionErrors`, `teamRequests`, `settledChecks`...) read as empty when absent.
 - Domain types: `model.ts` re-exports `modelSettings.ts`; always import from `model`.
@@ -135,7 +139,9 @@ appending a newer one.
   E2E finds a tab with `getByRole('tab', { name: /^Review/ })`.
 - Card chips and accessible names: `pullRequestStatuses` and `describePullRequest`
   (`components/prStatus.ts`); whose turn comes from `whoseTurn` / `turnIn` / `yourTurnIds`
-  (`src/lib/turn`), the one rule for section, chips, badge and events.
+  (`src/lib/turn`), the one rule for section, chips, badge and events. Merge eligibility
+  (`isReadyToMerge`, `mergesItself`, `awaitsMerge`) lives in `src/lib/mergeEligibility.ts`, which
+  both `diff` and `turn` import (they must not import each other).
 - Card code that walks the DOM (`j` / `k`, the seen observer) skips folded groups and folded
   stacks for free; code that works from data must check `isFolded`.
 - Expanded cards: module signals in `state/prDetail.ts` (`expandedIds`, `details`, `detailOf`);

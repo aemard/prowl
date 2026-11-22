@@ -3,8 +3,8 @@
  * why. Pure, from the snapshot alone (no extra GitHub read): the list's "Your turn" section, the
  * card's turn chip, the `turn` badge and the `your_turn` notification all read it.
  */
-import { isReadyToMerge } from '../diff/diffSnapshots';
 import type { MessageKey } from '../i18n';
+import { isReadyToMerge } from '../mergeEligibility';
 import type { PullRequest, Snapshot, Turn, TurnReason } from '../model';
 
 /** The short words for each reason it is the viewer's move, on cards (the badge counts its own way). */
@@ -15,9 +15,61 @@ export const TURN_LABELS: Partial<Record<TurnReason, MessageKey>> = {
   changes_requested: 'turnChangesRequested',
   conflicts: 'turnConflicts',
   feedback: 'turnFeedback',
+  unresolved_threads: 'turnUnresolvedThreads',
+  // The words of the card's own action.
+  update_branch: 'updateBranch',
   ready_to_merge: 'turnReadyToMerge',
 };
 const later = (a: string, b: string) => (a > b ? a : b);
+
+/**
+ * When the oldest feedback the viewer has not answered arrived: a review comment or an issue
+ * comment that is neither theirs nor a bot's (Copilot code review, CodeRabbit and CI reports
+ * comment after every push), newer than both the last push and the viewer's own latest review
+ * or comment. Answering hands the move back as a push does. Null when there is none.
+ */
+function unansweredFeedback(pr: PullRequest, viewer: string): string | null {
+  const isViewer = (login: string) => login.toLowerCase() === viewer;
+  const comment = pr.lastComment;
+  const replied = pr.reviews.find((r) => isViewer(r.author))?.submittedAt ?? '';
+  const answered = [
+    pr.lastCommitAt,
+    replied,
+    comment && isViewer(comment.author) ? comment.createdAt : '',
+  ].reduce(later);
+  const feedback = pr.reviews
+    .filter((r) => r.state === 'commented' && !r.isBot && !isViewer(r.author))
+    .map((r) => r.submittedAt);
+  if (comment && !comment.isBot && !isViewer(comment.author)) feedback.push(comment.createdAt);
+  return feedback.filter((at) => at > answered).sort()[0] ?? null;
+}
+
+/**
+ * The viewer's own PR once nothing needs fixing: who merges it, or what still keeps it from
+ * merging. Only facts GitHub reported decide; unread ones are nobody's yet (`merge_unknown`).
+ */
+function mergeTurn(pr: PullRequest, others: PullRequest['reviews']): Turn {
+  const pushed = pr.lastCommitAt;
+  // GitHub merges it on its own: nobody has to.
+  if (pr.inMergeQueue) return { owner: 'none', reason: 'in_merge_queue', since: pr.updatedAt };
+  if (isReadyToMerge(pr) && pr.autoMerge)
+    return { owner: 'none', reason: 'auto_merge', since: pushed };
+  const approved = others.find((r) => r.state === 'approved')?.submittedAt ?? pushed;
+  if (isReadyToMerge(pr) && pr.viewerCanMerge)
+    return { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) };
+  const reviewed = pr.reviewDecision === 'approved' || pr.reviewDecision === 'none';
+  // Strict status checks: the base moved on, and only an update lets it merge.
+  if (reviewed && pr.mergeStateStatus === 'behind' && pr.viewerCanUpdate)
+    return { owner: 'you', reason: 'update_branch', since: pr.updatedAt };
+  // Reviewed but blocked with conversations open: resolving them is the author's to do.
+  if (reviewed && pr.mergeStateStatus === 'blocked' && pr.unresolvedThreads > 0)
+    return { owner: 'you', reason: 'unresolved_threads', since: later(approved, pushed) };
+  if (pr.checks.state === 'pending')
+    return { owner: 'them', reason: 'waiting_on_checks', since: pushed };
+  if ([pr.mergeable, pr.mergeStateStatus, pr.reviewDecision].includes('unknown'))
+    return { owner: 'none', reason: 'merge_unknown', since: pushed };
+  return { owner: 'them', reason: 'waiting_on_reviewers', since: pushed };
+}
 
 /** The viewer's own PR: what they have to fix or finish, else who they wait for. */
 function authorTurn(pr: PullRequest, viewer: string): Turn {
@@ -30,30 +82,9 @@ function authorTurn(pr: PullRequest, viewer: string): Turn {
   if (asked) return { owner: 'you', reason: 'changes_requested', since: asked.submittedAt };
   if (pr.mergeable === 'conflicting')
     return { owner: 'you', reason: 'conflicts', since: pr.updatedAt };
-  // Bots (Copilot code review, CodeRabbit, CI reports) comment after every push: not feedback.
-  const reviewed = others.find(
-    (r) => r.state === 'commented' && !r.isBot && r.submittedAt > pushed,
-  );
-  const comment = pr.lastComment;
-  const commented =
-    comment &&
-    comment.createdAt > pushed &&
-    comment.author.toLowerCase() !== viewer &&
-    !comment.isBot
-      ? comment.createdAt
-      : null;
-  const feedback = reviewed?.submittedAt ?? commented;
+  const feedback = unansweredFeedback(pr, viewer);
   if (feedback) return { owner: 'you', reason: 'feedback', since: feedback };
-  // Auto-merge is on: GitHub merges it now, nobody has to.
-  if (isReadyToMerge(pr) && pr.autoMerge)
-    return { owner: 'none', reason: 'auto_merge', since: pushed };
-  if (isReadyToMerge(pr) && pr.viewerCanMerge) {
-    const approved = others.find((r) => r.state === 'approved')?.submittedAt ?? pushed;
-    return { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) };
-  }
-  if (pr.checks.state === 'pending')
-    return { owner: 'them', reason: 'waiting_on_checks', since: pushed };
-  return { owner: 'them', reason: 'waiting_on_reviewers', since: pushed };
+  return mergeTurn(pr, others);
 }
 
 /** Someone else's PR: a review asked of the viewer, a re-review after a push, or the author's. */

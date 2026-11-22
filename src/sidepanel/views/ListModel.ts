@@ -1,5 +1,5 @@
 /** Pure logic of the pull request list: quick filter, sort order, repositories, PRs set aside. */
-import type { PrLocalState, PullRequest, Settings, SortOrder } from '../../lib/model';
+import type { PrLocalState, PullRequest, SortOrder } from '../../lib/model';
 import { isSnoozed } from '../../lib/storage/prLocal';
 
 /**
@@ -67,12 +67,7 @@ export interface SectionParts {
   snoozed: PullRequest[];
 }
 
-export function splitSection(
-  prs: PullRequest[],
-  local: PrLocalState,
-  _settings: Settings,
-  now: number,
-): SectionParts {
+export function splitSection(prs: PullRequest[], local: PrLocalState, now: number): SectionParts {
   const parts: SectionParts = { shown: [], snoozed: [] };
   for (const pr of prs) {
     if (isSnoozed(local, pr.id, now)) parts.snoozed.push(pr);

@@ -60,7 +60,6 @@ function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: str
                   current.sort,
                 ),
             local,
-            current,
             clock,
           )
         : NOTHING,

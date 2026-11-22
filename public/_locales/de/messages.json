@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome Sync konnte deine Einstellungen nicht speichern. Sie bleiben auf diesem Gerät."
   },
-  "ciFailing": {
-    "message": "CI fehlgeschlagen"
-  },
-  "changesRequested": {
-    "message": "Änderungen angefordert"
-  },
-  "readyToMerge": {
-    "message": "bereit zum Mergen"
-  },
   "withUnseenChanges": {
     "message": "$P1$: $P2$ mit ungesehenen Änderungen",
     "placeholders": {
@@ -1693,9 +1684,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "Konflikte"
-  },
   "include": {
     "message": "Einschließen"
   },
@@ -3065,5 +3053,78 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Unterhaltungen auflösen"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ mit offenen Unterhaltungen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ mit offenen Unterhaltungen",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ hinter dem Basis-Branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ hinter dem Basis-Branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "In der Merge-Warteschlange"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "Du bist dran: erneut prüfen"
+  },
+  "notifyTurnCiFailed": {
+    "message": "Du bist dran: CI reparieren"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "Du bist dran: angeforderte Änderungen umsetzen"
+  },
+  "notifyTurnConflicts": {
+    "message": "Du bist dran: Konflikte lösen"
+  },
+  "notifyTurnFeedback": {
+    "message": "Du bist dran: auf Feedback antworten"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "Du bist dran: Unterhaltungen auflösen"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "Du bist dran: Branch aktualisieren"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "Du bist dran: jetzt mergen"
   }
 }

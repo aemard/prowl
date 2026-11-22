@@ -3,7 +3,16 @@
  * by one. A PR only in `prev` gives nothing: it simply left the search scope. A PR only in
  * `next` has no baseline: it only says when it arrived as the viewer's move (see `arrived`).
  */
-import type { PrEvent, PrEventType, PullRequest, ReviewState, Snapshot } from '../model';
+
+import { awaitsMerge, isReadyToMerge } from '../mergeEligibility';
+import type {
+  PrEvent,
+  PrEventType,
+  PullRequest,
+  ReviewState,
+  Snapshot,
+  TurnReason,
+} from '../model';
 import { turnIn } from '../turn/whoseTurn';
 import { ciOutcome } from './checkTransitions';
 
@@ -14,24 +23,15 @@ const REVIEW_EVENTS: Partial<Record<ReviewState, PrEventType>> = {
   commented: 'review_new',
 };
 
-/**
- * Open, not a draft, mergeable, and GitHub's verdict lets it through (`clean`; `unstable` means
- * only a check that is not required fails; `has_hooks`) with its review requirement met or
- * absent. Local facts never override a `blocked`, `behind` or `unknown` verdict.
- */
-export function isReadyToMerge(pr: PullRequest): boolean {
-  return (
-    pr.state === 'open' &&
-    !pr.isDraft &&
-    pr.mergeable === 'mergeable' &&
-    ['clean', 'unstable', 'has_hooks'].includes(pr.mergeStateStatus) &&
-    (pr.reviewDecision === 'approved' || pr.reviewDecision === 'none')
-  );
-}
-
 export { carrySettledChecks } from './checkTransitions';
 
-type Add = (type: PrEventType, key: string, actor: string | null, at: string) => void;
+type Add = (
+  type: PrEventType,
+  key: string,
+  actor: string | null,
+  at: string,
+  reason?: TurnReason,
+) => void;
 
 /**
  * Up to when `prev` saw GitHub, in GitHub's time: its local fetch time, or the newest update it
@@ -78,8 +78,8 @@ function changes(prev: Snapshot, next: Snapshot, before: PullRequest, pr: PullRe
   )
     add('comment_new', comment.createdAt, comment.author, comment.createdAt);
 
-  // With auto-merge on, GitHub merges it itself: `merged` follows.
-  if (isReadyToMerge(pr) && !pr.autoMerge && !isReadyToMerge(before))
+  // With auto-merge on or in a merge queue, GitHub merges it itself: `merged` follows.
+  if (awaitsMerge(pr) && !isReadyToMerge(before))
     add('ready_to_merge', pr.headSha, null, next.fetchedAt);
 
   if (before.state === 'open' && pr.state !== 'open')
@@ -100,7 +100,7 @@ function turnChange(
   const turn = turnIn(next, pr);
   if (turn.owner !== 'you' || (before && turnIn(prev, before).owner === 'you')) return;
   if (turn.reason === 'review_requested') add('review_requested', pr.updatedAt, null, pr.updatedAt);
-  else add('your_turn', `${turn.reason}:${turn.since}`, null, next.fetchedAt);
+  else add('your_turn', `${turn.reason}:${turn.since}`, null, next.fetchedAt, turn.reason);
 }
 
 /**
@@ -125,10 +125,11 @@ export function diffSnapshots(
     if (!before && !arrived(prev, next, pr, since)) continue;
     const { id: prId, repo, number, title, url } = pr;
     let told = false;
-    const add: Add = (type, key, actor, at) => {
+    const add: Add = (type, key, actor, at, reason) => {
       if (actor?.toLowerCase() === viewer) return;
       const id = `${prId}:${type}:${key}`;
-      events.set(id, { id, type, prId, repo: repo.nameWithOwner, number, title, url, actor, at });
+      const event = { id, type, prId, repo: repo.nameWithOwner, number, title, url, actor, at };
+      events.set(id, reason ? { ...event, reason } : event);
       told = true;
     };
     if (before) changes(prev, next, before, pr, add);

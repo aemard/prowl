@@ -59,6 +59,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           autoMergeAllowed
         }
         autoMergeRequest { mergeMethod enabledBy { login } }
+        isInMergeQueue
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
         latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { __typename login } } }
@@ -190,6 +191,8 @@ export interface PullRequestNode {
   };
   /** Null while auto-merge is off. */
   autoMergeRequest: { mergeMethod: string; enabledBy: Login | null } | null;
+  /** Absent in older fixtures. */
+  isInMergeQueue?: boolean;
   totalCommentsCount: number | null;
   labels: Nodes<{ name: string; color: string }> | null;
   latestReviews: Nodes<{

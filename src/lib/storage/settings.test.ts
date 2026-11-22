@@ -43,9 +43,6 @@ describe('DEFAULT_SETTINGS', () => {
       groupByRepo: true,
       localAi: false,
       singleKeyShortcuts: true,
-      hideStaleAfterDays: 0,
-      hideDrafts: false,
-      hideBots: false,
       unfollowedTeams: [],
     } satisfies Settings);
   });
@@ -107,9 +104,6 @@ describe('normalizeSettings', () => {
       theme: 'dark',
       sort: 'repo',
       groupByRepo: true,
-      hideStaleAfterDays: 0,
-      hideDrafts: false,
-      hideBots: false,
       unfollowedTeams: ['acme/core', 'octo-org/web.ui'],
     };
     expect(normalizeSettings(custom)).toEqual(custom);
@@ -184,13 +178,6 @@ describe('normalizeSettings', () => {
   ])('repairs maxPerSection %j to %j', (value, expected) => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
   });
-
-  it.each([0, -1, 7.4, 20, 365, 366, Number.POSITIVE_INFINITY, '30', null, undefined])(
-    'normalizes legacy hideStaleAfterDays %j to zero',
-    (value) => {
-      expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(0);
-    },
-  );
 
   it.each(['groupByRepo'] as const)('repairs %s: a boolean, else its default', (key) => {
     expect(normalizeSettings({ [key]: true })[key]).toBe(true);
@@ -292,13 +279,16 @@ describe('normalizeSettings', () => {
   });
 });
 
-it('forces all legacy hiding preferences off on every read', () => {
-  expect(
-    normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
-  ).toMatchObject({
-    version: SETTINGS_VERSION,
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
+it('drops the legacy hiding preferences on read', () => {
+  const read = normalizeSettings({
+    version: 1,
+    hideStaleAfterDays: 20,
+    hideDrafts: true,
+    hideBots: true,
   });
+  expect(read.version).toBe(SETTINGS_VERSION);
+  expect(Object.keys(read)).not.toEqual(
+    expect.arrayContaining(['hideStaleAfterDays', 'hideDrafts', 'hideBots']),
+  );
+  expect(read).toEqual(DEFAULT_SETTINGS);
 });

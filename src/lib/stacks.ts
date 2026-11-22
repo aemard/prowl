@@ -3,7 +3,7 @@
  * or one GitHub stack holding its members, in place of the first member the order meets. Only
  * PRs GitHub puts in a stack (`PullRequest.stack`) are grouped. Pure.
  */
-import { isReadyToMerge } from './diff/diffSnapshots';
+import { isReadyToMerge } from './mergeEligibility';
 import type { PullRequest } from './model';
 
 export type StackState = 'ready' | 'progress' | 'blocked' | 'draft';

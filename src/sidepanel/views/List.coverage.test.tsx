@@ -6,7 +6,7 @@ import { filterQuery, ListView } from './List';
 import { withSections } from './List.test-support';
 
 it('keeps proven coverage visible even when all loaded cards are hidden', () => {
-  withSections(['authored'], { hideDrafts: true });
+  withSections(['authored']);
   const draft = buildPullRequest({ isDraft: true });
   snapshot.value = buildSnapshotOf(
     { authored: [draft] },

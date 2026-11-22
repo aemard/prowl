@@ -54,7 +54,7 @@ describe('computeBadge: attention', () => {
     expect(view).toEqual({
       text: '4',
       title:
-        'Prowl: 4 pull requests needing attention (1 CI failing, 1 changes requested, 1 conflicts, 1 ready to merge)',
+        'Prowl: 4 pull requests needing attention (1 with failing CI, 1 with changes requested, 1 with conflicts, 1 ready to merge)',
       danger: true,
     });
   });
@@ -67,7 +67,7 @@ describe('computeBadge: attention', () => {
     expect(badge([both, ready(2)])).toMatchObject({
       text: '2',
       title:
-        'Prowl: 2 pull requests needing attention (1 CI failing, 1 changes requested, 1 ready to merge)',
+        'Prowl: 2 pull requests needing attention (1 with failing CI, 1 with changes requested, 1 ready to merge)',
     });
   });
 
@@ -81,6 +81,20 @@ describe('computeBadge: attention', () => {
     expect(badge([ready(1)]).title).toBe(
       'Prowl: 1 pull request needing attention (1 ready to merge)',
     );
+  });
+
+  it('leaves out a ready PR that the merge queue or auto-merge merges on its own', () => {
+    const queued = quiet(1, {
+      mergeStateStatus: 'CLEAN',
+      reviewDecision: 'APPROVED',
+      isInMergeQueue: true,
+    });
+    const auto = quiet(2, {
+      mergeStateStatus: 'CLEAN',
+      reviewDecision: 'APPROVED',
+      autoMergeRequest: { mergeMethod: 'SQUASH', enabledBy: null },
+    });
+    expect(badge([queued, auto])).toEqual(NO_BADGE);
   });
 
   it('shows nothing when nothing needs attention', () => {
@@ -119,7 +133,7 @@ describe('computeBadge: attention', () => {
     const [old, recent] = [stale, failing(2)] as [PullRequest, PullRequest];
     expect(badge([old, recent])).toMatchObject({
       text: '2',
-      title: 'Prowl: 2 pull requests needing attention (2 CI failing)',
+      title: 'Prowl: 2 pull requests needing attention (2 with failing CI)',
     });
     expect(badge([old], 'unseen').text).toBe('1');
     expect(computeBadge(snapshot([old, recent]), emptyPrLocal(), 'attention', NOW).text).toBe('2');
@@ -211,6 +225,18 @@ describe('turn badge', () => {
     fakeChrome().__state.locale = 'fr';
     expect(badge(prs, 'turn').title).toBe(
       'Prowl : en attente de votre part : 3 PR (2 revues demandées, 1 prête à fusionner)',
+    );
+  });
+
+  it('counts branches to update and conversations to resolve', () => {
+    const approved = { reviewDecision: 'APPROVED' } as const;
+    const behind = quiet(1, { ...approved, mergeStateStatus: 'BEHIND' });
+    const threads = quiet(2, {
+      ...approved,
+      reviewThreads: { nodes: [{ isResolved: false }] },
+    });
+    expect(badge([behind, threads], 'turn').title).toBe(
+      'Prowl: 2 pull requests waiting on you (1 with conversations to resolve, 1 behind its base branch)',
     );
   });
 

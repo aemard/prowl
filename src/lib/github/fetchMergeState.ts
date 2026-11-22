@@ -50,6 +50,30 @@ const searchFacts = (pr: PullRequest) => ({
 export const sameSearchFacts = (a: PullRequest, b: PullRequest) =>
   jsonEqual(searchFacts(a), searchFacts(b));
 
+/** What GitHub's merge verdict depends on among the search facts. */
+const verdictInputs = (pr: PullRequest) => ({
+  state: pr.state,
+  isDraft: pr.isDraft,
+  headSha: pr.headSha,
+  baseRefName: pr.baseRefName,
+  checks: pr.checks,
+  reviews: pr.reviews,
+  unresolvedThreads: pr.unresolvedThreads,
+});
+
+/**
+ * The merge facts `pr` starts a poll with, from its previous copy `before`. Kept, though due for
+ * a read, when what changed cannot move GitHub's verdict (a comment, a label, the title, the
+ * requested reviewers): resetting them on any change made a ready PR leave "Your turn" until its
+ * batch was read, then come back as news. Unknown when checks, reviews, conversations, the
+ * draft flag, the head or the base changed: a cached `clean` must not outlive a failing check.
+ */
+export const carriedMergeFacts = (before: PullRequest, pr: PullRequest): MergeFacts =>
+  jsonEqual(verdictInputs(before), verdictInputs(pr)) ? mergeFacts(before) : mapMergeState({});
+
+const unsettled = (facts: MergeFacts) =>
+  facts.mergeable === 'unknown' || facts.mergeStateStatus === 'unknown';
+
 function staleMergeStates(
   result: FetchResult,
   previous: Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> | null,
@@ -68,15 +92,10 @@ function staleMergeStates(
       readAt !== undefined &&
       now - Date.parse(readAt) <
         (snoozed(pr) ? SNOOZED_MERGE_STATE_MAX_AGE_MS : MERGE_STATE_MAX_AGE_MS) &&
-      before.mergeable !== 'unknown' &&
-      before.mergeStateStatus !== 'unknown' &&
+      !unsettled(before) &&
       before.reviewDecision !== 'unknown';
     // Preserve the baseline even when this poll has no budget left for its refresh.
-    if (before && sameSearchFacts(before, pr)) {
-      result.pullRequests[pr.id] = { ...pr, ...mergeFacts(before) };
-    } else if (before) {
-      result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
-    }
+    if (before) result.pullRequests[pr.id] = { ...pr, ...carriedMergeFacts(before, pr) };
     if (before && sameSearchFacts(before, pr) && readAt) result.mergeStateAt[pr.id] = readAt;
     if (!valid) {
       result.mergeStateDue ??= [];
@@ -179,7 +198,11 @@ export async function readMergeState({
       // are unknown for this one, and unread, so the next poll asks again.
       if (!isNode(node)) return;
       const sameHead = node.headRefOid === pr.headSha && messages.length === 0;
-      result.pullRequests[pr.id] = { ...pr, ...mapMergeState(sameHead ? node : {}) };
+      const facts = mapMergeState(sameHead ? node : {});
+      // GitHub still computing (after the base moved): the facts carried for this head stand,
+      // and the PR stays due, rather than flipping out of ready and back as news.
+      if (sameHead && unsettled(facts)) return;
+      result.pullRequests[pr.id] = { ...pr, ...facts };
       if (sameHead) {
         result.mergeStateAt[pr.id] = readAt;
         result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);

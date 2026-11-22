@@ -280,6 +280,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
           enabledBy: node.autoMergeRequest.enabledBy?.login ?? null,
         }
       : null,
+    inMergeQueue: node.isInMergeQueue === true,
   };
 }
 
