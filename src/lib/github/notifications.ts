@@ -19,7 +19,7 @@ export async function checkInbox(client: GitHubClient, since: string | null): Pr
     'GET',
     '/notifications?per_page=50',
     undefined,
-    since ? { 'If-Modified-Since': since } : {},
+    { headers: since ? { 'If-Modified-Since': since } : {}, accept: [304] },
   );
   const lastModified = headers.get('last-modified') ?? since;
   if (status === 304 || !since) return { changed: false, lastModified };

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
-import { mergeStackUpTo } from './stackMerge';
+import { MERGE_ASYNC_VERSION, mergeStackUpTo } from './stackMerge';
 
 const top = {
   repo: { owner: 'acme', name: 'web', nameWithOwner: 'acme/web' },
@@ -20,7 +20,9 @@ function setup(...answers: Response[]) {
       String(url),
       init.body && JSON.parse(String(init.body)),
     ]);
-  return { client, sent };
+  const versions = () =>
+    fetch.mock.calls.map(([, init]) => new Headers(init.headers).get('x-github-api-version'));
+  return { client, sent, versions };
 }
 const wait = async () => {};
 
@@ -39,6 +41,42 @@ describe('mergeStackUpTo', () => {
       ['GET', `${PATH}/u-1`, undefined],
       ['GET', `${PATH}/u-1`, undefined],
     ]);
+  });
+
+  it('asks both endpoints for the API version that documents them', async () => {
+    const { client, versions } = setup(
+      jsonResponse({ status: 'pending', details: { uuid: 'u-1' } }, { status: 202 }),
+      jsonResponse({ status: 'merged' }),
+    );
+    await mergeStackUpTo(client, top, { method: 'merge', queue: false }, wait);
+    expect(versions()).toEqual([MERGE_ASYNC_VERSION, MERGE_ASYNC_VERSION]);
+    expect(MERGE_ASYNC_VERSION).toBe('2026-03-10');
+  });
+
+  it('follows the merge already pending (409) instead of failing', async () => {
+    const { client, sent } = setup(
+      jsonResponse(
+        { message: 'A merge request is already pending', details: { uuid: 'u-9' } },
+        { status: 409 },
+      ),
+      jsonResponse({ status: 'enqueued', details: { message: 'Added to the queue' } }),
+    );
+    await expect(mergeStackUpTo(client, top, { method: 'merge', queue: true }, wait)).resolves.toBe(
+      'enqueued',
+    );
+    expect(sent()[1]).toEqual(['GET', `${PATH}/u-9`, undefined]);
+    const nameless = setup(jsonResponse({ message: 'Already pending' }, { status: 409 }));
+    await expect(
+      mergeStackUpTo(nameless.client, top, { method: 'merge', queue: false }, wait),
+    ).rejects.toThrow('Already pending');
+  });
+
+  it('reports a pull request already merged (200) without following anything', async () => {
+    const { client, sent } = setup(jsonResponse({ status: 'merged', details: { message: 'ok' } }));
+    await expect(
+      mergeStackUpTo(client, top, { method: 'merge', queue: false }, wait),
+    ).resolves.toBe('merged');
+    expect(sent()).toHaveLength(1);
   });
 
   it('queues without a method, and reports a stack already queued', async () => {

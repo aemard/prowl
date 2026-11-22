@@ -120,8 +120,11 @@ in-memory updates that the next snapshot replaces.
   `POST /repos/{o}/{r}/check-suites/{id}/rerequest`) and reading token scopes
   (`GET /user`, header `x-oauth-scopes`), and listing the viewer's teams (`GET /user/teams`:
   GraphQL has no "my teams" across organizations, and any `Team` field there needs `read:org`).
-- Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version: 2022-11-28` for REST,
-  20 s timeout, `cache: 'no-store'`. Errors never include the token.
+- Every request: `Authorization: Bearer <token>`, `X-GitHub-Api-Version` for REST (2022-11-28 by
+  default, `API_VERSION`; a request passes `apiVersion` for an endpoint documented only under a
+  newer version: `merge-async` asks for 2026-03-10), 20 s timeout, `cache: 'no-store'`. A request
+  lists the statuses outside 2xx that answer it (`accept`: 304 for the inbox, 409 for
+  `merge-async`); every other one is a `GitHubError`. Errors never include the token.
 - Check counts come from `statusCheckRollup.contexts.checkRunCountsByState` /
   `statusContextCountsByState` so the list query stays cheap; individual check runs are
   fetched only when a PR is expanded (`query ProwlPullRequestDetail`, see
@@ -465,8 +468,11 @@ opened, the members as the usual cards (details, actions) on a rail numbered by 
 confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
 GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
 pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
-`GET …/merge-async/{uuid}` for up to a minute. GitHub merges the run atomically or not at all;
-the GraphQL merge mutation refuses stacked PRs.
+`GET …/merge-async/{uuid}` for up to a minute, both with `X-GitHub-Api-Version: 2026-03-10`, the
+version that documents them. A 200 (already merged or queued) ends there; a 409 (a merge request
+is already pending, from another tab or device) names that operation's uuid, which Prowl follows
+as its own. GitHub merges the run atomically or not at all; the GraphQL merge mutation refuses
+stacked PRs.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
 details), a lone PR's merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to the
