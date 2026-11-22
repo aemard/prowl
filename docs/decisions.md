@@ -24,7 +24,7 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-10-06 — The OAuth App client id is injected at build time from the `PROWL_GITHUB_CLIENT_ID` repository variable; builds without it hide device flow and explain PAT sign-in, because an OAuth App can only be registered by the maintainer.
 - 2026-10-06 — `github.com` is an optional host permission requested only when device flow starts; PAT users never grant it.
 - 2026-10-06 — The token is stored unencrypted in `chrome.storage.local` (never `sync`): encrypting with a key stored next to it adds no protection; the threat model documents this.
-- 2026-10-06 — Perf budget: side panel JS ≤ 60 KB gzip, CSS ≤ 12 KB gzip, service worker ≤ 30 KB gzip, whole extension ≤ 400 KB gzip; first list render from cache ≤ 150 ms (E2E). The JS limits became 72 / 36 KB on 2026-11-21 (below).
+- 2026-10-06 — Perf budget: side panel JS ≤ 60 KB gzip, CSS ≤ 12 KB gzip, service worker ≤ 30 KB gzip, whole extension ≤ 400 KB gzip; first list render from cache ≤ 150 ms (E2E). The JS limits became 72 / 36 KB on 2026-11-21, then the side panel's went back to 60 KB on 2026-11-22 (both below).
 - 2026-10-06 — Badge default `attention` = PRs with failing CI, changes requested, conflicts or ready to merge; red when CI fails or changes are requested.
 - 2026-10-06 — Releases: release-please with `release-as: 1.0.0`; a tag-triggered workflow is the fallback if Actions may not open PRs. Assets: zip, SPDX SBOM (syft), build provenance attestation.
 - 2026-10-06 — Actions are pinned to commit SHAs (Scorecard "Pinned-Dependencies").

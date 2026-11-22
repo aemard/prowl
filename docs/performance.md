@@ -8,7 +8,7 @@ do not count toward first load.
 
 | Budget | Limit (gzip) |
 |---|---|
-| Side panel JS loaded at startup | 72 KB |
+| Side panel JS loaded at startup | 60 KB |
 | Side panel CSS | 12 KB |
 | Service worker JS | 36 KB |
 | Whole extension | 400 KB |
@@ -28,11 +28,12 @@ minute asks the service worker for a poll, which renders when it lands). Locally
   in the panel.
 - **Small runtime.** Preact 10 and @preact/signals are the only runtime dependencies; no CSS
   framework, no icon font (inline SVG icons).
-- **Lazy chunks.** Settings and a card's expanded part (checks, reviewers, actions, dialogs) are
-  separate chunks loaded on first use (`src/sidepanel/components/lazy.tsx`). The service worker
-  never uses dynamic `import()`.
-- **Cheap polling.** One GraphQL search per enabled section (~4 points per 50 PRs, pages of 25), merge facts only for PRs that changed, check counts
-  instead of check lists, details fetched only on expand.
+- **Lazy chunks.** Settings, a card's expanded part (checks, reviewers, actions, dialogs, the
+  detail query), stack rows and the turn summary are separate chunks loaded on first use
+  (`src/sidepanel/components/lazy.tsx`). The service worker never uses dynamic `import()`.
+- **Cheap polling.** One GraphQL search per enabled section (pages of 25 PRs, about 2 points
+  each), merge facts only for PRs that changed, check counts instead of check lists, details
+  fetched only on expand.
 
 ## Measuring
 

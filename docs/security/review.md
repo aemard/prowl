@@ -29,7 +29,7 @@ threat model's claims.
 
 | # | Severity | Finding | Resolution |
 |---|---|---|---|
-| F1 | Low | Approve/request changes did not pin the head commit: a push just before the click got approved unseen | Fixed: `commitOID` = `pr.headSha` (`actions.ts`), tested |
+| F1 | Low | Approve/request changes did not pin the head commit: a push just before the click got approved unseen | Fixed: `commitOID` = `pr.headSha` (`actions.ts`, now `reviewActions.ts`), tested |
 | F2 | Low | Release job restored the shared pnpm cache before building the attested zip | Fixed: no dependency cache in `release-assets.yml` |
 | F3 | Low | Optional `github.com` permission kept forever after the device flow | Fixed: removed when the flow ends and on sign-out |
 | F4 | Low | "Copy branch name" copies attacker-chosen names with shell syntax or bidi controls | Fixed: warning toast for such names, tested |

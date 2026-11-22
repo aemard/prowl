@@ -240,14 +240,6 @@ export async function updateSettings(
   });
 }
 
-/**
- * Persists migrated and repaired settings (the defaults on first run). Meant for
- * `runtime.onInstalled`; writes nothing when the stored value is already current.
- */
-export async function ensureSettings(): Promise<Settings> {
-  return updateItem(STORAGE_KEYS.settings, (stored) => normalizeSettings(stored));
-}
-
 /** Calls `listener` with normalized settings whenever they change in any context. */
 export function subscribeSettings(listener: (settings: Settings) => void): Unsubscribe {
   return subscribe(STORAGE_KEYS.settings, (value) => listener(normalizeSettings(value)));
