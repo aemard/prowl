@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome Sync no ha guardado tus ajustes. Se conservan en este dispositivo."
   },
-  "ciFailing": {
-    "message": "CI fallida"
-  },
-  "changesRequested": {
-    "message": "cambios solicitados"
-  },
-  "readyToMerge": {
-    "message": "lista para fusionar"
-  },
   "withUnseenChanges": {
     "message": "$P1$: $P2$ con cambios sin ver",
     "placeholders": {
@@ -1693,9 +1684,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "conflictos"
-  },
   "include": {
     "message": "Incluir"
   },
@@ -3056,6 +3044,79 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Resolver conversaciones"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ con conversaciones por resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ con conversaciones por resolver",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ por detrás de su rama base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ por detrás de su rama base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "En la cola de fusión"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "Tu turno: revisar de nuevo"
+  },
+  "notifyTurnCiFailed": {
+    "message": "Tu turno: arreglar la CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "Tu turno: atender los cambios solicitados"
+  },
+  "notifyTurnConflicts": {
+    "message": "Tu turno: resolver conflictos"
+  },
+  "notifyTurnFeedback": {
+    "message": "Tu turno: responder a los comentarios"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "Tu turno: resolver conversaciones"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "Tu turno: actualizar la rama"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "Tu turno: fusionarla"
   },
   "stackStateCount": {
     "message": "$P1$ $P2$",

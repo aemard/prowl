@@ -24,18 +24,6 @@
     "message": "Chrome sync did not take your settings. They stay on this device.",
     "description": "Extension text: Chrome sync did not take your settings. They stay on this device."
   },
-  "ciFailing": {
-    "message": "CI failing",
-    "description": "Extension text: CI failing"
-  },
-  "changesRequested": {
-    "message": "changes requested",
-    "description": "Extension text: changes requested"
-  },
-  "readyToMerge": {
-    "message": "ready to merge",
-    "description": "Extension text: ready to merge"
-  },
   "withUnseenChanges": {
     "message": "$P1$: $P2$ with unseen changes",
     "description": "Extension text: $1: $2 with unseen changes",
@@ -2075,10 +2063,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "conflicts",
-    "description": "Extension text: conflicts"
-  },
   "include": {
     "message": "Include",
     "description": "Extension text: Include"
@@ -3593,6 +3577,94 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Resolve conversations",
+    "description": "Extension text: Resolve conversations"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ with conversations to resolve",
+    "description": "Extension text: $P1$ with conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ with conversations to resolve",
+    "description": "Extension text: $P1$ with conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ behind its base branch",
+    "description": "Extension text: $P1$ behind its base branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ behind their base branch",
+    "description": "Extension text: $P1$ behind their base branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "In merge queue",
+    "description": "Extension text: In merge queue"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "description": "Extension text: $P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "Your turn: review again",
+    "description": "Extension text: Your turn: review again"
+  },
+  "notifyTurnCiFailed": {
+    "message": "Your turn: fix CI",
+    "description": "Extension text: Your turn: fix CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "Your turn: address the requested changes",
+    "description": "Extension text: Your turn: address the requested changes"
+  },
+  "notifyTurnConflicts": {
+    "message": "Your turn: resolve conflicts",
+    "description": "Extension text: Your turn: resolve conflicts"
+  },
+  "notifyTurnFeedback": {
+    "message": "Your turn: answer feedback",
+    "description": "Extension text: Your turn: answer feedback"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "Your turn: resolve conversations",
+    "description": "Extension text: Your turn: resolve conversations"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "Your turn: update the branch",
+    "description": "Extension text: Your turn: update the branch"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "Your turn: merge it",
+    "description": "Extension text: Your turn: merge it"
   },
   "stackStateCount": {
     "message": "$P1$ $P2$",

@@ -3,8 +3,9 @@
  * merge) and the sentence a screen reader gets for the whole card. Pure, so it is table-tested;
  * `PullRequestCard` only picks an icon per `StatusIcon` and renders.
  */
-import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
+
 import { countMessage, t } from '../../lib/i18n';
+import { isReadyToMerge } from '../../lib/mergeEligibility';
 import type { CheckSummary, MergeMethod, PullRequest, Turn } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { TURN_LABELS } from '../../lib/turn/whoseTurn';
@@ -150,12 +151,37 @@ function withTurn(chips: Status[], turn: Turn | undefined, now: number): Status[
     tone: fact.tone === 'attention' ? 'accent' : fact.tone,
     icon: 'bell',
     label: turn.reason === 'ci_failed' ? `${action} · ${fact.label}` : action,
-    detail: `${detail}. ${fact.detail}`,
+    detail: t('turnChipDetail', detail, fact.detail),
   };
   return chips.map((chip, i) => (i === index ? merged : chip));
 }
 
-/** Chips in reading order: Draft, CI, review, then conflicts or ready to merge; see `withTurn`. */
+const mergeChip = (label: string, detail: string, tone: Tone = 'accent'): Status => ({
+  id: 'merge',
+  tone,
+  icon: 'merge',
+  label,
+  detail,
+});
+
+/** Conflicts, who merges it (the merge queue, auto-merge), or ready to merge; else nothing. */
+function mergeStatus(pr: PullRequest, ready: boolean): Status | null {
+  if (pr.mergeable === 'conflicting')
+    return { ...mergeChip(t('conflicts'), t('hasMergeConflicts'), 'warning'), icon: 'alert' };
+  if (pr.state !== 'open') return null;
+  if (pr.inMergeQueue) return mergeChip(t('inMergeQueueShort'), t('inMergeQueueShort'));
+  if (pr.autoMerge) {
+    const method = MERGE_METHOD_NAMES[pr.autoMerge.method];
+    const by = pr.autoMerge.enabledBy;
+    return mergeChip(
+      t('autoMerge'),
+      by ? t('autoMergeBy', method, by) : t('autoMergeMethod', method),
+    );
+  }
+  return ready ? mergeChip(t('readyToMerge2'), t('readyToMerge2'), 'success') : null;
+}
+
+/** Chips in reading order: Draft, CI, review, then the merge chip; see `withTurn`. */
 export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now()): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
@@ -165,33 +191,7 @@ export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now
     ciStatus(pr.checks),
     // "Ready to merge" already says approved.
     ready && pr.reviewDecision === 'approved' ? null : reviewStatus(pr),
-    pr.mergeable === 'conflicting'
-      ? {
-          id: 'merge',
-          tone: 'warning',
-          icon: 'alert',
-          label: t('conflicts'),
-          detail: t('hasMergeConflicts'),
-        }
-      : pr.autoMerge && pr.state === 'open'
-        ? {
-            id: 'merge',
-            tone: 'accent',
-            icon: 'merge',
-            label: t('autoMerge'),
-            detail: pr.autoMerge.enabledBy
-              ? t('autoMergeBy', MERGE_METHOD_NAMES[pr.autoMerge.method], pr.autoMerge.enabledBy)
-              : t('autoMergeMethod', MERGE_METHOD_NAMES[pr.autoMerge.method]),
-          }
-        : ready
-          ? {
-              id: 'merge',
-              tone: 'success',
-              icon: 'merge',
-              label: t('readyToMerge2'),
-              detail: t('readyToMerge2'),
-            }
-          : null,
+    mergeStatus(pr, ready),
   ];
   return withTurn(
     chips.filter((chip): chip is Status => chip !== null),

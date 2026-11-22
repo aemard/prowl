@@ -89,6 +89,7 @@ describe('mapPullRequest', () => {
       viewerCanMerge: true,
       autoMergeAllowed: false,
       autoMerge: null,
+      inMergeQueue: false,
     } satisfies PullRequest);
   });
 

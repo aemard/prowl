@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildPollState, buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import type { CheckSummary, PollReason } from '../model';
+import { whoseTurn } from '../turn/whoseTurn';
 import { CI_WATCH_MS, ciWatched, isTrailing, pollVerdict } from './cadence';
 
 const NOW = Date.parse('2026-11-22T12:00:00.000Z');
@@ -63,12 +64,13 @@ describe('pollVerdict', () => {
     expect(verdict('schedule', state)).toEqual({ run: true });
   });
 
-  it('polls a list for the panel past a minute, for focus past the interval, for CI past 50 s', () => {
+  it('polls a list for the panel past a minute, for focus past the interval, for CI past 110 s', () => {
     const fresh = (reason: PollReason, age: number) =>
       verdict(reason, buildPollState(), at(NOW - age)).run;
     expect([fresh('panel', 30_000), fresh('panel', MINUTE)]).toEqual([false, true]);
     expect([fresh('focus', MINUTE), fresh('focus', 2 * MINUTE)]).toEqual([false, true]);
-    expect([fresh('ci', 40_000), fresh('ci', 50_000)]).toEqual([false, true]);
+    // With the minute alarm, a CI watch polls every 2 minutes: the poll interval's floor.
+    expect([fresh('ci', MINUTE), fresh('ci', 110_000)]).toEqual([false, true]);
     for (const reason of ['schedule', 'startup', 'inbox', 'user', 'change'] as const)
       expect(fresh(reason, 0)).toBe(true);
   });
@@ -97,6 +99,7 @@ describe('ciWatched', () => {
   });
   const watched = (pr: Parameters<typeof buildPullRequest>[0], listed = true) => {
     const built = buildPullRequest({
+      author: { login: 'OctoCat', avatarUrl: '', isBot: false },
       updatedAt: at(NOW - 5 * MINUTE),
       lastCommitAt: at(NOW - 5 * MINUTE),
       ...pr,
@@ -106,8 +109,20 @@ describe('ciWatched', () => {
     return ciWatched(snapshot, NOW);
   };
 
-  it('watches running CI on a listed open pull request that changed recently', () => {
+  it("watches running CI on the viewer's own listed open pull request that changed recently", () => {
     expect(watched({ checks: checks(1) })).toBe(true);
+  });
+
+  it("ignores CI on other people's pull requests: it never changes the viewer's turn there", () => {
+    const teammate = { login: 'alice', avatarUrl: '', isBot: false };
+    expect(watched({ checks: checks(1), author: teammate })).toBe(false);
+    expect(watched({ checks: checks(1), author: null })).toBe(false);
+    // The premise: whatever CI does on a teammate's PR, the viewer's turn there stays the same.
+    const states = ['pending', 'failure', 'success'] as const;
+    const turns = states.map((state) =>
+      whoseTurn(buildPullRequest({ checks: { ...checks(1), state } }), 'octocat'),
+    );
+    expect(new Set(turns.map((turn) => turn.reason)).size).toBe(1);
   });
 
   it('ignores waiting checks, old snapshots without running counts, closed and unlisted PRs', () => {

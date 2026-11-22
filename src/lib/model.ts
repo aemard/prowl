@@ -3,6 +3,7 @@
  * the GitHub layer and the diff engine. GitHub-specific shapes stay inside src/lib/github;
  * everything else depends only on these types.
  */
+import type { TurnReason } from './modelSettings';
 
 /** Aggregated CI state for the head commit. `none` = no checks configured. */
 export type CheckState = 'success' | 'failure' | 'pending' | 'none';
@@ -175,6 +176,11 @@ export interface PullRequest {
   autoMergeAllowed: boolean;
   /** Auto-merge is on: GitHub merges with `method` once the requirements pass. */
   autoMerge: { method: MergeMethod; enabledBy: string | null } | null;
+  /**
+   * GitHub's merge queue holds it (`isInMergeQueue`): it merges once the queue reaches it.
+   * Absent in snapshots stored before Prowl read it.
+   */
+  inMergeQueue?: boolean;
 }
 
 /**
@@ -358,6 +364,8 @@ export interface PrEvent {
   /** Who caused it, when known. */
   actor: string | null;
   at: string;
+  /** `your_turn` only: why it became the viewer's move (absent in events held before). */
+  reason?: TurnReason;
 }
 
 /** An event quiet hours silenced, waiting for the digest (`quietHeld`). */

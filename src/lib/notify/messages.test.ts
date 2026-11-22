@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prEvent } from '../../../tests/fixtures/events';
-import type { PrEventType } from '../model';
+import type { PrEvent, PrEventType, TurnReason } from '../model';
 import { notificationContent, summaryContent } from './messages';
 
 describe('notificationContent', () => {
@@ -27,6 +27,23 @@ describe('notificationContent', () => {
     ['closed', 'Closed'],
   ] satisfies [PrEventType, string][])('titles %s without an actor', (type, title) => {
     expect(notificationContent(prEvent({ type, actor: null })).title).toBe(title);
+  });
+
+  it.each([
+    ['conflicts', 'Your turn: resolve conflicts'],
+    ['feedback', 'Your turn: answer feedback'],
+    ['update_branch', 'Your turn: update the branch'],
+    ['unresolved_threads', 'Your turn: resolve conversations'],
+    ['ready_to_merge', 'Your turn: merge it'],
+    ['re_review', 'Your turn: review again'],
+  ] satisfies [TurnReason, string][])('says what to do for your turn on %s', (reason, title) => {
+    expect(notificationContent(prEvent({ type: 'your_turn', reason })).title).toBe(title);
+  });
+
+  it('falls back to "Your turn" for an event held without a known reason', () => {
+    expect(notificationContent(prEvent({ type: 'your_turn' })).title).toBe('Your turn');
+    const odd = { type: 'your_turn', reason: 'toString' } as unknown as Partial<PrEvent>;
+    expect(notificationContent(prEvent(odd)).title).toBe('Your turn');
   });
 
   it('puts the PR title in the message and the PR in the context', () => {

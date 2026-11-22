@@ -10,9 +10,9 @@ import type {
 } from '../model';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
-import { isNode, sameSearchFacts } from './fetchMergeState';
+import { carriedMergeFacts, isNode } from './fetchMergeState';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
-import { type MergeFacts, mapMergeState, mapPullRequest } from './mapPullRequest';
+import { mapPullRequest } from './mapPullRequest';
 import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY, withoutStacks } from './queries';
 import { parseRateLimit } from './rateLimit';
 import { buildSearchQuery, filterByRepo } from './search';
@@ -35,16 +35,6 @@ const missingStacks = (error: unknown) =>
   error instanceof GitHubError &&
   error.kind === 'graphql' &&
   /stackEntry|PullRequestStack/.test(error.message);
-
-const mergeFacts = (pr: PullRequest): MergeFacts => ({
-  reviewDecision: pr.reviewDecision,
-  mergeable: pr.mergeable,
-  mergeStateStatus: pr.mergeStateStatus,
-  viewerCanUpdate: pr.viewerCanUpdate,
-  viewerCanMergeAsAdmin: pr.viewerCanMergeAsAdmin === true,
-  viewerCanEnableAutoMerge: pr.viewerCanEnableAutoMerge === true,
-  viewerCanDisableAutoMerge: pr.viewerCanDisableAutoMerge === true,
-});
 
 export type PreviousSnapshot = Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
   Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests' | 'sectionScopes'>>;
@@ -213,9 +203,7 @@ export class SearchContext {
   };
   put = (pr: PullRequest) => {
     const before = this.previous?.pullRequests[pr.id];
-    this.result.pullRequests[pr.id] = before
-      ? { ...pr, ...(sameSearchFacts(before, pr) ? mergeFacts(before) : mapMergeState({})) }
-      : pr;
+    this.result.pullRequests[pr.id] = before ? { ...pr, ...carriedMergeFacts(before, pr) } : pr;
   };
   /**
    * A search cut short (or refused) cannot tell which PRs left the section: keeps the cached

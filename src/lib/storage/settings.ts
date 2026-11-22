@@ -107,9 +107,6 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   groupByRepo: true,
   localAi: false,
   singleKeyShortcuts: true,
-  hideStaleAfterDays: 0,
-  hideDrafts: false,
-  hideBots: false,
   unfollowedTeams: [],
 });
 
@@ -209,10 +206,6 @@ export function normalizeSettings(value: unknown): Settings {
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
     localAi: bool(raw.localAi, DEFAULT_SETTINGS.localAi),
     singleKeyShortcuts: bool(raw.singleKeyShortcuts, DEFAULT_SETTINGS.singleKeyShortcuts),
-    // Keep explicit off values for older synced installs (missing stale keys default to 20).
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
     unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }
@@ -238,14 +231,6 @@ export async function updateSettings(
       typeof patch === 'function' ? patch(current) : { ...current, ...patch },
     );
   });
-}
-
-/**
- * Persists migrated and repaired settings (the defaults on first run). Meant for
- * `runtime.onInstalled`; writes nothing when the stored value is already current.
- */
-export async function ensureSettings(): Promise<Settings> {
-  return updateItem(STORAGE_KEYS.settings, (stored) => normalizeSettings(stored));
 }
 
 /** Calls `listener` with normalized settings whenever they change in any context. */

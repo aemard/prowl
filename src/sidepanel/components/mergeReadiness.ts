@@ -4,8 +4,9 @@
  * table-tested; `PullRequestDetails` only picks an icon per tone. Works from the list's data
  * alone and sharpens (which checks are required, how many approvals) once the detail is loaded.
  */
-import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
+
 import { countMessage, t } from '../../lib/i18n';
+import { isReadyToMerge } from '../../lib/mergeEligibility';
 import type { MergeMethod, PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 

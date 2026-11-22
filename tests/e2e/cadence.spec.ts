@@ -1,6 +1,6 @@
 import type { Worker } from '@playwright/test';
 import type { PollState } from '../../src/lib/model';
-import { prNode, searchResponse } from '../fixtures/github';
+import { headCommit, prNode, RECENT_COMMIT, searchResponse } from '../fixtures/github';
 import { expect, test } from './fixtures';
 import type { MockGitHub } from './mock-github/server';
 
@@ -105,4 +105,78 @@ test('opening the panel during a backoff asks GitHub nothing', async ({
   await panel.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await settle(serviceWorker);
   expect(searches(github)).toBe(before);
+});
+
+test('an unchanged inbox answers 304 to the worker: If-Modified-Since is sent, nothing polls', async ({
+  github,
+  signIn,
+  poll,
+  serviceWorker,
+}) => {
+  github.on('GET', '/notifications', (request) =>
+    request.headers['if-modified-since'] === LAST
+      ? { status: 304, headers: { 'last-modified': LAST } }
+      : { headers: { 'last-modified': LAST }, body: [] },
+  );
+  await signIn();
+  await poll();
+  await serviceWorker.evaluate(
+    (lastModified) => chrome.storage.session.set({ inbox: { lastModified } }),
+    LAST,
+  );
+  const before = searches(github);
+  await fireInbox(serviceWorker);
+  await expect.poll(() => inboxReads(github).length).toBe(1);
+  expect(inboxReads(github)[0]?.headers['if-modified-since']).toBe(LAST);
+  // Stored only once checkInbox took the 304 as an answer (a thrown error stores no nextAt).
+  await expect
+    .poll(() =>
+      serviceWorker.evaluate(async () => (await chrome.storage.session.get('inbox')).inbox),
+    )
+    .toMatchObject({ lastModified: LAST, nextAt: expect.any(String) });
+  await settle(serviceWorker);
+  expect(searches(github)).toBe(before);
+});
+
+test("the CI watch polls for running CI on the viewer's own PR, not on a teammate's", async ({
+  github,
+  signIn,
+  poll,
+  serviceWorker,
+}) => {
+  let author = 'alice';
+  github.onGraphQL('ProwlSearch', (variables) =>
+    searchResponse(
+      [
+        prNode({
+          author: { __typename: 'User', login: author, avatarUrl: '' },
+          updatedAt: RECENT_COMMIT,
+          commits: headCommit({ IN_PROGRESS: 1 }),
+        }),
+      ],
+      variables,
+    ),
+  );
+  // A fine-grained token keeps the inbox out of it: only the CI watch can poll.
+  await signIn({ tokenType: 'fine_grained' });
+  /** Ages the list past the CI watch's 2-minute floor, then fires the fast lane. */
+  const watch = async () => {
+    await serviceWorker.evaluate(async () => {
+      const { snapshot } = await chrome.storage.local.get<{ snapshot: object }>('snapshot');
+      const fetchedAt = new Date(Date.now() - 3 * 60_000).toISOString();
+      await chrome.storage.local.set({ snapshot: { ...snapshot, fetchedAt } });
+    });
+    await fireInbox(serviceWorker);
+    await settle(serviceWorker);
+  };
+  await poll();
+  const before = searches(github);
+  await watch();
+  expect(searches(github)).toBe(before);
+
+  author = 'octocat';
+  await poll();
+  const mine = searches(github);
+  await watch();
+  await expect.poll(() => searches(github)).toBeGreaterThan(mine);
 });

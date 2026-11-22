@@ -115,7 +115,7 @@ test('a changed check becomes unseen without changing the PR activity date', asy
 }) => {
   const pr = prNode({ title: 'Observe checks', url: `${MOCK_ORIGIN}/acme/widgets/pull/1` });
   github.onGraphQL('ProwlSearch', (variables) => searchResponse([pr], variables));
-  await seedStorage({ settings: { ...defaultSettings(), hideStaleAfterDays: 0 } });
+  await seedStorage({ settings: defaultSettings() });
   await signIn();
   await poll();
   const panel = await openPanel();

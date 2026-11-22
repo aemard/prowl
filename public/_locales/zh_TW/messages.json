@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome 同步未能儲存設定。設定仍保留在此裝置上。"
   },
-  "ciFailing": {
-    "message": "CI 失敗"
-  },
-  "changesRequested": {
-    "message": "已要求變更"
-  },
-  "readyToMerge": {
-    "message": "可合併"
-  },
   "withUnseenChanges": {
     "message": "$P1$：$P2$ 有未檢視的變更",
     "placeholders": {
@@ -1693,9 +1684,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "衝突"
-  },
   "include": {
     "message": "包含"
   },
@@ -3056,6 +3044,79 @@
         "content": "$1"
       }
     }
+  },
+  "turnUnresolvedThreads": {
+    "message": "解決對話"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "有待解決對話 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "有待解決對話 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "落後於基礎分支 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "落後於基礎分支 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "在合併佇列中"
+  },
+  "turnChipDetail": {
+    "message": "$P1$。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "輪到你：再次審查"
+  },
+  "notifyTurnCiFailed": {
+    "message": "輪到你：修復 CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "輪到你：處理要求的變更"
+  },
+  "notifyTurnConflicts": {
+    "message": "輪到你：解決衝突"
+  },
+  "notifyTurnFeedback": {
+    "message": "輪到你：回覆意見"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "輪到你：解決對話"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "輪到你：更新分支"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "輪到你：合併它"
   },
   "stackStateCount": {
     "message": "$P2$ $P1$",

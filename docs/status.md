@@ -29,7 +29,10 @@ catch-up on open, CI watch); the quiet-hours digest; and publishing releases to 
 1. Verify against live GitHub what the mock cannot, the newest first: GitHub stacks
    (`stackEntry` and the asynchronous `merge-async` API, both recent; a refused `stackEntry`
    already degrades to a list without stacks), merge-queue positions and estimates, and the
-   notifications check with fine-grained tokens. Then branch-protection fields readable by
+   notifications check: with fine-grained tokens, and that GitHub answers 304 to its
+   `If-Modified-Since` without spending points (the worker's `X-RateLimit-Remaining` before and
+   after an unchanged check; Chromium's pass-through of the 304 is covered in E2E), and that
+   `/notifications` and GraphQL report separate budgets. Then branch-protection fields readable by
    non-admin tokens ("1 approval required"), exact merge refusal wording, the Chrome permission
    prompt for the device flow, CI visibility with fine-grained tokens, and the wording of the
    SAML errors and of `GitHub-Authentication-Token-Expiration` that Prowl reads.

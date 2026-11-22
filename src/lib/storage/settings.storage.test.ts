@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../test/chrome';
 import {
   DEFAULT_SETTINGS,
-  defaultSettings,
-  ensureSettings,
   loadSettings,
   migrateSettings,
   normalizeSettings,
@@ -19,8 +17,7 @@ describe('migrateSettings', () => {
     await chrome.storage.local.set({
       settings: { version: 1, theme: 'dark', sort: 'repo', groupByRepo: false },
     });
-    await ensureSettings();
-    expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
+    expect(await loadSettings()).toMatchObject({
       version: 2,
       language: 'system',
       theme: 'dark',
@@ -102,7 +99,6 @@ describe('settings storage', () => {
   it('keeps an existing five-minute interval', async () => {
     await chrome.storage.local.set({ settings: { ...DEFAULT_SETTINGS, pollIntervalMinutes: 5 } });
     expect((await loadSettings()).pollIntervalMinutes).toBe(5);
-    expect((await ensureSettings()).pollIntervalMinutes).toBe(5);
   });
 
   it('loads stored settings normalized', async () => {
@@ -134,25 +130,6 @@ describe('settings storage', () => {
       updateSettings((current) => ({ ...current, maxPerSection: 10 })),
     ]);
     expect(await loadSettings()).toMatchObject({ theme: 'dark', badge: 'off', maxPerSection: 10 });
-  });
-
-  it('ensureSettings writes the defaults on first run and repairs stored values', async () => {
-    expect(await ensureSettings()).toEqual(DEFAULT_SETTINGS);
-    expect(fakeChrome().storage.local.data.get('settings')).toEqual(DEFAULT_SETTINGS);
-
-    await chrome.storage.local.set({ settings: { maxPerSection: 500, legacy: true } });
-    expect(await ensureSettings()).toEqual({ ...DEFAULT_SETTINGS, maxPerSection: 100 });
-    expect(fakeChrome().storage.local.data.get('settings')).toEqual({
-      ...DEFAULT_SETTINGS,
-      maxPerSection: 100,
-    });
-  });
-
-  it('ensureSettings does not write when the stored settings are current', async () => {
-    await chrome.storage.local.set({ settings: defaultSettings() });
-    const set = vi.spyOn(chrome.storage.local, 'set');
-    await ensureSettings();
-    expect(set).not.toHaveBeenCalled();
   });
 
   it('notifies subscribers with normalized settings', async () => {

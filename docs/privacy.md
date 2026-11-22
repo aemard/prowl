@@ -28,8 +28,9 @@ your browser profile can read your token.
 - **Quiet-hours digest:** the events quiet hours held back (pull request title, number and what
   happened), until the digest shows them. Dropped after a day; removed when you sign out.
 - **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
-  notification choices and quiet hours. Removed when you uninstall Prowl.
-- **Local choices:** which pull requests you snoozed, muted, always show or have seen, by pull
+  notification choices, quiet hours and display preferences (language, theme, sort, grouping,
+  badge, shortcuts, on-device AI). Removed when you uninstall Prowl.
+- **Local choices:** which pull requests you snoozed, muted or have seen, by pull
   request id. Removed when you uninstall Prowl.
 - **Observed activity:** the useful CI/review facts seen then, for detecting activity changes.
   Removed when you sign out or replace your token.
@@ -51,8 +52,9 @@ the interface sends no text to a translation service and requires no additional 
   whether your GitHub notifications changed (`GET /notifications` with `If-Modified-Since`, no
   more often than GitHub's `X-Poll-Interval` allows); it only reads whether a pull request thread
   was updated since the last check, to decide whether to poll now, and never marks anything as
-  read. While CI runs on one of your pull requests that changed in the last hour, Prowl polls
-  every minute until it ends. After GitHub rejects your token, Prowl stops asking anything until
+  read. While CI runs on one of your own pull requests that changed in the last hour, Prowl polls
+  every 2 minutes until it ends; CI on other people's pull requests waits for the next scheduled
+  poll. After GitHub rejects your token, Prowl stops asking anything until
   you sign in again or press Refresh. When a Chrome window comes to the front, Prowl may
   refresh: it learns only that a window got focus, never which page it shows.
 - **`github.com`:** only when you choose "Continue with GitHub". Prowl sends the OAuth App's public

@@ -1,79 +1,211 @@
 # Codebase patterns
 
-- Localization: call `t` from `src/lib/i18n.ts` with a key in `public/_locales/en/messages.json`; a message no code uses fails `src/lib/i18n.test.ts` (remove it from all seven catalogs); add each message to all seven catalogs. Use complete sentences and `$P1$` placeholders (`placeholders.p1.content: "$1"`), `countMessage` for singular/plural variants, `formatNumber` for visible counts and `uiLocale()` for date formatting. `Message` renders reorderable markup slots as Preact children, never HTML. Display stored sections through `sectionLabel`; never translate IDs, queries, repository names or custom labels. The Chrome fake's `__state.locale` selects the browser language; `setLanguage` loads a manual choice, and `loadLanguage` restores the normalized setting before rendering or background work. Keep worker translations inside functions so changes apply without restarting it. `tests/e2e/i18n.spec.ts` covers native catalogs; `language.spec.ts` covers the picker, open panels, persistence and worker notifications.
+Where things live, which helper to call, the test builders and the gotchas, for anyone changing
+Prowl. [architecture.md](architecture.md) explains the design and
+[decisions.md](decisions.md) why it is so; this page is working knowledge only. Keep each entry
+to a sentence or two that points at a file, and rewrite an entry when it goes stale instead of
+appending a newer one.
 
-Where things live, which helper to call, the test builders and the gotchas, for anyone
-changing Prowl. [architecture.md](architecture.md) explains the design; this page is the
-working knowledge. Keep it short and current: newest knowledge wins.
+## Toolchain and gates
 
-- Screenshots in docs/screenshots/ are only written by `pnpm screenshots` (PROWL_SCREENSHOTS=1); plain `pnpm e2e`/`pnpm verify` capture but don't write, so they never churn the repo. Always go through `saveScreenshot(page, name, { fullPage? })` (tests/e2e/fixtures.ts): nothing else may write into docs/screenshots/. Set `PROWL_SCREENSHOT_NAMES=settings,settings-ja pnpm screenshots` to write only those captures; other tests still run. That run launches Chromium with `deviceScaleFactor: 2` (routine runs stay 1x), so a 400 x 760 panel is saved as 800 x 1520 px; tests/unit/images.test.ts fails on a 1x file. Show them at 400 x 760 CSS px (`<img width height>` in README and docs/auth.md; Screenshot.astro serves 1x/2x WebP via `srcset`; auth.astro rewrites the guide's `<img>` the same way and needs an import per screenshot). `pnpm store-images` downsamples the 2x files 2:1 into the exact store sizes; `pnpm store-images /tmp/prowl-store-preview` renders a preview without replacing them. Its bundled Roboto font is export-only and keeps the existing CSS sizes; it never uses fonts installed on the host. Both capture paths wait for fonts/images, disable animations and skip writing identical PNG bytes. Regenerate the affected captures and review previews when a change touches the UI; locale coverage adds just the single Japanese example alongside the existing English images.
-- `pnpm verify` is the gate. `pnpm verify:fast` for the inner loop.
-- Toolchain: Node 24 (`.nvmrc`), pnpm 12 (`packageManager`; settings such as `allowBuilds` live in pnpm-workspace.yaml, `.npmrc` is unused). Unit tests run in `vmThreads` (about 8 s): a test file gets its own VM context but module-level state inside one file is shared as before. A dependency with an install script must be listed in `allowBuilds` or `pnpm install` fails.
-- Unit tests get a fresh `chrome` fake (src/test/chrome.ts) before each test; use `fakeChrome().__state` to inspect alarms, notifications, badge, created tabs, granted origins, and `.emit()` on fake events to simulate Chrome.
-- E2E: tests/e2e/fixtures.ts gives `serviceWorker`, `extensionId`, `openPanel(hash)`, `expectNoA11yViolations(page)`, `github` (mock server: `onGraphQL(operationName, fn)`, `on(method, path, fn)`, `requests`), `saveScreenshot(page, name)`.
-- The e2e build (`vite build --mode e2e` -> dist-e2e/) points env.apiUrl and env.webUrl at http://127.0.0.1:4010 (override the port with PROWL_E2E_PORT, used for both the build and the mock server) and has a fixed client id `e2e-client-id`.
-- Biome formats with single quotes, 2 spaces, width 100. It enforces 300 code lines per file and 50 per function body (blank/comment-only lines excluded, so comments cost nothing). Test and spec files (`*.test.{ts,tsx,mjs}`, `tests/e2e/**/*.spec.ts`) are exempt from the function limit only, because a `describe` callback counts as a function; shared helpers (`*.test-support.*`, `tests/e2e/helpers/`) keep both. Split a long suite into `name.<behavior>.test.ts` files, each with its own `describe`, and builders into `name.test-support.ts`. Warnings fail in local checks and CI. Run `pnpm lint:fix` before verify. Native size rules cover JS/TS and CSS; Astro checks only frontmatter, not template length.
-- Vite 8 config uses `build.rolldownOptions`; the side panel entry is src/sidepanel/index.html, the worker is src/background/index.ts -> background.js.
-- Storage: never call chrome.storage.local directly; use src/lib/storage (getItem/setItem/subscribe, loadSettings/updateSettings/subscribeSettings, updatePrLocal((s) => snooze(s, id, until))). Settings and prLocal reads are always normalized; read-modify-write goes through updateItem (Web Lock shared by panel and worker, no-op writes skipped).
-- The chrome fake, like real Chrome, fires storage onChanged only for values that actually changed and omits oldValue for new keys.
-- GitHub: all HTTP goes through `createGitHubClient({ token, apiUrl, fetch? })` (src/lib/github/client.ts); it only throws `GitHubError` (`kind`, `status`, `resetAt`, `retryAfterSeconds`). `graphql` is strict (any `errors` entry throws), pass `{ partial: true }` for reads that tolerate holes; read the rate limit with `parseRateLimit(data.rateLimit)`. HTTP-level test builders live in tests/fixtures/http.ts (`jsonResponse`, `rateLimitHeaders`, `graphqlRateLimit`, `graphqlError`).
-- GraphQL contract: every operation in src/lib/github must be an exported string (`export const X_QUERY = /* GraphQL */ \`query ProwlX ...\``); `tests/unit/githubSchema.test.ts` validates them all against `tests/fixtures/github-schema.graphql` and rejects deprecated fields. Refresh the schema with `pnpm schema:update` (its own pull request). A field GitHub may drop is selected through a constant the query can be stripped of (`withoutStacks`), with the retry in `fetchSearch.ts`.
-- GitHub search: build each section's query with `buildSearchQuery(section, settings)` and drop fetched PRs with `filterByRepo(prs, settings)` (src/lib/github/search.ts); skip custom sections whose `validateCustomQuery(query)` is non-empty. GitHub's search API answers 422 for >5 AND/OR/NOT, >256 chars of search words (qualifiers excluded) and operators between qualifiers; the MCP `search_pull_requests` tool is a quick way to check search semantics.
-- GitHub fetch: `fetchPullRequests(client, settings, previousSnapshot)` (src/lib/github/fetchPullRequests.ts) returns `{ pullRequests, sections, sectionErrors, rateLimit }`; the poller adds `fetchedAt` + `auth.viewer`. Only it reads raw PR JSON (via `mapPullRequest`). GraphQL-shaped test data: tests/fixtures/github.ts (`prNode`, `headCommit`, `reviewNode`, `searchResponse(nodes, vars)`, `closedNode`, `nodesResponse(ids, nodes)`, `viewerNode`); in E2E: `github.onGraphQL('ProwlSearch', (v) => searchResponse(prs, v))`. Validate query edits against GitHub's public schema (docs.github.com/public/fpt/schema.docs.graphql + graphql-js in the scratchpad).
-- Diff: `diffSnapshots(prev, next, viewerLogin)` (src/lib/diff) gives `PrEvent[]` oldest first with ids that never include the poll time (dedupe on `id`); `isReadyToMerge(pr)` is the shared "ready to merge" rule. Rules table: docs/architecture.md "Diff engine".
-- UI: reuse `src/sidepanel/components/ui/<Name>` (import each module directly, no barrel) and icons from `components/icons` (`XIcon`, `GitMergeIcon`, ...; add Octicons paths there). docs/design.md is the reference.
-- CSS uses semantic tokens only (`--color-*`, `--space-*`, `--text-*`, `--duration-*`); src/styles/tokens.test.ts fails on raw colors outside tokens.css and tokens.base.css and when the contrast table in docs/design.md is stale (it prints the new table). Theme = `document.documentElement.dataset.theme` ('light' | 'dark', absent = system).
-- Layers in `src/styles/tokens.css`: sticky header, list filter and section bar 10, menus 40, toasts 50. Modal dialogs use the native top layer. Shared `Menu` uses the Popover API top layer, rendered in place to stay inside its landmark and enclosing dialog while escaping sticky/card stacking contexts. Use these tokens for new chrome/popovers.
-- Text controls show focus for pointer users too: a `--color-focus` border plus a 1px outline drawn just inside it (`outline-offset: -2 × border`), so a dialog or scroller that clips its children cannot thin the ring on one side; invalid controls switch the outline to the danger color.
-- Mount `<ToastRegion />` once and call `showToast({ message, tone })`. Dialog is controlled (`open`/`onClose`) and restores focus itself. A dialog action's failure goes in `error` (in-dialog `role="alert"`; pass `setError` as `runPrAction`'s `onError`), never a toast under the modal.
-- Preact tests: wrap raw `dispatchEvent` calls and fake-timer advances in `act()`. happy-dom has `dialog.showModal()` but no Esc handling: dispatch `new Event('cancel', { cancelable: true })`.
-- Panel state: import the signals from `src/sidepanel/state/store.ts` (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`, `hydrated`; read `.value` in render and the component subscribes), `route` / `navigate()` from `state/router.ts`, `sendToBackground()` from `state/background.ts` and `openGitHubUrl()` from `openUrl.ts` (the only way to open a URL). Views (`ListView`, `SettingsView`, `OnboardingView`) live in `src/sidepanel/views/`; `App` mounts the shell, theme and `ToastRegion`. `main.tsx` renders the shared `Loading` skeleton before waiting for storage/catalog reads, then renders the eagerly imported `App` once the language is ready (shared label tables translate on access); blocked storage must never leave a blank panel.
-- Signals gotcha: a component that reads signals only re-renders when those signals or its props change, so a parent's timer re-render does not reach a child; call `useNow(ms)` (relative times) in the component that shows the time.
-- Panel unit tests: build stored values with `src/test/panel.ts` (`buildAuth`, `buildSnapshot`, `buildPollState`), seed `chrome.storage.local`, `await hydrateStore()` inside `act`, and reset `auth.value` / `location.hash` in `afterEach` (module signals outlive a test).
-- Panel E2E: `seedStorage({ auth, snapshot, pollState })` writes from the service worker and an open panel follows live; seed before `openPanel()` for the first render. Spy on messages with `chrome.runtime.onMessage.addListener` in `serviceWorker.evaluate`.
-- Worker: `pollState.ts` shares failure handling; `mergeState.ts` owns consulted-card refresh and priority hints (public exports stay in `poller.ts`). `poll({ reason })` (src/background/poller.ts) is the only way to poll; give it the `PollReason` (src/lib/model.ts) of the trigger and let `pollVerdict` (src/lib/time/cadence.ts) decide: never gate a trigger on age, backoff or a rejected token in the caller. It is single-flight (`inbox` and `change` queue one trailing run), never rejects, and resolves to `{ snapshot, events }` or null. Alarms live in `pollState.ts` (`POLL_ALARM`, `INBOX_ALARM`, `scheduleAlarms`, `clearAlarms`): whatever stops polling clears both. Notifications and the badge hook in at the end of `runPoll` (once per poll), not in callers. `clearSignedOut()` clears alarm, pollState, badge and notifications. Backoff/rate-limit math is pure in src/lib/time/backoff.ts.
-- Session writes: wrap every worker write that depends on the account in `withSignedIn(auth, task)` (src/lib/storage/session.ts: the `prowl:session` Web Lock plus a token check, shared with the panel's sign-in/out). Web Locks are not reentrant, so never nest it, and keep GitHub reads outside it.
-- Worker messages are answered once handled (`await chrome.runtime.sendMessage({ type: 'poll', reason: 'user' })` resolves when the poll is done; a page may send only `panel`, `user` (explicit, skips the backoff) or `change`). E2E: `signIn(overrides?)` stores `E2E_AUTH` (token `ghp_e2e`), `poll()` forces a poll and waits; register `github.onGraphQL('ProwlSearch', ...)` before `poll()`.
-- Snapshot has optional `sectionErrors` (section id -> message), `teamRequests` (PR id -> team keys) and `settledChecks` (built by `carrySettledChecks`); readers treat absent as empty.
-- Auth: `validatePat(token)` -> `{ auth, warning }` and `signInErrorMessage(error)` (src/lib/github/auth/pat.ts); the panel stores the result with `completeSignIn(auth)` and forgets it with `signOut()` (src/sidepanel/state/session.ts). `client.restResponse(method, path)` is `rest` plus the response headers. E2E for sign-in: `github.onGraphQL('ProwlViewer', () => ({ viewer }))` and `github.on('GET', '/user', () => ({ headers: { 'x-oauth-scopes': 'repo' }, body }))`.
-- axe: a `<header>`/`<footer>` inside a `<dialog>` counts as a nested banner/contentinfo landmark; use `<div>` inside dialogs and other sectioning content you cannot label. Headings in views must not contain "Prowl" (smoke.spec matches the h1 by substring).
-- Notifications: `notifyEvents(events, settings.notifications, prLocal)` (src/background/notifier.ts) runs at the end of `runPoll`; pure rules are `filterEvents` (src/lib/notify) and `isQuietNow` (src/lib/time/quietHours.ts). Reported event ids live in `chrome.storage.session` key `notified` (event id -> PR url): the dedupe and the click lookup; `forgetNotified()` runs on sign-out. Events quiet hours hold wait in `chrome.storage.local` key `quietHeld` (`freshHeld` / `holdEvents`, src/lib/notify/quietDigest.ts: newest 50, dropped after 24 h); test a browser restart with `chrome.storage.session.clear()` plus `vi.resetModules()` (notifier.quiet.test.ts). Unit-test events with `prEvent()` from tests/fixtures/events.ts; E2E asserts on `chrome.notifications.getAll()` ids (event id, or `summary:<time>` for more than 3 events).
-- Badge: the toolbar badge is derived from storage. `computeBadge(snapshot, prLocal, mode, now)` (src/lib/badge) is pure; `updateBadge()` / `clearBadge()` / `watchBadge()` (src/background/badge.ts) paint it. `runPoll` calls `updateBadge()` at its end, `register.ts` calls it on startup and `watchBadge()` repaints on snapshot/prLocal/settings changes, so the panel only has to write storage (no message). `isGitHubUrl` lives in src/lib/url.ts. The chrome fake exposes the badge as `__state.badge` ({ text, color, title }); in E2E read it with `chrome.action.getBadgeText/getBadgeBackgroundColor/getTitle({})` in the worker and use `expect.poll` after a storage write (repaint is async).
-- Whose turn: `whoseTurn(pr, login, teams)` / `turnIn(snapshot, pr)` / `yourTurnIds(snapshot)` (src/lib/turn) are the one rule for the "Your turn" section, the card chips (`pullRequestStatuses(pr, turn, now)`: when it is the viewer's move, `withTurn` turns the chip of that fact into the action, one chip per fact), the `turn` badge and the `review_requested` / `your_turn` events. A PR new to the previous snapshot notifies only when it *arrived* (`diffSnapshots`: updated since, in a section with the same `sectionScopes` fingerprint), so a section turned on or a filter changed never bursts; tests build `sectionScopes` into both snapshots (diffSnapshots.arrivals.test.ts). The `your_turn` section is never searched; read a section's PRs with `pullRequestsOf(snap, section)` (views/ListState.ts), never `snap.sections[id]`. Test fixtures: `prNode` PRs are authored by the viewer (`octocat`); give `author` to make someone else's. Domain types are split in two files: `model.ts` re-exports `modelSettings.ts` (settings, local state, turn), so keep importing from `model`.
-- On-device AI: `src/lib/ai/builtInAi.ts` wraps Chrome's `Summarizer` / `LanguageModel` / `Translator` globals (declared there; tests set fakes on `globalThis` and delete them after). Panel state is `state/localAi.ts` (`aiState` with per-model `models`, `checkAi`, `downloadAi`, `runAi(pr, task, detail)`, which starts the model session before its first await so a download keeps the click's activation; account changes abort and clear it); the PR's words come from `fetchPullRequestText` (builders `textNode`, `failingRunText` in tests/fixtures/text.ts). Model output is untrusted: render it as text only. Inputs go through `fitInput(session, { lead, items })` (src/lib/ai/fitInput.ts), which trims to the model's own `measureInputUsage` / `inputQuota` (12 000 characters where Chrome cannot measure) by dropping the oldest items first; a `QuotaExceededError` shows as the localized `aiTooLong`. Both APIs are told the text is untrusted data (the Prompt API's system prompt and `---` marker, the Summarizer's `sharedContext`). Answers are keyed by `answerKey`: `updatedAt` for a summary, head + the failing checks' pages from the card detail (a re-run is a new run; the failed count without the detail) for an explanation.
-- Review conversations: `fetchReviewThreads` / `resolveThread` / `replyToThread` (src/lib/github/threads.ts, operations `ProwlReviewThreads` / `ProwlResolveThread` / `ProwlReplyThread`); the card loads them on demand through `state/reviewThreads.ts` (`loadThreads(pr)`, keyed by the PR's `updatedAt` and read again when it moves; up to 5 pages of 100, `complete: false` beyond) and writes through `runPrAction` with a per-thread `role="alert"` for failures. Panel state read for one account resets through `onAccountChange(reset)` (state/store.ts); a loader publishes only while `auth.value` is the session it started in and its entry is still the request it put. Builders: `threadNode`, `threadsResponse` (tests/fixtures/threads.ts).
-- Shortcuts: a key is one case in `shortcutFor` (state/shortcuts.ts, `inList` for card keys) plus one row in `SHORTCUTS` (the `?` dialog) and its action in `useShortcuts` (components/Shortcuts.tsx). Card keys find the PR through the focused card's `[data-pr-id]`. `s` snoozes for an hour (its toast has Undo), `t` opens Your turn; character keys are listed in `CHARACTER_KEYS` and go silent with `settings.singleKeyShortcuts` off (`shortcutFor(event, singleKeys)`); Approve and Merge have no key on purpose (one stray key must not change GitHub).
-- Stacks: `listItems` / `stackState` / `stackSummary` (src/lib/stacks.ts) group a section's PRs; `StackItem` (components, lazy in `ListSections`: tests wait for it with `findBy…`) takes `members` (all, `stackMembers`) and `shown` (the section's) and renders the shown ones as `ListCard`s inside `ol.pr-list.stack-item__list`, so `j` / `k` and the seen observer reach them once opened (`openStacks` in state/stacks.ts, folded by default). Merging goes through `mergeStackUpTo` (REST `merge-async`), never `mergePullRequest`, from `StackMergeButton` / `StackMergeDialog` (the stack item and a stacked card's "Merge up to here"); the dialog needs the top's detail (unit tests seed `details`). Fixture: give `prNode` a `stackEntry`.
-- List: `state/listContext.ts` owns account-local context signals; `ListState.ts` owns derived data and visibility hooks; `ListSections.tsx` renders grouped cards and the snoozed fold (`KINDS` per section kind in `sectionKinds.ts`; the checks and reviewers lists of a card are in `components/PullRequestDetailLists.tsx`). `ListView` reads `settings`, `snapshot`, `prLocal`, `pollState`; pure filter/sort in `views/ListModel.ts`, chips and the card's accessible name in `components/prStatus.ts` (reuses `isReadyToMerge`), relative times via `useNow(ms)` passed down as `now`. Panel test builders: `buildPullRequest(overrides)` and `buildSnapshotOf({ sectionId: prs })` in `src/test/panel.ts`.
-- List E2E: dataset in `tests/e2e/helpers/listData.ts` (`nodesFor(variables.query)` answers `ProwlSearch` per section; PR urls must be on the mock origin or the card has no href). The `poll()` fixture leaves a panel page open that also marks cards seen: close pages whose url contains `/sidepanel/` after polling. Stub `chrome.runtime.sendMessage` in the page to keep unseen dots for a screenshot.
-- Card: `PullRequestCard` = summary (`.pr-card__summary`, which carries `data-pr-id` / `data-unseen` and is what the seen observer watches) + `PullRequestDetails` when expanded. Title is a `GitHubLink`, the chevron `IconButton` ("Details for Title", `aria-expanded`) is its sibling; add row actions as siblings of the link inside the summary. Click-on-summary and Escape are native listeners on the `li` (Biome's a11y rules reject JSX handlers on non-interactive elements; do not add ignores). Expanded ids and the detail cache are module signals in `state/prDetail.ts` (`expandedIds`, `details`, `detailOf(pr)`; `loadDetail(pr)` is in `state/loadDetail.ts` so the detail query ships with the details chunk; reset by tests: set `auth.value = buildAuth()` first, reset `expandedIds` / `details` after).
-- Detail data: `fetchPullRequestDetail(client, id)` (src/lib/github) -> `PullRequestDetail` (checks failed first, reviewers, required approvals); builders `detailNode`, `checkRunNode`, `statusContextNode`, `detailReview`, `requestedReviewer`, `detailResponse` in tests/fixtures/github.ts. Panel unit tests stub fetch with `stubDetailFetch(answer?)` (src/test/githubFetch.ts) and `buildDetail()` (src/test/panel.ts); E2E registers `mockDetail(github)` (tests/e2e/helpers/detailData.ts). `mergeReadiness(pr, detail?)` is the pure source of the "Blocked: ..." lines. Detail completions must match both the loading entry object and the captured auth object (`prActions` uses the same auth guard); a matching PR key alone can belong to a newer request after sign-in.
-- A11y gotchas: Biome's `useSemanticElements` rejects `role="group"` (use a labelled list: `aria-labelledby` on the `ul`); an outline inside an `overflow: hidden` ancestor is clipped (use a negative `outline-offset`); `poll()` closes over its first page, so after you close the pages it left open use `panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }))` for later polls. REST calls take per-request options (`{ headers, apiVersion, accept }`): pass `accept` for a non-2xx status that is an answer (304, 409), `apiVersion` only for an endpoint documented under a newer version. GraphQL is blocked from this sandbox (`gh api graphql` answers 403): validate queries with the schema + graphql-js scripts, not the live API.
-- Device flow: `requestDeviceCode` / `pollForToken(code, { signal })` / `validateDeviceToken(token)` (src/lib/github/auth/deviceFlow.ts) throw `DeviceFlowError` (`reason` expired | denied | unsupported | network | server; the message is meant to be shown as is); `<DeviceFlow />` (views/DeviceFlow.tsx) is the panel side and only renders when `env.clientId` is set. `completeSignIn(auth, warning)` shows the warning toast for PAT and device sign-ins. E2E: `github.on('POST', '/login/device/code' | '/login/oauth/access_token', ...)`; the requests are form-encoded and `github.requestsFor(path)[n].body` is the parsed object.
-- Re-running checks: failed suites are read before any POST (five pages maximum); restarts are sequential and report partial success. The summary combines check runs and commit statuses, so an empty restart list points to GitHub or the service that reported the remaining failures (commit statuses cannot be re-run through the API).
-- Actions: `src/lib/github/reviewActions.ts` (`approve` / `requestChanges` / `comment`, operations `ProwlApprove` / `ProwlRequestChanges` / `ProwlComment`) are what the panel writes; run them with `runPrAction(pr, name, done, run)` (src/sidepanel/state/prActions.ts: one action per PR via the `pendingActions` signal, success toast + `{ type: 'poll', reason: 'change' }`, failure toast `<name> failed: <GitHub's message>`, or `onError(message)` for a form that shows it inline and focuses its field; an outcome after an account change is dropped). Written drafts survive folding cards: `reviewDrafts` / `setReviewDraft(prId, kind, text)` in `state/reviewDrafts.ts`. Buttons go in the `.pr-actions` row of the Actions group in `PullRequestDetails` (merge, re-run and the draft toggle sit there too). E2E: `github.onGraphQL('ProwlApprove', ...)` and assert on `github.requestsFor('ProwlApprove')[0].body.variables`.
-- Settings: the panel changes settings only through `saveSettings(patch | updater, { refresh })` (src/sidepanel/state/settings.ts; `refresh: true` for anything that changes what is fetched). Views read `settings.value` and show what storage holds. Screen pieces: `views/Settings*.tsx` (groups), `components/{RepoFilter,NumberField,SignOutDialog}`. Settings E2E: tests/e2e/settings.spec.ts (`group(panel, 'Account')` scopes to a settings group; the alarm period is `chrome.alarms.get('poll')` in the worker).
-- Merge: `mergePullRequest(client, prId, { method, headSha, title? })` (operation `ProwlMerge`, `expectedHeadOid` is a required variable) in src/lib/github/mergeActions.ts (with `setAutoMerge`, `enqueuePullRequest`, `dequeuePullRequest`; re-run, draft and update branch are in `maintenanceActions.ts`); `MergeAction` (components/MergeAction.tsx) is the first control of the `.pr-actions` row (`placement="merge"`, and `"auto"` after the review actions); its dialog and per-method commit titles are in `MergeDialog.tsx`, what it may offer in `mergeOptions` (components/mergeReadiness.ts, shared with `MergeQueueAction`). It renders nothing until `detailOf(pr)` (state/prDetail.ts) has the detail for the PR as it is now: only the detail says whether a merge queue applies. Unit tests: `show(overrides, detail?, placement?)` in `MergeAction.test-support.tsx` loads a detail for you. `PullRequest` gained `defaultMergeMethod` (repository `viewerDefaultMergeMethod`) and `viewerCanMerge` (repository `viewerPermission` WRITE or more; `viewerCanUpdate` is not a merge permission). E2E: `github.onGraphQL('ProwlMerge', ...)`; to make a merged PR leave the list, drop it from the `ProwlSearch` answer and answer `ProwlNodes` with `closedNode(id)` (tests/e2e/merge.spec.ts).
-- Site: pages in site/src/pages use `Base.astro`; `/auth/`, `/privacy/`, `/changelog/`, `/contributing/` render `docs/auth.md`, `docs/privacy.md`, `CHANGELOG.md`, `CONTRIBUTING.md` (`import { Content } from '../../../docs/auth.md'` inside `<article class="section wrap prose">`), so edit the Markdown, not the page; link between Markdown files with absolute URLs, images with `./screenshots/x.png` (works on GitHub and in Astro). Screenshots on hand-written pages go through `components/Screenshot.astro`. `compressHTML` is off in astro.config.mjs because Astro's compression dropped the space between a line break and the next inline tag; keep it off. `pnpm --filter site lighthouse` (CHROME_PATH=/opt/pw-browsers/chromium locally) must stay at 100 or at least 95 everywhere; screenshots are 400 CSS px wide (800 px files), keep them at most 22 rem wide on phones.
-- Status banner: `describeStatus(pollState, snapshot.fetchedAt, interval, now)` (components/StatusBannerModel.ts, pure) decides the one banner; `<StatusBanner />` sits in `<main>` above every view but onboarding (App Shell). Sign in again = `navigate('onboarding')` (settings and snapshot stay). A component that shows an age calls `useNow(ms)` only to re-render and reads `Date.now()` itself (the value `useNow` returns is stale after a snapshot change). Error E2E: tests/e2e/errors.spec.ts (`failWith(response | null)` toggles one `ProwlSearch` handler; a refused connection is `await github.stop()` ... `await github.start()` in try/finally).
-- Flake patterns: (1) `expectNoA11yViolations` waits for finite transitions/animations (`document.getAnimations()`) before scanning, because axe reads mid-transition colors on a slow runner; call it after `emulateMedia`, never scan inside a theme switch. (2) A list edited from a stale copy loses the previous edit when two changes come faster than the storage round trip: pass `saveSettings` an updater `(current) => ...` for arrays and objects, never `{ key: [...propCopy, x] }`.
-- Deprecations: import Preact event and attribute types from `'preact'` (`TargetedKeyboardEvent`, `MouseEventHandler`, `AnchorHTMLAttributes`), not `JSX.*` (deprecated aliases; `JSX.Element` is fine). To audit every dependency at once, run a script that asks the TypeScript language service for `getSuggestionDiagnostics` and keeps codes 6385/6386/6387 ("X is deprecated") for the files of `tsconfig.json`; it reported 0 in October 2026.
-- Site access: what the manifest may ask Chrome for lives in `tests/fixtures/manifestLock.ts` (exact permission lists + an allowlist of top-level keys, `assertManifestLocked(manifest, 'production' | 'e2e')`). To allow a new manifest key (the `commands` key, say) add its name to `ALLOWED_KEYS` and update docs/privacy.md and docs/decisions.md; a new permission also needs the lists there, the permission table in docs/privacy.md, README, `docs/chrome-web-store.md` and the landing page (`tests/unit/siteAccess.test.ts` fails until each names it in code font) and a row in `NAMED_PERMISSIONS` (SettingsModel.ts). `pnpm e2e` builds `dist/` and `dist-e2e/`; `permissions.spec.ts` is the only spec on `dist/` (`launchExtension(PRODUCTION_PATH)` from fixtures). Source code may only call `chrome.tabs.create`. Settings has a live "Privacy and permissions" group (`chrome.permissions.getAll()` + onAdded/onRemoved; the chrome fake emits those events from `request`/`remove`).
-- Section bar: sections are a bar fixed at the bottom (`components/SectionTabs.tsx`, still APG tabs; up to 5 tabs, past 5 the first 4 + a "More" `Menu`). A new section kind is one entry in `KINDS` (views/sectionKinds.ts: icon from components/icons, short bar name, empty hint); `Record<SectionKind, ...>` makes TypeScript ask for it. Bar names are short ("Mine 7", "Review 3"; E2E: `getByRole('tab', { name: /^Review/ })`), the full name is the tooltip, the "More" item text and the tabpanel's name. Anything fixed or floating near the bottom must keep clear of it: CSS uses `var(--app-inset-bottom, 0px)` (set by `:root:has(.section-tabs)`), JS measures `[data-bottom-bar]` (Menu placement, seen observer).
-- Visibility: `splitSection` sets aside only active snoozes, in one collapsed "Snoozed (N)" fold. Badge counts exclude snoozed PRs; mute only silences notifications. Legacy hiding keys remain stored at 0 / false / false through normalization on read, save and sync ingress; `normalizePrLocal` drops `alwaysShown`. Merge enrichment deprioritizes only snoozed PRs, with the 20-PR cap unchanged.
-- Teams: `teams.ts` discovers REST `/user/teams` and inline parents, up to 100 pages of 100; `TeamsState.incomplete` prevents exclusions at that bound. The section always searches `team-review-requested-user:@me`, even without discovery. `TEAM_SEARCH_QUERY` adds Team fields only to that search; shared `SEARCH_QUERY` stays permission safe. `teamEvidence` intersects normalized requested teams with discovered membership and drops a PR only when all those teams are in `unfollowedTeams` and requests/membership are complete. Permission holes keep results without chips. Filtering precedes `maxPerSection` inside `SearchContext.search`, so notifications and badge see the same membership as the panel. `put` keeps PR-id dedupe across sections; unfollowing never removes another section's membership. Builders: `requestedTeam`, `teamJson`, `userTeamsPage` re-exported from tests/fixtures/github.ts. E2E: tests/e2e/teams.spec.ts.
-- Grouped list: `settings.groupByRepo` (independent of `sort`) -> `groupByRepo(shown)` (views/ListModel.ts, groups in order of first PR) -> one `RepoGroup` (components/RepoGroup.tsx: `li` > `h2` > `button[aria-expanded]` "owner/name 3 pull requests", then its own `ul.pr-list`) per repository; only `shown` is grouped, "Snoozed (N)" stays flat. A folded group renders no cards (`foldedGroups` signal in state/listContext.ts, key = section + repo), which is how `j` / `k` (`moveFocus` queries `.pr-list .pr-card__toggle`) and the seen observer (queries `[data-pr-id]`) skip it; anything new that walks the cards by DOM gets that for free, anything that works from the data must use `groupByRepo` plus `isFolded`. A grouped card drops its repository name (`PullRequestCard grouped`).
+- `pnpm verify` is the gate, `pnpm verify:fast` the inner loop; run `pnpm lint:fix` first.
+  Node 24, pnpm 12; pnpm settings such as `allowBuilds` (needed by any dependency with an install
+  script) live in `pnpm-workspace.yaml`.
+- Biome: single quotes, 2 spaces, width 100; 300 code lines per file and 50 per function
+  (comments are free). Test and spec files are exempt from the function limit only; split a long
+  suite into `name.<behavior>.test.ts` with builders in `name.test-support.ts`.
+- Vite 8 uses `build.rolldownOptions`; entries are `src/sidepanel/index.html` and
+  `src/background/index.ts`. The E2E build (`dist-e2e/`) points the API and web URLs at
+  `http://127.0.0.1:4010` (`PROWL_E2E_PORT` for both build and mock) with client id
+  `e2e-client-id`.
+- `tests/unit/docPaths.test.ts` fails when a doc cites a `src/`, `tests/`... path that does not
+  exist: fix the doc in the same change that moves the file.
+- Deprecations: import Preact event and attribute types from `'preact'`
+  (`TargetedKeyboardEvent`, `MouseEventHandler`), not the deprecated `JSX.*` aliases.
 
-- `fetchPullRequests`: every PR a search finds goes through `put` (merge facts carry over while `sameSearchFacts` holds, with their `mergeStateAt` date, so a publication before the merge reads does not flap them); `preserve` restores a section's cached members only after a cut scan or a refused search, never over a PR this poll loaded. `sectionsPending` is stored with the snapshot: read it only while `pollState.inFlight`.
+## Tests
 
-- List context: use `selectSection` / `toggleFolded` in `state/listContext.ts` to persist account-local organization under the session lock; it is read from `panelState` once per account after hydration, never again (storage events are the panel's own writes coming back, and replaying them flashes older choices). Search and temporary reveals stay in memory. Seen changes compare `activityKey(pr)` as well as timestamps; UI messages require observed `{ updatedAt, facts }` versions and workers reject obsolete versions. Seen visibility requires 60% of the summary, or 60% of the unobstructed viewport for a taller summary; observer thresholds include the viewport-relative ratio. Use `jsonEqual` for storage comparisons, since Chrome reorders object keys.
+- Unit tests get a fresh `chrome` fake (`src/test/chrome.ts`) before each test:
+  `fakeChrome().__state` exposes alarms, notifications, badge, tabs and granted origins, and
+  `.emit()` fires its events. Like Chrome, it fires `storage.onChanged` only for real changes.
+- Panel unit tests: build stored values with `src/test/panel.ts` (`buildAuth`, `buildSnapshot`,
+  `buildSnapshotOf({ sectionId: prs })`, `buildPullRequest`, `buildDetail`), seed storage,
+  `await hydrateStore()` inside `act`, and reset module signals (`auth.value`, `location.hash`,
+  `expandedIds`, `details`) in `afterEach`. Stub detail reads with `stubDetailFetch`
+  (`src/test/githubFetch.ts`).
+- Preact tests: wrap `dispatchEvent` and fake-timer advances in `act()`. happy-dom has
+  `dialog.showModal()` but no Esc: dispatch `new Event('cancel', { cancelable: true })`.
+- GitHub-shaped builders live in `tests/fixtures/` (`github.ts`: `prNode`, `searchResponse`,
+  `closedNode`, `nodesResponse`, `detailNode`, `detailResponse`...; `http.ts`; `events.ts`
+  `prEvent`; `threads.ts`; `text.ts`; `teams.ts`). `prNode` PRs are authored by the viewer
+  (`octocat`): pass `author` for someone else's, `stackEntry` for a stack member.
+- E2E fixtures (`tests/e2e/fixtures.ts`): `serviceWorker`, `openPanel(hash)`, `signIn()`,
+  `seedStorage()`, `poll()`, `expectNoA11yViolations(page)`, `saveScreenshot(page, name)` and
+  `github` (the mock: `onGraphQL(operation, fn)`, `on(method, path, fn)`, `requestsFor(...)`).
+  List data is `tests/e2e/helpers/listData.ts`, expanded-card data `helpers/detailData.ts`.
+- `poll()` leaves a panel page open that marks cards seen: close `/sidepanel/` pages after it, and
+  for later polls send `chrome.runtime.sendMessage({ type: 'poll', reason: 'user' })` from a page.
+- Flakes: `expectNoA11yViolations` waits for running animations, so call it after
+  `emulateMedia`, never mid theme switch.
 
-- Sign-in disclosures: `OnboardingView` owns token/help state; `DeviceFlow.onTokenFallback`
-  opens the token form for missing permission, unsupported OAuth or GitHub denial. Keep help
-  separately requested. Notification details unmount when off without modifying saved choices.
-- Settings has six groups, in order: Sections, Refresh, Notifications, List, Account, Privacy
-  and permissions. About content is in Account. Use `changePrLimit()` for Change limit; its
-  signal survives the lazy mount and the shell must preserve the field's focus.
-- Team UI: `TeamPicker` in `views/SettingsTeams.tsx` mounts only beneath the enabled Team reviews switch in Settings → Sections. All teams are on unless in `unfollowedTeams`; switches save immediately. Loading (`role=status`), permission/no-team/error notices and Refresh live there only. The list section shows cards or “No review requests for your teams.”, with no picker or count/freshness line.
-- Expanded cards: `Merge status` names the status list, followed by the `Actions for #N` fieldset, Checks and Reviewers. No routine merge-verification age or branch-method narration. Keep the short incomplete-data GitHub link and all merge gating. Unknown merge status announces checking once and offers GitHub after the targeted refresh settles. Single-method confirmation hides its select and names the method; no methods offers Merge on GitHub.
-- First run: signed-in users land on the list with unchanged defaults and no note or install marker. `#onboarding` in preview still starts signed out; the onboarding route is sign-in only. No-op settings saves must not queue a poll.
+## GitHub layer (`src/lib/github/`)
+
+- All HTTP goes through `createGitHubClient` (`client.ts`), which throws only `GitHubError`.
+  `graphql` is strict; pass `{ partial: true }` for reads that tolerate holes. REST calls take
+  `{ headers, apiVersion, accept }`: `accept` for a non-2xx answer (304, 409), `apiVersion` only
+  for an endpoint documented under a newer version.
+- Every operation is an exported, named string (`query ProwlX`); `tests/unit/githubSchema.test.ts`
+  validates them against `tests/fixtures/github-schema.graphql` (refresh with
+  `pnpm schema:update`). A field GitHub may drop goes through a strippable constant
+  (`withoutStacks`, retried in `fetchSearch.ts`).
+- Searches: `buildSearchQuery`, `filterByRepo` and `validateCustomQuery` (`search.ts`).
+  `fetchPullRequests` is the only reader of raw PR JSON (via `mapPullRequest`); every PR it finds
+  goes through `put`, and `preserve` restores cached members only after a cut scan or a refused
+  search. Merge facts carry over with their date while `sameSearchFacts` holds and without it
+  while `carriedMergeFacts` (`fetchMergeState.ts`) says the change cannot move GitHub's verdict.
+- Writes: `reviewActions.ts`, `mergeActions.ts`, `maintenanceActions.ts`, `threads.ts`,
+  `stackMerge.ts` (the table is in architecture.md, Actions). A stack merges through
+  `mergeStackUpTo` (REST `merge-async`), never `mergePullRequest`.
+
+## Service worker (`src/background/`)
+
+- `poll({ reason })` (`poller.ts`) is the only way to poll: pass the trigger's `PollReason` and let
+  `pollVerdict` (`src/lib/time/cadence.ts`) decide; never gate a trigger on age or backoff in the
+  caller. Notifications and the badge run once at the end of `runPoll`.
+- Alarms are in `pollState.ts` (`scheduleAlarms`, `clearAlarms`): whatever stops polling clears
+  both. `clearSignedOut()` clears alarms, pollState, badge and notifications.
+- Pages may send only `panel`, `user` and `change` polls (`messages.ts`); a message resolves when
+  handled.
+- Wrap every account-dependent worker write in `withSignedIn(auth, task)`
+  (`src/lib/storage/session.ts`); Web Locks are not reentrant, so never nest it, and keep GitHub
+  reads outside it.
+- Notifications: `notifyEvents` (`notifier.ts`) over the pure `filterEvents` (`src/lib/notify`)
+  and `isQuietNow`; reported ids live in `chrome.storage.session` key `notified`, held events in
+  `quietHeld` (`quietDigest.ts`). Test a browser restart with `chrome.storage.session.clear()`
+  plus `vi.resetModules()`.
+- Badge: `computeBadge` (`src/lib/badge`) is pure; `watchBadge()` (`badge.ts`) repaints on
+  storage changes, so the panel only writes storage. In E2E, `expect.poll` the badge after a write.
+
+## Storage (`src/lib/storage/`)
+
+- Never call `chrome.storage.local` directly: use `getItem` / `setItem` / `subscribe`,
+  `loadSettings` / `updateSettings`, `updatePrLocal(fn)`. Reads are normalized; read-modify-write
+  goes through `updateItem` (a Web Lock shared by panel and worker).
+- The legacy hiding keys (`hideStaleAfterDays`, `hideDrafts`, `hideBots`) are not settings:
+  normalization drops them, and only `pushSettings` (`src/background/sync.ts`) still writes them,
+  off, into the sync copy for older Prowl versions on other devices.
+- Compare stored values with `jsonEqual` (Chrome reorders object keys). Optional snapshot fields
+  (`sectionErrors`, `teamRequests`, `settledChecks`...) read as empty when absent.
+- Domain types: `model.ts` re-exports `modelSettings.ts`; always import from `model`.
+
+## Side panel state (`src/sidepanel/state/`)
+
+- Signals in `store.ts` (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`); `route` /
+  `navigate()` in `router.ts`; `sendToBackground()` in `background.ts`; URLs open only through
+  `openGitHubUrl()` (`src/sidepanel/openUrl.ts`).
+- A component re-renders only when the signals it reads or its props change: call `useNow(ms)`
+  in the component that shows a relative time, and read `Date.now()` there.
+- Settings change only through `saveSettings(patch | updater, { refresh })` (`settings.ts`);
+  pass an updater for arrays and objects so quick edits do not lose each other. Use
+  `changePrLimit()` to focus the limit field across the lazy mount.
+- Account-local list context (selected section, folded groups) goes through `selectSection` /
+  `toggleFolded` (`listContext.ts`), read once per account after hydration.
+- Sign-in: `validatePat` (`src/lib/github/auth/pat.ts`) or the device flow
+  (`auth/deviceFlow.ts`, `views/DeviceFlow.tsx`, only with `env.clientId`), then
+  `completeSignIn` / `signOut` (`session.ts`).
+
+## UI and CSS
+
+- Reuse `src/sidepanel/components/ui/<Name>` (import each module, no barrel) and icons from
+  `components/icons`; `docs/design.md` is the reference.
+- CSS uses semantic tokens only; `src/styles/tokens.test.ts` fails on raw colors outside the
+  token files and on a stale contrast table in `docs/design.md` (it prints the new one).
+  Z-index layers are tokens in `src/styles/tokens.css`; `Menu` uses the Popover API top layer.
+- Anything fixed near the bottom keeps clear of the section bar: CSS uses
+  `var(--app-inset-bottom, 0px)`, JS measures `[data-bottom-bar]`.
+- Mount `<ToastRegion />` once and call `showToast`. `Dialog` is controlled and restores focus;
+  an action's failure goes in its `error` prop (in-dialog `role="alert"`, `setError` as
+  `runPrAction`'s `onError`), never a toast under the modal.
+- axe: a `<header>` / `<footer>` inside a `<dialog>` is a nested landmark; use `<div>`. Biome
+  rejects `role="group"`: use a labelled list. An outline inside `overflow: hidden` is clipped:
+  use a negative `outline-offset`. View headings must not contain "Prowl" (smoke.spec).
+- Click-on-summary and Escape on a card are native listeners on the `li`: Biome rejects JSX
+  handlers on non-interactive elements, and ignores are not allowed.
+
+## List and cards
+
+- A section's PRs come from `pullRequestsOf(snap, section)` (`views/ListState.ts`), never
+  `snap.sections[id]` (Your turn is never searched). Pure filter, sort and `groupByRepo` are in
+  `views/ListModel.ts`; snoozed PRs fold through `splitSection`.
+- A new section kind is one entry in `KINDS` (`views/sectionKinds.ts`). Bar names are short;
+  E2E finds a tab with `getByRole('tab', { name: /^Review/ })`.
+- Card chips and accessible names: `pullRequestStatuses` and `describePullRequest`
+  (`components/prStatus.ts`); whose turn comes from `whoseTurn` / `turnIn` / `yourTurnIds`
+  (`src/lib/turn`), the one rule for section, chips, badge and events. Merge eligibility
+  (`isReadyToMerge`, `mergesItself`, `awaitsMerge`) lives in `src/lib/mergeEligibility.ts`, which
+  both `diff` and `turn` import (they must not import each other).
+- Card code that walks the DOM (`j` / `k`, the seen observer) skips folded groups and folded
+  stacks for free; code that works from data must check `isFolded`.
+- Expanded cards: module signals in `state/prDetail.ts` (`expandedIds`, `details`, `detailOf`);
+  `loadDetail` sits in `state/loadDetail.ts` so the query ships with the details chunk. A detail
+  answer must match both its loading entry and the auth it started with.
+- Stacks: `listItems` / `stackMembers` (open members only) / `stackState` / `stackSummary` (ready
+  run from `stack.bottom`) in `src/lib/stacks.ts`; `StackItem` loads lazily, so tests wait for it
+  with `findBy…`. `StackMergeButton` / `StackMergeDialog` serve the stack and a stacked card's
+  "Merge up to here"; the dialog needs the top's detail (unit tests seed `details`).
+- Review threads load on demand through `state/reviewThreads.ts` (keyed by `updatedAt`, paged,
+  `complete: false` past 5 pages); written review drafts survive folding in `state/reviewDrafts.ts`.
+- State one account read resets through `onAccountChange(reset)` (`state/store.ts`); loaders
+  publish only while `auth.value` is their session and their entry is still the request they put.
+
+## Actions
+
+- Run every GitHub write from the panel with `runPrAction(pr, name, done, run, onError?)`
+  (`state/prActions.ts`): one action per PR, toast, then a `change` poll. E2E asserts on
+  `github.requestsFor('ProwlApprove')[0].body.variables`.
+- `MergeAction` renders nothing until `detailOf(pr)` has the detail (only it says whether a merge
+  queue applies); what it may offer is `mergeOptions` and the method `pickMethod`
+  (`components/mergeReadiness.ts`, shared with `MergeQueueAction` and the stack merge). A stacked
+  PR gets only `StackRoute`. Unit tests use `show()` from `MergeAction.test-support.tsx`.
+- To make a merged PR leave the list in E2E, drop it from the `ProwlSearch` answer and answer
+  `ProwlNodes` with `closedNode(id)`.
+- Shortcuts: one case in `shortcutFor` (`state/shortcuts.ts`), one row in `SHORTCUTS` and its
+  action in `useShortcuts` (`components/Shortcuts.tsx`); character keys go in `CHARACTER_KEYS`.
+  Approve and Merge have no key on purpose.
+
+## On-device AI
+
+- `src/lib/ai/builtInAi.ts` wraps Chrome's `Summarizer` / `LanguageModel` / `Translator` (tests set
+  fakes on `globalThis`); panel state is `state/localAi.ts`. Output is untrusted text, and inputs
+  go through `fitInput` (`src/lib/ai/fitInput.ts`), which fits them to the model's measured quota.
+- `modelFor(task, models)` is the only model choice (display, download, run); `startTask` must be
+  called before the first await of a click so a download keeps the user activation.
+
+## Localization
+
+- `t(key)` from `src/lib/i18n.ts`; add every message to all seven catalogs in
+  `public/_locales/`, and remove unused ones (`i18n.test.ts` fails on them). Use whole sentences
+  with `$P1$` placeholders, `countMessage` for plurals, `formatNumber` and `uiLocale()`.
+  `Message` renders markup slots as children, never HTML.
+- Show stored sections through `sectionLabel`; never translate ids, queries or repository names.
+  Keep worker translations inside functions so a language change applies without a restart.
+
+## Manifest and permissions
+
+- What the manifest may ask for is locked in `tests/fixtures/manifestLock.ts` (`ALLOWED_KEYS`,
+  permission lists). A new permission also needs `docs/privacy.md`, README,
+  `docs/chrome-web-store.md`, the landing page (`tests/unit/siteAccess.test.ts`) and a row in
+  `NAMED_PERMISSIONS` (`views/SettingsModel.ts`).
+- `permissions.spec.ts` is the only spec on the production `dist/`. Source code may only call
+  `chrome.tabs.create`.
+
+## Screenshots and site
+
+- Only `pnpm screenshots` writes `docs/screenshots/` (2x, through `saveScreenshot`);
+  `PROWL_SCREENSHOT_NAMES=a,b` limits it. `tests/unit/images.test.ts` fails on a 1x file. Show them
+  at 400 x 760 CSS px; `pnpm store-images` derives the store images.
+- Site pages (`site/src/pages`) render `docs/auth.md`, `docs/privacy.md`, `CHANGELOG.md` and
+  `CONTRIBUTING.md`: edit the Markdown. Link Markdown files with absolute URLs, images with
+  `./screenshots/<name>.png`; hand-written pages use `site/src/components/Screenshot.astro`.
+- Keep `compressHTML` off in `site/astro.config.mjs` (it dropped spaces before inline tags).
+  `pnpm --filter site lighthouse` must stay at 95 or more everywhere.

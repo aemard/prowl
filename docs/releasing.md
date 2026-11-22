@@ -145,6 +145,14 @@ A Dependabot pull request that stays open is one of these:
   says so ("disabled auto-merge"). Merge it by hand, or comment `@dependabot rebase` to run it
   again.
 
+A merge that auto-merge makes is GitHub's on behalf of the workflow's `GITHUB_TOKEN`, and events
+of that token start no workflow: the push to `main` runs neither CI, CodeQL nor Release Please.
+That is accepted: these updates change nothing that ships, `Verify` ran on the pull request, and
+the next push to `main` runs all three over everything merged since (Release Please reads every
+commit since the last release). To refresh them sooner, run **CI** or **Release Please** by hand
+(Actions, the workflow, "Run workflow"). Making the merge trigger them would need a personal
+token or a GitHub App secret in this workflow, which is what it is built to avoid.
+
 ## Toolchain
 
 - **Node** follows the newest Active LTS release: `.nvmrc` (used by CI, Pages, releases and the
