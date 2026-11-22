@@ -35,7 +35,7 @@ describe('updateBadge', () => {
     expect(shown()).toEqual({
       text: '2',
       color: BADGE_COLORS.danger,
-      title: 'Prowl: 2 pull requests waiting on you (1 Fix CI, 1 Merge it)',
+      title: 'Prowl: 2 pull requests waiting on you (1 with failing CI, 1 ready to merge)',
     });
 
     await setItem('snapshot', snapshot(ready));

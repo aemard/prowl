@@ -7,7 +7,7 @@ import { isReadyToMerge } from '../diff/diffSnapshots';
 import type { MessageKey } from '../i18n';
 import type { PullRequest, Snapshot, Turn, TurnReason } from '../model';
 
-/** The short words for each reason it is the viewer's move: card chip and badge tooltip. */
+/** The short words for each reason it is the viewer's move, on cards (the badge counts its own way). */
 export const TURN_LABELS: Partial<Record<TurnReason, MessageKey>> = {
   review_requested: 'turnReviewRequested',
   re_review: 'turnReReview',

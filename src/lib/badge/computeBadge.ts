@@ -8,7 +8,7 @@ import { isReadyToMerge } from '../diff/diffSnapshots';
 import { countMessage, formatNumber, type MessageKey, t } from '../i18n';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot, TurnReason } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
-import { TURN_LABELS, turnIn } from '../turn/whoseTurn';
+import { turnIn } from '../turn/whoseTurn';
 
 export interface BadgeView {
   /** Badge text: empty for none, `99+` above 99. */
@@ -42,16 +42,33 @@ const reasonsOf = (pr: PullRequest) =>
 
 const RED_TURNS: ReadonlySet<TurnReason> = new Set(['ci_failed', 'changes_requested']);
 
+/**
+ * How the tooltip counts each reason it is the viewer's move, in this order: noun phrases with
+ * their plural ("2 reviews requested, 1 with failing CI"), not the cards' imperative chip labels.
+ */
+const TURN_COUNTS: [TurnReason, MessageKey, MessageKey][] = [
+  ['review_requested', 'badgeReviewRequestedOne', 'badgeReviewRequestedOther'],
+  ['re_review', 'badgeReReviewOne', 'badgeReReviewOther'],
+  ['ci_failed', 'badgeCiFailedOne', 'badgeCiFailedOther'],
+  ['changes_requested', 'badgeChangesRequestedOne', 'badgeChangesRequestedOther'],
+  ['conflicts', 'badgeConflictsOne', 'badgeConflictsOther'],
+  ['feedback', 'badgeFeedbackOne', 'badgeFeedbackOther'],
+  ['ready_to_merge', 'badgeReadyToMergeOne', 'badgeReadyToMergeOther'],
+];
+
 /** `turn`: the PRs where it is the viewer's move, and why, from the same rule as the list. */
 function turnBadge(snapshot: Snapshot, prs: PullRequest[]): BadgeView {
   const reasons = prs
     .map((pr) => turnIn(snapshot, pr))
     .flatMap((turn) => (turn.owner === 'you' ? [turn.reason] : []));
   if (reasons.length === 0) return NO_BADGE;
-  const why = Object.entries(TURN_LABELS)
-    .map(([reason, label]) => ({ label: t(label), n: reasons.filter((r) => r === reason).length }))
+  const why = TURN_COUNTS.map(([reason, one, other]) => ({
+    one,
+    other,
+    n: reasons.filter((r) => r === reason).length,
+  }))
     .filter(({ n }) => n > 0)
-    .map(({ label, n }) => `${formatNumber(n)} ${label}`);
+    .map(({ one, other, n }) => countMessage(n, one, other));
   const pulls = countMessage(reasons.length, 'pullCountOne', 'pullCountOther');
   return {
     text: reasons.length > MAX_SHOWN ? `${MAX_SHOWN}+` : String(reasons.length),

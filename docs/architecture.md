@@ -495,7 +495,9 @@ now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/bad
 
 - `turn` (default) counts the PRs in a section where it is the viewer's move (`whoseTurn`, see
   [Whose turn](#whose-turn)); danger when one of them is the viewer's own with failing CI or
-  changes requested; tooltip `Prowl: 3 pull requests waiting on you (2 Your review, 1 Fix CI)`.
+  changes requested; tooltip `Prowl: 3 pull requests waiting on you (2 reviews requested, 1 with
+  failing CI)`: each reason has its own singular and plural noun phrase (`TURN_COUNTS`,
+  `countMessage`), never the cards' imperative chip labels.
 - `attention` counts the open PRs in a section with failing CI, requested changes,
   conflicts (`mergeable: conflicting`) or `isReadyToMerge`; `unseen` counts the PRs in a section
   with activity newer than `prLocal.seen` or facts that differ from `prLocal.seenFacts` (a PR
