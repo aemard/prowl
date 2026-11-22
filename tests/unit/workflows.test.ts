@@ -23,6 +23,23 @@ it('runs every workflow job on a free GitHub-hosted runner', () => {
   }
 });
 
+/**
+ * Dependabot may merge an Action update by itself only in workflows that hold no release
+ * permission and no secret (docs/decisions.md, "Dependabot auto-merge").
+ */
+it('auto-merges Action updates only in workflows without release permissions or secrets', () => {
+  const policy = readFileSync(resolve(dir, 'dependabot-auto-merge.yml'), 'utf8');
+  const allowed = /github_actions\)\s*\n\s*allowed='([^']+)'/.exec(policy)?.[1]?.split(' ') ?? [];
+  expect(allowed.length).toBeGreaterThan(0);
+  for (const path of allowed) {
+    const yaml = readFileSync(resolve(dir, '../..', path), 'utf8');
+    expect({
+      path,
+      risky: /id-token: write|contents: write|secrets\.|environment:/.test(yaml),
+    }).toEqual({ path, risky: false });
+  }
+});
+
 it('rejects runners that are billed or self-hosted', () => {
   for (const label of ['ubuntu-latest', 'ubuntu-24.04', 'ubuntu-24.04-arm']) {
     expect(label).toMatch(FREE_RUNNER);
