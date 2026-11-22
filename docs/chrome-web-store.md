@@ -197,5 +197,12 @@ The job log has the store's answer.
 - **400 on upload about the version**: the zip's version is not higher than the store's.
 - **Publish refused while a review is pending**: wait for the review, or cancel the pending
   submission in the dashboard, then run the workflow again for the tag.
+- **Edge: "The upload Failed" about the version**: Partner Center refuses a package whose version
+  is not higher than the one already published or submitted, so running `edge-add-ons.yml` again
+  for a tag Edge already has fails at the upload, on purpose. Publish a new release instead.
+- **Edge: "accepted without an operation id"**: Partner Center answered without the `Location`
+  header that names the operation to follow. Nothing was submitted; check the product's state in
+  Partner Center (a submission still in certification blocks a new one) and run the job again.
+- **Edge: 401**: the API key expired (72 days) or does not match `EDGE_CLIENT_ID`.
 - **`gh attestation verify` fails**: the zip on the release was not built by
   `release-assets.yml`. Do not publish it; rebuild the release assets.
