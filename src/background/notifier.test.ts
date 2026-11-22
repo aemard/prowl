@@ -66,6 +66,21 @@ describe('notifyEvents', () => {
     expect(shown().size).toBe(1);
   });
 
+  it('shows a turn or the event that tells it, never both, even when a poll repeats', async () => {
+    const comment = prEvent({ type: 'comment_new', actor: 'monalisa' });
+    const turn = prEvent({ type: 'your_turn', reason: 'feedback' });
+    await notify(comment, turn);
+    expect([...shown().keys()]).toEqual([comment.id]);
+    await notify(comment, turn);
+    expect(shown().size).toBe(1);
+    shown().clear();
+    // Comments off: the turn tells it.
+    const quiet = settings();
+    quiet.events = { ...quiet.events, comment_new: false };
+    await notifyEvents([comment, { ...turn, id: `${turn.id}:2` }], quiet, emptyPrLocal());
+    expect([...shown().keys()]).toEqual([`${turn.id}:2`]);
+  });
+
   it('reports the events of a summary once as well', async () => {
     await notify(...events(5));
     shown().clear();

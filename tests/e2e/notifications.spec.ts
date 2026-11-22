@@ -95,9 +95,28 @@ test('switched-off events and quiet hours produce no notification', async ({
   await signIn();
   await poll();
 
+  // CI off: the turn it makes (fix CI) still tells it; both off, nothing does.
   await seedStorage({
     settings: { notifications: { enabled: true, events: { ci_failed: false } } },
   });
+  state.checks = 'failure';
+  await poll();
+  expect(await shown(serviceWorker)).toEqual([
+    expect.stringMatching(new RegExp(`^${prId(1)}:your_turn:ci_failed:`)),
+  ]);
+  // Forget it, so only the toggle can keep the same turn from showing again.
+  await serviceWorker.evaluate(async () => {
+    for (const id of Object.keys(await chrome.notifications.getAll()))
+      await chrome.notifications.clear(id);
+    await chrome.storage.session.remove('notified');
+  });
+  await seedStorage({
+    settings: {
+      notifications: { enabled: true, events: { ci_failed: false, your_turn: false } },
+    },
+  });
+  state.checks = 'pending';
+  await poll();
   state.checks = 'failure';
   await poll();
   expect(await shown(serviceWorker)).toEqual([]);

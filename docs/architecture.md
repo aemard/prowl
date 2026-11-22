@@ -384,8 +384,8 @@ viewer made are left out; logins compare case-insensitively.
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | auto-merge is off, the PR is not in a merge queue (`isInMergeQueue`, read by the search) and `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
-| `review_requested` | `whoseTurn` becomes `you` for `review_requested` (a review asked of the viewer), on a known or an arrived PR, and no other event of this poll is about it | null | `updatedAt` | `updatedAt` (each request is its own) |
-| `your_turn` | `whoseTurn` becomes `you` for any other reason, same conditions; the event carries the `reason`, and the notification title says what to do ("Your turn: resolve conflicts", one catalog message per reason) | null | `next.fetchedAt` | reason + since |
+| `review_requested` | `whoseTurn` becomes `you` for `review_requested` (a review asked of the viewer), on a known or an arrived PR, whatever other events the poll has about it | null | `updatedAt` | `updatedAt` (each request is its own) |
+| `your_turn` | `whoseTurn` becomes `you` for any other reason, same conditions; the event carries the `reason`, and the notification title says what to do ("Your turn: resolve conflicts", one catalog message per reason). Emitted beside the event that caused it (`ci_failed` and the `ci_failed` turn); `filterEvents` shows one of them (see Notifications) | null | `next.fetchedAt` | reason + since |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
 worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
@@ -648,17 +648,22 @@ now)` (`src/lib/badge/computeBadge.ts`) and `updateBadge()` (`src/background/bad
 each progressive snapshot publication and targeted merge refresh (never rejects: a failure
 is logged and the published snapshot stands).
 
-1. Events whose `id` is already in `notified` are dropped.
-2. `filterEvents` (`src/lib/notify/filterEvents.ts`, pure) drops everything when notifications are
+1. `filterEvents` (`src/lib/notify/filterEvents.ts`, pure) drops everything when notifications are
    off or `isQuietNow` (`src/lib/time/quietHours.ts`: local time, `start` inclusive, `end`
    exclusive, a window may wrap past midnight, `start === end` is empty), then the events whose
-   type is switched off and those of a muted or snoozed PR. Dropped events are not retried
+   type is switched off and those of a muted or snoozed PR, then a `your_turn` event when a kept
+   event of its PR already tells it (`TOLD_BY`: `ci_failed`, `changes_requested`,
+   `ready_to_merge` tell the turn of the same reason, `comment_new` and `review_new` tell
+   `feedback`). So the specific event shows when its toggle is on, else the turn, never both;
+   `review_requested` and the other reasons always show. It runs on all the poll's events
+   before step 2, so a repeated poll drops the same turn events. Dropped events are not retried
    later and not marked as reported, except those silenced only by quiet hours: they wait in
    `chrome.storage.local` under `quietHeld` (`HeldEvent[]`, `src/lib/notify/quietDigest.ts`:
    newest 50, each with when it was held), so Chrome closed overnight keeps them, and the first
    poll after the window shows them as one `digest:<time>` notification ("During quiet hours:
    4 updates"), filtered again by the toggles, mutes and snoozes of that moment. Events held a
    day or more are dropped as stale; sign-out removes the list.
+2. Events whose `id` is already in `notified` (or in the digest just shown) are dropped.
 3. Up to 3 events become one `basic` notification each (`src/lib/notify/messages.ts`: title says what happened
    and who did it, message is the PR title, context is `owner/name#number`); more than 3 become
    one summary ("5 pull request updates", the first PRs listed). The notification id of a

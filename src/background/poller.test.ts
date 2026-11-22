@@ -116,7 +116,7 @@ describe('poll', () => {
       release();
     }
     const result = await loading;
-    expect(result?.events.map(({ type }) => type)).toEqual(['ci_failed']);
+    expect(result?.events.map(({ type }) => type)).toEqual(['ci_failed', 'your_turn']);
     expect(fakeChrome().__state.notifications.size).toBe(1);
     expect(await pollState()).toMatchObject({ inFlight: false });
     expect(await pollState()).not.toHaveProperty('mergePending');

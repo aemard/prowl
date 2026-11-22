@@ -80,7 +80,8 @@ appending a newer one.
   (`src/lib/storage/session.ts`); Web Locks are not reentrant, so never nest it, and keep GitHub
   reads outside it.
 - Notifications: `notifyEvents` (`notifier.ts`) over the pure `filterEvents` (`src/lib/notify`)
-  and `isQuietNow`; reported ids live in `chrome.storage.session` key `notified`, held events in
+  and `isQuietNow`. The diff always emits turn events; `filterEvents` drops a `your_turn` that
+  a kept event of its PR tells (`TOLD_BY`), so filter before the dedupe. Reported ids live in `chrome.storage.session` key `notified`, held events in
   `quietHeld` (`quietDigest.ts`). Test a browser restart with `chrome.storage.session.clear()`
   plus `vi.resetModules()`.
 - Badge: `computeBadge` (`src/lib/badge`) is pure; `watchBadge()` (`badge.ts`) repaints on

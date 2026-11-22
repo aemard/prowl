@@ -44,7 +44,7 @@ describe('poll', () => {
     expect(await types('success')).toEqual(['ci_passed']);
     expect(await types('pending')).toEqual([]);
     expect(await types('success')).toEqual([]);
-    expect(await types('failure')).toEqual(['ci_failed']);
+    expect(await types('failure')).toEqual(['ci_failed', 'your_turn']);
   });
 
   it('notifies each recovery once and stays silent after a worker module reload', async () => {
@@ -202,6 +202,6 @@ describe('poll', () => {
     await poll();
     checks = 'failure';
     later(2 * MINUTE);
-    expect((await poll())?.events).toHaveLength(1);
+    expect((await poll())?.events).toHaveLength(2);
   });
 });

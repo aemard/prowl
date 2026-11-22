@@ -124,17 +124,16 @@ export function diffSnapshots(
     const before = prev.pullRequests[pr.id];
     if (!before && !arrived(prev, next, pr, since)) continue;
     const { id: prId, repo, number, title, url } = pr;
-    let told = false;
     const add: Add = (type, key, actor, at, reason) => {
       if (actor?.toLowerCase() === viewer) return;
       const id = `${prId}:${type}:${key}`;
       const event = { id, type, prId, repo: repo.nameWithOwner, number, title, url, actor, at };
       events.set(id, reason ? { ...event, reason } : event);
-      told = true;
     };
     if (before) changes(prev, next, before, pr, add);
-    // A more precise event above already tells why it is the viewer's move.
-    if (!told) turnChange(prev, next, before, pr, add);
+    // Even when an event above tells the same: only the notifier knows which of them the
+    // settings let through (`filterEvents`).
+    turnChange(prev, next, before, pr, add);
   }
   return [...events.values()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 }

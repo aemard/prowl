@@ -48,9 +48,14 @@ export async function forgetNotified(): Promise<void> {
 }
 
 /** Keeps the events quiet hours silenced (and nothing else would have) for the digest. */
-async function hold(events: PrEvent[], settings: NotificationSettings, local: PrLocalState) {
+async function hold(
+  events: PrEvent[],
+  notified: Notified,
+  settings: NotificationSettings,
+  local: PrLocalState,
+) {
   const audible = { ...settings, quietHours: { ...settings.quietHours, enabled: false } };
-  const kept = filterEvents(events, audible, local);
+  const kept = filterEvents(events, audible, local).filter((e) => !Object.hasOwn(notified, e.id));
   if (kept.length === 0) return;
   const now = Date.now();
   await setItem('quietHeld', holdEvents(freshHeld(await getItem('quietHeld'), now), kept, now));
@@ -93,12 +98,12 @@ export async function notifyEvents(
 ): Promise<void> {
   try {
     const notified = await readNotified();
-    const fresh = events.filter((event) => !Object.hasOwn(notified, event.id));
     if (settings.enabled && isQuietNow(settings.quietHours))
-      return await hold(fresh, settings, local);
+      return await hold(events, notified, settings, local);
     const digest = await flushHeld(notified, settings, local);
-    const reported = new Set(digest.map(([id]) => id));
-    const shown = filterEvents(fresh, settings, local).filter((e) => !reported.has(e.id));
+    const reported = new Set([...Object.keys(notified), ...digest.map(([id]) => id)]);
+    // Filtered before dropping what was reported, so a repeated poll drops the same turn events.
+    const shown = filterEvents(events, settings, local).filter((e) => !reported.has(e.id));
     const kept = [
       ...Object.entries(notified),
       ...digest,

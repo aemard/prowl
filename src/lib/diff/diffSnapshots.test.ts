@@ -27,9 +27,9 @@ type Case = [name: string, before: Partial<PullRequest>, after: Partial<PullRequ
 
 const cases: Case[] = [
   // CI
-  ['ci_failed: success -> failure', ci('success'), ci('failure'), [['ci_failed']]],
-  ['ci_failed: pending -> failure', ci('pending'), ci('failure'), [['ci_failed']]],
-  ['ci_failed: none -> failure', ci('none'), ci('failure'), [['ci_failed']]],
+  ['ci_failed: success -> failure', ci('success'), ci('failure'), [['ci_failed'], ['your_turn']]],
+  ['ci_failed: pending -> failure', ci('pending'), ci('failure'), [['ci_failed'], ['your_turn']]],
+  ['ci_failed: none -> failure', ci('none'), ci('failure'), [['ci_failed'], ['your_turn']]],
   [
     'ci_failed: a new head commit fails too',
     ci('failure'),
@@ -107,13 +107,18 @@ const cases: Case[] = [
     [],
   ],
   // Ready to merge
-  ['ready_to_merge: mergeStateStatus clean', {}, ready(), [['ready_to_merge']]],
-  ['ready_to_merge: approved, checks pass, mergeable', {}, ready(), [['ready_to_merge']]],
+  ['ready_to_merge: mergeStateStatus clean', {}, ready(), [['ready_to_merge'], ['your_turn']]],
+  [
+    'ready_to_merge: approved, checks pass, mergeable',
+    {},
+    ready(),
+    [['ready_to_merge'], ['your_turn']],
+  ],
   [
     'ready_to_merge: no review needed, no checks',
     {},
     ready({ reviewDecision: 'none', ...ci('none') }),
-    [['ready_to_merge']],
+    [['ready_to_merge'], ['your_turn']],
   ],
   ['nothing: approved but blocked by GitHub', {}, { reviewDecision: 'approved' }, []],
   [
@@ -126,7 +131,7 @@ const cases: Case[] = [
     'ready_to_merge: draft marked ready',
     { isDraft: true, mergeStateStatus: 'draft' },
     ready(),
-    [['ready_to_merge']],
+    [['ready_to_merge'], ['your_turn']],
   ],
   ['nothing: still ready', ready(), ready({ headSha: NEW_SHA }), []],
   [
@@ -139,10 +144,10 @@ const cases: Case[] = [
   ['nothing: draft', {}, { isDraft: true, reviewDecision: 'approved' }, []],
   ['nothing: approved, checks pending', {}, { reviewDecision: 'approved', ...ci('pending') }, []],
   [
-    'only ci_failed: approved, checks failing',
+    'ci_failed and its turn: approved, checks failing',
     {},
     { reviewDecision: 'approved', ...ci('failure') },
-    [['ci_failed']],
+    [['ci_failed'], ['your_turn']],
   ],
   [
     'your turn: approved, conflicting',
@@ -178,18 +183,20 @@ describe('diffSnapshots', () => {
   it('builds the event from the next copy of the PR', () => {
     const after = pr({ title: 'Renamed', ...ci('failure') });
     expect(diffSnapshots(snapshot([pr()]), snapshot([after]), VIEWER)).toEqual([
-      {
-        id: `${base.id}:ci_failed:${SHA}:1`,
-        type: 'ci_failed',
-        prId: base.id,
-        repo: 'acme/widgets',
-        number: 1,
-        title: 'Renamed',
-        url: 'https://github.com/acme/widgets/pull/1',
-        actor: null,
-        at: FETCHED_AT,
-      },
+      expect.objectContaining({ type: 'ci_failed' }),
+      expect.objectContaining({ type: 'your_turn', reason: 'ci_failed', title: 'Renamed' }),
     ]);
+    expect(diffSnapshots(snapshot([pr()]), snapshot([after]), VIEWER)[0]).toEqual({
+      id: `${base.id}:ci_failed:${SHA}:1`,
+      type: 'ci_failed',
+      prId: base.id,
+      repo: 'acme/widgets',
+      number: 1,
+      title: 'Renamed',
+      url: 'https://github.com/acme/widgets/pull/1',
+      actor: null,
+      at: FETCHED_AT,
+    });
   });
 
   it('returns nothing without a previous snapshot', () => {
@@ -199,7 +206,7 @@ describe('diffSnapshots', () => {
   it('returns nothing when the previous snapshot belongs to another account', () => {
     const prev = snapshot([pr()], FETCHED_AT, 'hubot');
     expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), VIEWER)).toEqual([]);
-    expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), 'HUBOT')).toHaveLength(1);
+    expect(diffSnapshots(prev, snapshot([pr(ci('failure'))]), 'HUBOT')).not.toEqual([]);
   });
 
   it('ignores PRs that left the scope and PRs that are new', () => {
@@ -218,7 +225,8 @@ describe('diffSnapshots', () => {
     const ids = (fetchedAt: string) =>
       diffSnapshots(prev, snapshot([after], fetchedAt), VIEWER).map(({ id }) => id);
     expect(ids(FETCHED_AT)).toEqual(ids('2026-10-06T09:02:00.000Z'));
-    expect(new Set(ids(FETCHED_AT)).size).toBe(3);
+    // CI, comment, review and the turn (CI failed).
+    expect(new Set(ids(FETCHED_AT)).size).toBe(4);
   });
 
   it('reports a duplicated review once', () => {
@@ -240,6 +248,7 @@ describe('diffSnapshots', () => {
       ['approved', 2],
       ['comment_new', 1],
       ['ci_failed', 1],
+      ['your_turn', 1],
     ]);
   });
 });
@@ -255,7 +264,9 @@ describe('checks across pending polls', () => {
     states.forEach((state, index) => {
       const next = snapshot([pr(ci(state, index === 0 ? SHA : NEW_SHA))]);
       next.settledChecks = carrySettledChecks(prev, next.pullRequests);
-      if (prev) events.push(diffSnapshots(prev, next, VIEWER).map(({ type }) => type));
+      // The CI events only: the turn has its own cases above.
+      const types = prev ? diffSnapshots(prev, next, VIEWER).map(({ type }) => type) : null;
+      if (types) events.push(types.filter((type) => type !== 'your_turn'));
       prev = next;
     });
     return events;
