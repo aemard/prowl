@@ -14,6 +14,7 @@ added on 2026-10-07 (US-032); Trusted Types, the site's CSP and token expiry on 
 | PR snapshot (titles, branches, labels, CI and review state) | `chrome.storage.local` → `snapshot` | Disclosure of private repository metadata |
 | Settings, snoozes, mutes, seen markers | `chrome.storage.local` | Low (preferences) |
 | Notified event ids and their PR URLs | `chrome.storage.session` | Low (names private repos and PR numbers; cleared when Chrome closes or on sign-out) |
+| Events held for the quiet-hours digest (PR titles, numbers, URLs) | `chrome.storage.local` → `quietHeld` | Low (names private repos and PR titles; newest 50, dropped after 24 h, removed on sign-out) |
 
 ## Trust boundaries and data flows
 

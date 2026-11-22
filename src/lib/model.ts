@@ -344,6 +344,13 @@ export interface PrEvent {
   at: string;
 }
 
+/** An event quiet hours silenced, waiting for the digest (`quietHeld`). */
+export interface HeldEvent {
+  event: PrEvent;
+  /** When it was held (ISO): the digest drops what waited over a day. */
+  heldAt: string;
+}
+
 export interface RateLimit {
   limit: number;
   remaining: number;
@@ -420,6 +427,8 @@ export const STORAGE_KEYS = {
   prLocal: 'prLocal',
   teams: 'teams',
   panelState: 'panelState',
+  /** Events quiet hours hold for the digest; removed at sign-out. */
+  quietHeld: 'quietHeld',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

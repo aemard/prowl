@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { prEvent } from '../../tests/fixtures/events';
 import { emptyPrLocal, mute } from '../lib/storage/prLocal';
 import { defaultSettings } from '../lib/storage/settings';
+import { getItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { forgetNotified, notifyEvents } from './notifier';
 
@@ -52,6 +53,30 @@ describe('quiet-hours digest', () => {
     await forgetNotified();
     at('08:00');
     await notifyEvents([], settings(), emptyPrLocal());
+    expect(shown().size).toBe(0);
+  });
+
+  it('keeps the held events through a browser restart, for a day at most', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    at('23:00');
+    await notifyEvents([prEvent({ number: 5 })], settings(), emptyPrLocal());
+    // Chrome closes overnight: the session storage and the worker's modules are gone.
+    await chrome.storage.session.clear();
+    vi.resetModules();
+    const restarted = await import('./notifier');
+    at('07:30');
+    await restarted.notifyEvents([], settings(), emptyPrLocal());
+    expect([...shown().values()].map(({ options }) => options.title)).toEqual([
+      'During quiet hours: 1 update',
+    ]);
+    expect(await getItem('quietHeld')).toBeUndefined();
+
+    shown().clear();
+    at('23:00');
+    await restarted.notifyEvents([prEvent({ number: 6 })], settings(), emptyPrLocal());
+    // Chrome stays closed for over a day: what waited is stale news.
+    vi.setSystemTime(new Date('2026-10-08T07:30:00'));
+    await restarted.notifyEvents([], settings(), emptyPrLocal());
     expect(shown().size).toBe(0);
   });
 });

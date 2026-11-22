@@ -530,9 +530,11 @@ is logged and the published snapshot stands).
    exclusive, a window may wrap past midnight, `start === end` is empty), then the events whose
    type is switched off and those of a muted or snoozed PR. Dropped events are not retried
    later and not marked as reported, except those silenced only by quiet hours: they wait in
-   `chrome.storage.session` under `quietHeld` (newest 50) and the first poll after the window
-   shows them as one `digest:<time>` notification ("During quiet hours: 4 updates"), filtered
-   again by the toggles, mutes and snoozes of that moment.
+   `chrome.storage.local` under `quietHeld` (`HeldEvent[]`, `src/lib/notify/quietDigest.ts`:
+   newest 50, each with when it was held), so Chrome closed overnight keeps them, and the first
+   poll after the window shows them as one `digest:<time>` notification ("During quiet hours:
+   4 updates"), filtered again by the toggles, mutes and snoozes of that moment. Events held a
+   day or more are dropped as stale; sign-out removes the list.
 3. Up to 3 events become one `basic` notification each (`src/lib/notify/messages.ts`: title says what happened
    and who did it, message is the PR title, context is `owner/name#number`); more than 3 become
    one summary ("5 pull request updates", the first PRs listed). The notification id of a
@@ -581,6 +583,8 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
   The poller preserves local ids except confirmed closed PRs, including choices outside loaded searches.
   `forgetSeenFacts` drops observed facts only.
 - `panelState.ts`: `normalizePanelState` for account-local selected section and repository folds.
+- `quietHeld` (the quiet-hours digest) is the worker's alone: the panel store does not bind it,
+  and `freshHeld` validates what is read.
 
 Readers of `auth`, `snapshot`, `pollState` and `teams` trust the stored shape: only Prowl
 writes them.

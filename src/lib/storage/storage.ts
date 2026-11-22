@@ -6,6 +6,7 @@
  */
 import type {
   AuthState,
+  HeldEvent,
   PanelState,
   PollState,
   PrLocalState,
@@ -27,6 +28,7 @@ export interface StorageSchema {
   teams: TeamsState;
   sync: SyncState;
   panelState: PanelState;
+  quietHeld: HeldEvent[];
 }
 
 /** Called with the new and previous value; `undefined` means the key is absent. */
