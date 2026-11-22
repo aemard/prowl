@@ -10,7 +10,7 @@ import { createGitHubClient, type FetchLike } from '../client';
 import { GitHubError } from '../errors';
 import { hasReadOrg } from '../teams';
 
-const VIEWER_QUERY = 'query ProwlViewer { viewer { login avatarUrl name } }';
+export const VIEWER_QUERY = 'query ProwlViewer { viewer { login avatarUrl name } }';
 
 /**
  * Every GitHub token (`ghp_`, `github_pat_`, the 40 hex digits of old classic ones) is letters,

@@ -1,4 +1,4 @@
-import { setAutoMerge } from '../../lib/github/actions';
+import { setAutoMerge } from '../../lib/github/mergeActions';
 import { t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';

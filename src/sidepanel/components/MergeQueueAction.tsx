@@ -1,6 +1,10 @@
 import { useState } from 'preact/hooks';
-import { dequeuePullRequest, enqueuePullRequest, setAutoMerge } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
+import {
+  dequeuePullRequest,
+  enqueuePullRequest,
+  setAutoMerge,
+} from '../../lib/github/mergeActions';
 import { formatNumber, t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest, PullRequestDetail } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';

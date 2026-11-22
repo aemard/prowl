@@ -99,13 +99,25 @@ builds the site.
 
 ## Dependency updates
 
-Dependabot (`.github/dependabot.yml`) opens weekly pull requests for npm (development dependencies
-grouped, a 2 day cooldown because pnpm refuses packages younger than a day) and for GitHub Actions.
-`.github/workflows/dependabot-auto-merge.yml` then turns on auto-merge, with a squash, for the
-pull requests that are **patch or minor updates of development dependencies or of GitHub Actions**.
-Anything else stays for a person: runtime dependencies (Preact, `@preact/signals`, Astro, sharp),
-every major update, and a group that contains even one of those. Auto-merge waits for the required
-checks, so a red `Verify` run leaves the pull request open.
+Dependabot (`.github/dependabot.yml`) opens weekly pull requests for npm (a 2 day cooldown because
+pnpm refuses packages younger than a day) and for GitHub Actions. Development dependencies come in
+two groups: `test-tooling` (what tests, lints and type-checks: never run by a release) and
+`build-chain` (everything else: Vite and its plugins, fflate, the website's packages, any new
+tool). `.github/workflows/dependabot-auto-merge.yml` turns on auto-merge, with a squash, only for:
+
+- a **patch or minor update of the `test-tooling` group** that changes nothing but `package.json`
+  and `pnpm-lock.yaml` and leaves every package the release is built with (transitive ones
+  included) where it was: `node scripts/build-chain.mjs` lists them, from the base branch, for
+  both lockfiles;
+- a **patch or minor update of an Action** used only by `ci.yml`, `codeql.yml` or
+  `dependency-review.yml`, which hold no release permission and no secret.
+
+Anything else waits for a person, and the workflow's summary says why: the `build-chain` group,
+runtime dependencies (Preact, `@preact/signals`, Astro, sharp), every major update, transitive
+security updates, and any Action that also runs in a release, store or Pages workflow
+(`actions/checkout`, `setup-node`, `pnpm/action-setup`...). Review those as release changes:
+read the changelog and the diff of the lockfile. Auto-merge waits for the required checks, so a red
+`Verify` run leaves the pull request open. The reasons are in docs/decisions.md (2026-11-22).
 
 One-time setup (needs admin rights; without it the workflow fails or merges too early):
 
@@ -122,8 +134,9 @@ To keep one pull request from merging by itself, press "Disable auto-merge" on i
 
 A Dependabot pull request that stays open is one of these:
 
-- **Left for a person on purpose**: a runtime dependency (Astro, Preact…) or a major update. The
-  workflow does not turn auto-merge on; review and merge it by hand.
+- **Left for a person on purpose**: the build chain, a runtime dependency (Astro, Preact…), a
+  major update or an Action of the release path. The workflow does not turn auto-merge on and its
+  run summary names the reason; review and merge it by hand.
 - **A red required check**: auto-merge waits for green. A new tool version that reformats or
   lints differently (Biome) needs a fix on `main` first; Dependabot then rebases its pull request.
   Actions that must move together (`github/codeql-action` `init` and `analyze`) are grouped in

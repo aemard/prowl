@@ -57,7 +57,7 @@ Details: [sign-in guide](docs/auth.md).
 
 ## Features
 
-- **Language**: in **Settings → Appearance → Language**, choose English, Japanese, Simplified
+- **Language**: in **Settings → List → Language**, choose English, Japanese, Simplified
   or Traditional Chinese, French, German or Spanish, or follow Chrome's language (the default).
   The choice is saved and applies to the panel, notifications, dates and numbers, with English
   as the fallback for unavailable translations.
@@ -66,9 +66,11 @@ Details: [sign-in guide](docs/auth.md).
   searches, and repository include/exclude filters. Each scope sits in a bar at the bottom of
   the panel, with its count. Snooze a PR to set it aside in a "Snoozed" fold until the
   time you pick. A switch groups each tab's PRs under their repository, in collapsible groups.
-- **Your turn**: a section, a chip on every card and the toolbar badge say which pull
+- **Your turn**: a section, the toolbar badge (by default) and a notification say which pull
   requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
-  answer, a merge to make), longest waiting first. No extra GitHub request.
+  answer, a merge to make), longest waiting first. On a card, the chip that states the fact
+  becomes the action, with a bell ("Review", "Fix CI · 1 failing", "Merge it"). No extra GitHub
+  request.
 - **Deployments**: an expanded card lists where its head commit is deployed (preview, staging)
   and how that went.
 - **GitHub stacks**: a stack is one item of the list, with its progress (ready, in progress,
@@ -79,19 +81,20 @@ Details: [sign-in guide](docs/auth.md).
 - **Review conversations**: an expanded card lists the open review threads with their last
   comments; reply or resolve them without opening GitHub.
 - **Fast updates**: between polls, a free conditional check of your GitHub notifications (once a
-  minute) refreshes the list as soon as a pull request changes.
+  minute) refreshes the list soon after a pull request changes. The list also catches up when you
+  open the panel or come back to Chrome, and follows running CI every minute.
 - **On-device AI** (optional, off by default): with Chrome's built-in Gemini Nano, an expanded
   card summarizes the pull request and explains why its checks fail. The model runs on your
   device; nothing is sent anywhere but the GitHub read of that pull request.
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
-- **Notifications**: CI failed, CI passed after a failure, new review, approved, changes
-  requested, new comment, ready to merge, merged or closed by someone else, with Open and
-  Snooze 1 h buttons. Per-event toggles, quiet hours, and a toolbar badge counting PRs that
-  need you.
+- **Notifications**: your turn, CI failed, CI passed after a failure, new review, approved,
+  changes requested, new comment, ready to merge, merged or closed by someone else, with Open and
+  Snooze 1 h buttons. Per-event toggles, quiet hours (what happens during them arrives as one
+  digest afterwards), and a toolbar badge counting PRs that need you.
 - **Actions**: approve, request changes and merge (with confirmation; only the merge methods the
-  repository allows), turn auto-merge on or off, update a branch that is behind (merge or
+  repository allows, and GitHub's own commit title to start from), turn auto-merge on or off, update a branch that is behind (merge or
   rebase), comment, re-run failed checks, ready for review / convert to draft, snooze, mute,
   open in GitHub, copy branch name.
 - **Everywhere you work**: Ctrl+Shift+P (⌘⇧P on Mac) opens the panel (change it at

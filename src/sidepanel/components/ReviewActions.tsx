@@ -1,7 +1,7 @@
 import type { Ref } from 'preact';
 import { useRef, useState } from 'preact/hooks';
-import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
+import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/reviewActions';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';

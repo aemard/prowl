@@ -12,7 +12,9 @@ const POLL_MS = 10_000;
 
 /**
  * Uploads `zip` as the product's draft package, then submits the draft. Resolves to the operation
- * id of the submission and throws with Partner Center's answer when a step fails.
+ * id of the submission and throws with Partner Center's answer when a step fails. Partner Center
+ * refuses a package whose version is not higher than the published one: publishing a tag again
+ * fails at the upload, by design (docs/chrome-web-store.md, "When it fails").
  */
 export async function publishToEdge({
   zip,
@@ -36,6 +38,12 @@ export async function publishToEdge({
     if (!response.ok) throw new Error(`${method} ${url} answered ${response.status}: ${text}`);
     return { location: response.headers.get('location'), json: text ? JSON.parse(text) : {} };
   };
+  /** The id of the asynchronous operation a POST started, from its `Location` header. */
+  const operationOf = ({ location }, what) => {
+    if (!location)
+      throw new Error(`${what} was accepted without an operation id (no Location header).`);
+    return encodeURIComponent(location);
+  };
   /** Follows an asynchronous operation until it succeeded. */
   const settle = async (url, what) => {
     for (let poll = 0; ; poll++) {
@@ -56,10 +64,14 @@ export async function publishToEdge({
     await readFile(zip),
     'application/zip',
   );
-  await settle(`${product}/draft/package/operations/${upload.location}`, 'The upload');
+  await settle(
+    `${product}/draft/package/operations/${operationOf(upload, 'The upload')}`,
+    'The upload',
+  );
   log(`Uploaded ${zip}.`);
   const submitted = await call('POST', product, JSON.stringify({ notes }), 'application/json');
-  await settle(`${product}/operations/${submitted.location}`, 'The submission');
+  const operation = operationOf(submitted, 'The submission');
+  await settle(`${product}/operations/${operation}`, 'The submission');
   log('Submitted for certification.');
   return submitted.location;
 }
