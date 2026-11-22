@@ -40,6 +40,19 @@ it('auto-merges Action updates only in workflows without release permissions or 
   }
 });
 
+/**
+ * A stale pinned schema fails the weekly run (GitHub notifies the maintainer of a failed
+ * scheduled run), and the workflow stays read-only: no issue, no pull request, no secret.
+ */
+it('fails the weekly schema check on a stale pinned copy, with read-only permissions', () => {
+  const yaml = readFileSync(resolve(dir, 'github-schema.yml'), 'utf8');
+  expect(yaml).toMatch(/git diff --quiet -- tests\/fixtures\/github-schema\.graphql[\s\S]*exit 1/);
+  expect([...yaml.matchAll(/^\s+[a-z-]+: (write|read)$/gm)].map(([line]) => line.trim())).toEqual([
+    'contents: read',
+  ]);
+  expect(yaml).not.toMatch(/secrets\./);
+});
+
 it('rejects runners that are billed or self-hosted', () => {
   for (const label of ['ubuntu-latest', 'ubuntu-24.04', 'ubuntu-24.04-arm']) {
     expect(label).toMatch(FREE_RUNNER);

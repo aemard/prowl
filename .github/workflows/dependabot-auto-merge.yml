@@ -9,6 +9,8 @@ name: Dependabot auto-merge
 # - GitHub Actions: patch or minor, and only in workflows that hold no release permission or
 #   secret (ci.yml, codeql.yml, dependency-review.yml). An action that also runs in a release,
 #   store or Pages workflow is reviewed.
+# The merge is made for GITHUB_TOKEN, whose events start no workflow: the push to main runs no CI,
+# CodeQL or Release Please until the next push (accepted: docs/releasing.md, "Dependency updates").
 # `pull_request`, never `pull_request_target` (which runs with write access on behalf of the pull
 # request): the pull request's files are read as data, nothing from it runs.
 
