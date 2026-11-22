@@ -44,6 +44,9 @@ function authorTurn(pr: PullRequest, viewer: string): Turn {
       : null;
   const feedback = reviewed?.submittedAt ?? commented;
   if (feedback) return { owner: 'you', reason: 'feedback', since: feedback };
+  // Auto-merge is on: GitHub merges it now, nobody has to.
+  if (isReadyToMerge(pr) && pr.autoMerge)
+    return { owner: 'none', reason: 'auto_merge', since: pushed };
   if (isReadyToMerge(pr) && pr.viewerCanMerge) {
     const approved = others.find((r) => r.state === 'approved')?.submittedAt ?? pushed;
     return { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) };

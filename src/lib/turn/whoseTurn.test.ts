@@ -89,6 +89,18 @@ describe('whoseTurn on your own pull requests', () => {
     expect(turn(both).reason).toBe('feedback');
   });
 
+  it('is nobody’s move once auto-merge is on and it is ready', () => {
+    const ready = { mergeStateStatus: 'clean', reviewDecision: 'approved' } as const;
+    const autoMerge = { method: 'squash', enabledBy: 'me' } as const;
+    expect(turn(mine({ ...ready, autoMerge }))).toMatchObject({
+      owner: 'none',
+      reason: 'auto_merge',
+    });
+    // Not ready yet: what blocks it is still someone's move.
+    expect(turn(mine({ checks: failing, autoMerge })).reason).toBe('ci_failed');
+    expect(turn(mine({ checks: running, autoMerge })).reason).toBe('waiting_on_checks');
+  });
+
   it('is not your move to merge without write access', () => {
     const pr = mine({ mergeStateStatus: 'clean', viewerCanMerge: false });
     expect(turn(pr).owner).toBe('them');

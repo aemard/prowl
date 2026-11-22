@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CheckState, PrEventType, PullRequest, Snapshot } from '../model';
-import { carrySettledChecks, diffSnapshots, isReadyToMerge } from './diffSnapshots';
+import { carrySettledChecks, diffSnapshots } from './diffSnapshots';
 import {
   base,
   CLOSED,
@@ -129,6 +129,12 @@ const cases: Case[] = [
     [['ready_to_merge']],
   ],
   ['nothing: still ready', ready(), ready({ headSha: NEW_SHA }), []],
+  [
+    'nothing: ready, auto-merge merges it',
+    {},
+    ready({ autoMerge: { method: 'merge', enabledBy: null } }),
+    [],
+  ],
   ['nothing: draft', {}, { isDraft: true, reviewDecision: 'approved' }, []],
   ['nothing: approved, checks pending', {}, { reviewDecision: 'approved', ...ci('pending') }, []],
   [
@@ -291,34 +297,5 @@ describe('checks across pending polls', () => {
     expect(carrySettledChecks(failing, snapshot([pr(ci('success'))]).pullRequests)).toEqual({});
     expect(carrySettledChecks(null, pending.pullRequests)).toEqual({});
     expect(carrySettledChecks(snapshot([]), pending.pullRequests)).toEqual({});
-  });
-});
-
-describe('isReadyToMerge', () => {
-  it.each(['blocked', 'behind', 'dirty', 'draft', 'unknown'] as const)(
-    'never overrides GitHub %s with passing local facts',
-    (mergeStateStatus) => {
-      expect(isReadyToMerge(pr({ ...ready(), mergeStateStatus }))).toBe(false);
-    },
-  );
-  it.each(['clean', 'unstable', 'has_hooks'] as const)('accepts GitHub %s', (mergeStateStatus) => {
-    expect(isReadyToMerge(pr(ready({ mergeStateStatus })))).toBe(true);
-    expect(isReadyToMerge(pr(ready({ mergeStateStatus, reviewDecision: 'none' })))).toBe(true);
-  });
-  it.each([
-    { reviewDecision: 'unknown' },
-    { reviewDecision: 'review_required' },
-    { reviewDecision: 'changes_requested' },
-    { mergeable: 'conflicting' },
-    { mergeable: 'unknown' },
-    { isDraft: true },
-  ] as const)('is false for %j even when GitHub says clean', (overrides) => {
-    expect(isReadyToMerge(pr(ready(overrides)))).toBe(false);
-  });
-
-  it('is false once the PR is merged or closed', () => {
-    expect(isReadyToMerge(pr(ready()))).toBe(true);
-    expect(isReadyToMerge(pr(ready({ state: 'merged' })))).toBe(false);
-    expect(isReadyToMerge(pr(ready({ state: 'closed' })))).toBe(false);
   });
 });

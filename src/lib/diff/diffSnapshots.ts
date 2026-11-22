@@ -79,7 +79,8 @@ export function diffSnapshots(
     )
       add('comment_new', comment.createdAt, comment.author, comment.createdAt);
 
-    if (isReadyToMerge(pr) && !isReadyToMerge(before))
+    // With auto-merge on, GitHub merges it itself: `merged` follows.
+    if (isReadyToMerge(pr) && !pr.autoMerge && !isReadyToMerge(before))
       add('ready_to_merge', pr.headSha, null, next.fetchedAt);
 
     if (before.state === 'open' && pr.state !== 'open' && !isViewer(pr.closedBy))

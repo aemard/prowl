@@ -56,6 +56,8 @@ export type TurnReason =
   | 'waiting_on_reviewers'
   | 'waiting_on_checks'
   | 'waiting_on_author'
+  /** Ready, with auto-merge on: GitHub merges it on its own. */
+  | 'auto_merge'
   | 'draft'
   | 'closed';
 
