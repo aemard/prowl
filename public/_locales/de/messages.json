@@ -190,9 +190,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot"
-  },
   "someone": {
     "message": "Jemand"
   },

@@ -231,10 +231,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot",
-    "description": "Extension text: Bot"
-  },
   "someone": {
     "message": "Someone",
     "description": "Extension text: Someone"

@@ -190,9 +190,6 @@
       }
     }
   },
-  "bot": {
-    "message": "機器人"
-  },
   "someone": {
     "message": "有人"
   },
