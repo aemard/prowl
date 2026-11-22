@@ -19,6 +19,7 @@ const TITLES: Record<PrEventType, (actor: string | null) => string> = {
   ready_to_merge: () => t('readyToMerge2'),
   merged: (actor) => (actor ? t('mergedBy', actor) : t('merged')),
   closed: (actor) => (actor ? t('closedBy', actor) : t('closed')),
+  review_requested: () => t('reviewRequested'),
   your_turn: () => t('yourTurnSection'),
 };
 

@@ -2914,5 +2914,8 @@
   },
   "commitTitle": {
     "message": "コミットのタイトル"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "あなたのレビューが依頼されたとき（リストに新しく加わったプルリクエストも含む）"
   }
 }

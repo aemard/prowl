@@ -90,7 +90,7 @@ in-memory updates that the next snapshot replaces.
 4. Open PRs present in the previous snapshot but missing now are fetched by id
    (`query ProwlNodes`, `nodes(ids:)`) to learn whether they were merged or closed, and by whom.
 5. Repo include/exclude filters are applied; the poller adds `fetchedAt`, the viewer (from
-   `auth`), `sectionErrors`, `sectionCoverage`, `teamRequests`, `mergeStateAt`, `mergeStateDue`, `ciOutcomes` and `settledChecks`
+   `auth`), `sectionErrors`, `sectionCoverage`, `sectionScopes`, `teamRequests`, `mergeStateAt`, `mergeStateDue`, `ciOutcomes` and `settledChecks`
    to build the new `Snapshot`, and publishes it after each completed section, before merge
    reads and after each completed batch. Each publication updates
    the badge and diffs against the preceding publication, so notifications do not repeat. The
@@ -198,7 +198,10 @@ never qualifiers.
 
 `fetchPullRequests(client, settings, previous, teams)` (`src/lib/github/fetchPullRequests.ts`) is
 all of a poll's reads, sent one at a time (GitHub's advice against secondary rate limits). It
-returns `{ pullRequests, sections, sectionErrors, sectionCoverage, teamRequests, rateLimit }`.
+returns `{ pullRequests, sections, sectionErrors, sectionCoverage, sectionScopes, teamRequests, rateLimit }`.
+`sectionScopes` (`sectionScopes(settings)`, `search.ts`) fingerprints what each searched section
+asked for: its query, the include list, `maxPerSection` and, for the team section, the unfollowed
+teams. A pending section of a publication keeps the previous poll's fingerprint with its cards.
 `fetchSearch.ts` handles bounded searches, partial pages and cached section membership.
 `fetchMergeState.ts` handles merge-fact caching, prioritization and progressive enrichment.
 
@@ -333,10 +336,15 @@ that arrives after another account signed in is dropped (no toast, no poll, `fal
 
 `diffSnapshots(prev, next, viewerLogin)` (`src/lib/diff/diffSnapshots.ts`) compares the PRs
 present in both snapshots and returns `PrEvent[]`, oldest first. A null `prev` (first poll after
-sign-in) or a `prev` taken for another account gives `[]`. A PR in only one snapshot gives
-nothing: a new one has no baseline, a missing one simply left the search scope (merged and
-closed PRs stay in `next`, see above). Changes the viewer made are left out; logins compare
-case-insensitively.
+sign-in) or a `prev` taken for another account gives `[]`. A PR only in `prev` gives nothing: it
+left the search scope (merged and closed PRs stay in `next`, see above). A PR only in `next` has
+no baseline and gives at most its turn event (`review_requested` or `your_turn`), and only when
+it *arrived*: GitHub updated it after `prev` (dated by the earlier of `prev.fetchedAt` and the
+newest `updatedAt` it read, so a local clock running ahead hides nothing) and a section of `next`
+that has it was searched with the same `sectionScopes` fingerprint in `prev`. A PR that appears
+because a section was turned on, a query, filter or limit changed, or an earlier search missed
+it, is no news; a snapshot without fingerprints (older versions) has no arrivals. Changes the
+viewer made are left out; logins compare case-insensitively.
 
 | Event | prev -> next | `actor` | `at` | Id key |
 |---|---|---|---|---|
@@ -346,7 +354,8 @@ case-insensitively.
 | `comment_new` | `commentCount` grows and the latest issue comment is newer than before and not by the viewer | commenter | its `createdAt` | its `createdAt` |
 | `ready_to_merge` | auto-merge is off and `isReadyToMerge` turns true: open, not a draft, `mergeable`, `mergeStateStatus` `clean` / `unstable` (only non-required checks fail) / `has_hooks`, and `reviewDecision` approved / none. Local facts (checks, reviews) never override a `blocked`, `behind`, `dirty` or `unknown` verdict | null | `next.fetchedAt` | head SHA |
 | `merged`, `closed` | `open` -> merged / closed and `closedBy` is not the viewer (null, unknown, counts as someone else) | `closedBy` | `updatedAt` | head SHA |
-| `your_turn` | `whoseTurn` becomes `you` and no other event of this poll is about the PR (the more precise one already says why) | null | `next.fetchedAt` | reason + since |
+| `review_requested` | `whoseTurn` becomes `you` for `review_requested` (a review asked of the viewer), on a known or an arrived PR, and no other event of this poll is about it | null | `updatedAt` | `updatedAt` (each request is its own) |
+| `your_turn` | `whoseTurn` becomes `you` for any other reason, same conditions | null | `next.fetchedAt` | reason + since |
 
 Ids are `<pr id>:<type>:<key>` and never include the poll time, so a poll repeated after a
 worker restart yields the same ids for the notifier to dedupe. CI keys include a per-PR
@@ -449,9 +458,10 @@ is the push, review or comment that started the wait. "Last push" is the head co
 The "Your turn" preset section (kind `your_turn`, on by default, last in the list) is never
 searched: `fetchPullRequests` skips it and the panel lists `yourTurnIds(snapshot)`, the PRs of
 every other section where it is the viewer's move, longest waiting first (the list's sort
-order does not apply to it). Every card shows a "Your turn" chip with what to do ("Your review", "Fix CI",
-"Answer feedback"...) and since when; the `turn` badge counts the same PRs and the `your_turn`
-event notifies when a PR becomes the viewer's move.
+order does not apply to it). When it is the viewer's move, the card's chip for that fact becomes
+the action (one chip per fact: "Review", "Fix CI · 1 failing", "Merge it"...) with since when; the
+`turn` badge counts the same PRs, and the `review_requested` and `your_turn` events notify when a
+PR becomes the viewer's move or arrives as it (see [Diff engine](#diff-engine)).
 
 ### Stacks and merge queues
 

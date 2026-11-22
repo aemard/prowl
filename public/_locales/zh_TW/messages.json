@@ -2914,5 +2914,8 @@
   },
   "commitTitle": {
     "message": "提交標題"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "要求你審查時，包括清單中新出現的拉取請求"
   }
 }

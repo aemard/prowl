@@ -31,6 +31,7 @@ describe('DEFAULT_SETTINGS', () => {
           ready_to_merge: true,
           merged: true,
           closed: true,
+          review_requested: true,
           your_turn: true,
         },
         quietHours: { enabled: false, start: '22:00', end: '08:00' },
@@ -65,7 +66,7 @@ describe('DEFAULT_SETTINGS', () => {
 
   it('lists every event type and preset kind', () => {
     expect(PR_EVENT_TYPES).toEqual(Object.keys(DEFAULT_SETTINGS.notifications.events));
-    expect(PR_EVENT_TYPES).toHaveLength(10);
+    expect(PR_EVENT_TYPES).toHaveLength(11);
     expect(BUILT_IN_SECTION_KINDS).toEqual([
       'authored',
       'review_requested',

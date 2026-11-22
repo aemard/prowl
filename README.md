@@ -86,8 +86,9 @@ Details: [sign-in guide](docs/auth.md).
 - **State on every card**: CI rollup, review decision, mergeable or conflicts, draft, labels,
   unresolved threads, comments, last activity and age. Expand a card for failing checks,
   reviewers and what blocks the merge.
-- **Notifications**: CI failed, CI passed after a failure, new review, approved, changes
-  requested, new comment, ready to merge, merged or closed by someone else, with Open and
+- **Notifications**: review requested (new pull requests included), CI failed, CI passed after a
+  failure, new review, approved, changes requested, new comment, ready to merge, merged or closed
+  by someone else, your turn, with Open and
   Snooze 1 h buttons. Per-event toggles, quiet hours, and a toolbar badge counting PRs that
   need you.
 - **Actions**: approve, request changes and merge (with confirmation; only the merge methods the

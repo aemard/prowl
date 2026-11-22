@@ -96,6 +96,7 @@ describe('fetchPullRequests', () => {
         sectionErrors: {},
         teamRequests: {},
         mergeStateAt: {},
+        sectionScopes: {},
         rateLimit: null,
       });
     });

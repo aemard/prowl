@@ -279,6 +279,11 @@ export interface Snapshot {
   /** Sections not yet searched in a progressive publication. */
   sectionsPending?: string[];
   /**
+   * Section id -> fingerprint of what its search asked for (`sectionScopes`); a pending section
+   * keeps the previous poll's. Absent (older snapshots) means unknown: nothing counts as new.
+   */
+  sectionScopes?: Record<string, string>;
+  /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
    * section's missing scope, no team, or failed team searches (it keeps the PRs of the teams that
@@ -320,6 +325,8 @@ export type PrEventType =
   | 'ready_to_merge'
   | 'merged'
   | 'closed'
+  /** A review was asked of the viewer (`whoseTurn` reason `review_requested`), new PRs included. */
+  | 'review_requested'
   /** A PR became the viewer's turn (see `whoseTurn`) without another event saying why. */
   | 'your_turn';
 

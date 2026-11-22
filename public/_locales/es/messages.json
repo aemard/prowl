@@ -2914,5 +2914,8 @@
   },
   "commitTitle": {
     "message": "Título del commit"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "Cuando se solicita tu revisión, también en una pull request nueva en la lista"
   }
 }

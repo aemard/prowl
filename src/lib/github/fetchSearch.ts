@@ -41,7 +41,7 @@ const mergeFacts = (pr: PullRequest): MergeFacts => ({
 });
 
 export type PreviousSnapshot = Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
-  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests'>>;
+  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests' | 'sectionScopes'>>;
 
 type SearchResult = { prs: PullRequest[]; coverage: SectionCoverage; problems: string[] };
 

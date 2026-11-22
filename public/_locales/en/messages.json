@@ -3432,5 +3432,9 @@
   "commitTitle": {
     "message": "Commit title",
     "description": "Extension text: Commit title"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "When your review is asked for, also on a pull request new to the list",
+    "description": "Extension text: When your review is asked for, also on a pull request new to the list"
   }
 }

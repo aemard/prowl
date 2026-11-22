@@ -2914,5 +2914,8 @@
   },
   "commitTitle": {
     "message": "Commit-Titel"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "Wenn dein Review angefragt wird, auch bei einem Pull Request, der neu in der Liste ist"
   }
 }

@@ -173,6 +173,7 @@ function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchRe
     pullRequests: fetched.pullRequests,
     sections: fetched.sections,
     sectionCoverage: fetched.sectionCoverage,
+    sectionScopes: fetched.sectionScopes,
     sectionsPending: fetched.sectionsPending,
     sectionErrors: fetched.sectionErrors,
     teamRequests: fetched.teamRequests,
