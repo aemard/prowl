@@ -400,7 +400,7 @@ pure) decides whether it runs now:
 | `schedule` | the `poll` alarm (the interval) | always | no |
 | `startup` | install, browser start | always | no |
 | `inbox` | the fast lane: a PR thread updated since the last check | always (trailing) | no |
-| `ci` | the fast lane: CI runs on a listed PR (`ciWatched`) | 50 s | no |
+| `ci` | the fast lane: CI runs on one of the viewer's own listed PRs (`ciWatched`) | 110 s (one every 2 min) | no |
 | `focus` | a Chrome window got focus | the poll interval | no |
 | `panel` | the panel opened or became visible | 1 min | no |
 | `user` | Refresh, the shortcut, the banner's retry, team refresh | always | yes |
@@ -471,16 +471,33 @@ poll. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may ru
 the alarm's scheduled time so alarm jitter does not skip a minute. The first check of a browser
 session only records the date. Fine-grained tokens cannot read the inbox, and a 403 or 404 turns
 the lane off until the browser restarts (`chrome.storage.session` key `inbox`); polls keep their
-schedule either way. A 401 or a rate limit met by the inbox is recorded like a poll's
-(`recordPollFailure`): a rejected token stops both alarms and shows the banner.
+schedule either way. A 401 met by the inbox is recorded like a poll's (`recordPollFailure`): a
+rejected token stops both alarms and shows the banner. A rate limit backs off only the lane (its
+`nextAt` moves to the reset or `retry-after`, `Last-Modified` is kept): `/notifications` spends
+the REST budget and polls the GraphQL one, separate pools, so polls keep going.
 
-The same alarm also asks for a `ci` poll while CI runs on a listed open PR (`ciWatched`: the
+The 304 relies on Chrome passing it through: the client sends `cache: 'no-store'` with a
+hand-set `If-Modified-Since`. The Fetch standard bypasses the HTTP cache for both (an author-set
+conditional header already turns a `default` request into `no-store`), so the network's 304
+reaches the worker as a 304 rather than a cached 200. `tests/e2e/cadence.spec.ts` checks it in
+Chromium against the mock; that GitHub's real 304 costs no points is GitHub's documented
+behavior, still to be measured live (docs/status.md).
+
+The same alarm also asks for a `ci` poll while CI runs on one of the viewer's own listed open PRs
+(`ciWatched`: the
 `running` count, check runs in progress or queued and commit statuses reported pending, not
 checks that only wait: `EXPECTED`, `WAITING`, `REQUESTED` or a concurrency-pending run) that
 changed (push, comment, review: `max(lastCommitAt, updatedAt)`) within the last hour, for every
 token type: third-party CI never reaches the inbox. A required check nobody reports, a fork
 workflow awaiting approval or a deployment waiting for a reviewer therefore never polls every
-minute, and a runner that never picks a job up stops after an hour. A Chrome window that regains
+minute, and a runner that never picks a job up stops after an hour. Only the viewer's own PRs:
+CI changes whose turn it is only for the author (`whoseTurn`: failing CI, waiting on checks,
+ready to merge), so a teammate's, a team's or a mentioned PR waits for the scheduled poll, else
+an active team always has CI running somewhere and the cadence would never leave its fastest. A
+`ci` poll runs on a list at least 110 s old, so with the minute alarm it polls every 2 minutes,
+the floor of the poll interval: at most 30 extra full polls an hour, for at most an hour after
+the PR last changed (about 120 points an hour with the default section, 4 points a poll, plus
+`ProwlMergeState` for the PRs that changed). With an interval of 2 minutes it adds nothing. A Chrome window that regains
 focus (`chrome.windows.onFocusChanged`, `onChromeFocused`) asks for a `focus` poll, and the panel
 asks for a `panel` poll when it opens or becomes visible (`refreshIfStale`,
 `src/sidepanel/state/freshness.ts`); neither forces anything.

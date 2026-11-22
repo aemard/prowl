@@ -82,8 +82,8 @@ Details: [sign-in guide](docs/auth.md).
   comments; reply or resolve them without opening GitHub.
 - **Fast updates**: between polls, a free conditional check of your GitHub notifications (about
   once a minute) refreshes the list within a minute or so of a review, comment or other activity
-  GitHub notifies you about, and running CI on a pull request that changed in the last hour is
-  followed every minute. The list also catches up when you open the panel or come back to
+  GitHub notifies you about, and running CI on one of your own pull requests that changed in the
+  last hour is followed every 2 minutes (at most 30 extra polls an hour, whatever the interval). The list also catches up when you open the panel or come back to
   Chrome; other changes show up at the next scheduled poll.
 - **On-device AI** (optional, off by default): with Chrome's built-in Gemini Nano, an expanded
   card summarizes the pull request and explains why its checks fail. The model runs on your

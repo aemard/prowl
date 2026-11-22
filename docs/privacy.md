@@ -51,8 +51,9 @@ the interface sends no text to a translation service and requires no additional 
   whether your GitHub notifications changed (`GET /notifications` with `If-Modified-Since`, no
   more often than GitHub's `X-Poll-Interval` allows); it only reads whether a pull request thread
   was updated since the last check, to decide whether to poll now, and never marks anything as
-  read. While CI runs on one of your pull requests that changed in the last hour, Prowl polls
-  every minute until it ends. After GitHub rejects your token, Prowl stops asking anything until
+  read. While CI runs on one of your own pull requests that changed in the last hour, Prowl polls
+  every 2 minutes until it ends; CI on other people's pull requests waits for the next scheduled
+  poll. After GitHub rejects your token, Prowl stops asking anything until
   you sign in again or press Refresh. When a Chrome window comes to the front, Prowl may
   refresh: it learns only that a window got focus, never which page it shows.
 - **`github.com`:** only when you choose "Continue with GitHub". Prowl sends the OAuth App's public

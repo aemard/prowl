@@ -9,8 +9,11 @@ import { isWaiting } from './backoff';
 const MINUTE = 60_000;
 /** The panel refreshes a list older than this when it opens or is shown again. */
 export const PANEL_STALE_MS = MINUTE;
-/** CI-watch polls run on a list at least this old (the minute alarm fires about every 60 s). */
-export const CI_STALE_MS = 50_000;
+/**
+ * CI-watch polls run on a list at least this old: on the minute alarm, one every 2 minutes, the
+ * floor of the poll interval (10 s of slack for alarm jitter and the poll's own duration).
+ */
+export const CI_STALE_MS = 2 * MINUTE - 10_000;
 /** CI is watched this long after the pull request last changed (a push, a comment). */
 export const CI_WATCH_MS = 60 * MINUTE;
 
@@ -62,15 +65,19 @@ export function pollVerdict(
 }
 
 /**
- * CI runs (not merely waits) on a listed open pull request that changed within `CI_WATCH_MS`:
- * the cue for a poll every minute until it settles. Bounded so a check that stays queued, or a
- * clock gone wrong, never polls every minute for long.
+ * CI runs (not merely waits) on one of the viewer's own listed open pull requests that changed
+ * within `CI_WATCH_MS`: the cue for a `ci` poll until it settles. Only their own, because CI
+ * decides whose turn it is only for the author (`whoseTurn`: failing CI, waiting on checks,
+ * ready to merge); someone else's CI shows up at the next scheduled poll. Bounded so a check
+ * that stays queued, or a clock gone wrong, never keeps the fast cadence for long.
  */
 export function ciWatched(snapshot: Snapshot | undefined, now: number): boolean {
   if (!snapshot) return false;
+  const viewer = snapshot.viewer.login.toLowerCase();
   return [...new Set(Object.values(snapshot.sections).flat())].some((id) => {
     const pr = snapshot.pullRequests[id];
     if (pr?.state !== 'open' || !pr.checks.running) return false;
+    if (pr.author?.login.toLowerCase() !== viewer) return false;
     const age = now - Math.max(Date.parse(pr.lastCommitAt), Date.parse(pr.updatedAt));
     return age >= 0 && age < CI_WATCH_MS;
   });

@@ -17,9 +17,11 @@ const LAST = 'Thu, 05 Nov 2026 10:00:00 GMT';
 const LATER = 'Thu, 05 Nov 2026 10:05:00 GMT';
 const UPDATED = '2026-11-05T10:04:00Z';
 const MINUTE = 60_000;
+const VIEWER = { login: 'octocat', avatarUrl: '', isBot: false };
 let answer: () => Response;
 const fetch = vi.fn(async () => answer());
-const inbox = async () => (await chrome.storage.session.get('inbox')).inbox;
+const inbox = async () =>
+  (await chrome.storage.session.get<{ inbox?: Record<string, unknown> }>('inbox')).inbox;
 const alarms = () => [...fakeChrome().__state.alarms.keys()].sort();
 const prThread = (updatedAt: string) => ({
   subject: { type: 'PullRequest' },
@@ -140,12 +142,27 @@ describe('checkFastLane: the cadence policy', () => {
     expect(alarms()).not.toContain(POLL_ALARM);
   });
 
-  it('records a rate limit the inbox met, so every poll waits for it', async () => {
+  it('backs off only the lane on a REST rate limit: GraphQL polls have their own budget', async () => {
     await setItem('auth', buildAuth());
+    const due = Date.now();
     answer = () =>
       jsonResponse({ message: 'rate limit' }, { status: 429, headers: { 'retry-after': '600' } });
+    await checkFastLane(due);
+    expect(await getItem('pollState')).toBeUndefined();
+    expect(Date.parse(String((await inbox())?.nextAt))).toBeGreaterThanOrEqual(due + 10 * MINUTE);
+    await checkFastLane(due + 5 * MINUTE);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await checkFastLane(due + 11 * MINUTE);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the last Last-Modified through a rate limit, so the next check stays conditional', async () => {
+    await setItem('auth', buildAuth());
+    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    answer = () => jsonResponse({ message: 'API rate limit exceeded' }, { status: 403 });
     await checkFastLane();
-    expect(await getItem('pollState')).toMatchObject({ lastError: { kind: 'rate_limited' } });
+    expect(await inbox()).toMatchObject({ lastModified: LAST });
+    expect(await getItem('pollState')).toBeUndefined();
   });
 });
 
@@ -162,7 +179,10 @@ describe('checkFastLane: the CI watch', () => {
   const seed = (pr: Parameters<typeof buildPullRequest>[0]) =>
     setItem(
       'snapshot',
-      buildSnapshotOf({ authored: [buildPullRequest(pr)] }, { fetchedAt: ago(2 * MINUTE) }),
+      buildSnapshotOf(
+        { authored: [buildPullRequest({ author: VIEWER, ...pr })] },
+        { fetchedAt: ago(2 * MINUTE) },
+      ),
     );
 
   beforeEach(() => setItem('auth', { ...buildAuth(), tokenType: 'fine_grained' }));
@@ -175,6 +195,13 @@ describe('checkFastLane: the CI watch', () => {
 
   it('never polls every minute for checks that only wait (EXPECTED, WAITING)', async () => {
     await seed({ checks: checks(0), updatedAt: ago(5 * MINUTE), lastCommitAt: ago(5 * MINUTE) });
+    await checkFastLane();
+    expect(poll).not.toHaveBeenCalled();
+  });
+
+  it("leaves CI on other people's pull requests to the scheduled poll", async () => {
+    const author = { login: 'alice', avatarUrl: '', isBot: false };
+    await seed({ author, checks: checks(1), updatedAt: ago(MINUTE), lastCommitAt: ago(MINUTE) });
     await checkFastLane();
     expect(poll).not.toHaveBeenCalled();
   });

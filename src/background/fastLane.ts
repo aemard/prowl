@@ -5,25 +5,26 @@
  *   `X-Poll-Interval`; a pull request thread updated since the last check asks for an `inbox`
  *   poll. Off for tokens that cannot read the inbox (fine-grained ones, or a 403/404) for the
  *   browser session.
- * - while CI runs on a listed pull request that changed in the last hour (`ciWatched`), a `ci`
- *   poll, so a red or green build shows up within a minute (third-party CI never reaches the
- *   inbox).
+ * - while CI runs on one of the viewer's own listed pull requests that changed in the last hour
+ *   (`ciWatched`), a `ci` poll every 2 minutes, so a red or green build shows up quickly
+ *   (third-party CI never reaches the inbox).
  * Also a `focus` poll when Chrome comes back to the foreground.
  */
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
-import { GitHubError, isPollBudgetFailure } from '../lib/github/errors';
+import { GitHubError } from '../lib/github/errors';
 import { checkInbox } from '../lib/github/notifications';
 import type { AuthState, PollState } from '../lib/model';
 import { withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItems, withLock } from '../lib/storage/storage';
-import { isWaiting } from '../lib/time/backoff';
+import { isWaiting, rateLimitedUntil } from '../lib/time/backoff';
 import { ciWatched, pollVerdict } from '../lib/time/cadence';
 import { poll } from './poller';
 import { clearAlarms, IDLE, iso, recordPollFailure } from './pollState';
 
 const STATE = 'inbox';
+const MINUTE = 60_000;
 
 /**
  * `chrome.storage.session` key `inbox`: GitHub's `Last-Modified` of the last answer, when the
@@ -56,16 +57,29 @@ async function inboxChanged({ auth, state, interval, at }: LaneContext): Promise
     return changed;
   } catch (error) {
     if (!(error instanceof GitHubError)) throw error;
-    // A token without inbox access stops asking for this browser session.
-    if (['forbidden', 'not_found'].includes(error.kind))
-      await chrome.storage.session.set({ [STATE]: { lastModified: null, off: true } });
-    // A rejected token or an exhausted budget holds every poll, as if a poll had met it.
-    if (isPollBudgetFailure(error.kind))
-      await withLock('prowl:poll', async () => {
-        await withSignedIn(auth, () => recordPollFailure(error, state, Date.now(), interval));
-      });
+    await laneFailed(error, { auth, state, interval, at }, stored?.lastModified ?? null);
     return false;
   }
+}
+
+/**
+ * The inbox check failed. A token without inbox access stops asking for this browser session. A
+ * rate limit backs off only the lane: `/notifications` spends the REST budget, polls the GraphQL
+ * one (separate pools). A rejected token holds every poll, as if a poll had met it.
+ */
+async function laneFailed(error: GitHubError, lane: LaneContext, lastModified: string | null) {
+  const { auth, state, interval } = lane;
+  if (['forbidden', 'not_found'].includes(error.kind))
+    await chrome.storage.session.set({ [STATE]: { lastModified: null, off: true } });
+  if (error.kind === 'rate_limited') {
+    const now = Date.now();
+    const until = rateLimitedUntil(now, error) ?? now + MINUTE;
+    await chrome.storage.session.set({ [STATE]: { lastModified, nextAt: iso(until) } });
+  }
+  if (error.kind === 'unauthorized')
+    await withLock('prowl:poll', async () => {
+      await withSignedIn(auth, () => recordPollFailure(error, state, Date.now(), interval));
+    });
 }
 
 /** Runs on the `inbox` alarm (`at`: its scheduled time). Never rejects. */
