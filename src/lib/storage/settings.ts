@@ -106,6 +106,7 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
   sort: 'updated',
   groupByRepo: true,
   localAi: false,
+  singleKeyShortcuts: true,
   hideStaleAfterDays: 0,
   hideDrafts: false,
   hideBots: false,
@@ -207,6 +208,7 @@ export function normalizeSettings(value: unknown): Settings {
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
     localAi: bool(raw.localAi, DEFAULT_SETTINGS.localAi),
+    singleKeyShortcuts: bool(raw.singleKeyShortcuts, DEFAULT_SETTINGS.singleKeyShortcuts),
     // Keep explicit off values for older synced installs (missing stale keys default to 20).
     hideStaleAfterDays: 0,
     hideDrafts: false,

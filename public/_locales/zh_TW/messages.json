@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ 等 $P2$ 個",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "顯示堆疊 #$P1$ 的拉取請求",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "提交標題"
+  },
+  "mergeWhenReady": {
+    "message": "就緒後合併"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "檢查與審查通過後，GitHub 會將 $P1$ 加入 $P2$ 的合併佇列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "即使縮短，這個提取要求對裝置端 AI 來說仍然太長。"
+  },
+  "aiSummarizeAgain": {
+    "message": "重新摘要"
+  },
+  "aiExplainAgain": {
+    "message": "重新解釋"
+  },
+  "stackAndMore": {
+    "message": " 等 $P1$ 個",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "此堆疊另有 $P1$ 個未在此顯示：在其他區段中，或被篩選隱藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "此堆疊另有 $P1$ 個未在此顯示：在其他區段中，或被篩選隱藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "輪到你："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "單鍵快速鍵"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/ 和 ? 用於操作清單。若你使用語音輸入或常誤按按鍵，請關閉它們；方向鍵和 Enter 仍可使用。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "單鍵快速鍵已關閉。可在「設定 → 清單」中開啟。"
   },
   "reviewRequestedEventDescription": {
     "message": "要求你審查時，包括清單中新出現的拉取請求"

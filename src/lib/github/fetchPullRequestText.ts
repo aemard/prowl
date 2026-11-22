@@ -1,7 +1,8 @@
 /**
  * The words of a pull request, for the on-device AI: its description, latest comments and
  * reviews, and what its failing checks reported. Read on demand from an expanded card (never
- * polled, never stored), plain text only (`bodyText`), and cut to what a small model can read.
+ * polled, never stored), plain text only (`bodyText`), each item clipped; the on-device AI fits
+ * the whole to its model's input quota (`fitInput`), newest discussion first.
  */
 import { t } from '../i18n';
 import type { GitHubClient } from './client';
@@ -13,8 +14,8 @@ query ProwlPullRequestText($id: ID!) {
     ... on PullRequest {
       title
       bodyText
-      comments(last: 15) { nodes { author { login } bodyText } }
-      reviews(last: 10) { nodes { author { login } state bodyText } }
+      comments(last: 15) { nodes { author { login } bodyText createdAt } }
+      reviews(last: 10) { nodes { author { login } state bodyText createdAt } }
       commits(last: 1) {
         nodes {
           commit {
@@ -42,6 +43,7 @@ type Nodes<T> = { nodes: (T | null)[] | null } | null | undefined;
 interface Said {
   author: { login: string } | null;
   bodyText: string;
+  createdAt?: string;
   state?: string;
 }
 interface Annotation {
@@ -73,14 +75,14 @@ export interface TextData {
 
 /** What the AI reads: the conversation, and the reports of the failing checks. */
 export interface PullRequestText {
-  /** Title, description, then comments and reviews oldest first, `author: text`. */
-  discussion: string;
+  /** Title and description. */
+  description: string;
+  /** Comments and reviews, oldest first, one `author (kind): text` each. */
+  discussion: string[];
   /** One block per failing check: its name, title, summary and annotations. */
-  failures: string;
+  failures: string[];
 }
 
-/** About 3 000 tokens each: what Gemini Nano reads comfortably. */
-const MAX_CHARS = 12_000;
 const MAX_ITEM = 1_500;
 const FAILED = new Set(['FAILURE', 'TIMED_OUT', 'ACTION_REQUIRED', 'STARTUP_FAILURE', 'ERROR']);
 
@@ -110,19 +112,25 @@ export function mapPullRequestText(node: NonNullable<TextData['node']>): PullReq
     item.bodyText.trim()
       ? `${item.author?.login ?? 'ghost'} (${kind}): ${clip(item.bodyText, MAX_ITEM)}`
       : '';
+  // Comments and reviews interleaved by date, so trimming the oldest keeps the latest exchange.
   const discussion = [
-    node.title ?? '',
-    clip(node.bodyText ?? '', MAX_ITEM * 2),
-    ...present(node.comments).map(said('comment')),
-    ...present(node.reviews).map((r) => said(`review, ${(r.state ?? '').toLowerCase()}`)(r)),
-  ].filter(Boolean);
+    ...present(node.comments).map((c) => ({ at: c.createdAt, text: said('comment')(c) })),
+    ...present(node.reviews).map((r) => ({
+      at: r.createdAt,
+      text: said(`review, ${(r.state ?? '').toLowerCase()}`)(r),
+    })),
+  ]
+    .sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''))
+    .flatMap(({ text }) => text || []);
   const contexts = present(node.commits).flatMap((c) =>
     present(c.commit.statusCheckRollup?.contexts),
   );
-  const failures = contexts.flatMap((context) => failureOf(context) ?? []);
   return {
-    discussion: clip(discussion.join('\n\n'), MAX_CHARS),
-    failures: clip(failures.join('\n\n'), MAX_CHARS),
+    description: [node.title ?? '', clip(node.bodyText ?? '', MAX_ITEM * 2)]
+      .filter(Boolean)
+      .join('\n\n'),
+    discussion,
+    failures: contexts.flatMap((context) => failureOf(context) ?? []),
   };
 }
 

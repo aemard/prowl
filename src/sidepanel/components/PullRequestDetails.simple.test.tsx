@@ -66,6 +66,9 @@ it('orders maintenance before review and auto-merge controls, and omits unknown 
   });
   render(<PullRequestDetails pr={pr} id="detail" />);
   const actions = within(screen.getByRole('group', { name: 'Actions for #1' }));
+  // Merge controls wait for the detail: it says whether a merge queue applies.
+  expect(actions.queryByRole('button', { name: /auto-merge/ })).toBeNull();
+  await waitFor(() => expect(details.value[pr.id]?.loading).toBe(false));
   expect(actions.getAllByRole('button').map((button) => button.textContent)).toEqual([
     'Re-run failed',
     'Update branch',
@@ -74,7 +77,6 @@ it('orders maintenance before review and auto-merge controls, and omits unknown 
     'Comment',
     'Enable auto-merge',
   ]);
-  await waitFor(() => expect(details.value[pr.id]?.loading).toBe(false));
   expect(screen.queryByText('Requirement unknown')).toBeNull();
   expect(screen.queryByText('Merge', { selector: '.pr-detail__label' })).toBeNull();
   expect(screen.queryByText('Actions', { selector: '.pr-detail__label' })).toBeNull();

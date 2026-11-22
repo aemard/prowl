@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ und $P2$ weitere",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Pull Requests von Stack #$P1$ anzeigen",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "Commit-Titel"
+  },
+  "mergeWhenReady": {
+    "message": "Mergen, sobald bereit"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub reiht $P1$ in die Merge-Queue von $P2$ ein, sobald Checks und Reviews bestanden sind.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "Dieser Pull Request ist selbst gekürzt zu lang für die KI auf dem Gerät."
+  },
+  "aiSummarizeAgain": {
+    "message": "Neu zusammenfassen"
+  },
+  "aiExplainAgain": {
+    "message": "Neu erklären"
+  },
+  "stackAndMore": {
+    "message": " und $P1$ weitere",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ weiterer in diesem Stack wird hier nicht gezeigt: ein anderer Bereich oder der Filter.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ weitere in diesem Stack werden hier nicht gezeigt: ein anderer Bereich oder der Filter.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Du bist dran:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Tastenkürzel mit einer Taste"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / und ? steuern die Liste. Schalte sie aus, wenn du Spracheingabe nutzt oder versehentlich Tasten drückst; Pfeiltasten und Eingabe funktionieren weiter."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Tastenkürzel mit einer Taste sind aus. Schalte sie unter Einstellungen → Liste ein."
   },
   "reviewRequestedEventDescription": {
     "message": "Wenn dein Review angefragt wird, auch bei einem Pull Request, der neu in der Liste ist"

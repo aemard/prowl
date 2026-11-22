@@ -1,7 +1,7 @@
 {
   "$comment": "Gzipped byte budgets checked by scripts/check-size.mjs after `pnpm build`.",
   "entries": {
-    "sidepanel/index.html": { "js": 73728, "css": 12288 },
+    "sidepanel/index.html": { "js": 61440, "css": 12288 },
     "background/index.ts": { "js": 36864 }
   },
   "zip": 409600

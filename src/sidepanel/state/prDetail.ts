@@ -1,14 +1,10 @@
 /**
  * Expanded cards and their details. Module signals, like the list's tab and filter, so an
  * expanded card stays open across background refreshes, tab switches and a visit to Settings.
- * Details are fetched when a card is expanded (never polled) and kept in memory only.
+ * Details are fetched when a card is expanded (never polled; `loadDetail`, with the details
+ * chunk) and kept in memory only.
  */
 import { computed, effect, signal } from '@preact/signals';
-import { env } from '../../lib/env';
-import { createGitHubClient } from '../../lib/github/client';
-import { GitHubError } from '../../lib/github/errors';
-import { fetchPullRequestDetail } from '../../lib/github/fetchPullRequestDetail';
-import { t } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { auth } from './store';
 
@@ -48,6 +44,16 @@ export const detailKey = (pr: PullRequest) =>
     pr.requestedReviewers,
   ]);
 
+/**
+ * What is known of `pr`'s detail as the PR is now: the loaded detail, or that reading it failed;
+ * neither while it loads (an older detail does not count: the PR changed since).
+ */
+export function detailOf(pr: PullRequest): { detail?: PullRequestDetail; failed: boolean } {
+  const entry = details.value[pr.id];
+  if (entry?.key !== detailKey(pr) || entry.loading) return { failed: false };
+  return entry.error === undefined ? { detail: entry.detail, failed: false } : { failed: true };
+}
+
 export function toggleExpanded(id: string): void {
   const open = expandedIds.value;
   expandedIds.value = open.includes(id) ? open.filter((other) => other !== id) : [...open, id];
@@ -65,36 +71,3 @@ effect(() => {
   expandedIds.value = [];
   details.value = {};
 });
-
-const put = (id: string, entry: DetailEntry) => {
-  details.value = { ...details.value, [id]: entry };
-};
-
-/**
- * Fetches the detail of `pr` unless the entry already holds it (or is loading it) for its
- * current `detailKey`; a failed one is tried again. Retains the previous entry in memory while a
- * newer one loads (the view only uses matching completed entries). Publishes only while the
- * loading entry and auth session still belong to this request.
- */
-export async function loadDetail(pr: PullRequest): Promise<void> {
-  const session = auth.value;
-  const token = session?.token;
-  const key = detailKey(pr);
-  const current = details.value[pr.id];
-  if (!token || (current?.key === key && (current.loading || !current.error))) return;
-  const request: DetailEntry = { key, detail: current?.detail, loading: true };
-  put(pr.id, request);
-  const outcome: Partial<DetailEntry> = await fetchPullRequestDetail(
-    createGitHubClient({ token, apiUrl: env.apiUrl }),
-    pr.id,
-    pr,
-  ).then(
-    (detail) => ({ detail }),
-    (error: unknown) => ({
-      error: error instanceof GitHubError ? error.message : t('couldNotLoadTheDetails'),
-    }),
-  );
-  if (auth.value === session && details.value[pr.id] === request) {
-    put(pr.id, { key, detail: current?.detail, ...outcome, loading: false });
-  }
-}

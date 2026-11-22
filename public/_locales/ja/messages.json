@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ ほか $P2$ 件",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "スタック #$P1$ のプルリクエストを表示",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "コミットのタイトル"
+  },
+  "mergeWhenReady": {
+    "message": "準備ができたらマージ"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "チェックとレビューが通ると、GitHub が $P1$ を $P2$ のマージキューに追加します。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "このプルリクエストは、短くしてもデバイス上の AI には長すぎます。"
+  },
+  "aiSummarizeAgain": {
+    "message": "もう一度要約"
+  },
+  "aiExplainAgain": {
+    "message": "もう一度説明"
+  },
+  "stackAndMore": {
+    "message": " ほか $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "あなたの番："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "1 キーのショートカット"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/、? でリストを操作します。音声入力を使う場合や誤ってキーを押してしまう場合はオフにしてください。矢印キーと Enter は引き続き使えます。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "1 キーのショートカットはオフです。設定 → リストでオンにできます。"
   },
   "reviewRequestedEventDescription": {
     "message": "あなたのレビューが依頼されたとき（リストに新しく加わったプルリクエストも含む）"

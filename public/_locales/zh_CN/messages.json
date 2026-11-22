@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$ 等 $P2$ 个",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "显示堆栈 #$P1$ 的拉取请求",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "提交标题"
+  },
+  "mergeWhenReady": {
+    "message": "就绪后合并"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "检查和审查通过后，GitHub 会将 $P1$ 加入 $P2$ 的合并队列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "即使缩短，这个拉取请求对设备端 AI 来说仍然太长。"
+  },
+  "aiSummarizeAgain": {
+    "message": "重新总结"
+  },
+  "aiExplainAgain": {
+    "message": "重新解释"
+  },
+  "stackAndMore": {
+    "message": " 等 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "轮到你："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "单键快捷键"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/ 和 ? 用于操作列表。如果你使用语音输入或常误按按键，请关闭它们；方向键和回车键仍可使用。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "单键快捷键已关闭。可在“设置 → 列表”中开启。"
   },
   "reviewRequestedEventDescription": {
     "message": "请求你审查时，包括列表中新出现的拉取请求"

@@ -197,6 +197,8 @@ function StatusBadges({ statuses }: { statuses: Statuses }) {
         const Icon = STATUS_ICONS[icon];
         return (
           <Badge key={id} tone={tone} variant="plain" icon={<Icon size={12} />} title={detail}>
+            {/* A turn chip reads like an action ("Fix CI") but is a status: say whose move it is. */}
+            {icon === 'bell' && <span class="sr-only">{t('yourTurnPrefix')} </span>}
             {label}
           </Badge>
         );

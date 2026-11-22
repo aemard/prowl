@@ -12,7 +12,7 @@ import { TextField } from '../components/ui/TextField';
 import { selectSection } from '../state/listContext';
 import { navigate } from '../state/router';
 import { pollState } from '../state/store';
-import { KINDS, SectionContent } from './ListSections';
+import { SectionContent } from './ListSections';
 import {
   filterQuery,
   type LoadedListData,
@@ -20,6 +20,7 @@ import {
   useListData,
   useListVisibility,
 } from './ListState';
+import { KINDS } from './sectionKinds';
 import './List.css';
 
 export {

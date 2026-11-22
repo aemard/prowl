@@ -51,8 +51,10 @@ test('the Your turn section lists what waits on you, with why, and matches the b
   await expect(tab).toHaveText('Your turn2');
   await tab.click();
   await expect(panel.locator('.pr-card__title')).toHaveText(['Asks for my review', 'My red build']);
-  await expect(panel.locator('.pr-card__chips').getByText('Review', { exact: true })).toBeVisible();
-  await expect(panel.getByText('Fix CI · 1 failing', { exact: true })).toBeVisible();
+  await expect(
+    panel.locator('.pr-card__chips').getByText('Your turn: Review', { exact: true }),
+  ).toBeVisible();
+  await expect(panel.getByText('Your turn: Fix CI · 1 failing', { exact: true })).toBeVisible();
   await expectNoA11yViolations(panel);
   expect(await serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('2');
 });

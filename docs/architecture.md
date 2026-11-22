@@ -41,7 +41,7 @@ in-memory updates that the next snapshot replaces.
 | `src/lib/diff/` | `diffSnapshots(prev, next, viewer)` → `PrEvent[]`. Pure. | **95%** |
 | `src/lib/notify/` | `filterEvents` (which events notify) and the notification texts (`messages.ts`). Pure. | 80% |
 | `src/lib/badge/` | `computeBadge(snapshot, prLocal, mode, now)` → text, tooltip and color flag of the toolbar badge. Pure. | 80% |
-| `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`. Panel only. | 80% |
+| `src/lib/ai/` | `builtInAi.ts`: Chrome's on-device AI (Summarizer, Prompt and Translator APIs, feature-detected): `aiAvailability`, `downloadModel`, `summarize`, `ask`, `fitInput` (trims an input to the model's measured quota, oldest discussion first). Panel only. | 80% |
 | `src/lib/turn/` | `whoseTurn(pr, viewer, teams)` → `Turn` (`you` / `team` / `them` / `none`, a reason, since when) and `yourTurnIds(snapshot)`, the "Your turn" section. Pure; see [Whose turn](#whose-turn). | 80% |
 | `src/lib/activity.ts` | `activityKey(pr)`: the facts of a PR that count as activity for unseen (see Unseen). Pure. | 80% |
 | `src/lib/url.ts` | `isGitHubUrl`: the one allowlist for URLs Prowl opens (worker and panel) | 80% |
@@ -515,10 +515,15 @@ other's branches stay separate cards. Should GitHub refuse the search because th
 gone, `fetchSearch.ts` repeats it without the selection (`withoutStacks`) and the PRs list as
 outside any stack, so a change to that feature costs the stacks, never the list. In the list, `listItems(prs)` (`src/lib/stacks.ts`, pure)
 turns a section's PRs into items: a lone PR, or one stack holding its members (bottom first),
-placed where the first member falls in the section's order. `StackItem` shows the stack's
-repository, number, size and base, the bottom PR's title, a bar and counts by `stackState`
-(ready, in progress, blocked, draft), one bell chip per reason it is the viewer's move, and,
-opened, the members as the usual cards (details, actions) on a rail numbered by position.
+placed where the first member falls in the section's order. `StackItem` (loaded on first use,
+like `TurnSummary`) shows the stack's repository, number, size and base, the bottom PR's title
+as a link to it (with "and N more" as text beside it), and, counted over every member Prowl
+knows from all sections (`stackMembers(snapshot.pullRequests, id)`), a bar and counts by
+`stackState` (ready, in progress, blocked, draft), one bell chip per reason it is the viewer's
+move ("Your turn:" for screen readers, since the chip reads like an action), and Merge.
+Opened, it lists the members this section shows (after the filter) as the usual cards on a rail
+numbered by position, then how many are elsewhere (another section or the filter) and how many
+are in none of the viewer's sections.
 `stackSummary` finds the ready run from position 1; "Merge K of N" (or "Merge the whole stack")
 confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
 GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
@@ -530,10 +535,17 @@ as its own. GitHub merges the run atomically or not at all; the GraphQL merge mu
 stacked PRs.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
-details), a lone PR's merge control becomes "Add to merge queue" (`ProwlEnqueue`, pinned to the
-head the user saw, behind a confirmation) or, for a queued PR, its position, GitHub's estimate
-and "Remove from merge queue" (`ProwlDequeue`). Direct merge and auto-merge are not offered
-there: GitHub refuses them.
+details), a lone PR's merge control (`MergeQueueAction`) follows the readiness rules of Merge
+(`mergeOptions` in `components/mergeReadiness.ts`): a ready PR offers "Add to merge queue"
+(`ProwlEnqueue`, pinned to the head the user saw, behind a confirmation); one that is not ready
+yet offers GitHub's "Merge when ready", which is auto-merge on a queue branch
+(`ProwlEnableAutoMerge`: GitHub queues the PR once its checks and reviews pass; the queue's own
+settings decide the method and message, so the dialog asks for neither); a queued PR shows its
+position, GitHub's estimate and "Remove from merge queue" (`ProwlDequeue`). Red CI, conflicts,
+requested changes or unverified merge facts offer no queue action, and the queue is no bypass:
+"Merge without waiting" is not offered there. Until the card's detail has loaded, the merge
+control shows nothing, since only the detail says whether a queue applies; if the detail cannot
+be read, a "Merge on GitHub" link stands in.
 
 ### Badge
 
@@ -620,7 +632,7 @@ All persistent state lives in `chrome.storage.local` under the `STORAGE_KEYS` of
     `team_review_requested`, which takes the state of `review_requested`: before US-037 that
     section included team requests. Custom
     sections need a non-empty `query`; a missing, invalid or duplicate id becomes `custom-N`.
-  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `groupByRepo` is a boolean (default off); the legacy hiding keys are always normalized off, quiet hours are `HH:MM`, repo filters are `owner` or
+  - `pollIntervalMinutes` is an integer in 2-60 (stored 1 is raised to 2), `maxPerSection` in 1-100, `groupByRepo` is a boolean (default off), `singleKeyShortcuts` a boolean (default on); the legacy hiding keys are always normalized off, quiet hours are `HH:MM`, repo filters are `owner` or
     `owner/name` (deduplicated, case-insensitive), `unfollowedTeams` are team keys
     (`org/slug`, lowercased, deduplicated; default empty = follow every team, new ones
     included). A field added later needs no migration: a
@@ -762,7 +774,7 @@ signal (`state/store.ts`).
   compose them. One CSS file per component, tokens only (no raw colors).
 - List (`views/List.tsx`): sections come from `settings.sections` (enabled ones; a single one has
   no section bar), each item of the bar at the bottom shows its number of PRs that match the
-  quick filter; `KINDS` in `views/ListSections.tsx` maps each `SectionKind` to its bar icon, short name and empty-list hint.
+  quick filter; `KINDS` in `views/sectionKinds.ts` maps each `SectionKind` to its bar icon, short name and empty-list hint.
   PRs are `snapshot.sections[id]` -> `snapshot.pullRequests`, filtered and sorted by `settings.sort` in
   `views/ListModel.ts` (title, repo, `#number`, author, label names; every word must match), then
   split by `splitSection` into cards (what the bar counts) and snoozed PRs. The selected tab,
@@ -846,13 +858,16 @@ signal (`state/store.ts`).
   only with `viewerCanDisableAutoMerge`. Missing cached permission values mean false.
   These permissions are fetched by `ProwlMergeState`, cached with the merge facts and cleared
   when the head OID changes. Dialogs use only allowed methods, default to `defaultMergeMethod`
-  (else the first allowed), and omit the commit title for rebase. Multiple methods show a select;
+  (else the first allowed), and omit the commit title for rebase. The commit title starts on
+  GitHub's own for the method; an edit belongs to the method it was written for (switching shows
+  the other method's title, switching back restores the edit). Multiple methods show a select;
   one method is named in confirmation, with focus on the first available field.
   Mutations use the last polled `headSha`; GitHub refusals close the dialog, toast the reason,
   preserve the choices and force a refresh. Successful merges toast and refresh as well.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
-  reset when the token changes or goes away. `loadDetail(pr)` runs when `PullRequestDetails`
+  reset when the token changes or goes away. `loadDetail(pr)` (`state/loadDetail.ts`, in the
+  details chunk with the detail query) runs when `PullRequestDetails`
   mounts and whenever `detailKey(pr)` changes (activity, check counts, merge facts: a finished
   check does not always touch `updatedAt`); a poll that changes none of them costs nothing. The
   previous detail stays on screen while a newer one loads, an answer overtaken by a newer request

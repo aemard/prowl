@@ -26,15 +26,46 @@ describe('fetchPullRequestText', () => {
       ),
       'PR_1',
     );
-    expect(text.discussion).toBe(
-      'Improve widget\n\nMakes the widget faster.\n\nbob (comment): Can you add a test?\n\ncarol (review, approved): LGTM',
-    );
-    expect(text.failures).toBe(
-      'test\n1 test failed\nwidget.test.ts failed\n- src/widget.ts:12: expected 2, got 3\n\nci/circle: ERROR',
-    );
+    expect(text.description).toBe('Improve widget\n\nMakes the widget faster.');
+    expect(text.discussion).toEqual([
+      'bob (comment): Can you add a test?',
+      'carol (review, approved): LGTM',
+    ]);
+    expect(text.failures).toEqual([
+      'test\n1 test failed\nwidget.test.ts failed\n- src/widget.ts:12: expected 2, got 3',
+      'ci/circle: ERROR',
+    ]);
   });
 
-  it('skips empty comments, names deleted authors and caps long text', () => {
+  it('interleaves comments and reviews by date, oldest first', () => {
+    const text = mapPullRequestText(
+      textNode({
+        comments: {
+          nodes: [
+            { author: { login: 'bob' }, bodyText: 'first', createdAt: '2026-11-01T00:00:00Z' },
+            { author: { login: 'bob' }, bodyText: 'third', createdAt: '2026-11-03T00:00:00Z' },
+          ],
+        },
+        reviews: {
+          nodes: [
+            {
+              author: { login: 'carol' },
+              state: 'COMMENTED',
+              bodyText: 'second',
+              createdAt: '2026-11-02T00:00:00Z',
+            },
+          ],
+        },
+      }),
+    );
+    expect(text.discussion).toEqual([
+      'bob (comment): first',
+      'carol (review, commented): second',
+      'bob (comment): third',
+    ]);
+  });
+
+  it('skips empty comments, names deleted authors and clips long text', () => {
     const text = mapPullRequestText(
       textNode({
         bodyText: 'x'.repeat(20_000),
@@ -48,9 +79,9 @@ describe('fetchPullRequestText', () => {
         commits: null,
       }),
     );
-    expect(text.discussion.length).toBeLessThanOrEqual(12_001);
-    expect(text.discussion).toContain('ghost (comment): hi');
-    expect(text.failures).toBe('');
+    expect(text.description.length).toBeLessThanOrEqual(3_001 + 'Improve widget\n\n'.length);
+    expect(text.discussion).toEqual(['ghost (comment): hi']);
+    expect(text.failures).toEqual([]);
   });
 
   it('throws not_found when the pull request is gone', async () => {

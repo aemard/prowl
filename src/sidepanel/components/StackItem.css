@@ -36,14 +36,18 @@
   overflow-wrap: anywhere;
 }
 
-.stack-item .stack-item__title {
-  color: var(--color-fg);
-  font-weight: var(--weight-semibold);
-  text-decoration: none;
+.stack-item__title {
+  color: var(--color-fg-muted);
   overflow-wrap: anywhere;
 }
 
-.stack-item .stack-item__title:hover {
+.stack-item .stack-item__title a {
+  color: var(--color-fg);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.stack-item .stack-item__title a:hover {
   text-decoration: underline;
 }
 

@@ -42,6 +42,7 @@ describe('DEFAULT_SETTINGS', () => {
       sort: 'updated',
       groupByRepo: true,
       localAi: false,
+      singleKeyShortcuts: true,
       hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,
@@ -228,6 +229,12 @@ describe('normalizeSettings', () => {
     expect([settings.badge, settings.theme, settings.sort]).toEqual(['turn', 'system', 'updated']);
     const valid = normalizeSettings({ badge: 'off', theme: 'light', sort: 'created' });
     expect([valid.badge, valid.theme, valid.sort]).toEqual(['off', 'light', 'created']);
+  });
+
+  it('keeps single-key shortcuts on unless turned off with a boolean', () => {
+    expect(normalizeSettings({}).singleKeyShortcuts).toBe(true);
+    expect(normalizeSettings({ singleKeyShortcuts: 'no' }).singleKeyShortcuts).toBe(true);
+    expect(normalizeSettings({ singleKeyShortcuts: false }).singleKeyShortcuts).toBe(false);
   });
 
   it('cleans repository filters', () => {

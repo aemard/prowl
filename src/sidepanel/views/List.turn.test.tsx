@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/preact';
+import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { buildSnapshotOf } from '../../test/panel';
 import { snapshot } from '../state/store';
@@ -16,7 +16,9 @@ const failing = {
 
 /** A chip on a card, not the section tab of the same name. */
 const chip = (text: string) =>
-  screen.queryAllByText(text).find((el) => el.closest('.pr-card__chips'));
+  [...document.querySelectorAll('.pr-card__chips .ui-badge__label')].find(
+    (label) => label.textContent === text,
+  );
 
 describe('Your turn section', () => {
   beforeEach(() => {
@@ -44,15 +46,17 @@ describe('Your turn section', () => {
     expect(tab.textContent).toBe('Your turn2');
     fireEvent.click(tab);
     expect(cardTitles()).toEqual(['Asked of me', 'Mine, red']);
-    expect(screen.getByText('Fix CI · 1 failing')).toBeTruthy();
-    expect(chip('Review')?.closest('[title]')?.getAttribute('title')).toMatch(
+    // A status that reads as one: whose move it is, then what to do.
+    expect(chip('Your turn: Fix CI · 1 failing')).toBeTruthy();
+    expect(chip('Your turn: Review')?.closest('[title]')?.getAttribute('title')).toMatch(
       /^Your turn: Review, since /,
     );
   });
 
-  it('sums up the queue above the list', () => {
+  it('sums up the queue above the list', async () => {
     render(<ListView />);
     fireEvent.click(screen.getByRole('tab', { name: /^Your turn/ }));
+    await waitFor(() => expect(document.querySelector('.turn-summary')).not.toBeNull());
     expect(document.querySelector('.turn-summary')?.textContent).toMatch(
       /^Waiting on you: 2, the oldest since .+ ago\./,
     );
@@ -60,7 +64,8 @@ describe('Your turn section', () => {
 
   it('shows the chip on cards of the other sections too', () => {
     render(<ListView />);
-    expect(screen.getByText('Fix CI · 1 failing')).toBeTruthy();
-    expect(chip('Review')).toBeUndefined();
+    // A status that reads as one: whose move it is, then what to do.
+    expect(chip('Your turn: Fix CI · 1 failing')).toBeTruthy();
+    expect(chip('Your turn: Review')).toBeUndefined();
   });
 });

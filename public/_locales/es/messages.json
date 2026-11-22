@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, y $P2$ más",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Mostrar las pull requests de la pila #$P1$",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "Título del commit"
+  },
+  "mergeWhenReady": {
+    "message": "Fusionar cuando esté lista"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub añade $P1$ a la cola de fusión de $P2$ en cuanto pasen sus checks y revisiones.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "Esta pull request es demasiado larga para la IA del dispositivo, incluso acortada."
+  },
+  "aiSummarizeAgain": {
+    "message": "Resumir de nuevo"
+  },
+  "aiExplainAgain": {
+    "message": "Explicar de nuevo"
+  },
+  "stackAndMore": {
+    "message": ", y $P1$ más",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ más de esta pila no se muestra aquí: está en otra sección o la oculta el filtro.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ más de esta pila no se muestran aquí: están en otra sección o las oculta el filtro.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Tu turno:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Atajos de una sola tecla"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / y ? actúan sobre la lista. Desactívalos si usas entrada por voz o pulsas teclas sin querer; las flechas e Intro siguen funcionando."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Los atajos de una sola tecla están desactivados. Actívalos en Ajustes → Lista."
   },
   "reviewRequestedEventDescription": {
     "message": "Cuando se solicita tu revisión, también en una pull request nueva en la lista"

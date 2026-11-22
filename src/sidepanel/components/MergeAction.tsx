@@ -1,320 +1,119 @@
-import { useState } from 'preact/hooks';
-import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
-import { mergePullRequest, setAutoMerge } from '../../lib/github/mergeActions';
+import { setAutoMerge } from '../../lib/github/mergeActions';
 import { t } from '../../lib/i18n';
 import type { MergeMethod, PullRequest } from '../../lib/model';
-import { sendToBackground } from '../state/background';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
-import { detailKey, details } from '../state/prDetail';
+import { detailOf } from '../state/prDetail';
 import { auth } from '../state/store';
 import { GitHubLink } from './GitHubLink';
-import { AlertIcon, GitMergeIcon } from './icons';
+import { GitMergeIcon } from './icons';
+import { MergeDialog, type MergeDialogProps, useMergeControls } from './MergeDialog';
 import { MergeQueueAction } from './MergeQueueAction';
-import { mergeReadiness } from './mergeReadiness';
+import { type MergePlacement, mergeOptions } from './mergeReadiness';
 import { Button } from './ui/Button';
-import { Dialog } from './ui/Dialog';
-import { Select } from './ui/Select';
-import { TextField } from './ui/TextField';
 import './MergeAction.css';
 
-const METHODS: Record<MergeMethod, string> = {
-  get merge() {
-    return t('createAMergeCommit');
-  },
-  get squash() {
-    return t('squashAndMerge');
-  },
-  get rebase() {
-    return t('rebaseAndMerge');
-  },
-};
-
-function useMergeControls(pr: PullRequest) {
-  const [confirming, setConfirming] = useState(false);
-  const [picked, setPicked] = useState<MergeMethod>();
-  // null until the user edits it: the field shows GitHub's own title for the chosen method.
-  const [edited, setTitle] = useState<string | null>(null);
-  const pending = pendingActions.value[pr.id];
-  const titleFor = (method: MergeMethod) => edited ?? defaultCommitTitle(pr, method);
-  // What is being sent cannot be taken back by closing the dialog.
-  const close = () => pending === undefined && setConfirming(false);
-  const merge = async (method: MergeMethod) => {
-    const merged = await runPrAction(pr, t('merge'), t('merged'), (client) =>
-      // Untouched, GitHub applies its own default, which is what the field showed.
-      mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title: edited ?? undefined }),
-    );
-    setConfirming(false);
-    if (merged) setTitle(null);
-    else void sendToBackground({ type: 'poll', reason: 'change' });
-  };
-  const enableAutoMerge = async (method: MergeMethod) => {
-    const enabled = await runPrAction(pr, t('enableAutoMerge'), t('autoMergeIsOnFor'), (client) =>
-      setAutoMerge(client, pr.id, method, pr.headSha, edited ?? undefined),
-    );
-    setConfirming(false);
-    if (enabled) setTitle(null);
-  };
-
-  return {
-    confirming,
-    setConfirming,
-    picked,
-    setPicked,
-    titleFor,
-    setTitle,
-    pending,
-    close,
-    merge,
-    enableAutoMerge,
-  };
-}
-
-type MergeControls = ReturnType<typeof useMergeControls>;
-
-/** The title GitHub gives the commit unless told otherwise (`PullRequestDetail.commitTitles`). */
-function defaultCommitTitle(pr: PullRequest, method: MergeMethod): string {
-  const titles = currentDetail(pr)?.commitTitles;
-  return (method === 'merge' ? titles?.merge : titles?.squash) ?? `${pr.title} (#${pr.number})`;
-}
-type Placement = 'merge' | 'auto' | 'all';
-type MergeDialogProps = {
-  pr: PullRequest;
-  method: MergeMethod;
-  controls: MergeControls;
-  placement?: Placement;
-};
-
-function currentDetail(pr: PullRequest) {
-  const entry = details.value[pr.id];
-  return entry?.key === detailKey(pr) && !entry.loading && !entry.error ? entry.detail : undefined;
-}
-
 /**
- * What the merge control may offer, so it never contradicts the blockers listed above it: Merge
- * when GitHub's verdict is ready; "Merge without waiting" when it is not but the viewer can bypass
- * the rules (`viewerCanMergeAsAdmin`); otherwise auto-merge when the repository and the viewer
- * allow it, or nothing. Unverified merge facts offer nothing until a refresh fills them in.
- * GitHub still has the last word; a refusal shows its reason in a toast and requests a refresh.
+ * Merging an open, non-draft PR the viewer can merge, in one of two places of the actions row:
+ * Merge before the review actions, auto-merge after them (`placement`). Nothing shows until the
+ * card's detail says whether the base branch merges through a merge queue: a direct Merge there
+ * is one GitHub refuses. With a queue, `MergeQueueAction` takes over; when the detail cannot be
+ * read, a link to merge on GitHub stands in.
  */
-function mergeOptions(pr: PullRequest, placement: Placement = 'all') {
-  const ready = isReadyToMerge(pr);
-  const known =
-    pr.mergeable !== 'unknown' &&
-    pr.mergeStateStatus !== 'unknown' &&
-    pr.reviewDecision !== 'unknown';
-  return {
-    ready,
-    canMerge: placement !== 'auto' && known && (ready || pr.viewerCanMergeAsAdmin === true),
-    offerAutoMerge:
-      placement !== 'merge' &&
-      known &&
-      !ready &&
-      pr.autoMergeAllowed &&
-      !pr.autoMerge &&
-      pr.viewerCanEnableAutoMerge === true,
-  };
-}
-
-export function MergeAction({ pr, placement = 'all' }: { pr: PullRequest; placement?: Placement }) {
-  const controls = useMergeControls(pr);
-  const methods = currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods;
-  const method =
-    [controls.picked, pr.defaultMergeMethod].find((m) => m && methods.includes(m)) ?? methods[0];
-  if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
-  // A merge queue replaces Merge and auto-merge: GitHub refuses a direct merge there.
-  const queue = currentDetail(pr)?.mergeQueue;
-  if (queue !== undefined)
-    return placement === 'auto' ? null : <MergeQueueAction pr={pr} queue={queue} />;
-  if (!method)
-    return placement === 'auto' ? null : (
-      <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
-    );
-  return (
-    <>
-      <MergeButtons pr={pr} controls={controls} placement={placement} />
-      {controls.confirming &&
-        (mergeOptions(pr, placement).canMerge || mergeOptions(pr, placement).offerAutoMerge) && (
-          <MergeDialog pr={pr} method={method} controls={controls} placement={placement} />
-        )}
-    </>
-  );
-}
-
-function MergeButtons({
+export function MergeAction({
   pr,
-  controls,
-  placement,
+  placement = 'all',
 }: {
   pr: PullRequest;
-  controls: MergeControls;
-  placement: Placement;
+  placement?: MergePlacement;
 }) {
-  const { pending, setConfirming } = controls;
-  const ref = prRef(pr);
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  const label = canMerge ? (ready ? t('merge') : t('mergeWithoutWaiting')) : t('enableAutoMerge');
+  const { detail, failed } = detailOf(pr);
+  if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
+  if (!detail)
+    return failed && placement !== 'auto' ? (
+      <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
+    ) : null;
+  const methods = detail.allowedMergeMethods ?? pr.allowedMergeMethods;
   return (
     <>
-      {(canMerge || offerAutoMerge) && (
-        <Button
-          size="sm"
-          variant={ready ? 'primary' : 'secondary'}
-          icon={<GitMergeIcon size={12} />}
-          aria-label={t('message2', label, ref)}
-          loading={pending === (canMerge ? t('merge') : t('enableAutoMerge'))}
-          disabled={
-            pending !== undefined && pending !== (canMerge ? t('merge') : t('enableAutoMerge'))
-          }
-          onClick={() => setConfirming(true)}
-        >
-          {label}
-        </Button>
+      {detail.mergeQueue !== undefined ? (
+        <MergeQueueAction
+          pr={pr}
+          queue={detail.mergeQueue}
+          placement={placement}
+          method={pick(methods, pr.defaultMergeMethod)}
+        />
+      ) : methods.length > 0 ? (
+        <DirectMerge pr={pr} detail={detail} methods={methods} placement={placement} />
+      ) : (
+        placement !== 'auto' && <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
       )}
-      {placement !== 'merge' && pr.autoMerge && pr.viewerCanDisableAutoMerge === true && (
-        <Button
-          size="sm"
-          aria-label={t('of', t('turnOffAutoMerge'), ref)}
-          loading={pending === t('turnOffAutoMerge')}
-          disabled={pending !== undefined && pending !== t('turnOffAutoMerge')}
-          onClick={() =>
-            void runPrAction(pr, t('turnOffAutoMerge'), t('autoMergeIsOffFor'), (client) =>
-              setAutoMerge(client, pr.id, null, pr.headSha),
-            )
-          }
-        >
-          {t('turnOffAutoMerge')}
-        </Button>
+      {placement !== 'merge' && <TurnOffAutoMerge pr={pr} />}
+    </>
+  );
+}
+
+/** The first of `preferred` that `methods` allows, else the first allowed one. */
+const pick = (methods: MergeMethod[], ...preferred: (MergeMethod | undefined)[]) =>
+  [...preferred, ...methods].find((m): m is MergeMethod => m !== undefined && methods.includes(m));
+
+/** Merge (or "Merge without waiting", or "Enable auto-merge") and its confirmation. */
+function DirectMerge({
+  pr,
+  detail,
+  methods,
+  placement,
+}: Omit<MergeDialogProps, 'method' | 'controls'>) {
+  const controls = useMergeControls(pr, detail);
+  const method = pick(methods, controls.picked, pr.defaultMergeMethod);
+  const { pending, setConfirming } = controls;
+  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
+  if (!method || (!canMerge && !offerAutoMerge)) return null;
+  const action = canMerge ? t('merge') : t('enableAutoMerge');
+  const label = canMerge ? (ready ? t('merge') : t('mergeWithoutWaiting')) : action;
+  return (
+    <>
+      <Button
+        size="sm"
+        variant={ready ? 'primary' : 'secondary'}
+        icon={<GitMergeIcon size={12} />}
+        aria-label={t('message2', label, prRef(pr))}
+        loading={pending === action}
+        disabled={pending !== undefined && pending !== action}
+        onClick={() => setConfirming(true)}
+      >
+        {label}
+      </Button>
+      {controls.confirming && (
+        <MergeDialog
+          pr={pr}
+          detail={detail}
+          methods={methods}
+          method={method}
+          controls={controls}
+          placement={placement}
+        />
       )}
     </>
   );
 }
 
-function MergeDialog({ pr, method, controls, placement = 'all' }: MergeDialogProps) {
-  const { pending, close, merge, enableAutoMerge } = controls;
-  const ref = prRef(pr);
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  // The modal hides the blockers listed above the button: the dialog repeats them.
-  const blockers = ready
-    ? []
-    : mergeReadiness(pr, currentDetail(pr))
-        .filter(({ tone }) => tone !== 'neutral' && tone !== 'success')
-        .map(({ text }) => text.replace(/^Blocked: /, ''))
-        .map((text) => text.charAt(0).toLowerCase() + text.slice(1));
+/** "Turn off auto-merge" while it is on and the viewer may turn it off, with or without a queue. */
+function TurnOffAutoMerge({ pr }: { pr: PullRequest }) {
+  const pending = pendingActions.value[pr.id];
+  if (!pr.autoMerge || pr.viewerCanDisableAutoMerge !== true) return null;
   return (
-    <Dialog
-      open
-      onClose={close}
-      title={t('mergePullRequest')}
-      description={
-        !canMerge
-          ? t('letGitHubMergeIntoOnceItsChecksAndReviewsPass', ref, pr.baseRefName)
-          : offerAutoMerge
-            ? t('mergeIntoNowOrLetGithubMergeItOnce', ref, pr.baseRefName)
-            : t('mergeInto', ref, pr.baseRefName)
-      }
-      footer={
-        <MergeFooter
-          methodLabel={
-            (currentDetail(pr)?.allowedMergeMethods ?? pr.allowedMergeMethods).length === 1
-              ? METHODS[method]
-              : t('merge')
-          }
-          pending={pending}
-          offerAutoMerge={offerAutoMerge}
-          canMerge={canMerge}
-          close={close}
-          merge={() => void merge(method)}
-          enableAutoMerge={() => void enableAutoMerge(method)}
-        />
+    <Button
+      size="sm"
+      aria-label={t('of', t('turnOffAutoMerge'), prRef(pr))}
+      loading={pending === t('turnOffAutoMerge')}
+      disabled={pending !== undefined && pending !== t('turnOffAutoMerge')}
+      onClick={() =>
+        void runPrAction(pr, t('turnOffAutoMerge'), t('autoMergeIsOffFor'), (client) =>
+          setAutoMerge(client, pr.id, null, pr.headSha),
+        )
       }
     >
-      {canMerge && !ready && <p>{t('youCanBypassTheBranchRulesForThisPullRequest')}</p>}
-      <MergeFields pr={pr} method={method} controls={controls} blockers={blockers} />
-    </Dialog>
-  );
-}
-
-function MergeFooter({
-  methodLabel,
-  pending,
-  offerAutoMerge,
-  canMerge,
-  close,
-  merge,
-  enableAutoMerge,
-}: {
-  methodLabel: string;
-  pending: string | undefined;
-  offerAutoMerge: boolean;
-  canMerge: boolean;
-  close: () => void;
-  merge: () => void;
-  enableAutoMerge: () => void;
-}) {
-  return (
-    <>
-      <Button disabled={pending !== undefined} onClick={close}>
-        {t('cancel')}
-      </Button>
-      {offerAutoMerge && (
-        <Button
-          variant="primary"
-          loading={pending === t('enableAutoMerge')}
-          disabled={pending !== undefined && pending !== t('enableAutoMerge')}
-          onClick={() => void enableAutoMerge()}
-        >
-          {t('enableAutoMerge')}
-        </Button>
-      )}
-      {canMerge && (
-        <Button
-          variant={offerAutoMerge ? 'secondary' : 'primary'}
-          loading={pending === t('merge')}
-          disabled={pending !== undefined && pending !== t('merge')}
-          onClick={() => void merge()}
-        >
-          {methodLabel}
-        </Button>
-      )}
-    </>
-  );
-}
-
-function MergeFields({
-  pr,
-  method,
-  controls,
-  blockers,
-}: MergeDialogProps & { blockers: string[] }) {
-  const { pending, titleFor, setPicked, setTitle } = controls;
-  const detail = currentDetail(pr);
-  const methods = detail?.allowedMergeMethods ?? pr.allowedMergeMethods;
-  return (
-    <>
-      <p class="merge-dialog__pr">{pr.title}</p>
-      {blockers.length > 0 && (
-        <p class="merge-dialog__blockers">
-          <AlertIcon size={12} />
-          <span>{t('notReadyReasons', blockers.join('; '))}</span>
-        </p>
-      )}
-      {methods.length > 1 && (
-        <Select
-          label={t('mergeMethod')}
-          value={method}
-          options={methods.map((value) => ({ value, label: METHODS[value] }))}
-          disabled={pending !== undefined}
-          onValueChange={setPicked}
-        />
-      )}
-      {method !== 'rebase' && (
-        <TextField
-          label={t('commitTitle')}
-          value={titleFor(method)}
-          readOnly={pending !== undefined}
-          onValueChange={setTitle}
-        />
-      )}
-    </>
+      {t('turnOffAutoMerge')}
+    </Button>
   );
 }

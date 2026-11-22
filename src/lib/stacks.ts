@@ -35,6 +35,16 @@ export function listItems(prs: readonly PullRequest[]): ListItem[] {
   return items;
 }
 
+/**
+ * Every pull request of stack `id` that Prowl knows, from all sections (`Snapshot.pullRequests`),
+ * bottom to top: a section shows only some of them, the stack's progress counts them all.
+ */
+export function stackMembers(prs: Iterable<PullRequest>, id: string): PullRequest[] {
+  return [...prs]
+    .filter((pr) => pr.stack?.id === id)
+    .sort((a, b) => (a.stack?.position ?? 0) - (b.stack?.position ?? 0));
+}
+
 /** Where a member stands: draft, ready to merge, blocked (red CI, changes, conflicts), else in progress. */
 export function stackState(pr: PullRequest): StackState {
   if (pr.isDraft) return 'draft';

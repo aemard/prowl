@@ -105,7 +105,14 @@ export function ReviewThreads({ pr, id }: { pr: PullRequest; id: string }) {
       <p class="pr-detail__label" id={`${id}-threads`}>
         {t('conversations')}
       </p>
-      {entry.error && <p role="alert">{entry.error}</p>}
+      {entry.error && (
+        <p role="alert">
+          {entry.error}{' '}
+          <Button size="sm" loading={entry.loading} onClick={() => void loadThreads(pr)}>
+            {t('tryAgain')}
+          </Button>
+        </p>
+      )}
       {entry.threads?.length === 0 && <p>{t('noOpenConversations')}</p>}
       {entry.threads && entry.threads.length > 0 && (
         <ul

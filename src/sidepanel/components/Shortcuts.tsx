@@ -1,7 +1,7 @@
 import { signal, useSignalEffect } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { countMessage, t } from '../../lib/i18n';
-import { snooze, updatePrLocal } from '../../lib/storage/prLocal';
+import { snooze, unsnooze, updatePrLocal } from '../../lib/storage/prLocal';
 import { selectSection } from '../state/listContext';
 import { refreshRequested, requestRefresh, SHORTCUTS, shortcutFor } from '../state/shortcuts';
 import { pollState, settings, snapshot } from '../state/store';
@@ -45,7 +45,12 @@ function snoozeFocused() {
   moveFocus(1);
   if (document.activeElement?.closest('.pr-card') === card) moveFocus(-1);
   void updatePrLocal((state) => snooze(state, id, Date.now() + HOUR));
-  showToast({ message: t('snoozedForAnHour', title), tone: 'success' });
+  // One key did it: one click takes it back.
+  showToast({
+    message: t('snoozedForAnHour', title),
+    tone: 'success',
+    action: { label: t('undo'), onClick: () => void updatePrLocal((s) => unsnooze(s, id)) },
+  });
 }
 
 /** `t`: selects the "Your turn" section when it is on. */
@@ -62,7 +67,7 @@ export function useShortcuts(enabled: boolean): void {
     if (!enabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || document.querySelector('dialog[open]')) return;
-      const shortcut = shortcutFor(event);
+      const shortcut = shortcutFor(event, settings.value.singleKeyShortcuts);
       if (!shortcut) return;
       event.preventDefault();
       if (shortcut === 'next') moveFocus(1);
@@ -92,6 +97,7 @@ export function ShortcutsDialog() {
   };
   return (
     <Dialog open onClose={close} title={t('keyboardShortcuts')}>
+      {!settings.value.singleKeyShortcuts && <p>{t('singleKeyShortcutsOff')}</p>}
       <dl class="shortcuts">
         {SHORTCUTS.map(({ keys, action }) => (
           <div class="shortcuts__row" key={action}>

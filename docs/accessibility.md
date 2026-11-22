@@ -12,13 +12,19 @@ Everything is reachable with Tab and operable with Enter/Space. In the list:
 | `k` / `↑` | Previous pull request |
 | `Enter` / `Space` | Expand or collapse the focused pull request |
 | `o` | Open the focused pull request on GitHub |
+| `s` | Snooze the focused pull request for an hour (Undo in its toast) |
+| `t` | Show Your turn |
 | `r` | Refresh now |
 | `/` | Filter pull requests |
 | `?` | Show keyboard shortcuts (also in the account menu) |
 | `Esc` | Close a dialog or menu, collapse a pull request |
 
 Shortcuts never fire while typing in a field, inside a menu or a dialog, or with Ctrl, Cmd or
-Alt held. Arrows and `o` only act inside the list, so they keep their normal meaning elsewhere.
+Alt held. Arrows, `o` and `s` only act inside the list, so they keep their normal meaning
+elsewhere. Settings → List → "Single-key shortcuts" (on by default, synced) turns every
+character key above off (WCAG 2.1.4): speech input or a stray key then cannot move, snooze or
+refresh; the arrows, Enter, Space and Esc keep working, and the `?` dialog (still in the account
+menu) says the shortcuts are off.
 Grouped by repository (a setting), each repository header is a button in an `h2` (Tab, then
 Enter or Space folds it); `j` / `k` and the arrows still go from card to card, skip the cards of a
 folded group (they are not rendered), and from a header go to the nearest card after or before it.

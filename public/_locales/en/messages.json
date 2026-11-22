@@ -3207,18 +3207,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, and $P2$ more",
-    "description": "Extension text: $P1$, and $P2$ more",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Show the pull requests of stack #$P1$",
     "description": "Extension text: Show the pull requests of stack #$P1$",
@@ -3360,8 +3348,8 @@
     "description": "Extension text: Merge now"
   },
   "stackMergeQueue": {
-    "message": "Add to the merge queue",
-    "description": "Extension text: Add to the merge queue"
+    "message": "Add to merge queue",
+    "description": "Extension text: Add to merge queue"
   },
   "stackMerged": {
     "message": "Merged",
@@ -3416,6 +3404,77 @@
   "commitTitle": {
     "message": "Commit title",
     "description": "Extension text: Commit title"
+  },
+  "mergeWhenReady": {
+    "message": "Merge when ready",
+    "description": "Extension text: Merge when ready"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "description": "Extension text: GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "This pull request is too long for the on-device AI, even shortened.",
+    "description": "Extension text: This pull request is too long for the on-device AI, even shortened."
+  },
+  "aiSummarizeAgain": {
+    "message": "Summarize again",
+    "description": "Extension text: Summarize again"
+  },
+  "aiExplainAgain": {
+    "message": "Explain again",
+    "description": "Extension text: Explain again"
+  },
+  "stackAndMore": {
+    "message": ", and $P1$ more",
+    "description": "Extension text: , and $P1$ more",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ more in this stack is not shown here: another section or the filter has it.",
+    "description": "Extension text: $P1$ more in this stack is not shown here: another section or the filter has it.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ more in this stack are not shown here: another section or the filter has them.",
+    "description": "Extension text: $P1$ more in this stack are not shown here: another section or the filter has them.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Your turn:",
+    "description": "Extension text: Your turn:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Single-key shortcuts",
+    "description": "Extension text: Single-key shortcuts"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work.",
+    "description": "Extension text: j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Single-key shortcuts are off. Turn them on in Settings → List.",
+    "description": "Extension text: Single-key shortcuts are off. Turn them on in Settings → List."
   },
   "reviewRequestedEventDescription": {
     "message": "When your review is asked for, also on a pull request new to the list",

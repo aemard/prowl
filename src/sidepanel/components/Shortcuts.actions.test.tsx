@@ -46,6 +46,29 @@ describe('card shortcuts', () => {
     expect(document.activeElement?.textContent).toBe('Details PR_1');
   });
 
+  it('undoes a snooze from its toast', async () => {
+    render(<Harness />);
+    const first = screen.getByRole('button', { name: 'Details PR_1' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 's' });
+    await waitFor(async () => expect(Object.keys((await loadPrLocal()).snoozed)).toEqual(['PR_1']));
+    expect(toasts.value.at(-1)?.action?.label).toBe('Undo');
+    toasts.value.at(-1)?.action?.onClick();
+    await waitFor(async () => expect((await loadPrLocal()).snoozed).toEqual({}));
+  });
+
+  it('does nothing on a single key once those shortcuts are turned off', async () => {
+    settings.value = { ...defaultSettings(), singleKeyShortcuts: false };
+    render(<Harness />);
+    const first = screen.getByRole('button', { name: 'Details PR_1' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 's' });
+    fireEvent.keyDown(document.body, { key: 't' });
+    expect(toasts.value).toEqual([]);
+    expect(activeSectionId.value).not.toBe('your_turn');
+    expect((await loadPrLocal()).snoozed).toEqual({});
+  });
+
   it('t shows the Your turn section when it is on', () => {
     render(<Harness />);
     fireEvent.keyDown(document.body, { key: 't' });

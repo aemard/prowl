@@ -2720,17 +2720,6 @@
       }
     }
   },
-  "stackTitle": {
-    "message": "$P1$, et $P2$ autres",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "stackShow": {
     "message": "Afficher les pull requests de la pile #$P1$",
     "placeholders": {
@@ -2902,6 +2891,65 @@
   },
   "commitTitle": {
     "message": "Titre du commit"
+  },
+  "mergeWhenReady": {
+    "message": "Merger dès que prête"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub ajoute $P1$ à la file de merge de $P2$ dès que ses checks et ses revues passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "Cette pull request est trop longue pour l’IA de l’appareil, même raccourcie."
+  },
+  "aiSummarizeAgain": {
+    "message": "Résumer à nouveau"
+  },
+  "aiExplainAgain": {
+    "message": "Expliquer à nouveau"
+  },
+  "stackAndMore": {
+    "message": ", et $P1$ autres",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ autre de cette pile n’est pas affichée ici : une autre section ou le filtre l’écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ autres de cette pile ne sont pas affichées ici : une autre section ou le filtre les écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "À vous :"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Raccourcis à une touche"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / et ? agissent sur la liste. Désactivez-les si vous utilisez la saisie vocale ou appuyez sur des touches par erreur ; les flèches et Entrée fonctionnent toujours."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Les raccourcis à une touche sont désactivés. Activez-les dans Paramètres → Liste."
   },
   "reviewRequestedEventDescription": {
     "message": "Quand on vous demande une revue, y compris sur une pull request nouvelle dans la liste"

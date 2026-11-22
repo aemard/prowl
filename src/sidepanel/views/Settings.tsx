@@ -77,7 +77,7 @@ const LANGUAGES: SelectOption<Language>[] = [
 ];
 
 function AppearanceSettings() {
-  const { theme, sort, groupByRepo, badge } = settings.value;
+  const { theme, sort, groupByRepo, badge, singleKeyShortcuts } = settings.value;
   return (
     <SettingsGroup title={t('list')}>
       <Select
@@ -112,6 +112,12 @@ function AppearanceSettings() {
         options={BADGES}
         hint={BADGE_HINTS[badge]}
         onValueChange={(value) => void saveSettings({ badge: value })}
+      />
+      <Switch
+        label={t('singleKeyShortcutsLabel')}
+        description={t('singleKeyShortcutsDescription')}
+        checked={singleKeyShortcuts}
+        onChange={(checked) => void saveSettings({ singleKeyShortcuts: checked })}
       />
       <LocalAiSettings />
     </SettingsGroup>

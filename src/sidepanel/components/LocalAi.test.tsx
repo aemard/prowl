@@ -77,4 +77,31 @@ describe('LocalAi', () => {
       'The on-device AI could not answer: out of memory',
     );
   });
+
+  it('says in its own words when the text is too long for the model', async () => {
+    const prompt = chromeAi(() => '');
+    prompt.mockRejectedValueOnce(new DOMException('Input too large', 'QuotaExceededError'));
+    render(<LocalAi pr={buildPullRequest()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Summarize' }));
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'This pull request is too long for the on-device AI, even shortened.',
+    );
+  });
+
+  it('offers to ask again, and hides a summary once the pull request has new activity', async () => {
+    const prompt = chromeAi(() => 'First take.');
+    const pr = buildPullRequest();
+    const view = render(<LocalAi pr={pr} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Summarize' }));
+    await screen.findByRole('region', { name: 'Summary' });
+    prompt.mockResolvedValueOnce('Second take.');
+    fireEvent.click(screen.getByRole('button', { name: 'Summarize again' }));
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: 'Summary' }).textContent).toContain('Second'),
+    );
+    // A new comment without a push: the summary no longer describes the pull request.
+    view.rerender(<LocalAi pr={{ ...pr, updatedAt: '2026-11-22T10:00:00Z' }} />);
+    expect(screen.queryByRole('region', { name: 'Summary' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Summarize' })).toBeTruthy();
+  });
 });

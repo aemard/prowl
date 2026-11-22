@@ -1,4 +1,4 @@
-import { fireEvent, within } from '@testing-library/preact';
+import { act, fireEvent, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { MergeMethod, PullRequest } from '../../lib/model';
 import { buildDetail } from '../../test/panel';
@@ -10,6 +10,7 @@ import {
   resetMergeTest,
   setupMergeTest,
   show,
+  withDetail,
 } from './MergeAction.test-support';
 
 beforeEach(setupMergeTest);
@@ -43,9 +44,11 @@ describe('the methods the branch rules allow', () => {
     expect(within(document.body).getByRole('button', { name: 'Squash and merge' })).toBeTruthy();
   });
 
-  it('are not taken from a read made for another head', () => {
+  it("are not taken from a read made for another head: Merge waits for this head's", () => {
     read({ headSha: 'c'.repeat(40) });
     show({ allowedMergeMethods: all });
+    expect(within(document.body).queryByRole('button')).toBeNull();
+    act(() => withDetail({ ...pr, allowedMergeMethods: all }));
     fireEvent.click(opener());
     expect(offered()).toEqual(['Create a merge commit', 'Squash and merge', 'Rebase and merge']);
   });
