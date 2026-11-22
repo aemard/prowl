@@ -4,8 +4,30 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Two groups, because only one may merge itself (dependabot-auto-merge.yml, docs/decisions.md):
+    # tools that test, lint and type-check, which never run in a release; and everything else
+    # that is a development dependency, which builds what ships (Vite and its plugins, fflate
+    # for the zip, the website) and waits for a person. A new tool lands in build-chain until
+    # it is added to test-tooling here.
     groups:
-      dev-dependencies:
+      test-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+        patterns:
+          - vitest
+          - '@vitest/*'
+          - happy-dom
+          - '@testing-library/*'
+          - '@playwright/test'
+          - '@axe-core/*'
+          - fast-check
+          - graphql
+          - '@biomejs/biome'
+          - typescript
+          - '@types/*'
+          - lighthouse
+          - chrome-launcher
+      build-chain:
         dependency-type: development
         update-types: [minor, patch]
     # pnpm 12 refuses packages published less than a day ago (minimumReleaseAge), which would

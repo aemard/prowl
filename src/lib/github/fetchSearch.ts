@@ -13,7 +13,7 @@ import { GitHubError } from './errors';
 import { isNode, sameSearchFacts } from './fetchMergeState';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
 import { type MergeFacts, mapMergeState, mapPullRequest } from './mapPullRequest';
-import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY } from './queries';
+import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY, withoutStacks } from './queries';
 import { parseRateLimit } from './rateLimit';
 import { buildSearchQuery, filterByRepo } from './search';
 import { teamEvidence } from './teamEvidence';
@@ -29,6 +29,12 @@ const PAGE_SIZE = 25;
  * alone, unless every search failed (`fetchPullRequests`).
  */
 const POLL_LEVEL: readonly ErrorKind[] = ['unauthorized', 'rate_limited', 'network'];
+
+/** GitHub refused the query because its stack fields are gone ("Field 'stackEntry' doesn't exist"). */
+const missingStacks = (error: unknown) =>
+  error instanceof GitHubError &&
+  error.kind === 'graphql' &&
+  /stackEntry|PullRequestStack/.test(error.message);
 
 const mergeFacts = (pr: PullRequest): MergeFacts => ({
   reviewDecision: pr.reviewDecision,
@@ -131,30 +137,53 @@ export class SearchContext {
     };
   }
 
+  /**
+   * One search page. Without its stack fields when GitHub no longer has them, so a change to
+   * that recent feature costs the stacks, not the list. ponytail: found again on every poll (one
+   * refused request), which also notices when the field is back.
+   */
   private async searchPage(
     variables: Record<string, unknown>,
     teams: boolean,
   ): Promise<SearchData> {
     try {
-      const data = await this.read<SearchData>(
-        teams && !this.teamFallback ? TEAM_SEARCH_QUERY : SEARCH_QUERY,
-        variables,
-      );
+      return await this.searchPageWithTeams(variables, teams);
+    } catch (error) {
+      if (this.stacksMissing || !missingStacks(error)) throw error;
+      this.stacksMissing = true;
+      return this.searchPageWithTeams(variables, teams);
+    }
+  }
+
+  private stacksMissing = false;
+  private query(teams: boolean) {
+    const query = teams && !this.teamFallback ? TEAM_SEARCH_QUERY : SEARCH_QUERY;
+    return this.stacksMissing ? withoutStacks(query) : query;
+  }
+
+  /** A team search without its Team fields when the token cannot read them (`read:org`). */
+  private async searchPageWithTeams(
+    variables: Record<string, unknown>,
+    teams: boolean,
+  ): Promise<SearchData> {
+    try {
+      const data = await this.read<SearchData>(this.query(teams), variables);
       if (teams && !data.search && this.partialMessages.length) {
         this.teamFallback = true;
-        return this.read<SearchData>(SEARCH_QUERY, variables);
+        return this.read<SearchData>(this.query(false), variables);
       }
       return data;
     } catch (error) {
       if (
         !teams ||
         this.teamFallback ||
+        missingStacks(error) ||
         !(error instanceof GitHubError) ||
         !['forbidden', 'graphql'].includes(error.kind)
       )
         throw error;
       this.teamFallback = true;
-      return this.read<SearchData>(SEARCH_QUERY, variables);
+      return this.read<SearchData>(this.query(false), variables);
     }
   }
 

@@ -1197,9 +1197,6 @@
   "pullRequestsPerSection": {
     "message": "每个分区的 PR 数"
   },
-  "appearance": {
-    "message": "外观"
-  },
   "theme": {
     "message": "主题"
   },
@@ -1226,9 +1223,6 @@
   },
   "privacy": {
     "message": "隐私"
-  },
-  "about": {
-    "message": "关于"
   },
   "settingsSections": {
     "message": "设置分区"
@@ -2568,9 +2562,6 @@
         "content": "$1"
       }
     }
-  },
-  "loadingConversations": {
-    "message": "正在加载对话"
   },
   "noOpenConversations": {
     "message": "没有未解决的对话。"

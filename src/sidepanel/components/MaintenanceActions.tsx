@@ -1,4 +1,4 @@
-import { rerunFailedChecks, setDraft, updateBranch } from '../../lib/github/actions';
+import { rerunFailedChecks, setDraft, updateBranch } from '../../lib/github/maintenanceActions';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';

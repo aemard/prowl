@@ -239,7 +239,7 @@ an icon, copy the `d` of its 16 px SVG into `icons/index.ts` as
 | `CheckCircleFillIcon`, `XCircleFillIcon`, `AlertIcon`, `AlertFillIcon`, `InfoIcon` | Toast and banner tones, conflicts, field errors |
 | `CommentIcon`, `CommentDiscussionIcon`, `EyeIcon`, `EyeClosedIcon`, `PersonIcon`, `MentionIcon`, `FileDiffIcon` | Comments, unresolved threads, review required (and "Show N hidden"), hidden PR ("Hide again" and the revealed card's reason), author, mentioned, changes requested |
 | `SyncIcon`, `GearIcon`, `KebabHorizontalIcon`, `ChevronDownIcon`, `ChevronUpIcon`, `ChevronRightIcon`, `ArrowLeftIcon` | Refresh, settings, more actions, expand, navigate, back |
-| `SearchIcon`, `FilterIcon`, `BellIcon`, `BellSlashIcon`, `ClockIcon`, `LinkExternalIcon`, `CopyIcon`, `GitBranchIcon` | Filter, custom section, notifications, muted, snooze (and the rate-limit and stale banners), open in GitHub, copy, branch |
+| `SearchIcon`, `FilterIcon`, `BellIcon`, `BellSlashIcon`, `ClockIcon`, `LinkExternalIcon`, `CopyIcon` | Filter, custom section, notifications, muted, snooze (and the rate-limit and stale banners), open in GitHub, copy |
 | `SignOutIcon`, `MarkGithubIcon`, `KeyIcon`, `PlusIcon`, `TrashIcon`, `PencilIcon`, `InboxIcon`, `CloudOfflineIcon` | Account, sign-in, token (and the rejected-token banner), add/remove/edit, empty list, offline (and the offline banner) |
 
 ## Components
