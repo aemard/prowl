@@ -25,7 +25,7 @@ test('the Your turn section lists what waits on you, with why, and matches the b
               number: 7,
               title: 'Asks for my review',
               author: bob,
-              // Waiting longer than the red build: listed first.
+              // Waiting longer than the red build: listed after it (newest turn first).
               commits: headCommit({ SUCCESS: 1 }, {}, '2026-09-01T12:00:00Z'),
               reviewRequests: { nodes: [requestedReviewer('octocat')] },
             }),
@@ -50,7 +50,7 @@ test('the Your turn section lists what waits on you, with why, and matches the b
   const tab = panel.getByRole('tab', { name: /^Your turn/ });
   await expect(tab).toHaveText('Your turn2');
   await tab.click();
-  await expect(panel.locator('.pr-card__title')).toHaveText(['Asks for my review', 'My red build']);
+  await expect(panel.locator('.pr-card__title')).toHaveText(['My red build', 'Asks for my review']);
   await expect(
     panel.locator('.pr-card__chips').getByText('Your turn: Review', { exact: true }),
   ).toBeVisible();

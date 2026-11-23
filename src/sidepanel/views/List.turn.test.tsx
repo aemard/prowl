@@ -45,7 +45,8 @@ describe('Your turn section', () => {
     const tab = screen.getByRole('tab', { name: /^Your turn/ });
     expect(tab.textContent).toBe('Your turn2');
     fireEvent.click(tab);
-    expect(cardTitles()).toEqual(['Asked of me', 'Mine, red']);
+    // Newest turn first: "Asked of me" has waited since 2 October.
+    expect(cardTitles()).toEqual(['Mine, red', 'Asked of me']);
     // A status that reads as one: whose move it is, then what to do.
     expect(chip('Your turn: Fix CI · 1 failing')).toBeTruthy();
     expect(chip('Your turn: Review')?.closest('[title]')?.getAttribute('title')).toMatch(

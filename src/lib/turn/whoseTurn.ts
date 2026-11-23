@@ -136,7 +136,7 @@ export const turnIn = (snapshot: Snapshot, pr: PullRequest): Turn =>
   whoseTurn(pr, snapshot.viewer.login, snapshot.teamRequests?.[pr.id]);
 
 /**
- * The ids of the PRs of every section where it is the viewer's turn, longest waiting first:
+ * The ids of the PRs of every section where it is the viewer's turn, newest turn first:
  * what the "Your turn" section lists and the `turn` badge counts.
  */
 export function yourTurnIds(snapshot: Snapshot): string[] {
@@ -145,7 +145,7 @@ export function yourTurnIds(snapshot: Snapshot): string[] {
     .flatMap((id) => snapshot.pullRequests[id] ?? [])
     .map((pr) => ({ pr, turn: turnIn(snapshot, pr) }))
     .filter(({ turn }) => turn.owner === 'you')
-    .sort((a, b) => a.turn.since.localeCompare(b.turn.since))
+    .sort((a, b) => Date.parse(b.turn.since) - Date.parse(a.turn.since))
     .map(({ pr }) => pr.id);
 }
 

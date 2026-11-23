@@ -52,7 +52,7 @@ function sectionParts(enabled: Section[], snap: Snapshot | undefined, query: str
       section.id,
       snap
         ? splitSection(
-            // "Your turn" keeps its own order: longest waiting first.
+            // "Your turn" keeps its own order: newest turn first.
             section.kind === 'your_turn'
               ? filterPullRequests(pullRequestsOf(snap, section), query)
               : sortPullRequests(

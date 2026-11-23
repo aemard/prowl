@@ -582,7 +582,7 @@ is the push, review or comment that started the wait. "Last push" is the head co
 
 The "Your turn" preset section (kind `your_turn`, on by default, last in the list) is never
 searched: `fetchPullRequests` skips it and the panel lists `yourTurnIds(snapshot)`, the PRs of
-every other section where it is the viewer's move, longest waiting first (the list's sort
+every other section where it is the viewer's move, newest turn first (the list's sort
 order does not apply to it). When it is the viewer's move, the card's chip for that fact becomes
 the action (one chip per fact: "Review", "Fix CI · 1 failing", "Merge it"; reasons without a fact chip, such as "Answer feedback", "Update branch" or "Resolve conversations", add one up front) with since when, the two sentences joined by a catalog message (`turnChipDetail`, `。` in Japanese and Chinese); a queued PR's merge chip says "In merge queue"; the
 `turn` badge counts the same PRs, and the `review_requested` and `your_turn` events notify when a
