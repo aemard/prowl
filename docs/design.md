@@ -198,9 +198,13 @@ with an ellipsis and keep the full text in `title`.
 - **Controls:** `--control-sm` 24 px (dense rows), `--control-md` 28 px (default); 24 px is the
   WCAG 2.2 minimum target size, so nothing interactive is smaller. Icons `--icon-sm` 12,
   `--icon-md` 16 (also avatars), `--icon-lg` 20 px.
-- **Radius:** `--radius-sm` 4 (skeleton lines), `--radius-md` 6 (buttons, inputs, menu items,
-  chips), `--radius-lg` 10 (menus, dialogs, toasts), `--radius-full` (badges, labels, switches,
-  avatars). Glass cards and bars use larger, rounder corners.
+- **Radius:** `--radius-xs` 3 (stack bar segments), `--radius-sm` 4 (skeleton lines),
+  `--radius-md` 6 (buttons, inputs, menu items, chips), `--radius-lg` 10 (menus, dialogs, toasts,
+  the header alone), `--radius-full` (badges, labels, switches, avatars). Glass surfaces are
+  rounder: `--radius-glass-field` 15 (the quick filter's field), `--radius-glass-card` 21 (PR
+  cards and their expanded details, stack rows, section bar items), `--radius-glass-island` 23
+  (the header with the filter under it), `--radius-glass-bar` 26 (the section bar). A unit test
+  rejects any other raw radius, color or duration outside the token stylesheets.
 - **Borders and focus:** `--border-width` 1 px. Focus: `--focus-width` 2 px solid
   `--color-focus` at `--focus-offset` 2 px, set once in `base.css` on `:focus-visible`; text
   inputs show a ring on any focus.
@@ -208,8 +212,10 @@ with an ellipsis and keep the full text in `title`.
   (dialogs), stronger in dark; glass surfaces use `--glass-shadow`.
 - **Layers:** `--z-sticky` 10 (header, section bar), `--z-menu` 40, `--z-toast` 50; dialogs and
   `Menu` use the browser top layer.
-- **Insets:** the sticky header sets `--app-inset-top` and the section bar `--app-inset-bottom`
-  on `:root`. Nothing may sit under them: content ends above the bar, focus and `scrollIntoView`
+- **Insets:** the sticky header sets `--app-inset-top` (`--chrome-header-inset`, 69 px, or
+  `--chrome-filter-inset`, 123 px, with the quick filter under it) and the section bar
+  `--app-inset-bottom` (`--chrome-bar-inset`, 87 px, for a `--chrome-bar-height` 62 px bar floating
+  12 px above the bottom) on `:root`; the filter also sticks at `--chrome-header-inset`. Nothing may sit under them: content ends above the bar, focus and `scrollIntoView`
   stop clear of both (`scroll-padding`), toasts and menus rise above the bar (menus measure the
   element marked `data-bottom-bar`), and a card behind the bar does not count as seen.
 
@@ -221,13 +227,16 @@ with an ellipsis and keep the full text in `title`.
 | `--duration-normal` | 180 ms | 0 ms | Dialog and toast in |
 | `--duration-spin` | 800 ms | 1600 ms | Spinner rotation (essential, kept) |
 | `--duration-shimmer` | 1400 ms | animation off | Skeleton shimmer (decorative) |
+| `--duration-card-mark` | 500 ms | animation off | Card activity label icon popping in |
+| `--duration-card-arrive` | 700 ms | animation off | A new card unfolding into the list |
+| `--duration-card-activity` | 1100 ms | animation off | Card tint wash, merge or close exit, activity label |
 | `--ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | | State changes |
 | `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | | Things entering |
 
-Use the duration tokens for every transition and animation, so `prefers-reduced-motion: reduce`
-collapses them in one place. Purely decorative animations also switch off in their own stylesheet,
-as do the card arrival and merge or close exits (`PullRequestCardMotion.css`), which run longer
-(0.7 to 1.1 s) to show where a card came from or went.
+Use the duration tokens for every transition and animation (a unit test rejects raw ones), so
+`prefers-reduced-motion: reduce` collapses them in one place. Purely decorative animations switch
+off in their own stylesheet instead, as do the card arrival and merge or close exits
+(`PullRequestCardMotion.css`), which run longer to show where a card came from or went.
 
 ## Icons
 

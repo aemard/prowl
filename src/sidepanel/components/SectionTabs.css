@@ -1,34 +1,38 @@
-/* The bar is fixed at the bottom of the panel. While it is shown, the page keeps clear of it
-   through --app-inset-bottom: content ends and focused or scrolled-to elements stop above it
-   (App.css), toasts sit above it (Toast.css). Menus read its box (Menu.tsx). */
+/* The bar floats above the bottom of the panel, a glass pill inset by --space-3. While it is
+   shown, the page keeps clear of it through --app-inset-bottom: content ends and focused or
+   scrolled-to elements stop above it (App.css), toasts sit above it (Toast.css). Menus read its
+   box (Menu.tsx). Its blurred backdrop is drawn in App.css. */
 :root:has(.section-tabs) {
-  --app-inset-bottom: calc(var(--space-12) + var(--border-width));
+  --app-inset-bottom: var(--chrome-bar-inset);
 }
 
 .section-tabs {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  left: var(--space-3);
   z-index: var(--z-sticky);
   display: flex;
-  height: var(--app-inset-bottom);
-  /* Items share at most 480 px, centred, so they stay together in a wide panel. */
-  padding: 0 max(var(--space-1), (100% - 480px) / 2);
-  border-top: var(--border-width) solid var(--color-border-subtle);
-  background: var(--color-bg);
+  height: var(--chrome-bar-height);
+  padding: var(--space-1-5);
+  border: var(--border-width) solid var(--glass-edge);
+  border-radius: var(--radius-glass-bar);
+  background: transparent;
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-rim);
 }
 
 .section-tabs__list {
   display: flex;
   flex: 1;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 
 /* Icon and count over the label. The label comes first in the DOM (it leads the accessible
    name), so the column is reversed. */
 .section-tabs__item {
-  position: relative;
   display: flex;
   flex: 1 1 0;
   flex-direction: column-reverse;
@@ -38,7 +42,7 @@
   min-width: 0;
   padding: 0 var(--space-1);
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-glass-card);
   background: transparent;
   color: var(--color-fg-muted);
   cursor: pointer;
@@ -51,8 +55,7 @@
 }
 
 .section-tabs__item:hover,
-.section-tabs__item[aria-expanded="true"],
-.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) {
+.section-tabs__item[aria-expanded="true"] {
   color: var(--color-fg);
 }
 
@@ -77,65 +80,19 @@
   white-space: nowrap;
 }
 
-/* Selected is never color alone: a bar on the top edge (over the hairline), the accent icon and
-   count, and a heavier label. Assistive tech gets aria-selected, or "More" names the section. */
-.section-tabs__item::before {
-  content: "";
-  position: absolute;
-  top: calc(var(--border-width) * -1);
-  right: 0;
-  left: 0;
-  width: var(--space-8);
-  height: 2px;
-  margin: 0 auto;
-  border-radius: 0 0 var(--radius-full) var(--radius-full);
-  background: transparent;
-}
-
-.section-tabs__item:is([aria-selected="true"], [data-selected="true"])::before {
-  background: var(--color-accent-solid);
+/* Selected is never color alone: a tinted pill with a rim, the accent icon and count, and a
+   heavier label. Assistive tech gets aria-selected, or "More" names the section. */
+.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) {
+  background: var(--color-accent-bg);
+  color: var(--color-accent-fg);
+  box-shadow: inset 0 1px 0 var(--glass-rim);
 }
 
 .section-tabs__item:is([aria-selected="true"], [data-selected="true"]) .section-tabs__label {
   font-weight: var(--weight-semibold);
 }
 
-.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) .section-tabs__top > .icon {
-  color: var(--color-accent-fg);
-}
-
 .section-tabs__failed {
   display: inline-flex;
   color: var(--color-warning-fg);
-}
-
-:root:has(.section-tabs) {
-  --app-inset-bottom: 87px;
-}
-.section-tabs {
-  left: var(--space-3);
-  right: var(--space-3);
-  bottom: var(--space-3);
-  height: 62px;
-  padding: var(--space-1-5);
-  border: var(--border-width) solid var(--glass-edge);
-  border-radius: 26px;
-  background: transparent;
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 var(--glass-rim);
-}
-.section-tabs__list {
-  gap: var(--space-0-5);
-}
-.section-tabs__item {
-  border-radius: 21px;
-}
-.section-tabs__item:is([aria-selected="true"], [data-selected="true"]) {
-  background: var(--color-accent-bg);
-  color: var(--color-accent-fg);
-  box-shadow: inset 0 1px 0 var(--glass-rim);
-}
-.section-tabs__item::before {
-  display: none;
 }

@@ -126,8 +126,10 @@ appending a newer one.
 
 - Reuse `src/sidepanel/components/ui/<Name>` (import each module, no barrel) and icons from
   `components/icons`; `docs/design.md` is the reference.
-- CSS uses semantic tokens only; `src/styles/tokens.test.ts` fails on raw colors outside the
-  token files and on a stale contrast table in `docs/design.md` (it prints the new one).
+- CSS uses semantic tokens only; `src/styles/tokens.test.ts` fails on raw colors, radii and
+  animation/transition durations outside the token files and on a stale contrast table in
+  `docs/design.md` (it prints the new one). One layer per stylesheet: change the base rule, never
+  append an override at the end.
   Z-index layers are tokens in `src/styles/tokens.css`; `Menu` uses the Popover API top layer.
 - Anything fixed near the bottom keeps clear of the section bar: CSS uses
   `var(--app-inset-bottom, 0px)`, JS measures `[data-bottom-bar]`.

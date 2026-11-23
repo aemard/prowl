@@ -1,6 +1,12 @@
+/* A glass card; its layout and activity motion are in PullRequestCardMotion.css. */
 .pr-card {
+  border: var(--border-width) solid var(--glass-edge);
+  border-radius: var(--radius-glass-card);
+  background: var(--glass-card);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-rim);
   list-style: none;
-  border-bottom: var(--border-width) solid var(--color-border-subtle);
 }
 
 /* The whole summary is a click target for expanding (the chevron button does the same for the
@@ -9,14 +15,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1-5);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
+  padding: calc(var(--space-3) + var(--space-0-5));
+  border-radius: inherit;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 .pr-card__summary:hover {
-  background: var(--color-bg-hover);
+  background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
 }
 
 /* Unseen changes: a dot in the left gutter (the toggle's description says it too). */
@@ -76,7 +83,10 @@
   max-width: 100%;
   overflow: hidden;
   color: var(--color-fg);
-  font-weight: var(--weight-medium);
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.1px;
   overflow-wrap: anywhere;
   text-decoration: none;
   text-wrap: pretty;
@@ -103,8 +113,10 @@
   min-width: 0;
 }
 
-.pr-card__chips {
-  gap: var(--space-0-5) var(--space-3);
+.pr-card__chips .ui-badge {
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-md);
+  background: var(--badge-bg);
 }
 
 /* Labels and counts share a line when they fit; otherwise the counts wrap below. */
@@ -125,7 +137,7 @@
   max-width: 100%;
   padding: 0 var(--space-1-5);
   overflow: hidden;
-  border: var(--border-width) solid var(--color-border);
+  border: var(--border-width) solid var(--glass-edge);
   border-radius: var(--radius-full);
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
@@ -179,38 +191,4 @@
   color: var(--color-fg-muted);
   font-size: var(--text-xs);
   white-space: nowrap;
-}
-
-.pr-card {
-  border: var(--border-width) solid var(--glass-edge);
-  border-radius: 21px;
-  background: var(--glass-card);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 var(--glass-rim);
-}
-.pr-card__summary {
-  padding: calc(var(--space-3) + var(--space-0-5));
-  gap: var(--space-2);
-  border-radius: inherit;
-}
-.pr-card__summary:hover {
-  background: color-mix(in srgb, var(--color-accent-bg) 22%, transparent);
-}
-.pr-card__title {
-  font-size: var(--text-lg);
-  line-height: var(--leading-lg);
-  font-weight: var(--weight-semibold);
-  letter-spacing: -0.1px;
-}
-.pr-card__chips {
-  gap: var(--space-1);
-}
-.pr-card__chips .ui-badge {
-  background: var(--badge-bg);
-  padding: var(--space-0-5) var(--space-1-5);
-  border-radius: var(--radius-md);
-}
-.pr-label {
-  border-color: var(--glass-edge);
 }

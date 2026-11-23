@@ -4,7 +4,7 @@
   gap: var(--space-2);
   padding: calc(var(--space-3) + var(--space-0-5));
   border: var(--border-width) solid var(--color-accent-border);
-  border-radius: 21px;
+  border-radius: var(--radius-glass-card);
   background: var(--glass-card);
   box-shadow:
     var(--glass-shadow),
@@ -59,7 +59,8 @@
 .stack-item__bar > span {
   flex: 1;
   height: 8px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
+  background: var(--stack-fill);
 }
 
 [data-state="ready"] {
@@ -80,10 +81,6 @@
 [data-state="draft"] {
   --stack-fill: var(--color-surface);
   --stack-fg: var(--color-fg);
-}
-
-.stack-item__bar > span {
-  background: var(--stack-fill);
 }
 
 .stack-item__bar > [data-state="draft"] {
