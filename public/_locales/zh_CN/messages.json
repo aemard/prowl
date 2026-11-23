@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome 仅在点击后立即下载设备端模型。请再次点击以下载。"
+  },
+  "checksFailingOptional": {
+    "message": "仅可选检查失败：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "可以合并；需要有写入权限的人来合并"
   }
 }

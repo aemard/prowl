@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome はクリックの直後にのみオンデバイスモデルをダウンロードします。もう一度クリックしてダウンロードしてください。"
+  },
+  "checksFailingOptional": {
+    "message": "失敗しているのは任意のチェックのみ: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "マージ可能です。書き込み権限を持つ人がマージする必要があります"
   }
 }

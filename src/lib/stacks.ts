@@ -1,9 +1,9 @@
 /**
  * GitHub stacks in the list: a section's pull requests become items, a pull request on its own
  * or one GitHub stack holding its members, in place of the first member the order meets. Only
- * PRs GitHub puts in a stack (`PullRequest.stack`) are grouped. Pure.
+ * open PRs GitHub puts in a stack (`PullRequest.stack`) are grouped. Pure.
  */
-import { isReadyToMerge } from './mergeEligibility';
+import { failingChecksBlock, isReadyToMerge } from './mergeEligibility';
 import type { PullRequest } from './model';
 
 export type StackState = 'ready' | 'progress' | 'blocked' | 'draft';
@@ -13,12 +13,16 @@ export type ListItem =
   /** Members bottom (position 1, merges first) to top. */
   | { kind: 'stack'; id: string; members: PullRequest[] };
 
-/** One item per PR, except that the members of a stack form one item where the first appears. */
+/**
+ * One item per PR, except that the open members of a stack form one item where the first
+ * appears. A merged or closed one is a plain card: the stack shows only what is left to merge
+ * (`stackMembers`), so a search for merged PRs still lists them.
+ */
 export function listItems(prs: readonly PullRequest[]): ListItem[] {
   const items: ListItem[] = [];
   const stacks = new Map<string, PullRequest[]>();
   for (const pr of prs) {
-    if (!pr.stack) {
+    if (!pr.stack || pr.state !== 'open') {
       items.push({ kind: 'pr', pr });
       continue;
     }
@@ -52,7 +56,7 @@ export function stackState(pr: PullRequest): StackState {
   if (pr.isDraft) return 'draft';
   if (isReadyToMerge(pr)) return 'ready';
   if (
-    pr.checks.state === 'failure' ||
+    failingChecksBlock(pr) ||
     pr.reviewDecision === 'changes_requested' ||
     pr.mergeable === 'conflicting'
   )

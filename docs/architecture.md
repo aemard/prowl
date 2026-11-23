@@ -280,6 +280,10 @@ The one place for these figures: code comments point here. Estimated cost (GitHu
 requests every connection could need, divides by 100 and rounds; `rateLimit.cost` in each
 response gives the real figure):
 
+The search reads the last 5 issue comments of each PR, not 1, so a bot's CI or coverage report
+after a person's question does not hide it (`PullRequest.lastHumanComment`): the price counts
+connections, not nodes, so it is unchanged.
+
 | Query | Requests | Points |
 |---|---|---|
 | `ProwlSearch`, page of 25 (`PAGE_SIZE`, `fetchSearch.ts`) | 1 + 25 x 8 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts, stack entries) = 201 | about 2 |
@@ -552,16 +556,23 @@ asks for a `panel` poll when it opens or becomes visible (`refreshIfStale`,
 
 `whoseTurn(pr, viewerLogin, teams)` (`src/lib/turn/whoseTurn.ts`, pure, no extra GitHub read)
 says who has to move. Closed PRs and drafts are nobody's. On the viewer's own PR, in order:
-failing CI, changes requested after the last push (a bot's too: they block the merge), conflicts,
-then unanswered feedback: a review comment or an issue comment that is neither the viewer's nor a
+failing CI (`failingChecksBlock`: a failure under GitHub's `unstable` verdict is of optional
+checks only, and falls through to the merge; the card's CI chip is then neutral, the badge not
+red, the stack member ready), changes requested after the last push (a bot's too: they block the merge), conflicts,
+then unanswered feedback: a review comment or an issue comment (the latest non-bot one of the
+last 5, `lastHumanComment`, so a CI report after a question does not hide it) that is neither the viewer's nor a
 bot's (`isBot`, from GraphQL: Copilot code review and CodeRabbit comment after every push) and is
 newer than both the last push and the viewer's own latest review or issue comment (a reply hands
 the move back as a push does; `since` is the oldest unanswered one). Then who merges it: a PR in
 the merge queue (`in_merge_queue`) or ready with auto-merge on (`auto_merge`) is nobody's move,
-GitHub merges it; ready with write access is the viewer's (`ready_to_merge`). Reviewed (approved,
-or no review required) but held back, it is still the viewer's: `behind` with strict status
-checks and `viewerCanUpdate` asks for `update_branch`, `blocked` with unresolved conversations for
-`unresolved_threads`. Otherwise it waits on running checks, or, when GitHub's merge facts are not
+GitHub merges it; ready with write access is the viewer's (`ready_to_merge`), ready without it
+waits on someone who has it (`waiting_on_merge`, owner `them`, never stuck; the merge chip's
+tooltip says so). Reviewed (approved, or no review required) but held back, it is still the
+viewer's: `behind` with strict status checks and `viewerCanUpdate` asks for `update_branch`.
+Then it waits on checks still pending (one may be the required check that blocks it). Reviewed,
+`blocked`, checks done and conversations open is `unresolved_threads`: a heuristic, since the
+list does not see every rule (a required check that never reported, signed commits) and the
+card's readiness line names the real blocker once the detail loads. Otherwise, when GitHub's merge facts are not
 read for this head (`unknown`), on nothing known yet (`merge_unknown`, owner `none`, never counted
 as stuck); only then on reviewers (`waiting_on_reviewers`, "stuck" after two days). On someone
 else's PR: a review requested of the viewer, or a push after the viewer requested changes, is the

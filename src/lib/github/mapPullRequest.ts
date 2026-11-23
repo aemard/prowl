@@ -177,7 +177,9 @@ export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
 }
 
 function mapConversation(node: PullRequestNode) {
-  const lastComment = present(node.comments).at(-1);
+  const comments = present(node.comments);
+  const lastComment = comments.at(-1);
+  const lastHuman = comments.findLast(({ author }) => !author || !isBot(author));
   return {
     reviews: present(node.latestReviews)
       .flatMap(({ id, state, submittedAt, author }) => {
@@ -208,6 +210,9 @@ function mapConversation(node: PullRequestNode) {
           isBot: lastComment.author ? isBot(lastComment.author) : false,
           createdAt: lastComment.createdAt,
         }
+      : null,
+    lastHumanComment: lastHuman
+      ? { author: lastHuman.author?.login ?? GHOST, createdAt: lastHuman.createdAt }
       : null,
   };
 }

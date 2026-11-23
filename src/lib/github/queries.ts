@@ -77,7 +77,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
         }
         reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
         ${STACK_ENTRY}
-        comments(last: 1) { nodes { createdAt author { __typename login } } }
+        comments(last: 5) { nodes { createdAt author { __typename login } } }
         commits(last: 1) {
           nodes {
             commit {

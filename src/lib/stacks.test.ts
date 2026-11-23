@@ -30,6 +30,23 @@ describe('listItems', () => {
       ),
     ).toEqual([[101, 102, 103], 1, 2]);
   });
+
+  it.each([
+    ['merged', [101, [102, 103]]],
+    ['closed', [101, [102, 103]]],
+  ] as const)('lists a %s member as a plain card, the open ones as the stack', (state, shape) => {
+    const items = listItems([member(1, { state }), member(2), member(3)]);
+    expect(
+      items.map((item) =>
+        item.kind === 'pr' ? item.pr.number : item.members.map((m) => m.number),
+      ),
+    ).toEqual(shape);
+  });
+
+  it('lists a search of merged PRs as plain cards, no stack left to show', () => {
+    const items = listItems([member(1, { state: 'merged' }), member(2, { state: 'merged' })]);
+    expect(items.map(({ kind }) => kind)).toEqual(['pr', 'pr']);
+  });
 });
 
 describe('stackSummary', () => {
@@ -75,5 +92,18 @@ describe('stackSummary', () => {
     expect(stackState(member(1, { mergeable: 'conflicting' }))).toBe('blocked');
     expect(stackState(member(1, { reviewDecision: 'changes_requested' }))).toBe('blocked');
     expect(stackState(member(1))).toBe('progress');
+  });
+
+  it.each([
+    // Only optional checks fail: GitHub lets it merge.
+    [{ ...ready, mergeStateStatus: 'unstable', checks: failing }, 'ready'],
+    [
+      { reviewDecision: 'review_required', mergeStateStatus: 'unstable', checks: failing },
+      'progress',
+    ],
+    [{ ...ready, mergeStateStatus: 'blocked', checks: failing }, 'blocked'],
+    [{ ...ready, mergeStateStatus: 'unknown', checks: failing }, 'blocked'],
+  ] as const)('reads failing checks by GitHub’s verdict: %j is %s', (overrides, state) => {
+    expect(stackState(member(1, overrides))).toBe(state);
   });
 });

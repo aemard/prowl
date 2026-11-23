@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome solo descarga el modelo en el dispositivo justo después de un clic. Haz clic de nuevo para descargarlo."
+  },
+  "checksFailingOptional": {
+    "message": "Solo fallan comprobaciones opcionales: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Lista para fusionar; alguien con acceso de escritura debe fusionarla"
   }
 }

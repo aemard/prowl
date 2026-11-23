@@ -16,6 +16,16 @@ const checks = (overrides: Partial<CheckSummary>): CheckSummary => ({
 });
 
 describe('ciStatus', () => {
+  it('is neutral, not red, when only optional checks fail', () => {
+    const failing = checks({ state: 'failure', total: 2, failed: 1, passed: 1 });
+    expect(ciStatus(failing, false)).toMatchObject({
+      tone: 'neutral',
+      label: '1 failing',
+      detail: 'Only optional checks failing: 1 failed, 1 passed (2 checks)',
+    });
+    expect(ciStatus(failing)?.tone).toBe('danger');
+  });
+
   it.each([
     [
       checks({ state: 'failure', total: 8, failed: 2, pending: 1, passed: 5 }),
@@ -67,6 +77,33 @@ describe('pullRequestStatuses', () => {
       { id: 'ci', tone: 'danger', label: '1 failing' },
       { id: 'review', tone: 'danger', icon: 'diff', label: 'Changes requested' },
       { id: 'merge', tone: 'warning', icon: 'alert', label: 'Conflicts' },
+    ]);
+  });
+
+  it('shows an optional failure on a ready PR as neutral beside Ready to merge', () => {
+    const pr = buildPullRequest({
+      checks: checks({ state: 'failure', total: 2, failed: 1, passed: 1 }),
+      reviewDecision: 'approved',
+      mergeStateStatus: 'unstable',
+    });
+    expect(pullRequestStatuses(pr)).toMatchObject([
+      { id: 'ci', tone: 'neutral', label: '1 failing' },
+      { id: 'merge', tone: 'success', label: 'Ready to merge', detail: 'Ready to merge' },
+    ]);
+  });
+
+  it('says who merges a ready PR the viewer may not merge', () => {
+    const pr = buildPullRequest({
+      reviewDecision: 'approved',
+      mergeStateStatus: 'clean',
+      viewerCanMerge: false,
+    });
+    expect(pullRequestStatuses(pr)).toMatchObject([
+      {
+        id: 'merge',
+        label: 'Ready to merge',
+        detail: 'Ready to merge; someone with write access has to merge it',
+      },
     ]);
   });
 

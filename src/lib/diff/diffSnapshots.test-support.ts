@@ -33,6 +33,7 @@ export const reviews = (...list: Review[]) => ({ reviews: list });
 export const comments = (commentCount: number, author?: string, createdAt = COMMENTED) => ({
   commentCount,
   lastComment: author ? { author, isBot: false, createdAt } : null,
+  lastHumanComment: author ? { author, createdAt } : null,
 });
 export const ready = (overrides: Partial<PullRequest> = {}): Partial<PullRequest> => ({
   reviewDecision: 'approved',

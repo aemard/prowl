@@ -3,7 +3,7 @@ import { useId } from 'preact/hooks';
 import { countMessage, formatNumber, type MessageKey, t } from '../../lib/i18n';
 import type { PullRequest, Snapshot, TurnReason } from '../../lib/model';
 import { type StackState, stackState, stackSummary } from '../../lib/stacks';
-import { TURN_LABELS, turnIn } from '../../lib/turn/whoseTurn';
+import { RED_TURNS, TURN_LABELS, turnIn } from '../../lib/turn/whoseTurn';
 import { openStacks, toggleStack } from '../state/stacks';
 import { GitHubLink } from './GitHubLink';
 import { BellIcon, ChevronDownIcon, ChevronUpIcon } from './icons';
@@ -19,7 +19,6 @@ const STATES: { state: StackState; label: MessageKey }[] = [
   { state: 'blocked', label: 'stackBlocked' },
   { state: 'draft', label: 'stackDrafts' },
 ];
-const RED: ReadonlySet<TurnReason> = new Set(['ci_failed', 'changes_requested']);
 
 /** What waits on the viewer in the stack, one chip per reason: "Review 2", "Fix CI · #2473". */
 function turnChips(snapshot: Snapshot, members: PullRequest[]) {
@@ -142,7 +141,7 @@ function TurnChips({ snapshot, members }: { snapshot: Snapshot; members: PullReq
       {chips.map(({ reason, text }) => (
         <Badge
           key={reason}
-          tone={RED.has(reason) ? 'danger' : 'accent'}
+          tone={RED_TURNS.has(reason) ? 'danger' : 'accent'}
           variant="plain"
           icon={<BellIcon size={12} />}
           title={t('yourTurnSection')}

@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome ne télécharge le modèle sur l'appareil que juste après un clic. Cliquez à nouveau pour le télécharger."
+  },
+  "checksFailingOptional": {
+    "message": "Seules des vérifications facultatives échouent : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Prête à fusionner ; une personne ayant l’accès en écriture doit la fusionner"
   }
 }

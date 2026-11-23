@@ -3785,5 +3785,18 @@
   "aiNeedsClick": {
     "message": "Chrome downloads the on-device model only right after a click. Click again to download it.",
     "description": "Extension text: Chrome downloads the on-device model only right after a click. Click again to download it."
+  },
+  "checksFailingOptional": {
+    "message": "Only optional checks failing: $P1$",
+    "description": "Extension text: Only optional checks failing: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Ready to merge; someone with write access has to merge it",
+    "description": "Extension text: Ready to merge; someone with write access has to merge it"
   }
 }

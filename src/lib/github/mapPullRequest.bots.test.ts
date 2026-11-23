@@ -60,3 +60,38 @@ describe('isBot', () => {
     });
   });
 });
+
+describe('lastHumanComment', () => {
+  const at = (hour: number) => `2026-10-05T${String(hour).padStart(2, '0')}:00:00Z`;
+  const by = (login: string | null, typename = 'User', hour = 10) => ({
+    createdAt: at(hour),
+    author: login ? { __typename: typename, login } : null,
+  });
+  const human = (nodes: ReturnType<typeof by>[] | null) =>
+    mapPullRequest(prNode({ comments: { nodes } })).lastHumanComment;
+
+  it.each([
+    ['no comment', [], null],
+    ['a person only', [by('bob')], { author: 'bob', createdAt: at(10) }],
+    // A coverage report after a question must not hide it.
+    [
+      'a person, then bots',
+      [by('bob', 'User', 9), by('codecov', 'Bot', 10), by('ci[bot]', 'User', 11)],
+      { author: 'bob', createdAt: at(9) },
+    ],
+    ['bots only', [by('codecov', 'Bot'), by('github-actions', 'Bot')], null],
+    [
+      'the latest of two people',
+      [by('bob', 'User', 9), by('carol', 'User', 10)],
+      { author: 'carol', createdAt: at(10) },
+    ],
+    // A deleted account was a person.
+    ['a deleted account', [by(null)], { author: 'ghost', createdAt: at(10) }],
+  ])('with %s', (_, nodes, expected) => {
+    expect(human(nodes)).toEqual(expected);
+  });
+
+  it('is null when GitHub could not read the comments', () => {
+    expect(human(null)).toBeNull();
+  });
+});

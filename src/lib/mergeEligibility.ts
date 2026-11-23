@@ -21,6 +21,15 @@ export function isReadyToMerge(pr: PullRequest): boolean {
 }
 
 /**
+ * Failing checks hold it back: some check fails and GitHub has not called the failure optional
+ * (`unstable`: only checks that are not required fail, the PR may merge). An unread verdict
+ * counts as blocking. Whose turn ("Fix CI"), the badge's red, stack states and the card's CI chip
+ * share it; the readiness line sharpens it per check once the detail is loaded.
+ */
+export const failingChecksBlock = (pr: PullRequest): boolean =>
+  pr.checks.state === 'failure' && pr.mergeStateStatus !== 'unstable';
+
+/**
  * GitHub merges it without anyone's click: auto-merge is on, or it sits in a merge queue.
  * Such a PR is neither news when it turns ready nor anyone's move.
  */

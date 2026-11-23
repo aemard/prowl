@@ -58,6 +58,8 @@ export type TurnReason =
   | 'update_branch'
   | 'ready_to_merge'
   | 'waiting_on_reviewers'
+  /** Ready, but the viewer cannot merge it: someone with write access has to. */
+  | 'waiting_on_merge'
   | 'waiting_on_checks'
   | 'waiting_on_author'
   /** Ready, with auto-merge on: GitHub merges it on its own. */

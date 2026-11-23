@@ -145,6 +145,12 @@ export interface PullRequest {
   commentCount: number;
   /** The latest issue comment; `isBot` as for `Actor.isBot`. */
   lastComment: { author: string; isBot: boolean; createdAt: string } | null;
+  /**
+   * The latest issue comment not by a bot among the last few (`SEARCH_QUERY`), so a CI or
+   * coverage report posted after a question does not hide it. Absent in snapshots stored before
+   * Prowl read it (`whoseTurn` then falls back on `lastComment`).
+   */
+  lastHumanComment?: { author: string; createdAt: string } | null;
   /** Set once the PR is merged or closed. */
   closedBy: string | null;
   /**

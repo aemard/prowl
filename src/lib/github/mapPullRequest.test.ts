@@ -79,6 +79,7 @@ describe('mapPullRequest', () => {
       unresolvedThreads: 1,
       commentCount: 4,
       lastComment: { author: 'hubot', isBot: false, createdAt: '2026-10-05T11:00:00Z' },
+      lastHumanComment: { author: 'hubot', createdAt: '2026-10-05T11:00:00Z' },
       closedBy: null,
       allowedMergeMethods: ['merge', 'squash'],
       defaultMergeMethod: 'merge',

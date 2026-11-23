@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome lädt das On-Device-Modell nur direkt nach einem Klick herunter. Klicken Sie erneut, um es herunterzuladen."
+  },
+  "checksFailingOptional": {
+    "message": "Nur optionale Prüfungen schlagen fehl: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Bereit zum Mergen; jemand mit Schreibzugriff muss ihn mergen"
   }
 }

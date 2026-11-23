@@ -5,17 +5,17 @@
  */
 import { activityKey } from '../activity';
 import { countMessage, type MessageKey, t } from '../i18n';
-import { awaitsMerge } from '../mergeEligibility';
+import { awaitsMerge, failingChecksBlock } from '../mergeEligibility';
 import type { BadgeMode, PrLocalState, PullRequest, Snapshot, TurnReason } from '../model';
 import { isSeen, isSnoozed } from '../storage/prLocal';
-import { turnIn } from '../turn/whoseTurn';
+import { RED_TURNS, turnIn } from '../turn/whoseTurn';
 
 export interface BadgeView {
   /** Badge text: empty for none, `99+` above 99. */
   text: string;
   /** Tooltip of the toolbar icon. */
   title: string;
-  /** A counted PR has failing CI or requested changes. */
+  /** A counted PR has failing CI (not only optional checks) or requested changes. */
   danger: boolean;
 }
 
@@ -36,7 +36,7 @@ const REASONS: Reason[] = [
     one: 'badgeCiFailedOne',
     other: 'badgeCiFailedOther',
     red: true,
-    applies: (pr) => pr.checks.state === 'failure',
+    applies: failingChecksBlock,
   },
   {
     one: 'badgeChangesRequestedOne',
@@ -64,8 +64,6 @@ export const NO_BADGE: BadgeView = { text: '', title: BADGE_TITLE, danger: false
 
 const reasonsOf = (pr: PullRequest) =>
   pr.state === 'open' ? REASONS.filter((reason) => reason.applies(pr)) : [];
-
-const RED_TURNS: ReadonlySet<TurnReason> = new Set(['ci_failed', 'changes_requested']);
 
 /**
  * How the tooltip counts each reason it is the viewer's move, in this order: noun phrases with
@@ -107,7 +105,7 @@ function turnBadge(snapshot: Snapshot, prs: PullRequest[]): BadgeView {
 /**
  * The badge for `snapshot` under `mode`. Only PRs in a section count, never a snoozed one; a
  * muted one does: mute only silences notifications. `turn` counts PRs where it is the viewer's
- * move (`whoseTurn`); `attention` counts open PRs with failing CI, requested changes, conflicts
+ * move (`whoseTurn`); `attention` counts open PRs with failing CI (`failingChecksBlock`), requested changes, conflicts
  * or ready to merge; `unseen` counts PRs updated since the user saw them. No snapshot (signed
  * out) and `off` show nothing.
  */

@@ -5,7 +5,7 @@
  */
 
 import { countMessage, t } from '../../lib/i18n';
-import { isReadyToMerge } from '../../lib/mergeEligibility';
+import { failingChecksBlock, isReadyToMerge } from '../../lib/mergeEligibility';
 import type { CheckSummary, MergeMethod, PullRequest, Turn } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
 import { TURN_LABELS } from '../../lib/turn/whoseTurn';
@@ -45,8 +45,11 @@ export const MERGE_METHOD_NAMES: Record<MergeMethod, string> = {
   },
 };
 
-/** CI rollup chip, or null when the commit has no checks. */
-export function ciStatus(checks: CheckSummary): Status | null {
+/**
+ * CI rollup chip, or null when the commit has no checks. A failure that does not `block` (only
+ * optional checks fail, `failingChecksBlock`) is neutral, not red.
+ */
+export function ciStatus(checks: CheckSummary, block = true): Status | null {
   const { failed, pending, passed, neutral, total } = checks;
   const counts = [
     failed && countMessage(failed, 'failed2One', 'failed2'),
@@ -61,10 +64,10 @@ export function ciStatus(checks: CheckSummary): Status | null {
     case 'failure':
       return {
         id: 'ci',
-        tone: 'danger',
+        tone: block ? 'danger' : 'neutral',
         icon: 'x',
         label: countMessage(failed, 'failingOne', 'failing'),
-        detail: t('checksFailing', of),
+        detail: t(block ? 'checksFailing' : 'checksFailingOptional', of),
       };
     case 'pending':
       return {
@@ -178,7 +181,10 @@ function mergeStatus(pr: PullRequest, ready: boolean): Status | null {
       by ? t('autoMergeBy', method, by) : t('autoMergeMethod', method),
     );
   }
-  return ready ? mergeChip(t('readyToMerge2'), t('readyToMerge2'), 'success') : null;
+  if (!ready) return null;
+  // Ready, but not the viewer's to merge (`waiting_on_merge`): the chip says who merges it.
+  const detail = pr.viewerCanMerge ? t('readyToMerge2') : t('readyAwaitsMaintainer');
+  return mergeChip(t('readyToMerge2'), detail, 'success');
 }
 
 /** Chips in reading order: Draft, CI, review, then the merge chip; see `withTurn`. */
@@ -188,7 +194,7 @@ export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now
     pr.isDraft
       ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,
-    ciStatus(pr.checks),
+    ciStatus(pr.checks, failingChecksBlock(pr)),
     // "Ready to merge" already says approved.
     ready && pr.reviewDecision === 'approved' ? null : reviewStatus(pr),
     mergeStatus(pr, ready),

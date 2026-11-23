@@ -3221,5 +3221,16 @@
   },
   "aiNeedsClick": {
     "message": "Chrome 只會在點擊後立即下載裝置端模型。請再次點擊以下載。"
+  },
+  "checksFailingOptional": {
+    "message": "僅選用檢查失敗：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "可以合併；需要有寫入權限的人來合併"
   }
 }

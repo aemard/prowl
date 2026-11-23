@@ -77,6 +77,21 @@ describe('computeBadge: attention', () => {
     expect(badge([failing(1)]).danger).toBe(true);
   });
 
+  it.each([
+    // Only optional checks fail (`unstable`): ready to merge, not red.
+    ['UNSTABLE', 'APPROVED', 'turn', { text: '1', danger: false }],
+    ['UNSTABLE', 'APPROVED', 'attention', { text: '1', danger: false }],
+    ['BLOCKED', 'APPROVED', 'turn', { text: '1', danger: true }],
+    ['BLOCKED', 'APPROVED', 'attention', { text: '1', danger: true }],
+  ] as const)('reads failing checks under %s %s in %s mode', (status, decision, mode, view) => {
+    const pr = quiet(1, {
+      commits: headCommit({ FAILURE: 1, SUCCESS: 1 }),
+      mergeStateStatus: status,
+      reviewDecision: decision,
+    });
+    expect(badge([pr], mode)).toMatchObject(view);
+  });
+
   it('says "1 pull request" in the singular', () => {
     expect(badge([ready(1)]).title).toBe(
       'Prowl: 1 pull request needing attention (1 ready to merge)',

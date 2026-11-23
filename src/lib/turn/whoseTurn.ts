@@ -4,7 +4,7 @@
  * card's turn chip, the `turn` badge and the `your_turn` notification all read it.
  */
 import type { MessageKey } from '../i18n';
-import { isReadyToMerge } from '../mergeEligibility';
+import { failingChecksBlock, isReadyToMerge } from '../mergeEligibility';
 import type { PullRequest, Snapshot, Turn, TurnReason } from '../model';
 
 /** The short words for each reason it is the viewer's move, on cards (the badge counts its own way). */
@@ -20,6 +20,9 @@ export const TURN_LABELS: Partial<Record<TurnReason, MessageKey>> = {
   update_branch: 'updateBranch',
   ready_to_merge: 'turnReadyToMerge',
 };
+/** The reasons that turn a chip or the badge red: something is broken, not just owed. */
+export const RED_TURNS: ReadonlySet<TurnReason> = new Set(['ci_failed', 'changes_requested']);
+
 const later = (a: string, b: string) => (a > b ? a : b);
 
 /**
@@ -30,7 +33,12 @@ const later = (a: string, b: string) => (a > b ? a : b);
  */
 function unansweredFeedback(pr: PullRequest, viewer: string): string | null {
   const isViewer = (login: string) => login.toLowerCase() === viewer;
-  const comment = pr.lastComment;
+  const comment =
+    pr.lastHumanComment !== undefined
+      ? pr.lastHumanComment
+      : pr.lastComment?.isBot
+        ? null
+        : pr.lastComment;
   const replied = pr.reviews.find((r) => isViewer(r.author))?.submittedAt ?? '';
   const answered = [
     pr.lastCommitAt,
@@ -40,7 +48,7 @@ function unansweredFeedback(pr: PullRequest, viewer: string): string | null {
   const feedback = pr.reviews
     .filter((r) => r.state === 'commented' && !r.isBot && !isViewer(r.author))
     .map((r) => r.submittedAt);
-  if (comment && !comment.isBot && !isViewer(comment.author)) feedback.push(comment.createdAt);
+  if (comment && !isViewer(comment.author)) feedback.push(comment.createdAt);
   return feedback.filter((at) => at > answered).sort()[0] ?? null;
 }
 
@@ -55,17 +63,22 @@ function mergeTurn(pr: PullRequest, others: PullRequest['reviews']): Turn {
   if (isReadyToMerge(pr) && pr.autoMerge)
     return { owner: 'none', reason: 'auto_merge', since: pushed };
   const approved = others.find((r) => r.state === 'approved')?.submittedAt ?? pushed;
-  if (isReadyToMerge(pr) && pr.viewerCanMerge)
-    return { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) };
+  if (isReadyToMerge(pr))
+    return pr.viewerCanMerge
+      ? { owner: 'you', reason: 'ready_to_merge', since: later(approved, pushed) }
+      : { owner: 'them', reason: 'waiting_on_merge', since: later(approved, pushed) };
   const reviewed = pr.reviewDecision === 'approved' || pr.reviewDecision === 'none';
   // Strict status checks: the base moved on, and only an update lets it merge.
   if (reviewed && pr.mergeStateStatus === 'behind' && pr.viewerCanUpdate)
     return { owner: 'you', reason: 'update_branch', since: pr.updatedAt };
-  // Reviewed but blocked with conversations open: resolving them is the author's to do.
-  if (reviewed && pr.mergeStateStatus === 'blocked' && pr.unresolvedThreads > 0)
-    return { owner: 'you', reason: 'unresolved_threads', since: later(approved, pushed) };
+  // A check still running may be the required one that blocks it: wait for it first.
   if (pr.checks.state === 'pending')
     return { owner: 'them', reason: 'waiting_on_checks', since: pushed };
+  // ponytail: reviewed, blocked, checks done and conversations open reads as the conversations'
+  // doing; a rule the list does not see (a required check that never reported, signed commits)
+  // reads the same. The card's readiness line names the real blocker once the detail loads.
+  if (reviewed && pr.mergeStateStatus === 'blocked' && pr.unresolvedThreads > 0)
+    return { owner: 'you', reason: 'unresolved_threads', since: later(approved, pushed) };
   if ([pr.mergeable, pr.mergeStateStatus, pr.reviewDecision].includes('unknown'))
     return { owner: 'none', reason: 'merge_unknown', since: pushed };
   return { owner: 'them', reason: 'waiting_on_reviewers', since: pushed };
@@ -74,7 +87,8 @@ function mergeTurn(pr: PullRequest, others: PullRequest['reviews']): Turn {
 /** The viewer's own PR: what they have to fix or finish, else who they wait for. */
 function authorTurn(pr: PullRequest, viewer: string): Turn {
   const pushed = pr.lastCommitAt;
-  if (pr.checks.state === 'failure') return { owner: 'you', reason: 'ci_failed', since: pushed };
+  // Only a failure GitHub calls optional (`unstable`) lets a ready PR fall through to its merge.
+  if (failingChecksBlock(pr)) return { owner: 'you', reason: 'ci_failed', since: pushed };
   const others = pr.reviews.filter((r) => r.author.toLowerCase() !== viewer);
   // Changes asked after the last push: the author's move. A push since hands it back. A bot's
   // count too: they block the merge like anyone's.
@@ -140,7 +154,8 @@ export const STUCK_MS = 2 * 24 * 60 * 60 * 1000;
 
 /**
  * The numbers above the "Your turn" list: how many PRs wait on the viewer and since when the
- * oldest has, and how many of the viewer's own PRs have waited on reviewers for over two days.
+ * oldest has, and how many of the viewer's own PRs have waited on reviewers for over two days
+ * (one that is ready and waits only for someone to merge it, `waiting_on_merge`, is not).
  */
 export function turnSummary(snapshot: Snapshot, now: number) {
   const ids = new Set(Object.values(snapshot.sections).flat());

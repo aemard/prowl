@@ -150,13 +150,17 @@ appending a newer one.
   (`components/prStatus.ts`); whose turn comes from `whoseTurn` / `turnIn` / `yourTurnIds`
   (`src/lib/turn`), the one rule for section, chips, badge and events. Merge eligibility
   (`isReadyToMerge`, `mergesItself`, `awaitsMerge`) lives in `src/lib/mergeEligibility.ts`, which
-  both `diff` and `turn` import (they must not import each other).
+  both `diff` and `turn` import (they must not import each other). "Red CI" is
+  `failingChecksBlock` there (an `unstable` verdict means only optional checks fail), and the red
+  turn reasons are `RED_TURNS` in `whoseTurn.ts`: never test `checks.state === 'failure'` alone.
+- Feedback reads `lastHumanComment` (latest non-bot of the last 5 comments); `lastComment` stays the
+  latest of any author for the diff's `comment_new`. Test builders that set one should set both.
 - Card code that walks the DOM (`j` / `k`, the seen observer) skips folded groups and folded
   stacks for free; code that works from data must check `isFolded`.
 - Expanded cards: module signals in `state/prDetail.ts` (`expandedIds`, `details`, `detailOf`);
   `loadDetail` sits in `state/loadDetail.ts` so the query ships with the details chunk. A detail
   answer must match both its loading entry and the auth it started with.
-- Stacks: `listItems` / `stackMembers` (open members only) / `stackState` / `stackSummary` (ready
+- Stacks: `listItems` (groups open members; a merged or closed one is a plain card) / `stackMembers` (open members only) / `stackState` / `stackSummary` (ready
   run from `stack.bottom`) in `src/lib/stacks.ts`; `StackItem` loads lazily, so tests wait for it
   with `findBy…`. `StackMergeButton` / `StackMergeDialog` serve the stack and a stacked card's
   "Merge up to here"; the dialog needs the top's detail (unit tests seed `details`).
