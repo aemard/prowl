@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import type { ReviewThread } from '../model';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
+import { RATE_LIMIT_FIELDS } from './rateLimit';
 import { messageOf } from './reviewActions';
 
 export const THREADS_QUERY = /* GraphQL */ `
@@ -21,7 +22,7 @@ query ProwlReviewThreads($id: ID!, $after: String) {
       }
     }
   }
-  rateLimit { limit remaining resetAt cost }
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 export const RESOLVE_THREAD_MUTATION = /* GraphQL */ `

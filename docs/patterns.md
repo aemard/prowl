@@ -57,7 +57,9 @@ appending a newer one.
 - Every operation is an exported, named string (`query ProwlX`); `tests/unit/githubSchema.test.ts`
   validates them against `tests/fixtures/github-schema.graphql` (refresh with
   `pnpm schema:update`). A field GitHub may drop goes through a strippable constant
-  (`withoutStacks`, retried in `fetchSearch.ts`).
+  (`withoutStacks`, retried in `fetchSearch.ts`). End each read with `${RATE_LIMIT_FIELDS}`
+  (`rateLimit.ts`); a connection added or removed changes the table in architecture.md, "Query
+  cost", the only place with figures.
 - Searches: `buildSearchQuery`, `filterByRepo` and `validateCustomQuery` (`search.ts`).
   `fetchPullRequests` is the only reader of raw PR JSON (via `mapPullRequest`); every PR it finds
   goes through `put`, and `preserve` restores cached members only after a cut scan or a refused

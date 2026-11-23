@@ -7,6 +7,7 @@
 import { t } from '../i18n';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
+import { RATE_LIMIT_FIELDS } from './rateLimit';
 
 export const TEXT_QUERY = /* GraphQL */ `
 query ProwlPullRequestText($id: ID!) {
@@ -36,7 +37,7 @@ query ProwlPullRequestText($id: ID!) {
       }
     }
   }
-  rateLimit { limit remaining resetAt cost }
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 type Nodes<T> = { nodes: (T | null)[] | null } | null | undefined;

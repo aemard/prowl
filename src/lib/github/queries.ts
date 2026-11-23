@@ -3,18 +3,15 @@
  * the E2E mock dispatches on the name. Enum values are typed as `string` because GitHub adds
  * values over time; `mapPullRequest.ts` maps unknown ones to safe defaults.
  *
- * Estimated cost (GitHub: requests needed for every connection / 100, rounded): a search page
- * of 25 PRs with its 7 nested connections is 1 + 25 x 7 = 176 requests, about 2 points;
- * `ProwlNodes` with 100 ids and `ProwlMergeState` with 10 are 1 point. Lists use counts
- * (`checkRunCountsByState`) instead of check nodes, so the page stays light whatever the number
- * of checks.
+ * What each read costs is worked out once, in docs/architecture.md ("Query cost"): update it
+ * there when a connection is added or removed. Lists use counts (`checkRunCountsByState`)
+ * instead of check nodes, so the page stays light whatever the number of checks.
  *
  * Points are not the limit, GitHub's 10 s execution time is: `mergeStateStatus` and
  * `reviewDecision` take about half a second per PR on busy repositories (branch rules are
  * evaluated each time), so they live in `ProwlMergeState`, asked for few PRs at a time.
  */
-
-const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
+import { RATE_LIMIT_FIELDS } from './rateLimit';
 
 /** Entries read per stack: a longer stack's open bottom is not known (`PullRequest.stack.bottom`). */
 const STACK_ENTRIES = 20;
@@ -97,7 +94,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
       }
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** Team fields are isolated: repo-only tokens must still load all other sections. */
@@ -125,7 +122,7 @@ query ProwlMergeState($ids: [ID!]!) {
       viewerCanDisableAutoMerge
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** Final state of PRs that left every section: merged or closed, and by whom. */
@@ -143,7 +140,7 @@ query ProwlNodes($ids: [ID!]!) {
       }
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** A connection as selected here: only `nodes`, whose entries are null where a read failed. */

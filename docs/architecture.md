@@ -259,7 +259,7 @@ Mapping (`mapPullRequest`):
 
 | Field | Rule |
 |---|---|
-| `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
+| `checks` | Head commit `checkRunCountsByState` + `statusContextCountsByState`. failed: FAILURE, ERROR, TIMED_OUT, STARTUP_FAILURE, ACTION_REQUIRED; pending: PENDING, EXPECTED, QUEUED, IN_PROGRESS, WAITING, REQUESTED; passed: SUCCESS; neutral: anything else (NEUTRAL, SKIPPED, CANCELLED, STALE, new values). State: `failure` if any failed, else `pending` if any pending, else `success` if any, else `none`. `statusCheckRollup.state` is not used. |
 | enums | Lower-cased when the model knows the value; otherwise `unknown` (`reviewDecision`, `mergeable`, `mergeStateStatus`) or `open` (`state`). `reviewDecision` is `none` when GitHub sends null (no review required), so a missing or unrecognized value is never read as "no requirement". |
 | `reviews` | `latestReviews`, newest first; PENDING and unknown states dropped. Each carries `isBot` from `author.__typename`, as for `author` below (Copilot code review and CodeRabbit are `Bot`s). |
 | `requestedReviewers` | Users, bots and mannequins. Teams are not selected: every `Team` field needs `read:org` and would fail the whole query for a `repo`-only token. |
@@ -283,14 +283,21 @@ response gives the real figure):
 | Query | Requests | Points |
 |---|---|---|
 | `ProwlSearch`, page of 25 (`PAGE_SIZE`, `fetchSearch.ts`) | 1 + 25 x 8 nested connections (labels, latestReviews, reviewRequests, reviewThreads, comments, commits, contexts, stack entries) = 201 | about 2 |
+| `ProwlMergeState`, 10 ids | 1 (no connection) | 1 |
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
-| `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 4 connections (latestReviews, reviewRequests, commits, contexts) = 5 | 1 |
+| `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 6 connections (latestReviews, reviewRequests, firstCommit, commits, contexts, deployments) = 7 | 1 |
+| `ProwlReviewThreads`, one page, on demand | 1 + 1 (reviewThreads) + 100 (comments) = 102 | 1 |
+| `ProwlPullRequestText`, on demand | 1 + 4 (comments, reviews, commits, contexts) + 50 (annotations) = 55 | 1 |
 
 Team reviews runs one `ProwlSearch`, like any section; `/user/teams` uses the REST core budget,
-refreshed once a day, independent of the GraphQL search.
-The default settings (two searched sections, Your turn needs none; 50 PRs each, every 2 minutes) cost
-about 240 points an hour (4.8%) of the 5,000; four sections of 100 PRs every 2 minutes stay under 1,000. `ProwlMergeState` adds
-about a point per 10 changed PRs.
+refreshed once a day, independent of the GraphQL search. GitHub prices a page by its `first`
+arguments, not by what it returns, but a section stops at its last page: with the default
+settings (two searched sections, Your turn needs none; up to 50 PRs each, every 2 minutes) a
+poll costs 4 points when each section fits in one page of 25 and 8 when both are full, so 120
+to 240 points an hour (2.4% to 4.8% of the 5,000); four sections of 100 PRs every 2 minutes
+(32 points a poll) stay under 1,000. `ProwlMergeState` adds about a point per 10 changed PRs.
+Fast-lane polls cost the same: inbox news polls at most once a minute and the CI watch at most
+every 2 minutes (see [Inbox fast lane](#inbox-fast-lane)).
 
 ## Pull request detail
 
@@ -504,8 +511,7 @@ waits for a later alarm, which still asks with the same `If-Modified-Since`, so 
 deferred, not lost. The `inbox` poll itself has no floor, since it trails a poll in flight that
 may have read GitHub before the news. Cost: at most one inbox poll a minute, so with the
 default 2-minute interval at most 30 more full polls an hour than the schedule, as for the CI
-watch (see [Query cost](#query-cost): about 4 to 8 points a poll with the default
-sections, so up to 120 to 240 points an hour, 5% of the budget); the 304s are free. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
+watch, each priced as a scheduled poll ([Query cost](#query-cost)); the 304s are free. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
 the alarm's scheduled time so alarm jitter does not skip a minute. The first check of a browser
 session (or of a sign-in) only records the date. Fine-grained tokens cannot read the inbox, and a
 403 or 404 turns the lane off until the browser restarts or another sign-in
@@ -536,8 +542,8 @@ ready to merge), so a teammate's, a team's or a mentioned PR waits for the sched
 an active team always has CI running somewhere and the cadence would never leave its fastest. A
 `ci` poll runs on a list at least 110 s old, so with the minute alarm it polls every 2 minutes,
 the floor of the poll interval: at most 30 extra full polls an hour, for at most an hour after
-the PR last changed (about 120 points an hour with the default section, 4 points a poll, plus
-`ProwlMergeState` for the PRs that changed). With an interval of 2 minutes it adds nothing. A Chrome window that regains
+the PR last changed, each priced as a scheduled poll ([Query cost](#query-cost)), plus
+`ProwlMergeState` for the PRs that changed. With an interval of 2 minutes it adds nothing. A Chrome window that regains
 focus (`chrome.windows.onFocusChanged`, `onChromeFocused`) asks for a `focus` poll, and the panel
 asks for a `panel` poll when it opens or becomes visible (`refreshIfStale`,
 `src/sidepanel/state/freshness.ts`); neither forces anything.

@@ -6,6 +6,9 @@ import type { RateLimit } from '../model';
 
 type HeaderSource = Pick<Headers, 'get'>;
 
+/** The selection every Prowl read adds at its root, for `parseRateLimit` (`cost`: what it took). */
+export const RATE_LIMIT_FIELDS = 'rateLimit { limit remaining resetAt cost }';
+
 /** A non-negative integer from a number or a numeric string; anything else is null. */
 function toCount(value: unknown): number | null {
   const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;

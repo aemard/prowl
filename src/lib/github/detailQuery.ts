@@ -3,15 +3,14 @@
  * apart from the polled queries so the service worker does not ship it.
  */
 import type { GraphQLRateLimit, Login, Nodes } from './queries';
-
-const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
+import { RATE_LIMIT_FIELDS } from './rateLimit';
 
 /**
  * What the expanded card needs about one PR: its head commit's check runs and status contexts
  * (100 per page, `$after` pages through more), who reviewed or was asked to, and the base
  * branch's rules. `isRequired(pullRequestId:)` says which checks block the merge. Teams are left
  * out of the requested reviewers like in `ProwlSearch` (`read:org`). Not polled: one request per
- * page when a card is expanded, about 1 point (1 + 4 connections = 5 requests).
+ * page when a card is expanded (cost: docs/architecture.md, "Query cost").
  */
 export const DETAIL_QUERY = /* GraphQL */ `
 query ProwlPullRequestDetail($id: ID!, $after: String) {
@@ -54,7 +53,7 @@ query ProwlPullRequestDetail($id: ID!, $after: String) {
       }
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 export interface CheckRunNode {
