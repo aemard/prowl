@@ -1,19 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../../tests/fixtures/http';
-import {
-  CONVERT_TO_DRAFT_MUTATION,
-  DISABLE_AUTO_MERGE_MUTATION,
-  ENABLE_AUTO_MERGE_MUTATION,
-  MARK_READY_MUTATION,
-  rerunFailedChecks,
-  setAutoMerge,
-  setDraft,
-  UPDATE_BRANCH_MUTATION,
-  updateBranch,
-} from './actions';
 import { setup } from './actions.test-support';
 import { createGitHubClient, type FetchLike } from './client';
 import { GitHubError } from './errors';
+import {
+  CONVERT_TO_DRAFT_MUTATION,
+  MARK_READY_MUTATION,
+  rerunFailedChecks,
+  setDraft,
+  UPDATE_BRANCH_MUTATION,
+  updateBranch,
+} from './maintenanceActions';
 
 const suites = (nodes: unknown[]) => ({
   node: {
@@ -177,36 +174,5 @@ describe('updateBranch', () => {
     await expect(updateBranch(empty.client, 'PR_1', 'abc', 'merge')).rejects.toMatchObject({
       kind: 'server',
     });
-  });
-});
-
-describe('setAutoMerge', () => {
-  it('turns auto-merge on with a method pinned to the head, and off', async () => {
-    const on = setup({
-      enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: { mergeMethod: 'SQUASH' } } },
-    });
-    await setAutoMerge(on.client, 'PR_1', 'squash', 'abc');
-    expect(on.sent).toEqual([
-      {
-        query: ENABLE_AUTO_MERGE_MUTATION,
-        variables: { id: 'PR_1', method: 'SQUASH', oid: 'abc' },
-      },
-    ]);
-    const off = setup({ disablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null } } });
-    await setAutoMerge(off.client, 'PR_1', null, 'abc');
-    expect(off.sent).toEqual([{ query: DISABLE_AUTO_MERGE_MUTATION, variables: { id: 'PR_1' } }]);
-  });
-
-  it('fails when GitHub does not confirm the new state', async () => {
-    const stillOff = setup({
-      enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null } },
-    });
-    await expect(setAutoMerge(stillOff.client, 'PR_1', 'merge', 'abc')).rejects.toMatchObject({
-      kind: 'server',
-    });
-    const empty = setup({ disablePullRequestAutoMerge: null });
-    await expect(setAutoMerge(empty.client, 'PR_1', null, 'abc')).rejects.toBeInstanceOf(
-      GitHubError,
-    );
   });
 });

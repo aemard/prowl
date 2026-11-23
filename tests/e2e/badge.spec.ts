@@ -35,7 +35,7 @@ function serve(github: Parameters<Parameters<typeof test>[2]>[0]['github']) {
   return state;
 }
 
-test('counts the pull requests that need attention, red while CI fails', async ({
+test('counts the pull requests waiting on you, red while your CI fails', async ({
   github,
   signIn,
   poll,
@@ -49,7 +49,7 @@ test('counts the pull requests that need attention, red while CI fails', async (
   expect(await icon(serviceWorker)).toEqual({
     text: '2',
     color: DANGER,
-    title: 'Prowl: 2 pull requests needing attention (1 CI failing, 1 ready to merge)',
+    title: 'Prowl: 2 pull requests waiting on you (1 with failing CI, 1 ready to merge)',
   });
 
   state.failing = false;
@@ -57,7 +57,7 @@ test('counts the pull requests that need attention, red while CI fails', async (
   expect(await icon(serviceWorker)).toEqual({
     text: '1',
     color: ACCENT,
-    title: 'Prowl: 1 pull request needing attention (1 ready to merge)',
+    title: 'Prowl: 1 pull request waiting on you (1 ready to merge)',
   });
 });
 

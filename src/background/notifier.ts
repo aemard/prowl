@@ -1,22 +1,28 @@
-import { t } from '../lib/i18n';
 /**
  * Desktop notifications for a poll's events. The worker can stop at any time, so what must
  * survive lives in `chrome.storage.session` (cleared when the browser closes): `notified`
  * maps the id of every event already reported to its PR's URL. It dedupes events (ids are
  * stable per change, see the diff engine) and tells a click where to go; a notification for
  * one event has that event's id as its id. A summary of several events is recorded under its
- * own id too, pointing at the viewer's pull requests on GitHub.
+ * own id too, pointing at the viewer's pull requests on GitHub. Events silenced only by quiet
+ * hours wait in `chrome.storage.local` under `quietHeld` (Chrome is often closed overnight) and
+ * become one digest notification at the first poll after the window ends.
  */
 
 import { env } from '../lib/env';
+import { t } from '../lib/i18n';
 import type { NotificationSettings, PrEvent, PrLocalState } from '../lib/model';
 import { filterEvents } from '../lib/notify/filterEvents';
 import {
   type NotificationContent,
   notificationContent,
+  quietDigestContent,
   summaryContent,
 } from '../lib/notify/messages';
+import { freshHeld, holdEvents } from '../lib/notify/quietDigest';
 import { snooze, updatePrLocal } from '../lib/storage/prLocal';
+import { getItem, removeItems, setItem } from '../lib/storage/storage';
+import { isQuietNow } from '../lib/time/quietHours';
 import { isGitHubUrl } from '../lib/url';
 
 const NOTIFIED = 'notified';
@@ -36,9 +42,40 @@ async function readNotified(): Promise<Notified> {
   return stored[NOTIFIED] ?? {};
 }
 
-/** Forgets what was reported (sign-out). */
-export function forgetNotified(): Promise<void> {
-  return chrome.storage.session.remove(NOTIFIED);
+/** Forgets what was reported and what waits for the digest (sign-out). */
+export async function forgetNotified(): Promise<void> {
+  await Promise.all([chrome.storage.session.remove(NOTIFIED), removeItems('quietHeld')]);
+}
+
+/** Keeps the events quiet hours silenced (and nothing else would have) for the digest. */
+async function hold(
+  events: PrEvent[],
+  notified: Notified,
+  settings: NotificationSettings,
+  local: PrLocalState,
+) {
+  const audible = { ...settings, quietHours: { ...settings.quietHours, enabled: false } };
+  const kept = filterEvents(events, audible, local).filter((e) => !Object.hasOwn(notified, e.id));
+  if (kept.length === 0) return;
+  const now = Date.now();
+  await setItem('quietHeld', holdEvents(freshHeld(await getItem('quietHeld'), now), kept, now));
+}
+
+/** After quiet hours: one digest of what waited, still enabled, unmuted and not yet reported. */
+async function flushHeld(
+  notified: Notified,
+  settings: NotificationSettings,
+  local: PrLocalState,
+): Promise<[string, string][]> {
+  const stored = await getItem('quietHeld');
+  if (stored === undefined) return [];
+  await removeItems('quietHeld');
+  const held = freshHeld(stored, Date.now()).map(({ event }) => event);
+  const due = filterEvents(held, settings, local).filter((e) => !Object.hasOwn(notified, e.id));
+  if (due.length === 0) return [];
+  const id = `digest:${Date.now()}`;
+  await show(id, quietDigestContent(due));
+  return [...due.map((e) => [e.id, e.url] as [string, string]), [id, `${env.webUrl}/pulls`]];
 }
 
 function show(id: string, content: NotificationContent, buttons?: { title: string }[]) {
@@ -60,12 +97,25 @@ export async function notifyEvents(
   local: PrLocalState,
 ): Promise<void> {
   try {
-    if (events.length === 0) return;
     const notified = await readNotified();
-    const fresh = events.filter((event) => !Object.hasOwn(notified, event.id));
-    const shown = filterEvents(fresh, settings, local);
-    if (shown.length === 0) return;
-    const kept = [...Object.entries(notified), ...shown.map((e) => [e.id, e.url] as const)];
+    if (settings.enabled && isQuietNow(settings.quietHours))
+      return await hold(events, notified, settings, local);
+    const digest = await flushHeld(notified, settings, local);
+    const reported = new Set([...Object.keys(notified), ...digest.map(([id]) => id)]);
+    // Filtered before dropping what was reported, so a repeated poll drops the same turn events.
+    const shown = filterEvents(events, settings, local).filter((e) => !reported.has(e.id));
+    const kept = [
+      ...Object.entries(notified),
+      ...digest,
+      ...shown.map((e) => [e.id, e.url] as const),
+    ];
+    if (shown.length === 0) {
+      if (digest.length > 0)
+        await chrome.storage.session.set({
+          [NOTIFIED]: Object.fromEntries(kept.slice(-MAX_NOTIFIED)),
+        });
+      return;
+    }
     if (shown.length <= MAX_SEPARATE) {
       for (const event of shown) await show(event.id, notificationContent(event), buttons());
     } else {

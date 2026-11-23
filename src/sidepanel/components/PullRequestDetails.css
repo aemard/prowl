@@ -1,11 +1,13 @@
-/* The expanded part of a card: an inset panel below the card's summary. */
+/* The expanded part of a card: an opaque reading panel below the card's summary, rounded to
+   the card's lower corners. */
 .pr-detail {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4) var(--space-4);
   border-top: var(--border-width) solid var(--color-border-subtle);
-  background: var(--color-bg-subtle);
+  border-radius: 0 0 var(--radius-glass-card) var(--radius-glass-card);
+  background: var(--glass-solid);
 }
 
 .pr-detail__label {
@@ -155,10 +157,6 @@
   gap: var(--space-1-5);
 }
 
-.pr-detail {
-  border-radius: 0 0 21px 21px;
-  background: var(--glass-solid);
-}
 .pr-detail__freshness {
   margin: var(--space-2) 0;
   color: var(--color-fg-muted);

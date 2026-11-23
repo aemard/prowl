@@ -4,7 +4,7 @@ import { headCommit, prNode, viewerNode } from '../../tests/fixtures/github';
 import { mapPullRequest } from '../lib/github/mapPullRequest';
 import type { PullRequest, Snapshot } from '../lib/model';
 import { markSeen, snooze, updatePrLocal } from '../lib/storage/prLocal';
-import { updateSettings } from '../lib/storage/settings';
+import { loadSettings, updateSettings } from '../lib/storage/settings';
 import { setItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { BADGE_COLORS, clearBadge, updateBadge, watchBadge } from './badge';
@@ -35,7 +35,7 @@ describe('updateBadge', () => {
     expect(shown()).toEqual({
       text: '2',
       color: BADGE_COLORS.danger,
-      title: 'Prowl: 2 pull requests needing attention (1 CI failing, 1 ready to merge)',
+      title: 'Prowl: 2 pull requests waiting on you (1 with failing CI, 1 ready to merge)',
     });
 
     await setItem('snapshot', snapshot(ready));
@@ -115,7 +115,7 @@ describe('watchBadge', () => {
     await repainted('1');
   });
 
-  it('keeps counting drafts and bots when legacy preferences are saved', async () => {
+  it('counts drafts and bots, even with legacy hiding keys stored', async () => {
     const draft = mapPullRequest(
       prNode({ number: 2, isDraft: true, commits: headCommit({ FAILURE: 1 }) }),
     );
@@ -127,14 +127,12 @@ describe('watchBadge', () => {
       }),
     );
     await setItem('snapshot', snapshot(failing, draft, bot));
+    await updateSettings({ badge: 'attention' });
     await updateBadge();
     watchBadge();
     await repainted('3');
-    await updateSettings({ hideDrafts: true });
-    await repainted('3');
-    await updateSettings({ hideBots: true });
-    await repainted('3');
-    await updateSettings({ hideDrafts: false, hideBots: false });
+    const legacy = { hideDrafts: true, hideBots: true, hideStaleAfterDays: 20 };
+    await chrome.storage.local.set({ settings: { ...(await loadSettings()), ...legacy } });
     await repainted('3');
   });
 });

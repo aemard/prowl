@@ -100,7 +100,13 @@ describe('the confirmation', () => {
       viewerCanMergeAsAdmin: true,
       reviewDecision: 'changes_requested',
       reviews: [
-        { id: 'R_1', author: 'alice', state: 'changes_requested', submittedAt: pr.updatedAt },
+        {
+          id: 'R_1',
+          author: 'alice',
+          isBot: false,
+          state: 'changes_requested',
+          submittedAt: pr.updatedAt,
+        },
       ],
       mergeable: 'conflicting',
       mergeStateStatus: 'dirty',
@@ -226,8 +232,7 @@ describe('merging', () => {
     choose('squash');
     fireEvent.input(commitTitle(), { target: { value: 'Title' } });
     fireEvent.click(confirm());
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    fireEvent.click(opener());
+    await waitFor(() => expect(within(dialog()).getByRole('alert').textContent).toBe('No'));
     expect((method() as HTMLSelectElement).value).toBe('squash');
     expect((commitTitle() as HTMLInputElement).value).toBe('Title');
 
@@ -235,12 +240,12 @@ describe('merging', () => {
     fireEvent.click(confirm());
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     fireEvent.click(opener());
-    expect((commitTitle() as HTMLInputElement).value).toBe('');
+    expect((commitTitle() as HTMLInputElement).value).toBe('Improve the widgets (#1)');
   });
 });
 
 describe('when GitHub refuses', () => {
-  it('closes the dialog, shows the reason in a toast, never the token, and refreshes', async () => {
+  it('keeps the dialog open with the reason, never the token, and refreshes', async () => {
     stubGitHub(() =>
       jsonResponse({
         data: null,
@@ -256,14 +261,21 @@ describe('when GitHub refuses', () => {
     show();
     fireEvent.click(opener());
     fireEvent.click(confirm());
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(toastTexts()).toEqual([
-      'danger: Merge failed: Head branch was modified. Review and try the merge again. [redacted]',
-    ]);
+    await waitFor(() =>
+      expect(within(dialog()).getByRole('alert').textContent).toBe(
+        'Head branch was modified. Review and try the merge again. [redacted]',
+      ),
+    );
+    expect(toasts.value).toEqual([]);
     // The head moved, so the panel's copy of the pull request is stale: ask for a fresh one.
     expect(send).toHaveBeenCalledWith(poll);
     expect(pendingActions.value).toEqual({});
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(opener().getAttribute('aria-busy')).toBeNull();
+    // Opened again, the dialog starts without the earlier refusal.
+    fireEvent.click(opener());
+    expect(within(dialog()).queryByRole('alert')).toBeNull();
   });
 
   it('explains a merge that GitHub did not carry out', async () => {
@@ -271,8 +283,11 @@ describe('when GitHub refuses', () => {
     show();
     fireEvent.click(opener());
     fireEvent.click(confirm());
-    await waitFor(() => expect(toasts.value).toHaveLength(1));
-    expect(toastTexts()).toEqual(['danger: Merge failed: GitHub did not confirm the merge.']);
+    await waitFor(() =>
+      expect(within(dialog()).getByRole('alert').textContent).toBe(
+        'GitHub did not confirm the merge.',
+      ),
+    );
   });
 });
 

@@ -94,6 +94,12 @@ const UI_PAIRS: [fg: string, bg: string][] = [
   ['fg-on-solid', 'border-control'],
 ];
 
+/** Raw values a component stylesheet must take from the tokens instead. */
+const RAW_COLOR = /:[^;{}]*(#[0-9a-f]{3,8}\b|rgba?\(|hsla?\()/i;
+/** A corner is a token, `inherit` or 0; any other number is a raw radius. */
+const RAW_RADIUS = /radius\s*:[^;{}]*(?<![\w-])(?:\d*\.)?\d*[1-9]\d*(?:px|r?em|%)/i;
+const RAW_DURATION = /(?:transition|animation)[\w-]*\s*:[^;{}]*(?<![\w-])\d*\.?\d+m?s\b/i;
+
 const fmt = (n: number) => n.toFixed(2);
 const cell = (fg: string, bg: string) =>
   `${fmt(ratio(light, fg, bg))} / ${fmt(ratio(dark, fg, bg))}`;
@@ -198,22 +204,44 @@ describe('design tokens', () => {
     expect(current).toBe(contrastTable());
   });
 
-  it('keeps raw colors out of every stylesheet except the design tokens', () => {
-    const offenders: string[] = [];
+  it('keeps raw colors, radii and durations out of every stylesheet except the design tokens', () => {
     const walk = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
         entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
       );
+    const rules: [kind: string, pattern: RegExp][] = [
+      ['color', RAW_COLOR],
+      ['radius', RAW_RADIUS],
+      ['duration', RAW_DURATION],
+    ];
+    const offenders: string[] = [];
     for (const file of walk(resolve(root, 'src'))) {
       if (
         !file.endsWith('.css') ||
         tokenFiles.some((name) => file === resolve(root, 'src/styles', name))
       )
         continue;
-      const source = readFileSync(file, 'utf8');
-      if (/:[^;{}]*(#[0-9a-f]{3,8}\b|rgba?\(|hsla?\()/i.test(source)) offenders.push(file);
+      const source = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      for (const [kind, pattern] of rules) {
+        if (pattern.test(source)) offenders.push(`${kind}: ${file}`);
+      }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('recognizes raw radii and durations but not tokens', () => {
+    expect(RAW_RADIUS.test('border-radius: 21px;')).toBe(true);
+    expect(RAW_RADIUS.test('border-radius: 0 0 23px 23px;')).toBe(true);
+    expect(RAW_RADIUS.test('border-radius: 50%;')).toBe(true);
+    expect(
+      RAW_RADIUS.test('border-radius: 0 0 var(--radius-glass-card) var(--radius-glass-card);'),
+    ).toBe(false);
+    expect(RAW_RADIUS.test('border-radius: inherit;')).toBe(false);
+    expect(RAW_DURATION.test('animation: card 1100ms linear both;')).toBe(true);
+    expect(RAW_DURATION.test('transition: opacity 0.2s;')).toBe(true);
+    expect(RAW_DURATION.test('transition: color var(--duration-fast) var(--ease-standard);')).toBe(
+      false,
+    );
   });
 
   it('computes contrast like WCAG', () => {

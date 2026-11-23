@@ -213,7 +213,8 @@ test.describe('with a rich set of pull requests', () => {
 
     await expect(cardFor(panel, /^WIP: migrate/)).toContainText('Draft');
     await expect(cardFor(panel, /^WIP: migrate/)).toContainText('3 pending');
-    await expect(cardFor(panel, /^Fix crash when rotating/)).toContainText('Conflicts');
+    // The viewer's own conflicting PR: the conflicts chip is the action (one chip per fact).
+    await expect(cardFor(panel, /^Fix crash when rotating/)).toContainText('Resolve conflicts');
     await expect(cardFor(panel, /^Add rate limiting/)).toContainText('Ready to merge');
     await expect(cardFor(panel, /^Dark mode: fix contrast/)).toContainText('1 pending');
     await expect(cardFor(panel, /^Dark mode: fix contrast/)).toContainText('Approved');

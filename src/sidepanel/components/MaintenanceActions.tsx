@@ -1,7 +1,7 @@
-import { rerunFailedChecks, setDraft, updateBranch } from '../../lib/github/actions';
+import { rerunFailedChecks, setDraft, updateBranch } from '../../lib/github/maintenanceActions';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
-import { pendingActions, prRef, runPrAction } from '../state/prActions';
+import { forPr, pendingActions, runPrAction } from '../state/prActions';
 import { auth } from '../state/store';
 import { GitPullRequestIcon, SyncIcon } from './icons';
 import { Button } from './ui/Button';
@@ -30,7 +30,7 @@ export const draftActionName = (pr: PullRequest) =>
 
 export const rerun = (pr: PullRequest) =>
   runPrAction(pr, t('reRunFailedChecks'), t('reRunningFailedChecksOf'), (client) =>
-    rerunFailedChecks(client, pr.id).then(() => undefined),
+    rerunFailedChecks(client, pr.id),
   );
 
 export const toggleDraft = (pr: PullRequest) =>
@@ -47,14 +47,13 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
   if (!viewer) return null;
   const pending = pendingActions.value[pr.id];
   const draftName = draftActionName(pr);
-  const ref = prRef(pr);
   return (
     <>
       {canRerun(pr) && (
         <Button
           size="sm"
           icon={<SyncIcon size={12} />}
-          aria-label={t('of', t('reRunFailedChecks'), ref)}
+          aria-label={forPr(t('reRunFailedChecks'), pr)}
           loading={pending === t('reRunFailedChecks')}
           disabled={pending !== undefined && pending !== t('reRunFailedChecks')}
           onClick={() => void rerun(pr)}
@@ -64,7 +63,7 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
       )}
       {canUpdateBranch(pr) && (
         <Menu
-          label={t('of', t('updateBranch'), ref)}
+          label={forPr(t('updateBranch'), pr)}
           items={[
             {
               id: 'merge',
@@ -82,7 +81,7 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
               {...props}
               size="sm"
               icon={<SyncIcon size={12} />}
-              aria-label={t('of', t('updateBranch'), ref)}
+              aria-label={forPr(t('updateBranch'), pr)}
               loading={pending === t('updateBranch')}
               disabled={pending !== undefined && pending !== t('updateBranch')}
             >
@@ -95,7 +94,7 @@ export function MaintenanceActions({ pr }: { pr: PullRequest }) {
         <Button
           size="sm"
           icon={<GitPullRequestIcon size={12} />}
-          aria-label={t('actionReference', draftName, ref)}
+          aria-label={forPr(draftName, pr)}
           loading={pending === draftName}
           disabled={pending !== undefined && pending !== draftName}
           onClick={() => void toggleDraft(pr)}

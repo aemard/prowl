@@ -39,6 +39,7 @@ watcher with manual extension reload.
 | `pnpm verify:fast` | Lint, types and unit tests. Use it while you work. |
 | `pnpm verify` | Everything CI runs: lint, types, unit tests with coverage gates, build, size budget and end-to-end tests. |
 | `pnpm lint:fix` | Formats the code with Biome and applies its safe fixes. |
+| `pnpm schema:update` | Downloads GitHub's GraphQL schema into `tests/fixtures/github-schema.graphql`, which the contract test checks every operation against. Commit it in its own pull request. |
 
 A pull request needs a green `pnpm verify`. Tests never call the real GitHub API: they use the
 builders in `tests/fixtures/` and the mock GitHub server of the end-to-end suite. The end-to-end
@@ -67,8 +68,12 @@ Packages come from npm through pnpm, pinned by `pnpm-lock.yaml` (CI installs wit
 `--frozen-lockfile`); GitHub Actions are pinned to commit SHAs. Add a dependency only when the
 platform and the existing ones do not cover the need: a runtime one needs a line in
 `docs/decisions.md` and has to fit the size budget, and one with an install script must be allowed
-in `pnpm-workspace.yaml`. Dependabot proposes updates every week, dependency review fails a pull
-request that adds a known-vulnerable package, and every release ships an SBOM.
+in `pnpm-workspace.yaml`. Dependabot proposes updates every week; only test tooling and Actions
+outside the release path merge themselves, everything that builds or ships the extension is
+reviewed by a person (docs/releasing.md, "Dependency updates"). Dependency review fails a pull
+request that adds a known-vulnerable package, and every release ships an SBOM. A new development
+dependency that only tests or lints goes in the `test-tooling` group of `.github/dependabot.yml`;
+one the build imports goes in `BUILD_ROOTS` of `scripts/build-chain.mjs`.
 
 ## Commits and pull requests
 

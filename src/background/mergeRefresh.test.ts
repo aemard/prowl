@@ -89,6 +89,14 @@ it.each(['b'.repeat(40), undefined])(
   },
 );
 
+it('keeps the carried facts, still due, while GitHub is still computing them for this head', async () => {
+  const computing = prNode({ mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN' });
+  serve(() => jsonResponse({ data: mergeStateResponse([pr.id], [computing]) }));
+  const before = await getItem('snapshot');
+  await refreshMergeState(pr.id, pr.headSha);
+  expect(await getItem('snapshot')).toEqual(before);
+});
+
 it('honors rate-limit waits and rejects stale heads and absent PRs without fetching', async () => {
   const fetch = serve();
   await refreshMergeState('missing', pr.headSha);

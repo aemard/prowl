@@ -4,7 +4,7 @@
  * as a new snapshot, show up without any message). The panel only reads these; the service
  * worker owns `snapshot` and `pollState`.
  */
-import { batch, computed, signal } from '@preact/signals';
+import { batch, computed, effect, signal, untracked } from '@preact/signals';
 import {
   type AuthState,
   type PanelState,
@@ -27,6 +27,21 @@ export const settings = signal<Settings>(defaultSettings());
 export const auth = signal<AuthState | undefined>(undefined);
 export const snapshot = signal<Snapshot | undefined>(undefined);
 export const pollState = signal<PollState | undefined>(undefined);
+
+// Changes only with the token itself, not with every rewrite of `auth`.
+const signedInAs = computed(() => auth.value?.token);
+
+/**
+ * Runs `reset` now and whenever another account (or none) signs in: what the panel read for one
+ * account (details, conversations, AI answers) must not show to the next. Loaders also check, as
+ * they publish, that `auth.value` is still the session they started in.
+ */
+export function onAccountChange(reset: () => void): void {
+  effect(() => {
+    void signedInAs.value;
+    untracked(reset);
+  });
+}
 /** The global loader covers searching only; merge batches carry their own card indicators. */
 export const listRefreshing = computed(
   () => pollState.value?.inFlight === true && pollState.value.mergePending === undefined,
@@ -40,9 +55,12 @@ export const panelState = signal<PanelState | undefined>(undefined);
 /** False until the first read of storage has been applied: show a skeleton, not a guess. */
 export const hydrated = signal(false);
 
+/** What the panel shows; the quiet-hours digest (`quietHeld`) is the worker's alone. */
+type PanelKey = Exclude<StorageKey, 'quietHeld'>;
+
 // Settings and prLocal are normalized on every read; auth, snapshot, pollState and teams are
 // only written by Prowl, so their stored shape is trusted.
-const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
+const BINDINGS: Record<PanelKey, (raw: unknown) => void> = {
   [STORAGE_KEYS.settings]: (raw) => {
     settings.value = normalizeSettings(raw);
   },
@@ -68,7 +86,7 @@ const BINDINGS: Record<StorageKey, (raw: unknown) => void> = {
     panelState.value = normalizePanelState(raw);
   },
 };
-const KEYS = Object.keys(BINDINGS) as StorageKey[];
+const KEYS = Object.keys(BINDINGS) as PanelKey[];
 
 /**
  * Reads every key into the signals, then keeps them in sync. Returns the function that stops
@@ -77,14 +95,14 @@ const KEYS = Object.keys(BINDINGS) as StorageKey[];
  */
 export async function hydrateStore(): Promise<() => void> {
   hydrated.value = false;
-  const changed = new Set<StorageKey>();
+  const changed = new Set<PanelKey>();
   const stops = KEYS.map((key) =>
     subscribe(key, (value) => {
       changed.add(key);
       BINDINGS[key](value);
     }),
   );
-  const stored: Partial<Record<StorageKey, unknown>> = await getItems(KEYS);
+  const stored: Partial<Record<PanelKey, unknown>> = await getItems(KEYS);
   batch(() => {
     for (const key of KEYS) if (!changed.has(key)) BINDINGS[key](stored[key]);
     hydrated.value = true;

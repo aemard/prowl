@@ -40,8 +40,8 @@ it('coalesces scope changes and team refreshes made during a poll into one run',
       enabled: section.kind === 'authored' || section.kind === 'review_requested',
     })),
   });
-  const following = poll({ force: true, afterCurrent: true });
-  expect(poll({ force: true, afterCurrent: true })).toBe(following);
+  const following = poll({ reason: 'change' });
+  expect(poll({ reason: 'change' })).toBe(following);
   // A team refresh asked meanwhile joins the same trailing run.
   expect(poll({ refreshTeams: true })).toBe(following);
   release();

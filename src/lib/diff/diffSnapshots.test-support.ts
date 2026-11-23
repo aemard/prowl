@@ -25,13 +25,15 @@ export const ci = (state: CheckState, headSha = SHA): Partial<PullRequest> => ({
 export const review = (author: string, state: Review['state'], submittedAt = REVIEWED): Review => ({
   id: `PRR_${author}_${state}`,
   author,
+  isBot: false,
   state,
   submittedAt,
 });
 export const reviews = (...list: Review[]) => ({ reviews: list });
 export const comments = (commentCount: number, author?: string, createdAt = COMMENTED) => ({
   commentCount,
-  lastComment: author ? { author, createdAt } : null,
+  lastComment: author ? { author, isBot: false, createdAt } : null,
+  lastHumanComment: author ? { author, createdAt } : null,
 });
 export const ready = (overrides: Partial<PullRequest> = {}): Partial<PullRequest> => ({
   reviewDecision: 'approved',

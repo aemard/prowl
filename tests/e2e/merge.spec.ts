@@ -55,16 +55,20 @@ async function expand(panel: Page, title: RegExp): Promise<Locator> {
 }
 /** Ids of the pull requests GitHub has merged: gone from the search, final in `ProwlNodes`. */
 let gone: Set<string>;
+/** PR id -> the `updatedAt` a later search reports (a comment arrived). */
+let updated: Record<string, string>;
 
 test.describe('merge', () => {
   test.beforeEach(async ({ context, github, seedStorage, signIn, poll }) => {
     gone = new Set();
+    updated = {};
     github.onGraphQL(SEARCH, (variables) =>
       searchResponse(
         authored
           .filter(({ id }) => !gone.has(id))
           .map((node) => ({
             ...node,
+            updatedAt: updated[node.id] ?? node.updatedAt,
             repository: { ...node.repository, ...REPOSITORIES[node.id] },
           })),
         variables,
@@ -154,7 +158,8 @@ test.describe('merge', () => {
     await expect(
       dialog.getByRole('button', { name: 'Squash and merge', exact: true }),
     ).toBeVisible();
-    await expect(dialog.getByRole('textbox', { name: 'Commit title (optional)' })).toBeVisible();
+    // It starts on the title GitHub would use, not on an empty "optional" field.
+    await expect(dialog.getByRole('textbox', { name: 'Commit title' })).toHaveValue(/\(#\d+\)$/);
     await expectNoA11yViolations(panel);
 
     // A rebase has no commit title to ask for.
@@ -203,6 +208,28 @@ test.describe('merge', () => {
     await expect(card(panel, API.title)).toHaveCount(1);
   });
 
+  test('a poll that brings a comment keeps the open dialog and the edited title', async ({
+    github,
+    openPanel,
+  }) => {
+    const panel = await openPanel();
+    const mine = await expand(panel, API.title);
+    await mine.getByRole('button', { name: `Merge ${API.ref}` }).click();
+    const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
+    const title = dialog.getByRole('textbox', { name: /Commit title/ });
+    await title.fill('Add rate limiting, reviewed');
+    const reads = github.requestsFor('ProwlPullRequestDetail').length;
+    updated[API.id] = new Date().toISOString();
+    await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
+    // The card reads the detail again for the newer PR, behind the dialog, which stays.
+    await expect
+      .poll(() => github.requestsFor('ProwlPullRequestDetail').length)
+      .toBeGreaterThan(reads);
+    await expect(dialog).toBeVisible();
+    await expect(title).toHaveValue('Add rate limiting, reviewed');
+    await expect(title).toBeFocused();
+  });
+
   test('has no Merge button without write access or on a draft', async ({ openPanel }) => {
     const panel = await openPanel();
     for (const { title } of [READ_ONLY, DRAFT]) {
@@ -231,20 +258,16 @@ test.describe('merge', () => {
     const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
     await dialog.getByRole('combobox', { name: 'Merge method' }).selectOption('squash');
     await dialog.getByRole('button', { name: 'Merge', exact: true }).click();
-    // The dialog closes so the toast is not hidden behind it.
-    await expect(dialog).toHaveCount(0);
-    await expect(toasts(panel)).toContainText(
-      'Merge failed: Head branch was modified. Review and try the merge again.',
+    // The reason stays in the dialog: a toast would sit under the modal.
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'Head branch was modified. Review and try the merge again.',
     );
     await expect(card(panel, API.title)).toHaveCount(1);
-    await expect(opener).toBeEnabled();
-    await expect(opener).not.toHaveAttribute('aria-busy', 'true');
     // The head moved, so the panel asks for a fresh copy of the pull request.
     await expect.poll(() => github.requestsFor(SEARCH).length).toBeGreaterThan(polls);
 
     // Trying again keeps the method that was chosen, and now works.
     refuse = false;
-    await opener.click();
     await expect(dialog.getByRole('combobox', { name: 'Merge method' })).toHaveValue('squash');
     await dialog.getByRole('button', { name: 'Merge', exact: true }).click();
     await expect(toasts(panel)).toContainText(`Merged ${API.ref}`);

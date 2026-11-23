@@ -1,9 +1,9 @@
-import { t } from '../i18n';
 /**
  * The one HTTP client for GitHub (GraphQL and REST). It runs in the service worker and the
  * side panel, so it only uses `fetch` and `AbortController`. It never retries: the poller owns
  * backoff. Every failure is a `GitHubError`; the token is masked in everything it carries.
  */
+import { t } from '../i18n';
 import { classifyGraphQLType, classifyHttpStatus, GitHubError } from './errors';
 import { headerCount, resetAtFromHeaders } from './rateLimit';
 
@@ -20,6 +20,16 @@ export interface GitHubClientOptions {
 
 type GraphQLOptions = { partial?: boolean; onPartialErrors?: (messages: string[]) => void };
 
+/** Per-request REST options. */
+export interface RestOptions {
+  /** Extra request headers, e.g. `If-Modified-Since`. */
+  headers?: Record<string, string>;
+  /** `X-GitHub-Api-Version` for an endpoint documented only under a newer version. */
+  apiVersion?: string;
+  /** Statuses outside 2xx that answer the request instead of failing it (304, 409...). */
+  accept?: number[];
+}
+
 export interface GitHubClient {
   /**
    * Runs a GraphQL operation and returns its `data`. GitHub answers 200 even when a field
@@ -34,17 +44,28 @@ export interface GitHubClient {
     options?: GraphQLOptions,
   ): Promise<T>;
   /** Calls a REST endpoint (`path` starts with `/`). Resolves to `undefined` for empty bodies. */
-  rest<T = void>(method: HttpMethod, path: string, body?: unknown): Promise<T>;
-  /** Like `rest`, plus the response headers (e.g. `x-oauth-scopes` of `GET /user`). */
+  rest<T = void>(
+    method: HttpMethod,
+    path: string,
+    body?: unknown,
+    options?: RestOptions,
+  ): Promise<T>;
+  /** Like `rest`, plus the status and headers (e.g. `x-oauth-scopes` of `GET /user`). */
   restResponse<T = void>(
     method: HttpMethod,
     path: string,
     body?: unknown,
-  ): Promise<{ data: T; headers: Headers }>;
+    options?: RestOptions,
+  ): Promise<{ data: T; headers: Headers; status: number }>;
 }
 
 const TIMEOUT_MS = 20_000;
-const API_VERSION = '2022-11-28';
+/**
+ * The REST version Prowl is written against. GitHub supports a version for at least 24 months
+ * after its successor ships, and none of 2026-03-10's breaking changes touch what Prowl reads;
+ * an endpoint documented only under a newer version passes `apiVersion` (see decisions.md).
+ */
+export const API_VERSION = '2022-11-28';
 /** GitHub: without `retry-after`, wait at least a minute after a secondary rate limit. */
 const SECONDARY_RETRY_SECONDS = 60;
 const MAX_MESSAGE_LENGTH = 300;
@@ -83,13 +104,14 @@ async function send(
   method: HttpMethod,
   path: string,
   body: unknown,
-  rest: boolean,
+  rest: RestOptions | null,
 ) {
   const headers: Record<string, string> = {
+    ...rest?.headers,
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
   };
-  if (rest) headers['X-GitHub-Api-Version'] = API_VERSION;
+  if (rest) headers['X-GitHub-Api-Version'] = rest.apiVersion ?? API_VERSION;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 
   const controller = new AbortController();
@@ -130,7 +152,9 @@ async function send(
   } catch {
     payload = UNPARSEABLE;
   }
-  if (!response.ok) throw httpError(response, payload, token);
+  // An accepted status is an answer, e.g. 304 to a conditional read: nothing changed.
+  const accepted = rest?.accept?.includes(response.status) === true;
+  if (!response.ok && !accepted) throw httpError(response, payload, token);
   return { response, payload };
 }
 
@@ -140,7 +164,7 @@ async function readGraphQL<T>(
   variables: Record<string, unknown> = {},
   { partial = false, onPartialErrors }: GraphQLOptions = {},
 ) {
-  const { response, payload } = await send(client, 'POST', '/graphql', { query, variables }, false);
+  const { response, payload } = await send(client, 'POST', '/graphql', { query, variables }, null);
   const { status, headers } = response;
   if (!isRecord(payload)) throw fail('server', unexpected(), status, headers);
   const { data, errors } = payload;
@@ -189,18 +213,23 @@ export function createGitHubClient({
   fetch: fetchImpl,
 }: GitHubClientOptions): GitHubClient {
   const client = { token, apiUrl: apiUrl.replace(/\/+$/, ''), fetch: fetchImpl };
-  async function restResponse<T = void>(method: HttpMethod, path: string, body?: unknown) {
-    const { response, payload } = await send(client, method, path, body, true);
+  async function restResponse<T = void>(
+    method: HttpMethod,
+    path: string,
+    body?: unknown,
+    options: RestOptions = {},
+  ) {
+    const { response, payload } = await send(client, method, path, body, options);
     if (payload === UNPARSEABLE)
       throw fail('server', unexpected(), response.status, response.headers);
-    return { data: payload as T, headers: response.headers };
+    return { data: payload as T, headers: response.headers, status: response.status };
   }
   return {
     graphql<T>(query: string, variables?: Record<string, unknown>, options?: GraphQLOptions) {
       return readGraphQL<T>(client, query, variables, options);
     },
-    async rest<T = void>(method: HttpMethod, path: string, body?: unknown) {
-      return (await restResponse<T>(method, path, body)).data;
+    async rest<T = void>(method: HttpMethod, path: string, body?: unknown, options?: RestOptions) {
+      return (await restResponse<T>(method, path, body, options)).data;
     },
     restResponse,
   };

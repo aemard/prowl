@@ -55,10 +55,34 @@
   --icon-lg: 20px;
 
   /* Radius */
+  --radius-xs: 3px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
   --radius-full: 9999px;
+  /* Glass surfaces are rounder: the filter field, cards (also stack rows and bar items), the
+     header island and the section bar */
+  --radius-glass-field: 15px;
+  --radius-glass-card: 21px;
+  --radius-glass-island: 23px;
+  --radius-glass-bar: 26px;
+
+  /* Glass chrome geometry (Header.css, List.css, SectionTabs.css). The header island's lower
+     edge is its 8 px sticky offset, top hairline, 12 px padding and two lines (69 px); the quick
+     filter sticks there. The section bar is 48 px items in 6 px of padding and a hairline. The
+     other insets are how far content keeps clear of the chrome, a few px of air included: the
+     header and filter (bottom at 116 px) and the bar (top 74 px above the panel's bottom). */
+  --chrome-header-inset: calc(
+    var(--space-2) +
+    var(--border-width) +
+    2 *
+    var(--space-3) +
+    var(--leading-lg) +
+    var(--leading-sm)
+  );
+  --chrome-filter-inset: 123px;
+  --chrome-bar-height: calc(var(--space-12) + 2 * (var(--space-1-5) + var(--border-width)));
+  --chrome-bar-inset: 87px;
 
   /* Borders */
   --border-width: 1px;
@@ -70,6 +94,11 @@
   --duration-normal: 180ms;
   --duration-spin: 800ms;
   --duration-shimmer: 1400ms;
+  /* Card activity (PullRequestCardMotion.css): longer, to show where a card came from or went.
+     Their animations switch off under reduced motion rather than collapse. */
+  --duration-card-mark: 500ms;
+  --duration-card-arrive: 700ms;
+  --duration-card-activity: 1100ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }

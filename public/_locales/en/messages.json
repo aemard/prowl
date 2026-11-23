@@ -24,18 +24,6 @@
     "message": "Chrome sync did not take your settings. They stay on this device.",
     "description": "Extension text: Chrome sync did not take your settings. They stay on this device."
   },
-  "ciFailing": {
-    "message": "CI failing",
-    "description": "Extension text: CI failing"
-  },
-  "changesRequested": {
-    "message": "changes requested",
-    "description": "Extension text: changes requested"
-  },
-  "readyToMerge": {
-    "message": "ready to merge",
-    "description": "Extension text: ready to merge"
-  },
   "withUnseenChanges": {
     "message": "$P1$: $P2$ with unseen changes",
     "description": "Extension text: $1: $2 with unseen changes",
@@ -230,10 +218,6 @@
         "content": "$1"
       }
     }
-  },
-  "bot": {
-    "message": "Bot",
-    "description": "Extension text: Bot"
   },
   "someone": {
     "message": "Someone",
@@ -431,18 +415,6 @@
     "message": "Converted to draft:",
     "description": "Extension text: Converted to draft:"
   },
-  "of": {
-    "message": "$P1$ of $P2$",
-    "description": "Extension text: $1 of $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Update with a rebase",
     "description": "Extension text: Update with a rebase"
@@ -470,18 +442,6 @@
   "autoMergeIsOnFor": {
     "message": "Auto-merge is on for",
     "description": "Extension text: Auto-merge is on for"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "description": "Extension text: $1 $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Auto-merge is off for",
@@ -514,14 +474,6 @@
         "content": "$2"
       }
     }
-  },
-  "commitTitleOptional": {
-    "message": "Commit title (optional)",
-    "description": "Extension text: Commit title (optional)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Empty uses GitHub's default.",
-    "description": "Extension text: Empty uses GitHub's default."
   },
   "enterAWholeNumberFromTo": {
     "message": "Enter a whole number from $P1$ to $P2$.",
@@ -747,10 +699,6 @@
   "noReviewsYet": {
     "message": "No reviews yet.",
     "description": "Extension text: No reviews yet."
-  },
-  "actions": {
-    "message": "Actions",
-    "description": "Extension text: Actions"
   },
   "tryAgain": {
     "message": "Try again",
@@ -1473,10 +1421,6 @@
     "message": "Pull requests per section",
     "description": "Extension text: Pull requests per section"
   },
-  "appearance": {
-    "message": "Appearance",
-    "description": "Extension text: Appearance"
-  },
   "theme": {
     "message": "Theme",
     "description": "Extension text: Theme"
@@ -1512,10 +1456,6 @@
   "privacy": {
     "message": "Privacy",
     "description": "Extension text: Privacy"
-  },
-  "about": {
-    "message": "About",
-    "description": "Extension text: About"
   },
   "settingsSections": {
     "message": "Settings sections",
@@ -2095,10 +2035,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "conflicts",
-    "description": "Extension text: conflicts"
-  },
   "include": {
     "message": "Include",
     "description": "Extension text: Include"
@@ -2253,18 +2189,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$: $P2$",
-    "description": "Extension text: $1: $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -2844,5 +2768,1043 @@
   "noFailedCheckRunsToReRunHere": {
     "message": "No failed check runs to re-run here. Re-run other checks on GitHub or at the service that reported them.",
     "description": "Error when only commit statuses or non-rerunnable suites failed."
+  },
+  "quietDigestOne": {
+    "message": "During quiet hours: $P1$ update",
+    "description": "Extension text: During quiet hours: $P1$ update",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "During quiet hours: $P1$ updates",
+    "description": "Extension text: During quiet hours: $P1$ updates",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "Your turn",
+    "description": "Extension text: Your turn"
+  },
+  "yourTurnEmpty": {
+    "message": "Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make.",
+    "description": "Extension text: Nothing waits for you. A pull request comes here when it is your move: a review to give, CI to fix, feedback to answer or a merge to make."
+  },
+  "yourTurnPreset": {
+    "message": "Pull requests of your other sections where it is your move",
+    "description": "Extension text: Pull requests of your other sections where it is your move"
+  },
+  "yourTurnEventDescription": {
+    "message": "When a pull request starts waiting on you",
+    "description": "Extension text: When a pull request starts waiting on you"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make.",
+    "description": "Extension text: Counts pull requests where it is your move: reviews to give, CI to fix, feedback to answer, merges to make."
+  },
+  "waitingOnYou": {
+    "message": "$P1$: $P2$ waiting on you ($P3$)",
+    "description": "Extension text: $P1$: $P2$ waiting on you ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Review",
+    "description": "Extension text: Review (it is your turn to review)"
+  },
+  "turnReReview": {
+    "message": "Review again",
+    "description": "Extension text: Review again"
+  },
+  "turnCiFailed": {
+    "message": "Fix CI",
+    "description": "Extension text: Fix CI"
+  },
+  "turnChangesRequested": {
+    "message": "Address changes",
+    "description": "Extension text: Address changes"
+  },
+  "turnConflicts": {
+    "message": "Resolve conflicts",
+    "description": "Extension text: Resolve conflicts"
+  },
+  "turnFeedback": {
+    "message": "Answer feedback",
+    "description": "Extension text: Answer feedback"
+  },
+  "turnReadyToMerge": {
+    "message": "Merge it",
+    "description": "Extension text: Merge it"
+  },
+  "yourTurnSince": {
+    "message": "Your turn: $P1$, since $P2$",
+    "description": "Extension text: Your turn: $P1$, since $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "On-device AI in Chrome",
+    "description": "Extension text: On-device AI in Chrome"
+  },
+  "localAiDescription": {
+    "message": "Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server.",
+    "description": "Extension text: Summarize pull requests and explain failing checks with Gemini Nano, which Chrome runs on this device. Nothing is sent to any server."
+  },
+  "localAiAvailable": {
+    "message": "Ready on this device.",
+    "description": "Extension text: Ready on this device."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome needs to download its model once (several GB).",
+    "description": "Extension text: Chrome needs to download its model once (several GB)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome is downloading its model.",
+    "description": "Extension text: Chrome is downloading its model."
+  },
+  "localAiUnavailable": {
+    "message": "Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space.",
+    "description": "Extension text: Not available in this browser or on this device: it needs a recent desktop Chrome with enough memory and free disk space."
+  },
+  "localAiDownload": {
+    "message": "Download the model",
+    "description": "Extension text: Download the model"
+  },
+  "localAiProgress": {
+    "message": "Downloading the model: $P1$%",
+    "description": "Extension text: Downloading the model: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Summarize",
+    "description": "Extension text: Summarize"
+  },
+  "aiExplainFailure": {
+    "message": "Explain the failure",
+    "description": "Extension text: Explain the failure"
+  },
+  "aiWorking": {
+    "message": "Thinking on your device",
+    "description": "Extension text: Thinking on your device"
+  },
+  "aiGeneratedNote": {
+    "message": "Generated on your device by Chrome’s built-in AI. It can be wrong.",
+    "description": "Extension text: Generated on your device by Chrome’s built-in AI. It can be wrong."
+  },
+  "aiFailed": {
+    "message": "The on-device AI could not answer: $P1$",
+    "description": "Extension text: The on-device AI could not answer: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Summary",
+    "description": "Extension text: Summary"
+  },
+  "aiExplanationHeading": {
+    "message": "Why the checks fail",
+    "description": "Extension text: Why the checks fail"
+  },
+  "aiNothingToExplain": {
+    "message": "The failing checks reported no details to explain. Open them on GitHub.",
+    "description": "Extension text: The failing checks reported no details to explain. Open them on GitHub."
+  },
+  "aiAssistant": {
+    "message": "On-device AI",
+    "description": "Extension text: On-device AI"
+  },
+  "conversations": {
+    "message": "Conversations",
+    "description": "Extension text: Conversations"
+  },
+  "showConversationsOne": {
+    "message": "Show $P1$ conversation",
+    "description": "Extension text: Show $P1$ conversation",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Show $P1$ conversations",
+    "description": "Extension text: Show $P1$ conversations",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noOpenConversations": {
+    "message": "No open conversations.",
+    "description": "Extension text: No open conversations."
+  },
+  "outdated": {
+    "message": "Outdated",
+    "description": "Extension text: Outdated"
+  },
+  "earlierComments": {
+    "message": "$P1$ earlier comments on GitHub",
+    "description": "Extension text: $P1$ earlier comments on GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Reply on $P1$",
+    "description": "Extension text: Reply on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Reply",
+    "description": "Extension text: Reply"
+  },
+  "resolveAction": {
+    "message": "Resolve",
+    "description": "Extension text: Resolve"
+  },
+  "replied": {
+    "message": "Replied",
+    "description": "Extension text: Replied"
+  },
+  "resolved": {
+    "message": "Resolved",
+    "description": "Extension text: Resolved"
+  },
+  "viewInTheDiff": {
+    "message": "View in the diff",
+    "description": "Extension text: View in the diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Could not load the conversations: $P1$",
+    "description": "Extension text: Could not load the conversations: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "Snooze the focused pull request for 1 hour",
+    "description": "Extension text: Snooze the focused pull request for 1 hour"
+  },
+  "shortcutYourTurn": {
+    "message": "Show what waits on you (Your turn)",
+    "description": "Extension text: Show what waits on you (Your turn)"
+  },
+  "snoozedForAnHour": {
+    "message": "Snoozed for 1 hour: $P1$",
+    "description": "Extension text: Snoozed for 1 hour: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "Add to merge queue",
+    "description": "Extension text: Add to merge queue"
+  },
+  "removeFromMergeQueue": {
+    "message": "Remove from merge queue",
+    "description": "Extension text: Remove from merge queue"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "description": "Extension text: GitHub merges $P1$ into $P2$ once the queue reaches it and its checks pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "In the merge queue: position $P1$",
+    "description": "Extension text: In the merge queue: position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "In the merge queue: position $P1$, about $P2$ min",
+    "description": "Extension text: In the merge queue: position $P1$, about $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Added to the merge queue",
+    "description": "Extension text: Added to the merge queue"
+  },
+  "removedFromMergeQueue": {
+    "message": "Removed from the merge queue",
+    "description": "Extension text: Removed from the merge queue"
+  },
+  "deployments": {
+    "message": "Deployments",
+    "description": "Extension text: Deployments"
+  },
+  "deployed": {
+    "message": "Deployed",
+    "description": "Extension text: Deployed"
+  },
+  "deploying": {
+    "message": "Deploying",
+    "description": "Extension text: Deploying"
+  },
+  "deployFailed": {
+    "message": "Failed",
+    "description": "Extension text: Failed"
+  },
+  "turnSummaryWaiting": {
+    "message": "Waiting on you: $P1$, the oldest since $P2$.",
+    "description": "Extension text: Waiting on you: $P1$, the oldest since $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests has waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "description": "Extension text: $P1$ of your pull requests have waited on reviewers for more than 2 days.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "awaitingReview": {
+    "message": "Awaiting review",
+    "description": "Extension text: Awaiting review"
+  },
+  "stackHeading": {
+    "message": "$P1$ · stack #$P2$ · $P3$ into $P4$",
+    "description": "Extension text: $P1$ · stack #$P2$ · $P3$ into $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "Show the pull requests of stack #$P1$",
+    "description": "Extension text: Show the pull requests of stack #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "Hide the pull requests of stack #$P1$",
+    "description": "Extension text: Hide the pull requests of stack #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "Ready",
+    "description": "Extension text: Ready"
+  },
+  "stackProgress": {
+    "message": "In progress",
+    "description": "Extension text: In progress"
+  },
+  "stackBlocked": {
+    "message": "Blocked",
+    "description": "Extension text: Blocked"
+  },
+  "stackDrafts": {
+    "message": "Drafts",
+    "description": "Extension text: Drafts"
+  },
+  "stackBar": {
+    "message": "Stack #$P1$, bottom to top: $P2$",
+    "description": "Extension text: Stack #$P1$, bottom to top: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "Bottom $P1$ can merge now",
+    "description": "Extension text: Bottom $P1$ can merge now",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "The whole stack can merge now",
+    "description": "Extension text: The whole stack can merge now"
+  },
+  "stackMergeSome": {
+    "message": "Merge $P1$ of $P2$",
+    "description": "Extension text: Merge $P1$ of $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "Merge the whole stack",
+    "description": "Extension text: Merge the whole stack"
+  },
+  "stackMergeAria": {
+    "message": "Merge the $P1$ ready pull requests at the bottom of stack #$P2$",
+    "description": "Extension text: Merge the $P1$ ready pull requests at the bottom of stack #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "Merge $P1$ pull request",
+    "description": "Extension text: Merge $P1$ pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "Merge $P1$ pull requests",
+    "description": "Extension text: Merge $P1$ pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "The bottom of stack #$P1$ in $P2$, into $P3$, in this order. All of them merge, or none.",
+    "description": "Extension text: The bottom of stack #$P1$ in $P2$, into $P3$, in this order. All of them merge, or none.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "The $P1$ above stay open. GitHub rebases them onto $P2$.",
+    "description": "Extension text: The $P1$ above stay open. GitHub rebases them onto $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMerged": {
+    "message": "Merged",
+    "description": "Extension text: Merged"
+  },
+  "stackStillMerging": {
+    "message": "GitHub is still merging",
+    "description": "Extension text: GitHub is still merging"
+  },
+  "stackMissing": {
+    "message": "$P1$ more in this stack are not in your sections.",
+    "description": "Extension text: $P1$ more in this stack are not in your sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · base of the stack",
+    "description": "Extension text: $P1$ · base of the stack",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "$P1$ of $P2$ in stack #$P3$",
+    "description": "Extension text: $P1$ of $P2$ in stack #$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "$P1$ more in this stack is not in your sections.",
+    "description": "Extension text: $P1$ more in this stack is not in your sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commitTitle": {
+    "message": "Commit title",
+    "description": "Extension text: Commit title"
+  },
+  "mergeWhenReady": {
+    "message": "Merge when ready",
+    "description": "Extension text: Merge when ready"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "description": "Extension text: GitHub adds $P1$ to the merge queue of $P2$ once its checks and reviews pass.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "This pull request is too long for the on-device AI, even shortened.",
+    "description": "Extension text: This pull request is too long for the on-device AI, even shortened."
+  },
+  "aiSummarizeAgain": {
+    "message": "Summarize again",
+    "description": "Extension text: Summarize again"
+  },
+  "aiExplainAgain": {
+    "message": "Explain again",
+    "description": "Extension text: Explain again"
+  },
+  "stackAndMore": {
+    "message": ", and $P1$ more",
+    "description": "Extension text: , and $P1$ more",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ more in this stack is not shown here: another section or the filter has it.",
+    "description": "Extension text: $P1$ more in this stack is not shown here: another section or the filter has it.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ more in this stack are not shown here: another section or the filter has them.",
+    "description": "Extension text: $P1$ more in this stack are not shown here: another section or the filter has them.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "Your turn:",
+    "description": "Extension text: Your turn:"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Single-key shortcuts",
+    "description": "Extension text: Single-key shortcuts"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work.",
+    "description": "Extension text: j, k, o, s, t, r, / and ? act on the list. Turn them off if you use speech input or press keys by accident; the arrows and Enter still work."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Single-key shortcuts are off. Turn them on in Settings → List.",
+    "description": "Extension text: Single-key shortcuts are off. Turn them on in Settings → List."
+  },
+  "reviewRequestedEventDescription": {
+    "message": "When your review is asked for, also on a pull request new to the list",
+    "description": "Extension text: When your review is asked for, also on a pull request new to the list"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "$P1$ review requested",
+    "description": "Extension text: $P1$ review requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "$P1$ reviews requested",
+    "description": "Extension text: $P1$ reviews requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "$P1$ to review again",
+    "description": "Extension text: $P1$ to review again",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "$P1$ to review again",
+    "description": "Extension text: $P1$ to review again",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "$P1$ with failing CI",
+    "description": "Extension text: $P1$ with failing CI",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "$P1$ with failing CI",
+    "description": "Extension text: $P1$ with failing CI",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "$P1$ with changes requested",
+    "description": "Extension text: $P1$ with changes requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "$P1$ with changes requested",
+    "description": "Extension text: $P1$ with changes requested",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "$P1$ with conflicts",
+    "description": "Extension text: $P1$ with conflicts",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "$P1$ with conflicts",
+    "description": "Extension text: $P1$ with conflicts",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "$P1$ with feedback to answer",
+    "description": "Extension text: $P1$ with feedback to answer",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "$P1$ with feedback to answer",
+    "description": "Extension text: $P1$ with feedback to answer",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "$P1$ ready to merge",
+    "description": "Extension text: $P1$ ready to merge",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "$P1$ ready to merge",
+    "description": "Extension text: $P1$ ready to merge",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Resolve conversations",
+    "description": "Extension text: Resolve conversations"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ with conversations to resolve",
+    "description": "Extension text: $P1$ with conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ with conversations to resolve",
+    "description": "Extension text: $P1$ with conversations to resolve",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ behind its base branch",
+    "description": "Extension text: $P1$ behind its base branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ behind their base branch",
+    "description": "Extension text: $P1$ behind their base branch",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "In merge queue",
+    "description": "Extension text: In merge queue"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "description": "Extension text: $P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "Your turn: review again",
+    "description": "Extension text: Your turn: review again"
+  },
+  "notifyTurnCiFailed": {
+    "message": "Your turn: fix CI",
+    "description": "Extension text: Your turn: fix CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "Your turn: address the requested changes",
+    "description": "Extension text: Your turn: address the requested changes"
+  },
+  "notifyTurnConflicts": {
+    "message": "Your turn: resolve conflicts",
+    "description": "Extension text: Your turn: resolve conflicts"
+  },
+  "notifyTurnFeedback": {
+    "message": "Your turn: answer feedback",
+    "description": "Extension text: Your turn: answer feedback"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "Your turn: resolve conversations",
+    "description": "Extension text: Your turn: resolve conversations"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "Your turn: update the branch",
+    "description": "Extension text: Your turn: update the branch"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "Your turn: merge it",
+    "description": "Extension text: Your turn: merge it"
+  },
+  "stackStateCount": {
+    "message": "$P1$ $P2$",
+    "description": "Extension text: $P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": ", ",
+    "description": "Extension text: , "
+  },
+  "stackMergeLater": {
+    "message": "In stack #$P1$: it merges from the stack once it and every pull request below it are ready.",
+    "description": "Extension text: In stack #$P1$: it merges from the stack once it and every pull request below it are ready.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "Merge up to here",
+    "description": "Extension text: Merge up to here"
+  },
+  "stackMergeUpToAria": {
+    "message": "Merge stack #$P2$ up to $P1$",
+    "description": "Extension text: Merge stack #$P2$ up to $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "Add $P1$ pull request to the merge queue",
+    "description": "Extension text: Add $P1$ pull request to the merge queue",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "Add $P1$ pull requests to the merge queue",
+    "description": "Extension text: Add $P1$ pull requests to the merge queue",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "The stack changed since this opened. Check the pull requests above, then confirm again.",
+    "description": "Extension text: The stack changed since this opened. Check the pull requests above, then confirm again."
+  },
+  "stackMergeChecking": {
+    "message": "Checking how $P1$ merges…",
+    "description": "Extension text: Checking how $P1$ merges…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl cannot merge this stack into $P1$ from here.",
+    "description": "Extension text: Prowl cannot merge this stack into $P1$ from here.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ merges through a merge queue: they join it in this order.",
+    "description": "Extension text: $P1$ merges through a merge queue: they join it in this order.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sendReplyOn": {
+    "message": "Send reply on $P1$",
+    "description": "Extension text: Send reply on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "Resolve conversation on $P1$",
+    "description": "Extension text: Resolve conversation on $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub did not confirm that the conversation is resolved.",
+    "description": "Extension text: GitHub did not confirm that the conversation is resolved."
+  },
+  "moreConversationsOnGitHub": {
+    "message": "This pull request has more conversations than Prowl reads; open ones may be only on GitHub.",
+    "description": "Extension text: This pull request has more conversations than Prowl reads; open ones may be only on GitHub."
+  },
+  "aiNeedsClick": {
+    "message": "Chrome downloads the on-device model only right after a click. Click again to download it.",
+    "description": "Extension text: Chrome downloads the on-device model only right after a click. Click again to download it."
+  },
+  "checksFailingOptional": {
+    "message": "Only optional checks failing: $P1$",
+    "description": "Extension text: Only optional checks failing: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Ready to merge; someone with write access has to merge it",
+    "description": "Extension text: Ready to merge; someone with write access has to merge it"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "description": "Accessible name of a button that acts on one pull request: the action ($1, such as 'Merge' or 'Turn off auto-merge'), then the pull request ($2, such as acme/web#12).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "description": "Toast once GitHub confirmed an action: what happened ($1, such as 'Merged'), then the pull request ($2, such as acme/web#12).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "description": "Chip of a stack: what waits on you ($1, such as 'Review'), then the number of the one pull request it concerns ($2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "description": "Chip of a stack: what waits on you ($1, such as 'Review'), then how many of its pull requests it concerns ($2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

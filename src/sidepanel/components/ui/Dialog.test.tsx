@@ -196,4 +196,25 @@ describe('Dialog', () => {
     fireEvent.keyDown(el, { key: 'Tab', shiftKey: true });
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }));
   });
+
+  it("announces why its action failed above the footer, and nothing when it didn't", () => {
+    const { rerender } = render(
+      <Dialog open title="Merge" onClose={() => {}} footer={<Button>Merge</Button>} />,
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+    rerender(
+      <Dialog
+        open
+        title="Merge"
+        error="Rule says no"
+        onClose={() => {}}
+        footer={<Button>Merge</Button>}
+      />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('Rule says no');
+    expect(alert.nextElementSibling?.contains(screen.getByRole('button', { name: 'Merge' }))).toBe(
+      true,
+    );
+  });
 });

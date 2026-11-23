@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
-import { t } from '../../lib/i18n';
-import type { PullRequest } from '../../lib/model';
+import { formatNumber, t } from '../../lib/i18n';
+import type { PullRequest, Turn } from '../../lib/model';
+import { stackState } from '../../lib/stacks';
 import type { ActivityKind } from '../state/prActivity';
 import { collapse, expandedIds, toggleExpanded } from '../state/prDetail';
 import { pollState } from '../state/store';
@@ -33,6 +34,8 @@ export interface PullRequestCardProps {
   grouped?: boolean;
   /** The viewer's teams (`org/slug`) asked to review it, from `snapshot.teamRequests`. */
   teams?: readonly string[];
+  /** Whose move it is (`whoseTurn`); the card shows a chip when it is the viewer's. */
+  turn?: Turn;
 }
 
 function useCardInteractions(id: string) {
@@ -83,11 +86,12 @@ export function PullRequestCard({
   snoozedUntil,
   grouped,
   teams,
+  turn,
 }: PullRequestCardProps) {
   const detailId = useId();
   const card = useCardInteractions(pr.id);
   const expanded = expandedIds.value.includes(pr.id);
-  const statuses = pullRequestStatuses(pr);
+  const statuses = pullRequestStatuses(pr, turn, now);
   const refreshingMerge = pollState.value?.mergePending?.includes(pr.id) === true;
   const teamRequest =
     teams && teams.length > 0 && t('reviewRequestedFrom', teams.map((t) => `@${t}`).join(', '));
@@ -96,6 +100,8 @@ export function PullRequestCard({
     <li
       class="pr-card"
       ref={card}
+      data-stack-position={pr.stack?.position}
+      data-state={pr.stack ? stackState(pr) : undefined}
       data-activity={activity}
       inert={activity !== undefined && activity !== 'new'}
     >
@@ -131,6 +137,8 @@ export function PullRequestCard({
             {describePullRequest(pr, statuses, unseen, now)}
             {refreshingMerge && t('updatingMergeStatus2')}
             {teamRequest && `. ${teamRequest}`}
+            {pr.stack &&
+              `. ${t('stackPosition', formatNumber(pr.stack.position), formatNumber(pr.stack.size), formatNumber(pr.stack.number))}`}
           </span>
         </div>
         {expanded && <PullRequestDetails pr={pr} id={detailId} />}

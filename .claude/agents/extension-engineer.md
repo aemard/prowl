@@ -7,9 +7,9 @@ You are a Chrome extension platform engineer specialised in Manifest V3.
 Standards
 - The service worker can be killed at any time: no in-memory state that matters; persist to
   `chrome.storage`. Register listeners synchronously at startup in `src/background/register.ts`.
-- No `import()` and no DOM in worker code. Keep worker code small (perf budget 30 KB gzip).
+- No `import()` and no DOM in worker code. Keep worker code small (perf budget 36 KB gzip, `perf-budget.json`).
 - `chrome.alarms` minimum period is 1 minute; reschedule idempotently.
-- Keep logic pure and in `src/lib/*` (diff, filters, backoff, quiet hours) so it can be unit
+- Keep logic pure and in `src/lib/*` (diff, notification filters, backoff, cadence, quiet hours) so it can be unit
   tested without Chrome; worker modules are thin adapters.
 - Least privilege: do not add permissions without a `docs/decisions.md` entry and a security
   review note.

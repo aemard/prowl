@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome Sync n’a pas enregistré vos paramètres. Ils restent sur cet appareil."
   },
-  "ciFailing": {
-    "message": "CI en échec"
-  },
-  "changesRequested": {
-    "message": "modifications demandées"
-  },
-  "readyToMerge": {
-    "message": "prêt à fusionner"
-  },
   "withUnseenChanges": {
     "message": "$P1$ : $P2$ avec des modifications non vues",
     "placeholders": {
@@ -190,9 +181,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot"
-  },
   "someone": {
     "message": "Quelqu’un"
   },
@@ -350,17 +338,6 @@
   "convertedToDraft": {
     "message": "Convertie en brouillon :"
   },
-  "of": {
-    "message": "$P1$ de $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Mettre à jour par rebase"
   },
@@ -381,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "Fusion automatique activée pour"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Fusion automatique désactivée pour"
@@ -420,12 +386,6 @@
         "content": "$2"
       }
     }
-  },
-  "commitTitleOptional": {
-    "message": "Titre du commit (facultatif)"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "Vide : valeur par défaut de GitHub."
   },
   "enterAWholeNumberFromTo": {
     "message": "Saisissez un entier entre $P1$ et $P2$.",
@@ -613,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "Aucune revue pour le moment."
-  },
-  "actions": {
-    "message": "Actions"
   },
   "tryAgain": {
     "message": "Réessayer"
@@ -1203,9 +1160,6 @@
   "pullRequestsPerSection": {
     "message": "PR par section"
   },
-  "appearance": {
-    "message": "Apparence"
-  },
   "theme": {
     "message": "Thème"
   },
@@ -1232,9 +1186,6 @@
   },
   "privacy": {
     "message": "Confidentialité"
-  },
-  "about": {
-    "message": "À propos"
   },
   "settingsSections": {
     "message": "Sections des paramètres"
@@ -1708,9 +1659,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "conflits"
-  },
   "include": {
     "message": "Inclure"
   },
@@ -1836,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$ : $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -2417,5 +2354,891 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "Aucune exécution de vérification en échec à relancer ici. Relancez les autres vérifications sur GitHub ou sur le service qui les a signalées."
+  },
+  "quietDigestOne": {
+    "message": "Pendant les heures calmes : $P1$ mise à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "Pendant les heures calmes : $P1$ mises à jour",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "À vous"
+  },
+  "yourTurnEmpty": {
+    "message": "Rien ne vous attend. Une pull request arrive ici quand c’est à vous d’agir : une review à faire, une CI à réparer, un retour à traiter ou un merge à faire."
+  },
+  "yourTurnPreset": {
+    "message": "Les pull requests de vos autres sections où c’est à vous d’agir"
+  },
+  "yourTurnEventDescription": {
+    "message": "Quand une pull request se met à vous attendre"
+  },
+  "yourTurnBadgeHint": {
+    "message": "Compte les pull requests où c’est à vous d’agir : reviews à faire, CI à réparer, retours à traiter, merges à faire."
+  },
+  "waitingOnYou": {
+    "message": "$P1$ : en attente de votre part : $P2$ ($P3$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "Review"
+  },
+  "turnReReview": {
+    "message": "À revoir"
+  },
+  "turnCiFailed": {
+    "message": "CI à réparer"
+  },
+  "turnChangesRequested": {
+    "message": "Changements à faire"
+  },
+  "turnConflicts": {
+    "message": "Conflits à résoudre"
+  },
+  "turnFeedback": {
+    "message": "Retours à traiter"
+  },
+  "turnReadyToMerge": {
+    "message": "À merger"
+  },
+  "yourTurnSince": {
+    "message": "À vous : $P1$, depuis $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "IA locale de Chrome"
+  },
+  "localAiDescription": {
+    "message": "Résume les pull requests et explique les checks en échec avec Gemini Nano, que Chrome exécute sur cet appareil. Rien n’est envoyé à un serveur."
+  },
+  "localAiAvailable": {
+    "message": "Prête sur cet appareil."
+  },
+  "localAiDownloadable": {
+    "message": "Chrome doit télécharger son modèle une fois (plusieurs Go)."
+  },
+  "localAiDownloading": {
+    "message": "Chrome télécharge son modèle."
+  },
+  "localAiUnavailable": {
+    "message": "Indisponible dans ce navigateur ou sur cet appareil : il faut un Chrome récent pour ordinateur, avec assez de mémoire et d’espace disque libre."
+  },
+  "localAiDownload": {
+    "message": "Télécharger le modèle"
+  },
+  "localAiProgress": {
+    "message": "Téléchargement du modèle : $P1$ %",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "Résumer"
+  },
+  "aiExplainFailure": {
+    "message": "Expliquer l’échec"
+  },
+  "aiWorking": {
+    "message": "Réflexion sur votre appareil"
+  },
+  "aiGeneratedNote": {
+    "message": "Généré sur votre appareil par l’IA intégrée de Chrome. Elle peut se tromper."
+  },
+  "aiFailed": {
+    "message": "L’IA locale n’a pas pu répondre : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "Résumé"
+  },
+  "aiExplanationHeading": {
+    "message": "Pourquoi les checks échouent"
+  },
+  "aiNothingToExplain": {
+    "message": "Les checks en échec n’ont rapporté aucun détail à expliquer. Ouvrez-les sur GitHub."
+  },
+  "aiAssistant": {
+    "message": "IA locale"
+  },
+  "conversations": {
+    "message": "Discussions"
+  },
+  "showConversationsOne": {
+    "message": "Afficher $P1$ discussion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "Afficher $P1$ discussions",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noOpenConversations": {
+    "message": "Aucune discussion ouverte."
+  },
+  "outdated": {
+    "message": "Obsolète"
+  },
+  "earlierComments": {
+    "message": "$P1$ commentaires précédents sur GitHub",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "Répondre sur $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "Répondre"
+  },
+  "resolveAction": {
+    "message": "Résoudre"
+  },
+  "replied": {
+    "message": "Réponse envoyée"
+  },
+  "resolved": {
+    "message": "Résolue"
+  },
+  "viewInTheDiff": {
+    "message": "Voir dans le diff"
+  },
+  "couldNotLoadConversations": {
+    "message": "Impossible de charger les discussions : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "Mettre en pause la pull request sélectionnée pendant 1 heure"
+  },
+  "shortcutYourTurn": {
+    "message": "Afficher ce qui vous attend (À vous)"
+  },
+  "snoozedForAnHour": {
+    "message": "En pause pendant 1 heure : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "Ajouter à la file de merge"
+  },
+  "removeFromMergeQueue": {
+    "message": "Retirer de la file de merge"
+  },
+  "addToMergeQueueDescription": {
+    "message": "GitHub merge $P1$ dans $P2$ quand la file l’atteint et que ses checks passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "Dans la file de merge : position $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "Dans la file de merge : position $P1$, environ $P2$ min",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "Ajoutée à la file de merge"
+  },
+  "removedFromMergeQueue": {
+    "message": "Retirée de la file de merge"
+  },
+  "deployments": {
+    "message": "Déploiements"
+  },
+  "deployed": {
+    "message": "Déployé"
+  },
+  "deploying": {
+    "message": "En cours"
+  },
+  "deployFailed": {
+    "message": "Échec"
+  },
+  "turnSummaryWaiting": {
+    "message": "En attente de votre part : $P1$, la plus ancienne depuis $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "$P1$ de vos pull requests attend des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "$P1$ de vos pull requests attendent des reviewers depuis plus de 2 jours.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "awaitingReview": {
+    "message": "En attente de review"
+  },
+  "stackHeading": {
+    "message": "$P1$ · pile #$P2$ · $P3$ vers $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "Afficher les pull requests de la pile #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "Masquer les pull requests de la pile #$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "Prêtes"
+  },
+  "stackProgress": {
+    "message": "En cours"
+  },
+  "stackBlocked": {
+    "message": "Bloquées"
+  },
+  "stackDrafts": {
+    "message": "Brouillons"
+  },
+  "stackBar": {
+    "message": "Pile #$P1$, de bas en haut : $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "Les $P1$ du bas peuvent être mergées",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "Toute la pile peut être mergée"
+  },
+  "stackMergeSome": {
+    "message": "Merger $P1$ sur $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "Merger toute la pile"
+  },
+  "stackMergeAria": {
+    "message": "Merger les $P1$ pull requests prêtes en bas de la pile #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "Merger $P1$ pull request",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "Merger $P1$ pull requests",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "Le bas de la pile #$P1$ dans $P2$, vers $P3$, dans cet ordre. Tout est mergé, ou rien.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "Les $P1$ au-dessus restent ouvertes. GitHub les rebase sur $P2$.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMerged": {
+    "message": "Mergées"
+  },
+  "stackStillMerging": {
+    "message": "GitHub est encore en train de merger"
+  },
+  "stackMissing": {
+    "message": "$P1$ autres de cette pile ne sont pas dans vos sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · base de la pile",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "$P1$ sur $P2$ dans la pile #$P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "$P1$ autre de cette pile n’est pas dans vos sections.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commitTitle": {
+    "message": "Titre du commit"
+  },
+  "mergeWhenReady": {
+    "message": "Merger dès que prête"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "GitHub ajoute $P1$ à la file de merge de $P2$ dès que ses checks et ses revues passent.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "Cette pull request est trop longue pour l’IA de l’appareil, même raccourcie."
+  },
+  "aiSummarizeAgain": {
+    "message": "Résumer à nouveau"
+  },
+  "aiExplainAgain": {
+    "message": "Expliquer à nouveau"
+  },
+  "stackAndMore": {
+    "message": ", et $P1$ autres",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "$P1$ autre de cette pile n’est pas affichée ici : une autre section ou le filtre l’écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "$P1$ autres de cette pile ne sont pas affichées ici : une autre section ou le filtre les écarte.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "À vous :"
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "Raccourcis à une touche"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j, k, o, s, t, r, / et ? agissent sur la liste. Désactivez-les si vous utilisez la saisie vocale ou appuyez sur des touches par erreur ; les flèches et Entrée fonctionnent toujours."
+  },
+  "singleKeyShortcutsOff": {
+    "message": "Les raccourcis à une touche sont désactivés. Activez-les dans Paramètres → Liste."
+  },
+  "reviewRequestedEventDescription": {
+    "message": "Quand on vous demande une revue, y compris sur une pull request nouvelle dans la liste"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "$P1$ revue demandée",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "$P1$ revues demandées",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "$P1$ à revoir",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "$P1$ à revoir",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "$P1$ avec la CI en échec",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "$P1$ avec la CI en échec",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "$P1$ avec des changements demandés",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "$P1$ avec des changements demandés",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "$P1$ en conflit",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "$P1$ en conflit",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "$P1$ avec des retours à traiter",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "$P1$ avec des retours à traiter",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "$P1$ prête à fusionner",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "$P1$ prêtes à fusionner",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnUnresolvedThreads": {
+    "message": "Conversations à résoudre"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "$P1$ avec des conversations à résoudre",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "$P1$ avec des conversations à résoudre",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "$P1$ en retard sur sa branche de base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "$P1$ en retard sur leur branche de base",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "Dans la file de fusion"
+  },
+  "turnChipDetail": {
+    "message": "$P1$. $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "À vous : relire à nouveau"
+  },
+  "notifyTurnCiFailed": {
+    "message": "À vous : corriger la CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "À vous : traiter les modifications demandées"
+  },
+  "notifyTurnConflicts": {
+    "message": "À vous : résoudre les conflits"
+  },
+  "notifyTurnFeedback": {
+    "message": "À vous : répondre aux retours"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "À vous : résoudre les conversations"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "À vous : mettre à jour la branche"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "À vous : la fusionner"
+  },
+  "stackStateCount": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": ", "
+  },
+  "stackMergeLater": {
+    "message": "Dans la pile #$P1$ : elle se fusionne depuis la pile quand elle et toutes les pull requests en dessous sont prêtes.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "Fusionner jusqu'ici"
+  },
+  "stackMergeUpToAria": {
+    "message": "Fusionner la pile #$P2$ jusqu'à $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "Ajouter $P1$ pull request à la file de fusion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "Ajouter $P1$ pull requests à la file de fusion",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "La pile a changé depuis l'ouverture. Vérifiez les pull requests ci-dessus, puis confirmez à nouveau."
+  },
+  "stackMergeChecking": {
+    "message": "Vérification du mode de fusion de $P1$…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl ne peut pas fusionner cette pile dans $P1$ d'ici.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ fusionne via une file de fusion : elles y entrent dans cet ordre.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sendReplyOn": {
+    "message": "Envoyer la réponse sur $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "Résoudre la conversation sur $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub n'a pas confirmé que la conversation est résolue."
+  },
+  "moreConversationsOnGitHub": {
+    "message": "Cette pull request a plus de conversations que Prowl n'en lit ; certaines ouvertes ne sont peut-être que sur GitHub."
+  },
+  "aiNeedsClick": {
+    "message": "Chrome ne télécharge le modèle sur l'appareil que juste après un clic. Cliquez à nouveau pour le télécharger."
+  },
+  "checksFailingOptional": {
+    "message": "Seules des vérifications facultatives échouent : $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "Prête à fusionner ; une personne ayant l’accès en écriture doit la fusionner"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

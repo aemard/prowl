@@ -1,10 +1,18 @@
 name: Dependabot auto-merge
 
-# Turns on auto-merge for Dependabot's patch and minor updates of development dependencies and
-# GitHub Actions. GitHub then squash-merges the pull request once the required checks pass.
-# Runtime dependencies and major updates stay for a person to review (docs/releasing.md).
+# Turns on auto-merge for the Dependabot updates that cannot change what ships nor what runs
+# next to a release's secrets; GitHub then squash-merges once the required checks pass. Everything
+# else waits for a person (policy and reasons: docs/decisions.md, "Dependabot auto-merge"):
+# - npm: only the `test-tooling` group (dependabot.yml), patch or minor, touching only
+#   package.json and pnpm-lock.yaml, and leaving every package of the build chain where it was
+#   (scripts/build-chain.mjs, run from the base branch on both lockfiles).
+# - GitHub Actions: patch or minor, and only in workflows that hold no release permission or
+#   secret (ci.yml, codeql.yml, dependency-review.yml). An action that also runs in a release,
+#   store or Pages workflow is reviewed.
+# The merge is made for GITHUB_TOKEN, whose events start no workflow: the push to main runs no CI,
+# CodeQL or Release Please until the next push (accepted: docs/releasing.md, "Dependency updates").
 # `pull_request`, never `pull_request_target` (which runs with write access on behalf of the pull
-# request): this job checks out and runs nothing from it.
+# request): the pull request's files are read as data, nothing from it runs.
 
 on: pull_request
 
@@ -30,17 +38,56 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
 
-      # `dependency-type` and `update-type` are the strictest of a grouped pull request: one
-      # runtime dependency or one major update keeps the whole group manual. A GitHub Action is
-      # not a development dependency, so it is matched by `package-ecosystem` instead.
+      - name: Check out the base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Check out the update (read as data)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: head
+          persist-credentials: false
+
+      # `update-type` and `dependency-group` are those of the whole pull request: one major
+      # update or one dependency outside the group keeps it manual.
+      - name: Apply the policy
+        id: policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+          GROUP: ${{ steps.metadata.outputs.dependency-group }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: |
+          manual() { echo "Left for review: $1" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; }
+          case "$UPDATE_TYPE" in
+            version-update:semver-patch | version-update:semver-minor) ;;
+            *) manual "update type ${UPDATE_TYPE:-unknown}" ;;
+          esac
+          case "$ECOSYSTEM" in
+            npm_and_yarn)
+              [ "$GROUP" = test-tooling ] || manual "not the test-tooling group (${GROUP:-none})"
+              allowed='package.json pnpm-lock.yaml' ;;
+            github_actions)
+              allowed='.github/workflows/ci.yml .github/workflows/codeql.yml .github/workflows/dependency-review.yml' ;;
+            *) manual "ecosystem ${ECOSYSTEM:-unknown}" ;;
+          esac
+          for file in $(gh pr diff "$PR_URL" --name-only); do
+            case " $allowed " in *" $file "*) ;; *) manual "$file changed" ;; esac
+          done
+          if [ "$ECOSYSTEM" = npm_and_yarn ]; then
+            node base/scripts/build-chain.mjs base/pnpm-lock.yaml > before.txt
+            node base/scripts/build-chain.mjs head/pnpm-lock.yaml > after.txt
+            diff before.txt after.txt || manual "the build chain moved"
+          fi
+          echo "merge=true" >> "$GITHUB_OUTPUT"
+
       - name: Enable auto-merge
-        if: >-
-          ${{
-            contains(fromJSON('["version-update:semver-patch", "version-update:semver-minor"]'),
-              steps.metadata.outputs.update-type)
-            && (steps.metadata.outputs.dependency-type == 'direct:development'
-              || steps.metadata.outputs.package-ecosystem == 'github_actions')
-          }}
+        if: steps.policy.outputs.merge == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}

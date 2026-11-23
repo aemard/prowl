@@ -139,8 +139,8 @@ test('finds the teams and lists what they are asked to review in Team reviews', 
   await expect.poll(() => cards(panel)).toEqual([failing.id, shared.id, draft.id]);
   await expect(panel.locator('.team-picker')).toHaveCount(0);
   await expect(panel.getByRole('button', { name: 'Edit teams' })).toHaveCount(0);
-  // The badge includes the failing draft too.
-  await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('2');
+  // The badge counts the review asked of the viewer; team requests are their team's turn.
+  await expect.poll(() => serviceWorker.evaluate(() => chrome.action.getBadgeText({}))).toBe('1');
   // Each card says which of the viewer's teams is asked, in the chip and to a screen reader.
   const sharedCard = panel.locator(`[data-pr-id="${shared.id}"]`);
   await expect(sharedCard.getByTitle('Review requested from @acme/core, @acme/web')).toHaveText(

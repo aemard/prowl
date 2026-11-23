@@ -10,8 +10,9 @@ Standards
   than duplicating styles. Feature components live in `src/sidepanel/components/`, screens in
   `src/sidepanel/views/`.
 - State: read from the signals in `src/sidepanel/state/store.ts`; the service worker owns
-  `snapshot` and `pollState`. User actions call `src/lib/github/actions.ts`, then send
-  `{ type: 'poll', force: true }`.
+  `snapshot` and `pollState`. User actions call the functions in `src/lib/github/` (review,
+  merge, maintenance, threads, stack merge) through `runPrAction` (`src/sidepanel/state/prActions.ts`),
+  which toasts the outcome and sends `{ type: 'poll', reason: 'change' }`.
 - Untrusted GitHub text is rendered as text. URLs opened only via the allowlisted helper.
 - Accessibility: semantic HTML first, ARIA only when needed, visible focus, keyboard parity,
   live regions for async outcomes, axe zero violations.

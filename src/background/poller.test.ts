@@ -12,7 +12,7 @@ import { defaultSettings } from '../lib/storage/settings';
 import { getItem, getItems, removeItems, setItem, setItems } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
 import { buildAuth, buildPollState } from '../test/panel';
-import { clearSignedOut, poll, refreshMergeState, scheduleAlarm } from './poller';
+import { clearSignedOut, poll, refreshMergeState } from './poller';
 import {
   alarm,
   at,
@@ -26,6 +26,7 @@ import {
   searchWith,
   signIn,
 } from './poller.test-support';
+import { scheduleAlarms } from './pollState';
 
 beforeEach(() => {
   vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
@@ -39,7 +40,7 @@ afterEach(() => {
 describe('poll', () => {
   it('does nothing while signed out, and unschedules the alarm', async () => {
     const requests = github();
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     expect(await poll()).toBeNull();
     expect(requests).toEqual([]);
     expect(alarm()).toBeUndefined();
@@ -105,6 +106,7 @@ describe('poll', () => {
           reached();
         }),
     );
+    later(2 * MINUTE);
     const loading = poll();
     await started;
     try {
@@ -115,7 +117,7 @@ describe('poll', () => {
       release();
     }
     const result = await loading;
-    expect(result?.events.map(({ type }) => type)).toEqual(['ci_failed']);
+    expect(result?.events.map(({ type }) => type)).toEqual(['ci_failed', 'your_turn']);
     expect(fakeChrome().__state.notifications.size).toBe(1);
     expect(await pollState()).toMatchObject({ inFlight: false });
     expect(await pollState()).not.toHaveProperty('mergePending');
@@ -202,10 +204,11 @@ describe('poll', () => {
   it('shares one poll between concurrent triggers', async () => {
     const requests = github();
     await signIn();
-    const polls = [poll(), poll({ force: true }), poll()];
+    const polls = [poll(), poll({ reason: 'user' }), poll()];
     const [first, ...others] = await Promise.all(polls);
     expect(requests).toHaveLength(1);
     for (const other of others) expect(other).toBe(first);
+    later(2 * MINUTE);
     await poll();
     expect(requests).toHaveLength(2);
   });
@@ -213,25 +216,26 @@ describe('poll', () => {
 
 describe('scheduleAlarm', () => {
   it('creates the alarm, and replaces it only for a new period', async () => {
-    await scheduleAlarm(2, true);
+    await scheduleAlarms(2, true);
     expect(alarm()).toBeUndefined();
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     expect(alarm()).toMatchObject({ periodInMinutes: 2 });
     later(MINUTE);
-    await scheduleAlarm(2, true);
+    await scheduleAlarms(2, true);
     expect(alarm()).toMatchObject({ scheduledTime: NOW + 2 * MINUTE });
-    await scheduleAlarm(5, true);
+    await scheduleAlarms(5, true);
     expect(alarm()).toMatchObject({ periodInMinutes: 5, scheduledTime: NOW + 6 * MINUTE });
   });
 });
 
 describe('clearSignedOut', () => {
   it('clears the alarm, the poll state, the badge and the notifications', async () => {
-    await scheduleAlarm(2);
+    await scheduleAlarms(2);
     await setItems({ auth: buildAuth(), pollState: buildPollState() });
     await chrome.action.setBadgeText({ text: '3' });
     await chrome.storage.session.set({
       notified: { 'PR_1:ci_failed:a': 'https://github.com/a/b/pull/1' },
+      inbox: { lastModified: null, off: true },
     });
     await chrome.notifications.create('PR_1:ci_failed:a', {
       type: 'basic',
@@ -245,7 +249,7 @@ describe('clearSignedOut', () => {
     expect(await getItems(['auth', 'pollState'])).toEqual({});
     expect(fakeChrome().__state.badge.text).toBe('');
     expect(fakeChrome().__state.notifications.size).toBe(0);
-    expect(await chrome.storage.session.get('notified')).toEqual({});
+    expect(await chrome.storage.session.get(['notified', 'inbox'])).toEqual({});
   });
 });
 
@@ -253,7 +257,7 @@ it('ignores delayed signed-out cleanup after another account has signed in', asy
   await signIn(buildAuth('new-account'));
   const state = buildPollState();
   await setItem('pollState', state);
-  await scheduleAlarm(5);
+  await scheduleAlarms(5);
   await clearSignedOut();
   expect(await getItem('auth')).toEqual(buildAuth('new-account'));
   expect(await getItem('pollState')).toEqual(state);

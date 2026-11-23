@@ -1,7 +1,7 @@
 import type { ComponentChildren, RefObject, TargetedKeyboardEvent } from 'preact';
 import { useId, useLayoutEffect, useRef } from 'preact/hooks';
 import { t } from '../../../lib/i18n';
-import { XIcon } from '../icons';
+import { AlertIcon, XIcon } from '../icons';
 import { cx, focusableIn } from './cx';
 import { IconButton } from './IconButton';
 import './Dialog.css';
@@ -17,6 +17,11 @@ export interface DialogProps {
   children?: ComponentChildren;
   /** Action buttons, right-aligned. Put the least destructive one first. */
   footer?: ComponentChildren;
+  /**
+   * Why the dialog's action failed, announced and shown above the footer: the dialog stays open
+   * so the user can try again or cancel (a toast would sit under the modal, unseen).
+   */
+  error?: string;
   /** Element focused on open. Defaults to the first focusable element in the body or footer. */
   initialFocus?: RefObject<HTMLElement>;
   /** Close when the backdrop is clicked (default true). */
@@ -83,6 +88,7 @@ function DialogContent({
   description,
   children,
   footer,
+  error,
   onClose,
   titleId,
   descriptionId,
@@ -103,6 +109,12 @@ function DialogContent({
         </p>
       )}
       {children && <div class="ui-dialog__body">{children}</div>}
+      {error && (
+        <p class="ui-dialog__error" role="alert">
+          <AlertIcon size={16} />
+          <span>{error}</span>
+        </p>
+      )}
       {footer && <div class="ui-dialog__footer">{footer}</div>}
     </div>
   );

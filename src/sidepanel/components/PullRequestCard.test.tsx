@@ -153,6 +153,11 @@ describe('PullRequestCard', () => {
     expect(screen.getByTitle('Fix the flaky test').textContent).toBe('Fix the flaky test');
   });
 
+  it('shows a lower bound when GitHub has more conversations than were read', () => {
+    renderCard({ unresolvedThreads: 100, incomplete: ['conversations'] });
+    expect(screen.getByText('100+ unresolved')).toBeTruthy();
+  });
+
   it('names no author on your own pull requests', () => {
     renderCard({
       author: {

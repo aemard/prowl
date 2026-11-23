@@ -6,7 +6,15 @@ import { signal } from '@preact/signals';
 import { t } from '../../lib/i18n';
 import { sendToBackground } from './background';
 
-export type Shortcut = 'next' | 'previous' | 'open' | 'refresh' | 'filter' | 'help';
+export type Shortcut =
+  | 'next'
+  | 'previous'
+  | 'open'
+  | 'snooze'
+  | 'yourTurn'
+  | 'refresh'
+  | 'filter'
+  | 'help';
 
 export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
   {
@@ -33,6 +41,18 @@ export const SHORTCUTS: ReadonlyArray<{ keys: string[]; action: string }> = [
     keys: ['o'],
     get action() {
       return t('openTheFocusedPullRequestOnGithub');
+    },
+  },
+  {
+    keys: ['s'],
+    get action() {
+      return t('shortcutSnooze');
+    },
+  },
+  {
+    keys: ['t'],
+    get action() {
+      return t('shortcutYourTurn');
     },
   },
   {
@@ -74,9 +94,17 @@ interface KeyLike {
 const isEditable = (el: Element) =>
   el.matches('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
 
-/** What `event` asks for, or null when the key is not a shortcut there (typing, a menu...). */
-export function shortcutFor(event: KeyLike): Shortcut | null {
+/** The character keys (WCAG 2.1.4's single-key shortcuts), which the user can turn off. */
+const CHARACTER_KEYS = new Set(['j', 'k', 'o', 's', 't', 'r', '/', '?']);
+
+/**
+ * What `event` asks for, or null when the key is not a shortcut there (typing, a menu...).
+ * With `singleKeys` off (Settings), only the arrows of the list remain: speech input or a stray
+ * key cannot move, snooze or refresh.
+ */
+export function shortcutFor(event: KeyLike, singleKeys = true): Shortcut | null {
   if (event.ctrlKey || event.metaKey || event.altKey) return null;
+  if (!singleKeys && CHARACTER_KEYS.has(event.key)) return null;
   const target = event.target instanceof Element ? event.target : null;
   if (target && (isEditable(target) || target.closest('[role="menu"], dialog'))) return null;
   const inList = target?.closest('.pr-list') != null;
@@ -91,6 +119,10 @@ export function shortcutFor(event: KeyLike): Shortcut | null {
       return inList ? 'previous' : null;
     case 'o':
       return inList ? 'open' : null;
+    case 's':
+      return inList ? 'snooze' : null;
+    case 't':
+      return 'yourTurn';
     case 'r':
       return 'refresh';
     case '/':
@@ -108,5 +140,5 @@ export const refreshRequested = signal<number | null>(null);
 /** Refresh now (button or `r`): a forced poll whose outcome the announcer reads out. */
 export function requestRefresh(): void {
   refreshRequested.value = Date.now();
-  void sendToBackground({ type: 'poll', force: true });
+  void sendToBackground({ type: 'poll', reason: 'user' });
 }

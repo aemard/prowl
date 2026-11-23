@@ -169,5 +169,5 @@ test('the worker uses the selected language for notifications, buttons and the t
   ]);
   await expect
     .poll(() => serviceWorker.evaluate(() => chrome.action.getTitle({})))
-    .toContain(catalog.ciFailing?.message);
+    .toContain(catalog.badgeCiFailedOne?.message.replace('$P1$', '1'));
 });

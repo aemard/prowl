@@ -34,7 +34,11 @@ describe('mapPullRequest', () => {
       reviewRequests: { nodes: [{ requestedReviewer: { login: 'monalisa' } }] },
       reviewThreads: { nodes: [{ isResolved: false }, { isResolved: true }] },
       totalCommentsCount: 4,
-      comments: { nodes: [{ createdAt: '2026-10-05T11:00:00Z', author: { login: 'hubot' } }] },
+      comments: {
+        nodes: [
+          { createdAt: '2026-10-05T11:00:00Z', author: { __typename: 'User', login: 'hubot' } },
+        ],
+      },
       commits: headCommit({ SUCCESS: 2 }, {}, '2026-10-04T16:20:00Z'),
     });
     expect(mapPullRequest(node)).toEqual({
@@ -56,12 +60,14 @@ describe('mapPullRequest', () => {
       createdAt: '2026-10-01T09:00:00Z',
       updatedAt: '2026-10-05T12:00:00Z',
       lastCommitAt: '2026-10-04T16:20:00Z',
-      checks: { state: 'success', total: 2, passed: 2, failed: 0, pending: 0, neutral: 0 },
+      // Every count is covered by mapPullRequest.checks.test.ts.
+      checks: expect.objectContaining({ state: 'success', total: 2, passed: 2, running: 0 }),
       reviewDecision: 'review_required',
       reviews: [
         {
           id: expect.any(String),
           author: 'hubot',
+          isBot: false,
           state: 'commented',
           submittedAt: expect.any(String),
         },
@@ -72,7 +78,8 @@ describe('mapPullRequest', () => {
       labels: [{ name: 'bug', color: 'd73a4a' }],
       unresolvedThreads: 1,
       commentCount: 4,
-      lastComment: { author: 'hubot', createdAt: '2026-10-05T11:00:00Z' },
+      lastComment: { author: 'hubot', isBot: false, createdAt: '2026-10-05T11:00:00Z' },
+      lastHumanComment: { author: 'hubot', createdAt: '2026-10-05T11:00:00Z' },
       closedBy: null,
       allowedMergeMethods: ['merge', 'squash'],
       defaultMergeMethod: 'merge',
@@ -83,31 +90,8 @@ describe('mapPullRequest', () => {
       viewerCanMerge: true,
       autoMergeAllowed: false,
       autoMerge: null,
+      inMergeQueue: false,
     } satisfies PullRequest);
-  });
-
-  const author = (login: string, __typename: string) =>
-    mapPullRequest(prNode({ author: { __typename, login, avatarUrl: 'a' } })).author;
-
-  describe('author.isBot', () => {
-    it.each([
-      // GraphQL: the type says it, the login has no suffix.
-      ['Bot', 'dependabot', true],
-      // The suffix says it on its own, as REST spells bot logins.
-      ['User', 'renovate[bot]', true],
-      ['Bot', 'renovate[bot]', true],
-      ['User', 'octocat', false],
-      // A person who happens to be called like a bot is not one.
-      ['User', 'bot', false],
-      ['Mannequin', 'dependabot-fan', false],
-      ['Organization', 'acme', false],
-    ])('is %s %s -> %s', (typename, login, isBot) => {
-      expect(author(login, typename)).toEqual({ login, avatarUrl: 'a', isBot });
-    });
-
-    it('is absent with the author of a deleted account', () => {
-      expect(mapPullRequest(prNode({ author: null })).author).toBeNull();
-    });
   });
 
   const lastCommitAt = (commits: ReturnType<typeof headCommit>) =>

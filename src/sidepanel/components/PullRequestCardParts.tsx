@@ -5,6 +5,7 @@ import { toggleExpanded } from '../state/prDetail';
 import { auth } from '../state/store';
 import {
   AlertIcon,
+  BellIcon,
   BellSlashIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -40,6 +41,7 @@ const STATUS_ICONS: Record<StatusIcon, IconComponent> = {
   eye: EyeIcon,
   alert: AlertIcon,
   merge: GitMergeIcon,
+  bell: BellIcon,
 };
 
 type CardHeadProps = Pick<
@@ -195,6 +197,8 @@ function StatusBadges({ statuses }: { statuses: Statuses }) {
         const Icon = STATUS_ICONS[icon];
         return (
           <Badge key={id} tone={tone} variant="plain" icon={<Icon size={12} />} title={detail}>
+            {/* A turn chip reads like an action ("Fix CI") but is a status: say whose move it is. */}
+            {icon === 'bell' && <span class="sr-only">{t('yourTurnPrefix')} </span>}
             {label}
           </Badge>
         );
@@ -257,7 +261,13 @@ function CardFooter({ pr, now }: Pick<PullRequestCardProps, 'pr' | 'now'>) {
           title={countMessage(pr.unresolvedThreads, 'unresolvedCountOne', 'unresolvedCountOther')}
         >
           <CommentDiscussionIcon size={12} />
-          {t('unresolved2', pr.unresolvedThreads)}
+          {t(
+            'unresolved2',
+            // More threads than the 100 read: the count is a lower bound.
+            pr.incomplete?.includes('conversations')
+              ? `${formatNumber(pr.unresolvedThreads)}+`
+              : formatNumber(pr.unresolvedThreads),
+          )}
         </span>
       )}
       <span class="pr-card__age" title={by ? t('openedBy', by) : undefined}>

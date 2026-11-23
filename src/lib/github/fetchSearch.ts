@@ -1,5 +1,5 @@
-import { t } from '../i18n';
 /** Bounded section searches, coverage metadata and cached membership after cut scans. */
+import { t } from '../i18n';
 import type {
   ErrorKind,
   PullRequest,
@@ -10,14 +10,16 @@ import type {
 } from '../model';
 import type { GitHubClient } from './client';
 import { GitHubError } from './errors';
-import { isNode, sameSearchFacts } from './fetchMergeState';
+import { carriedMergeFacts, isNode } from './fetchMergeState';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
-import { type MergeFacts, mapMergeState, mapPullRequest } from './mapPullRequest';
-import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY } from './queries';
+import { mapPullRequest } from './mapPullRequest';
+import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY, withoutStacks } from './queries';
 import { parseRateLimit } from './rateLimit';
-import { buildSearchQuery, filterByRepo } from './search';
+import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
 import { teamEvidence } from './teamEvidence';
 
+/** A query that already says how GitHub sorts its results. */
+const HAS_SORT = /(?:^|[\s(])sort:/i;
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
 const SAML = /\bSAML\b/i;
 
@@ -30,18 +32,14 @@ const PAGE_SIZE = 25;
  */
 const POLL_LEVEL: readonly ErrorKind[] = ['unauthorized', 'rate_limited', 'network'];
 
-const mergeFacts = (pr: PullRequest): MergeFacts => ({
-  reviewDecision: pr.reviewDecision,
-  mergeable: pr.mergeable,
-  mergeStateStatus: pr.mergeStateStatus,
-  viewerCanUpdate: pr.viewerCanUpdate,
-  viewerCanMergeAsAdmin: pr.viewerCanMergeAsAdmin === true,
-  viewerCanEnableAutoMerge: pr.viewerCanEnableAutoMerge === true,
-  viewerCanDisableAutoMerge: pr.viewerCanDisableAutoMerge === true,
-});
+/** GitHub refused the query because its stack fields are gone ("Field 'stackEntry' doesn't exist"). */
+const missingStacks = (error: unknown) =>
+  error instanceof GitHubError &&
+  error.kind === 'graphql' &&
+  /stackEntry|PullRequestStack/.test(error.message);
 
 export type PreviousSnapshot = Pick<Snapshot, 'pullRequests' | 'mergeStateAt'> &
-  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests'>>;
+  Partial<Pick<Snapshot, 'sections' | 'sectionCoverage' | 'teamRequests' | 'sectionScopes'>>;
 
 type SearchResult = { prs: PullRequest[]; coverage: SectionCoverage; problems: string[] };
 
@@ -131,30 +129,53 @@ export class SearchContext {
     };
   }
 
+  /**
+   * One search page. Without its stack fields when GitHub no longer has them, so a change to
+   * that recent feature costs the stacks, not the list. ponytail: found again on every poll (one
+   * refused request), which also notices when the field is back.
+   */
   private async searchPage(
     variables: Record<string, unknown>,
     teams: boolean,
   ): Promise<SearchData> {
     try {
-      const data = await this.read<SearchData>(
-        teams && !this.teamFallback ? TEAM_SEARCH_QUERY : SEARCH_QUERY,
-        variables,
-      );
+      return await this.searchPageWithTeams(variables, teams);
+    } catch (error) {
+      if (this.stacksMissing || !missingStacks(error)) throw error;
+      this.stacksMissing = true;
+      return this.searchPageWithTeams(variables, teams);
+    }
+  }
+
+  private stacksMissing = false;
+  private query(teams: boolean) {
+    const query = teams && !this.teamFallback ? TEAM_SEARCH_QUERY : SEARCH_QUERY;
+    return this.stacksMissing ? withoutStacks(query) : query;
+  }
+
+  /** A team search without its Team fields when the token cannot read them (`read:org`). */
+  private async searchPageWithTeams(
+    variables: Record<string, unknown>,
+    teams: boolean,
+  ): Promise<SearchData> {
+    try {
+      const data = await this.read<SearchData>(this.query(teams), variables);
       if (teams && !data.search && this.partialMessages.length) {
         this.teamFallback = true;
-        return this.read<SearchData>(SEARCH_QUERY, variables);
+        return this.read<SearchData>(this.query(false), variables);
       }
       return data;
     } catch (error) {
       if (
         !teams ||
         this.teamFallback ||
+        missingStacks(error) ||
         !(error instanceof GitHubError) ||
         !['forbidden', 'graphql'].includes(error.kind)
       )
         throw error;
       this.teamFallback = true;
-      return this.read<SearchData>(SEARCH_QUERY, variables);
+      return this.read<SearchData>(this.query(false), variables);
     }
   }
 
@@ -184,9 +205,7 @@ export class SearchContext {
   };
   put = (pr: PullRequest) => {
     const before = this.previous?.pullRequests[pr.id];
-    this.result.pullRequests[pr.id] = before
-      ? { ...pr, ...(sameSearchFacts(before, pr) ? mergeFacts(before) : mapMergeState({})) }
-      : pr;
+    this.result.pullRequests[pr.id] = before ? { ...pr, ...carriedMergeFacts(before, pr) } : pr;
   };
   /**
    * A search cut short (or refused) cannot tell which PRs left the section: keeps the cached
@@ -217,26 +236,39 @@ export class SearchContext {
     return true;
   }
 
-  /** One search even without team discovery; exclusions require complete evidence. */
-  async searchTeams(section: Section): Promise<void> {
-    const query = `${buildSearchQuery(section, this.settings)} sort:updated-desc`;
+  /**
+   * Searches one section into `result`, newest updates first unless its query sorts. A custom
+   * query that is invalid, or a search refused or given up on (`sectionLevel`), is reported in
+   * `sectionErrors` and keeps the cached members; the team section searches even without team
+   * discovery, and only complete evidence excludes a PR (`teamEvidence`).
+   */
+  async searchSection(section: Section): Promise<void> {
+    const { id } = section;
+    const invalid = section.kind === 'custom' ? validateCustomQuery(section.query ?? '') : [];
+    if (invalid.length > 0) {
+      this.result.sectionErrors[id] = invalid.join(' ');
+      return;
+    }
+    const built = buildSearchQuery(section, this.settings);
+    const query = HAS_SORT.test(built) ? built : `${built} sort:updated-desc`;
     try {
-      const page = await this.search(query, true);
+      const page = await this.search(query, section.kind === 'team_review_requested');
       for (const pr of page.prs) this.put(pr);
-      this.result.sections[section.id] = page.prs.map(({ id }) => id);
-      if (page.problems.length)
-        this.result.sectionErrors[section.id] = this.problemText(page.problems);
+      this.result.sections[id] = page.prs.map((pr) => pr.id);
+      if (page.problems.length) this.result.sectionErrors[id] = this.problemText(page.problems);
       if (page.coverage.stale) this.preserve(section);
-      this.coverageFor(section.id, page.coverage);
+      this.coverageFor(id, page.coverage);
     } catch (error) {
       if (!this.sectionLevel(error)) throw error;
-      this.result.sectionErrors[section.id] = error.message;
+      this.result.sectionErrors[id] = error.message;
       this.preserve(section);
-      this.coverageFor(section.id, {
-        hasMore: false,
+      const cached = this.previous?.sectionCoverage?.[id];
+      const queries = cached?.queries ?? [];
+      this.coverageFor(id, {
+        hasMore: cached?.hasMore ?? false,
         partial: true,
         stale: true,
-        queries: [{ query, cursor: null }],
+        queries,
       });
     }
   }

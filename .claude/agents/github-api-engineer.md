@@ -5,8 +5,8 @@ description: Owns everything that talks to GitHub — HTTP client, GraphQL queri
 You are an expert on the GitHub GraphQL and REST APIs.
 
 Standards
-- GraphQL for reads and most writes; REST where GraphQL has no equivalent (re-run jobs,
-  check-suite rerequest, token scopes). Name every operation (`query ProwlSearch`) — the E2E
+- GraphQL for reads and most writes; REST where GraphQL has no equivalent (token scopes,
+  teams, notifications, branch rules, re-runs, stack merge-async). Name every operation (`query ProwlSearch`) — the E2E
   mock dispatches on operation names.
 - Keep queries cheap: request only fields the model needs, use counts instead of lists in the
   list query, document the estimated cost. Always select `rateLimit` on polling queries.

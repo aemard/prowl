@@ -97,7 +97,7 @@ describe('settings sync', () => {
   });
 });
 
-it('forces legacy hiding keys off when an old device syncs a partial payload', async () => {
+it('drops legacy hiding keys an old device syncs, and keeps them off in the synced copy', async () => {
   watchSettingsSync();
   await setItem(STORAGE_KEYS.sync, { enabled: true, error: null });
   await settle();
@@ -105,15 +105,19 @@ it('forces legacy hiding keys off when an old device syncs a partial payload', a
   await vi.waitFor(async () =>
     expect((await chrome.storage.local.get('settings')).settings).toMatchObject({
       version: SETTINGS_VERSION,
+    }),
+  );
+  expect((await chrome.storage.local.get('settings')).settings).not.toHaveProperty(
+    'hideStaleAfterDays',
+  );
+  // An older Prowl reads a missing stale key as "hide after 20 days": the copy says off.
+  await updateSettings({ sort: 'repo' });
+  await vi.waitFor(async () =>
+    expect((await chrome.storage.sync.get(SYNCED_KEY))[SYNCED_KEY]).toMatchObject({
+      sort: 'repo',
       hideStaleAfterDays: 0,
       hideDrafts: false,
       hideBots: false,
     }),
   );
-  await updateSettings({ hideStaleAfterDays: 20, hideDrafts: true, hideBots: true });
-  expect(await loadSettings()).toMatchObject({
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
-  });
 });

@@ -20,6 +20,7 @@ const counts = (failed: number, pending = 0) => ({
 const review = (author: string, state: PullRequest['reviews'][number]['state']) => ({
   id: author,
   author,
+  isBot: false,
   state,
   submittedAt: '2026-10-05T10:00:00Z',
 });

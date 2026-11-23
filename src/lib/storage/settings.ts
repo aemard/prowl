@@ -1,39 +1,43 @@
 /**
- * User settings: defaults, validation and migrations. Every read goes through
+ * User settings: defaults, migrations, normalization and storage. Every read goes through
  * `normalizeSettings`, so callers always get a complete, valid `Settings` whatever is stored.
+ * Single values are validated in `settingsValues.ts`, the section list in `settingsSections.ts`;
+ * their public names are exported from here too.
  */
 import {
   type BadgeMode,
   type Language,
   type NotificationSettings,
   type PrEventType,
-  type Section,
-  type SectionKind,
   type Settings,
   type SortOrder,
   STORAGE_KEYS,
   type Theme,
 } from '../model';
 import { isRecord } from './guards';
+import { BUILT_IN_SECTION_KINDS, builtInSection, normalizeSections } from './settingsSections';
+import {
+  bool,
+  clampInt,
+  normalizeRepoList,
+  normalizeTeamKeys,
+  normalizeTime,
+  oneOf,
+} from './settingsValues';
 import { getItem, subscribe, type Unsubscribe, updateItem } from './storage';
+
+export {
+  BUILT_IN_SECTION_KINDS,
+  type BuiltInSectionKind,
+  MAX_SECTION_LABEL_LENGTH,
+} from './settingsSections';
+export { normalizeRepoPattern, normalizeTime, TEAM_KEY } from './settingsValues';
 
 export const SETTINGS_VERSION: Settings['version'] = 2;
 export const MIN_POLL_INTERVAL_MINUTES = 2;
 export const MAX_POLL_INTERVAL_MINUTES = 60;
 export const MIN_PER_SECTION = 1;
 export const MAX_PER_SECTION = 100;
-export const MAX_SECTION_LABEL_LENGTH = 60;
-
-export type BuiltInSectionKind = Exclude<SectionKind, 'custom'>;
-
-/** Preset sections in default order. A preset's id is its kind and its label is fixed. */
-const BUILT_IN_SECTIONS: Record<BuiltInSectionKind, { label: string; enabled: boolean }> = {
-  authored: { label: 'Created by me', enabled: true },
-  review_requested: { label: 'Review requested', enabled: true },
-  team_review_requested: { label: 'Team reviews', enabled: false },
-  mentioned: { label: 'Mentioned', enabled: false },
-  assigned: { label: 'Assigned to me', enabled: false },
-};
 
 const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
   ci_failed: true,
@@ -45,9 +49,16 @@ const EVENT_DEFAULTS: Record<PrEventType, boolean> = {
   ready_to_merge: true,
   merged: true,
   closed: true,
+  review_requested: true,
+  your_turn: true,
 };
 
-const BADGE_MODES: Record<BadgeMode, true> = { attention: true, unseen: true, off: true };
+const BADGE_MODES: Record<BadgeMode, true> = {
+  turn: true,
+  attention: true,
+  unseen: true,
+  off: true,
+};
 const THEMES: Record<Theme, true> = { system: true, light: true, dark: true };
 const LANGUAGES: Record<Language, true> = {
   system: true,
@@ -65,7 +76,6 @@ function keysOf<K extends string>(record: Record<K, unknown>): K[] {
   return Object.keys(record) as K[];
 }
 
-export const BUILT_IN_SECTION_KINDS: readonly BuiltInSectionKind[] = keysOf(BUILT_IN_SECTIONS);
 /** Every notification event type, in settings-screen order. */
 export const PR_EVENT_TYPES: readonly PrEventType[] = keysOf(EVENT_DEFAULTS);
 
@@ -75,10 +85,6 @@ function deepFreeze<T>(value: T): T {
     Object.freeze(value);
   }
   return value;
-}
-
-function builtInSection(kind: BuiltInSectionKind, enabled = BUILT_IN_SECTIONS[kind].enabled) {
-  return { id: kind, kind, label: BUILT_IN_SECTIONS[kind].label, enabled } satisfies Section;
 }
 
 /** Frozen; use `defaultSettings()` for a copy you can change. */
@@ -94,14 +100,13 @@ export const DEFAULT_SETTINGS: Settings = deepFreeze({
     events: { ...EVENT_DEFAULTS },
     quietHours: { enabled: false, start: '22:00', end: '08:00' },
   },
-  badge: 'attention',
+  badge: 'turn',
   theme: 'system',
   language: 'system',
   sort: 'updated',
   groupByRepo: true,
-  hideStaleAfterDays: 0,
-  hideDrafts: false,
-  hideBots: false,
+  localAi: false,
+  singleKeyShortcuts: true,
   unfollowedTeams: [],
 });
 
@@ -151,129 +156,6 @@ export function migrateSettings(
 // ---------------------------------------------------------------------------------------------
 // Normalization
 
-function bool(value: unknown, fallback: boolean): boolean {
-  return typeof value === 'boolean' ? value : fallback;
-}
-
-function oneOf<T extends string>(value: unknown, allowed: Record<T, true>, fallback: T): T {
-  return typeof value === 'string' && Object.hasOwn(allowed, value) ? (value as T) : fallback;
-}
-
-function clampInt(value: unknown, min: number, max: number, fallback: number): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
-  return Math.min(max, Math.max(min, Math.round(value)));
-}
-
-const TIME = /^([01]?\d|2[0-3]):([0-5]\d)$/;
-
-/** `HH:MM` (24h) from `H:MM` or `HH:MM`; `null` when it is not a valid time of day. */
-export function normalizeTime(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const match = TIME.exec(value.trim());
-  if (!match) return null;
-  const [, hours = '', minutes = ''] = match;
-  return `${hours.padStart(2, '0')}:${minutes}`;
-}
-
-const REPO_PATTERN = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}(?:\/[A-Za-z0-9._-]{1,100})?$/;
-
-/** A trimmed `owner` or `owner/name` as GitHub allows them; `null` when invalid. */
-export function normalizeRepoPattern(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const pattern = value.trim();
-  if (!REPO_PATTERN.test(pattern)) return null;
-  const name = pattern.split('/')[1];
-  return name === '.' || name === '..' ? null : pattern;
-}
-
-function normalizeRepoList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const item of value) {
-    const pattern = normalizeRepoPattern(item);
-    if (pattern === null || seen.has(pattern.toLowerCase())) continue;
-    seen.add(pattern.toLowerCase());
-    out.push(pattern);
-  }
-  return out;
-}
-
-/** `org/slug`, lowercase: what GitHub allows in an organization login and a team slug. */
-export const TEAM_KEY = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9._-]{1,100}$/;
-
-/** Team keys (`org/slug`), lowercased, deduped; anything else is dropped. */
-function normalizeTeamKeys(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  const keys = value
-    .filter((item) => typeof item === 'string')
-    .map((item) => item.trim().toLowerCase());
-  return [...new Set(keys.filter((key) => TEAM_KEY.test(key)))];
-}
-
-function isBuiltInKind(value: unknown): value is BuiltInSectionKind {
-  return typeof value === 'string' && Object.hasOwn(BUILT_IN_SECTIONS, value);
-}
-
-const CUSTOM_ID = /^[A-Za-z0-9_-]{1,64}$/;
-
-function label(value: unknown, fallback: string): string {
-  const text = typeof value === 'string' ? value.trim() : '';
-  return (text || fallback).slice(0, MAX_SECTION_LABEL_LENGTH);
-}
-
-/** A section with its stored id (`''` for a custom section whose id must be regenerated). */
-function parseSection(value: unknown): Section | null {
-  if (!isRecord(value)) return null;
-  if (isBuiltInKind(value.kind)) {
-    return builtInSection(value.kind, bool(value.enabled, BUILT_IN_SECTIONS[value.kind].enabled));
-  }
-  if (value.kind !== 'custom') return null;
-  const query = typeof value.query === 'string' ? value.query.trim() : '';
-  if (query === '') return null;
-  const id = typeof value.id === 'string' && CUSTOM_ID.test(value.id) ? value.id : '';
-  return {
-    id: isBuiltInKind(id) ? '' : id,
-    kind: 'custom',
-    label: label(value.label, query),
-    enabled: bool(value.enabled, true),
-    query,
-  };
-}
-
-/**
- * Keeps the stored order. Presets appear exactly once (missing ones are appended with their
- * defaults, duplicates dropped); custom sections need a query and get a fresh `custom-N` id
- * when theirs is missing, invalid or already used.
- */
-function normalizeSections(value: unknown): Section[] {
-  if (!Array.isArray(value)) return defaultSettings().sections;
-  const parsed = value.map(parseSection).filter((section) => section !== null);
-  const reserved = new Set(parsed.map((section) => section.id));
-  const used = new Set<string>();
-  const sections: Section[] = [];
-  let next = 1;
-  for (const section of parsed) {
-    if (section.kind !== 'custom' && used.has(section.id)) continue;
-    if (section.kind === 'custom' && (section.id === '' || used.has(section.id))) {
-      while (reserved.has(`custom-${next}`) || used.has(`custom-${next}`)) next += 1;
-      section.id = `custom-${next}`;
-    }
-    used.add(section.id);
-    sections.push(section);
-  }
-  for (const kind of BUILT_IN_SECTION_KINDS) {
-    if (used.has(kind)) continue;
-    // "Review requested" used to include team requests: whoever followed it keeps seeing them.
-    const inherited =
-      kind === 'team_review_requested'
-        ? parsed.find((section) => section.id === 'review_requested')?.enabled
-        : undefined;
-    sections.push(builtInSection(kind, inherited));
-  }
-  return sections;
-}
-
 function normalizeNotifications(value: unknown): NotificationSettings {
   const defaults = DEFAULT_SETTINGS.notifications;
   const raw: Record<string, unknown> = isRecord(value) ? value : {};
@@ -322,10 +204,8 @@ export function normalizeSettings(value: unknown): Settings {
     language: oneOf(raw.language, LANGUAGES, DEFAULT_SETTINGS.language),
     sort: oneOf(raw.sort, SORT_ORDERS, DEFAULT_SETTINGS.sort),
     groupByRepo: bool(raw.groupByRepo, DEFAULT_SETTINGS.groupByRepo),
-    // Keep explicit off values for older synced installs (missing stale keys default to 20).
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
+    localAi: bool(raw.localAi, DEFAULT_SETTINGS.localAi),
+    singleKeyShortcuts: bool(raw.singleKeyShortcuts, DEFAULT_SETTINGS.singleKeyShortcuts),
     unfollowedTeams: normalizeTeamKeys(raw.unfollowedTeams),
   };
 }
@@ -351,14 +231,6 @@ export async function updateSettings(
       typeof patch === 'function' ? patch(current) : { ...current, ...patch },
     );
   });
-}
-
-/**
- * Persists migrated and repaired settings (the defaults on first run). Meant for
- * `runtime.onInstalled`; writes nothing when the stored value is already current.
- */
-export async function ensureSettings(): Promise<Settings> {
-  return updateItem(STORAGE_KEYS.settings, (stored) => normalizeSettings(stored));
 }
 
 /** Calls `listener` with normalized settings whenever they change in any context. */

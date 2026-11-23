@@ -22,6 +22,7 @@ export const presets = (overrides: Partial<Record<string, boolean>> = {}): Secti
     label: 'Assigned to me',
     enabled: overrides.assigned ?? false,
   },
+  { id: 'your_turn', kind: 'your_turn', label: 'Your turn', enabled: overrides.your_turn ?? true },
 ];
 
 export function sectionsOf(sections: unknown): Section[] {

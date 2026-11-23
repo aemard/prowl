@@ -25,9 +25,12 @@ your browser profile can read your token.
   sign out.
 - **Notification record:** the ids of events already reported, in `chrome.storage.session`.
   Removed when you sign out or Chrome closes.
+- **Quiet-hours digest:** the events quiet hours held back (pull request title, number and what
+  happened), until the digest shows them. Dropped after a day; removed when you sign out.
 - **Settings:** your sections and search queries, the teams you unfollowed, repository filters, poll interval,
-  notification choices and quiet hours. Removed when you uninstall Prowl.
-- **Local choices:** which pull requests you snoozed, muted, always show or have seen, by pull
+  notification choices, quiet hours and display preferences (language, theme, sort, grouping,
+  badge, shortcuts, on-device AI). Removed when you uninstall Prowl.
+- **Local choices:** which pull requests you snoozed, muted or have seen, by pull
   request id. Removed when you uninstall Prowl.
 - **Observed activity:** the useful CI/review facts seen then, for detecting activity changes.
   Removed when you sign out or replace your token.
@@ -45,12 +48,26 @@ the interface sends no text to a translation service and requires no additional 
 
 - **`api.github.com`:** on every poll, and when you act on a pull request. Prowl sends your token
   in the `Authorization` header and the search queries built from your settings. An action you
-  start, such as approving, is sent as you.
+  start, such as approving, is sent as you. Between polls, once a minute, Prowl also asks
+  whether your GitHub notifications changed (`GET /notifications` with `If-Modified-Since`, no
+  more often than GitHub's `X-Poll-Interval` allows); it only reads whether a pull request thread
+  was updated since the last check, to decide whether to poll now, and never marks anything as
+  read. While CI runs on one of your own pull requests that changed in the last hour, Prowl polls
+  every 2 minutes until it ends; CI on other people's pull requests waits for the next scheduled
+  poll. After GitHub rejects your token, Prowl stops asking anything until
+  you sign in again or press Refresh. When a Chrome window comes to the front, Prowl may
+  refresh: it learns only that a window got focus, never which page it shows.
 - **`github.com`:** only when you choose "Continue with GitHub". Prowl sends the OAuth App's public
   client id and the one-time device code, to get a token. Chrome asks you to allow this host
   first, and you can say no.
 - **`avatars.githubusercontent.com`:** when the panel shows a picture. It is a plain image
   request, with no token.
+
+When you turn on **On-device AI in Chrome** (Settings → List, off by default) and click
+Summarize or Explain the failure on a card, Prowl reads that pull request's description,
+latest comments and reviews and failing-check reports from `api.github.com`, and hands them to
+Gemini Nano, the model Chrome runs on your device. Chrome downloads the model once, after you
+click "Download the model"; the text and the answer stay on your device and are not stored.
 
 Your token only ever goes to `api.github.com`. When you open a pull request, Prowl opens its
 `github.com` page in a normal browser tab, and it opens nothing that is not on GitHub.

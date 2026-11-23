@@ -3,6 +3,7 @@
  * the GitHub layer and the diff engine. GitHub-specific shapes stay inside src/lib/github;
  * everything else depends only on these types.
  */
+import type { TurnReason } from './modelSettings';
 
 /** Aggregated CI state for the head commit. `none` = no checks configured. */
 export type CheckState = 'success' | 'failure' | 'pending' | 'none';
@@ -16,6 +17,13 @@ export interface CheckSummary {
   passed: number;
   failed: number;
   pending: number;
+  /**
+   * Of `pending`, the checks that actually run: check runs in progress or queued for a runner,
+   * commit statuses a CI service reported as started. The rest wait on something that may never
+   * come (a required check never reported, a workflow awaiting approval, a deployment waiting
+   * for a reviewer). Absent in snapshots stored before Prowl told them apart.
+   */
+  running?: number;
   /** Skipped, neutral and cancelled-by-user checks. */
   neutral: number;
 }
@@ -47,6 +55,8 @@ export interface Review {
   /** GraphQL node id; used to detect new reviews between polls. */
   id: string;
   author: string;
+  /** Posted by an app account (Copilot code review, CodeRabbit...), as for `Actor.isBot`. */
+  isBot: boolean;
   state: ReviewState;
   submittedAt: string;
 }
@@ -115,14 +125,14 @@ export interface PullRequest {
   updatedAt: string;
   /**
    * When the head commit was committed (`committedDate`). A rebase, an amend or "Update branch"
-   * renews it; comments, reviews and labels do not. What hides a PR with no recent commit.
+   * renews it; comments, reviews and labels do not.
    */
   lastCommitAt: string;
   checks: CheckSummary;
   reviewDecision: ReviewDecision;
   /** Latest review per reviewer, newest first. */
   reviews: Review[];
-  /** Logins (or team slugs prefixed with `@`) whose review is requested. */
+  /** Logins of the users whose review is requested (team requests are in `Snapshot.teamRequests`). */
   requestedReviewers: string[];
   mergeable: Mergeable;
   mergeStateStatus: MergeStateStatus;
@@ -133,9 +143,31 @@ export interface PullRequest {
   incomplete?: string[];
   /** Issue comments plus review comments (`totalCommentsCount`). */
   commentCount: number;
-  lastComment: { author: string; createdAt: string } | null;
+  /** The latest issue comment; `isBot` as for `Actor.isBot`. */
+  lastComment: { author: string; isBot: boolean; createdAt: string } | null;
+  /**
+   * The latest issue comment not by a bot among the last few (`SEARCH_QUERY`), so a CI or
+   * coverage report posted after a question does not hide it. Absent in snapshots stored before
+   * Prowl read it (`whoseTurn` then falls back on `lastComment`).
+   */
+  lastHumanComment?: { author: string; createdAt: string } | null;
   /** Set once the PR is merged or closed. */
   closedBy: string | null;
+  /**
+   * The GitHub stack this PR belongs to (GitHub's stacked pull requests, not a chain of branches
+   * someone built by hand): which one, how many PRs, this one's place (1 merges first, into
+   * `base`). Absent outside a stack. `open` and `bottom` (the lowest open position) come from
+   * GitHub's list of the stack's entries, absent when it was cut: a merged PR may keep its place.
+   */
+  stack?: {
+    id: string;
+    number: number;
+    size: number;
+    position: number;
+    base: string;
+    open?: number;
+    bottom?: number;
+  };
   /** Merge methods the repository allows. */
   allowedMergeMethods: MergeMethod[];
   /** What the merge dialog starts on: the method the viewer used last here, else the repo's. */
@@ -150,6 +182,11 @@ export interface PullRequest {
   autoMergeAllowed: boolean;
   /** Auto-merge is on: GitHub merges with `method` once the requirements pass. */
   autoMerge: { method: MergeMethod; enabledBy: string | null } | null;
+  /**
+   * GitHub's merge queue holds it (`isInMergeQueue`): it merges once the queue reaches it.
+   * Absent in snapshots stored before Prowl read it.
+   */
+  inMergeQueue?: boolean;
 }
 
 /**
@@ -169,7 +206,34 @@ export interface PullRequestDetail {
   requiresConversationResolution: boolean;
   /** Effective methods from readable branch rules; absent means not verified. */
   allowedMergeMethods?: MergeMethod[];
+  /**
+   * Present when the base branch merges through a merge queue: the PR's place in it, or null when
+   * it is not queued. Absent: no queue.
+   */
+  mergeQueue?: { position: number; estimatedSeconds: number | null } | null;
+  /** The commit title GitHub would use for a squash or a merge commit, from the repository's settings. */
+  commitTitles?: { squash: string; merge: string };
+  /** Where the head commit is deployed (GitHub Deployments), newest first, one per environment. */
+  deployments?: { environment: string; state: CheckItemState; url: string | null }[];
   warnings?: string[];
+}
+
+/** A review conversation on the diff, as an expanded card lists it (read on demand, never stored). */
+export interface ReviewThread {
+  id: string;
+  resolved: boolean;
+  /** The code it was about changed since. */
+  outdated: boolean;
+  path: string;
+  line: number | null;
+  canResolve: boolean;
+  canReply: boolean;
+  /**
+   * Every comment of the thread; `comments` holds the last three, oldest first, after the
+   * opening one when they leave it out.
+   */
+  commentCount: number;
+  comments: { author: string; text: string; createdAt: string; url: string }[];
 }
 
 /**
@@ -177,6 +241,8 @@ export interface PullRequestDetail {
  * team the viewer belongs to (one viewer-team search, filtered by `Settings.unfollowedTeams`).
  */
 export type SectionKind =
+  /** Derived, never searched: the PRs of the other sections where it is the viewer's turn. */
+  | 'your_turn'
   | 'authored'
   | 'review_requested'
   | 'team_review_requested'
@@ -229,7 +295,7 @@ export interface SectionCoverage {
   hasMore: boolean;
   partial?: boolean;
   stale?: boolean;
-  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  /** The section's search queries, each with its own cursor; totals must not be summed across queries that overlap. */
   queries: { query: string; cursor: string | null; total?: number }[];
 }
 
@@ -244,6 +310,11 @@ export interface Snapshot {
   /** Sections not yet searched in a progressive publication. */
   sectionsPending?: string[];
   /**
+   * Section id -> fingerprint of what its search asked for (`sectionScopes`); a pending section
+   * keeps the previous poll's. Absent (older snapshots) means unknown: nothing counts as new.
+   */
+  sectionScopes?: Record<string, string>;
+  /**
    * Section id -> why it could not be loaded in this poll: a custom section's invalid query, a
    * search GitHub refused or gave up on (such a section has no entry in `sections`), or the team
    * section's missing scope, no team, or failed team searches (it keeps the PRs of the teams that
@@ -251,8 +322,8 @@ export interface Snapshot {
    */
   sectionErrors?: Record<string, string>;
   /**
-   * PR id -> keys (`teamKey`) of the followed teams whose search returned it, for the PRs of the
-   * `team_review_requested` section. Absent means none.
+   * PR id -> keys (`teamKey`) of the viewer's followed teams that the PR asks to review, read
+   * from its review requests, for the PRs of the `team_review_requested` section. Absent means none.
    */
   teamRequests?: Record<string, string[]>;
   /**
@@ -284,7 +355,11 @@ export type PrEventType =
   | 'comment_new'
   | 'ready_to_merge'
   | 'merged'
-  | 'closed';
+  | 'closed'
+  /** A review was asked of the viewer (`whoseTurn` reason `review_requested`), new PRs included. */
+  | 'review_requested'
+  /** A PR became the viewer's turn (see `whoseTurn`) without another event saying why. */
+  | 'your_turn';
 
 export interface PrEvent {
   /** Deterministic: the same change always produces the same id (used for dedupe). */
@@ -298,6 +373,15 @@ export interface PrEvent {
   /** Who caused it, when known. */
   actor: string | null;
   at: string;
+  /** `your_turn` only: why it became the viewer's move (absent in events held before). */
+  reason?: TurnReason;
+}
+
+/** An event quiet hours silenced, waiting for the digest (`quietHeld`). */
+export interface HeldEvent {
+  event: PrEvent;
+  /** When it was held (ISO): the digest drops what waited over a day. */
+  heldAt: string;
 }
 
 export interface RateLimit {
@@ -351,80 +435,8 @@ export interface AuthState {
   expiresAt?: string | null;
 }
 
-/** Local-only per-PR state. Never sent anywhere. */
-export interface PrLocalState {
-  /** PR id -> ISO time the snooze ends. */
-  snoozed: Record<string, string>;
-  /** PR ids with notifications muted. */
-  muted: Record<string, true>;
-  /** PR id -> `updatedAt` value the user has seen. */
-  seen: Record<string, string>;
-  /** Useful facts observed at that timestamp (CI can change without changing updatedAt). */
-  seenFacts?: Record<string, string>;
-}
+export type * from './modelSettings';
 
-/** Local panel organization for one account; search text is deliberately session-only. */
-export interface PanelState {
-  login: string;
-  activeSectionId?: string;
-  foldedGroups: string[];
-}
-
-export interface QuietHours {
-  enabled: boolean;
-  /** Local time, `HH:MM`, 24h. A window may wrap past midnight (22:00 -> 07:00). */
-  start: string;
-  end: string;
-}
-
-export interface NotificationSettings {
-  enabled: boolean;
-  events: Record<PrEventType, boolean>;
-  quietHours: QuietHours;
-}
-
-/** `attention`: PRs that need you (CI failing, changes requested, conflicts, ready to merge). */
-export type BadgeMode = 'attention' | 'unseen' | 'off';
-
-export type Theme = 'system' | 'light' | 'dark';
-
-export type Language = 'system' | 'en' | 'ja' | 'zh-CN' | 'zh-TW' | 'fr' | 'de' | 'es';
-
-export type SortOrder = 'updated' | 'created' | 'repo';
-
-export interface Settings {
-  version: 2;
-  sections: Section[];
-  /** `owner/name` or `owner`. Empty = all repositories. */
-  repoInclude: string[];
-  /** `owner/name` or `owner`. Applied after include. */
-  repoExclude: string[];
-  /** Integer minutes, minimum 2, default 2. */
-  pollIntervalMinutes: number;
-  /** Results fetched per section, 1-100, default 50. */
-  maxPerSection: number;
-  notifications: NotificationSettings;
-  badge: BadgeMode;
-  theme: Theme;
-  /** `system` follows Chrome's interface language; an explicit choice overrides it. */
-  language: Language;
-  sort: SortOrder;
-  /** The list groups each section's PRs under their repository (independent of `sort`). */
-  groupByRepo: boolean;
-  /** Legacy sync compatibility key, always normalized to 0. */
-  hideStaleAfterDays: number;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideDrafts: boolean;
-  /** Legacy sync compatibility key, always normalized to false. */
-  hideBots: boolean;
-  /**
-   * Team keys (`org/slug`, lowercase) left out of the team section. Empty = every discovered
-   * team is followed, and so is any team discovered later.
-   */
-  unfollowedTeams: string[];
-}
-
-/** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 /**
  * Whether this device mirrors its settings through Chrome sync, and why the last write there
  * failed. Device-local: it never goes to `chrome.storage.sync` itself.
@@ -438,6 +450,7 @@ export interface SyncState {
 /** The manifest command that opens the side panel from the keyboard. */
 export const OPEN_PANEL_COMMAND = 'open-panel';
 
+/** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 export const STORAGE_KEYS = {
   sync: 'sync',
   settings: 'settings',
@@ -447,13 +460,25 @@ export const STORAGE_KEYS = {
   prLocal: 'prLocal',
   teams: 'teams',
   panelState: 'panelState',
+  /** Events quiet hours hold for the digest; removed at sign-out. */
+  quietHeld: 'quietHeld',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
+/**
+ * Why a poll is asked for; the worker's cadence policy (`src/lib/time/cadence.ts`) decides from
+ * it whether the poll may run now. The worker's own: `schedule` (the poll alarm), `startup`,
+ * `inbox` (a pull request thread changed), `ci` (CI runs on a listed PR), `focus` (a Chrome
+ * window came back). The panel's (`PanelPollReason`): `panel` (opened or shown again), `user`
+ * (an explicit Refresh or retry), `change` (settings saved, an action done, signed in).
+ */
+export type PollReason = 'schedule' | 'startup' | 'inbox' | 'ci' | 'focus' | PanelPollReason;
+export type PanelPollReason = 'panel' | 'user' | 'change';
+
 /** Messages the side panel sends to the service worker via `chrome.runtime.sendMessage`. */
 export type BackgroundRequest =
-  | { type: 'poll'; force?: boolean; afterCurrent?: boolean }
+  | { type: 'poll'; reason: PanelPollReason }
   | {
       type: 'markSeen';
       prIds: string[];

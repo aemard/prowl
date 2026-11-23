@@ -1,10 +1,10 @@
 import type { Ref } from 'preact';
 import { useRef, useState } from 'preact/hooks';
-import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/actions';
 import type { GitHubClient } from '../../lib/github/client';
+import { approve, comment, MAX_BODY_LENGTH, requestChanges } from '../../lib/github/reviewActions';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
-import { pendingActions, prRef, runPrAction } from '../state/prActions';
+import { forPr, pendingActions, prRef, runPrAction } from '../state/prActions';
 import { type ReviewDraftKind, reviewDrafts, setReviewDraft } from '../state/reviewDrafts';
 import { auth } from '../state/store';
 import { CheckIcon, CommentIcon, FileDiffIcon } from './icons';
@@ -125,7 +125,7 @@ function ReviewButtons({
         <Button
           size="sm"
           icon={<CheckIcon size={12} />}
-          aria-label={t('message2', t('approve'), ref)}
+          aria-label={forPr(t('approve'), pr)}
           {...state(t('approve'))}
           onClick={() =>
             void runPrAction(pr, t('approve'), t('approved2'), (client) =>
@@ -140,7 +140,7 @@ function ReviewButtons({
         <Button
           size="sm"
           icon={<FileDiffIcon size={12} />}
-          aria-label={t('message2', WRITTEN.request_changes.name, ref)}
+          aria-label={forPr(WRITTEN.request_changes.name, pr)}
           {...state(WRITTEN.request_changes.name)}
           onClick={() => open('request_changes')}
         >

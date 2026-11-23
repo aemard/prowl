@@ -31,17 +31,18 @@ describe('DEFAULT_SETTINGS', () => {
           ready_to_merge: true,
           merged: true,
           closed: true,
+          review_requested: true,
+          your_turn: true,
         },
         quietHours: { enabled: false, start: '22:00', end: '08:00' },
       },
-      badge: 'attention',
+      badge: 'turn',
       theme: 'system',
       language: 'system',
       sort: 'updated',
       groupByRepo: true,
-      hideStaleAfterDays: 0,
-      hideDrafts: false,
-      hideBots: false,
+      localAi: false,
+      singleKeyShortcuts: true,
       unfollowedTeams: [],
     } satisfies Settings);
   });
@@ -63,13 +64,14 @@ describe('DEFAULT_SETTINGS', () => {
 
   it('lists every event type and preset kind', () => {
     expect(PR_EVENT_TYPES).toEqual(Object.keys(DEFAULT_SETTINGS.notifications.events));
-    expect(PR_EVENT_TYPES).toHaveLength(9);
+    expect(PR_EVENT_TYPES).toHaveLength(11);
     expect(BUILT_IN_SECTION_KINDS).toEqual([
       'authored',
       'review_requested',
       'team_review_requested',
       'mentioned',
       'assigned',
+      'your_turn',
     ]);
   });
 });
@@ -102,9 +104,6 @@ describe('normalizeSettings', () => {
       theme: 'dark',
       sort: 'repo',
       groupByRepo: true,
-      hideStaleAfterDays: 0,
-      hideDrafts: false,
-      hideBots: false,
       unfollowedTeams: ['acme/core', 'octo-org/web.ui'],
     };
     expect(normalizeSettings(custom)).toEqual(custom);
@@ -180,13 +179,6 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ maxPerSection: value }).maxPerSection).toBe(expected);
   });
 
-  it.each([0, -1, 7.4, 20, 365, 366, Number.POSITIVE_INFINITY, '30', null, undefined])(
-    'normalizes legacy hideStaleAfterDays %j to zero',
-    (value) => {
-      expect(normalizeSettings({ hideStaleAfterDays: value }).hideStaleAfterDays).toBe(0);
-    },
-  );
-
   it.each(['groupByRepo'] as const)('repairs %s: a boolean, else its default', (key) => {
     expect(normalizeSettings({ [key]: true })[key]).toBe(true);
     expect(normalizeSettings({ [key]: false })[key]).toBe(false);
@@ -221,13 +213,15 @@ describe('normalizeSettings', () => {
 
   it('falls back to the default badge, theme and sort for unknown values', () => {
     const settings = normalizeSettings({ badge: 'count', theme: 'toString', sort: 42 });
-    expect([settings.badge, settings.theme, settings.sort]).toEqual([
-      'attention',
-      'system',
-      'updated',
-    ]);
+    expect([settings.badge, settings.theme, settings.sort]).toEqual(['turn', 'system', 'updated']);
     const valid = normalizeSettings({ badge: 'off', theme: 'light', sort: 'created' });
     expect([valid.badge, valid.theme, valid.sort]).toEqual(['off', 'light', 'created']);
+  });
+
+  it('keeps single-key shortcuts on unless turned off with a boolean', () => {
+    expect(normalizeSettings({}).singleKeyShortcuts).toBe(true);
+    expect(normalizeSettings({ singleKeyShortcuts: 'no' }).singleKeyShortcuts).toBe(true);
+    expect(normalizeSettings({ singleKeyShortcuts: false }).singleKeyShortcuts).toBe(false);
   });
 
   it('cleans repository filters', () => {
@@ -285,13 +279,16 @@ describe('normalizeSettings', () => {
   });
 });
 
-it('forces all legacy hiding preferences off on every read', () => {
-  expect(
-    normalizeSettings({ version: 1, hideStaleAfterDays: 20, hideDrafts: true, hideBots: true }),
-  ).toMatchObject({
-    version: SETTINGS_VERSION,
-    hideStaleAfterDays: 0,
-    hideDrafts: false,
-    hideBots: false,
+it('drops the legacy hiding preferences on read', () => {
+  const read = normalizeSettings({
+    version: 1,
+    hideStaleAfterDays: 20,
+    hideDrafts: true,
+    hideBots: true,
   });
+  expect(read.version).toBe(SETTINGS_VERSION);
+  expect(Object.keys(read)).not.toEqual(
+    expect.arrayContaining(['hideStaleAfterDays', 'hideDrafts', 'hideBots']),
+  );
+  expect(read).toEqual(DEFAULT_SETTINGS);
 });

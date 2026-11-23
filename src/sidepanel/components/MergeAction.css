@@ -1,20 +1,6 @@
-/* The pull request being merged, at the top of the confirmation. */
-.merge-dialog__pr {
-  font-weight: var(--weight-medium);
-}
-
-/* Why GitHub may refuse it, repeated from the card's merge lines that the dialog covers. */
-.merge-dialog__blockers {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-1);
-  color: var(--color-attention-fg);
+/* A queued PR's place, or why a stacked PR's card has no Merge of its own yet. */
+.merge-action__note {
+  align-self: center;
+  color: var(--color-fg-muted);
   font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  text-wrap: pretty;
-}
-
-.merge-dialog__blockers .icon {
-  flex: none;
-  margin-top: var(--space-0-5);
 }

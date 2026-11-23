@@ -5,16 +5,18 @@
  */
 import type {
   CheckRunNode,
-  ClosedPullRequestNode,
   DetailData,
   DetailPullRequestNode,
+  StatusContextNode,
+} from '../../src/lib/github/detailQuery';
+import type {
+  ClosedPullRequestNode,
   MergeStateData,
   MergeStateNode,
   NodesData,
   PullRequestNode,
   SearchData,
   StateCount,
-  StatusContextNode,
 } from '../../src/lib/github/queries';
 import { graphqlRateLimit } from './http';
 
@@ -85,7 +87,7 @@ export function reviewNode(
     id: `PRR_${login ?? 'ghost'}_${state}_${submittedAt ?? 'pending'}`,
     state,
     submittedAt,
-    author: login === null ? null : { login },
+    author: login === null ? null : { __typename: 'User', login },
   };
 }
 
@@ -124,6 +126,7 @@ export function prNode(
     viewerCanEnableAutoMerge: true,
     viewerCanDisableAutoMerge: true,
     autoMergeRequest: null,
+    isInMergeQueue: false,
     totalCommentsCount: 0,
     labels: { nodes: [] },
     latestReviews: { nodes: [] },

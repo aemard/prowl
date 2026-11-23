@@ -1,16 +1,23 @@
-import { t } from '../i18n';
 /**
  * Search queries for the PR list: one GitHub issue-search string per section, plus the
  * repo include/exclude filters. Inputs come from `normalizeSettings`, which already validated
  * the repo patterns (`owner` or `owner/name`), so they are interpolated verbatim.
  */
+import { t } from '../i18n';
 import type { PullRequest, Section, Settings } from '../model';
 import type { BuiltInSectionKind } from '../storage/settings';
 
 type RepoFilters = Pick<Settings, 'repoInclude' | 'repoExclude'>;
+type ScopeSettings = Pick<
+  Settings,
+  'sections' | 'repoInclude' | 'repoExclude' | 'maxPerSection' | 'unfollowedTeams'
+>;
 
 /** `review-requested:@me` would also match the viewer's teams: they have their own section. */
-const PRESET_QUALIFIER: Record<Exclude<BuiltInSectionKind, 'team_review_requested'>, string> = {
+const PRESET_QUALIFIER: Record<
+  Exclude<BuiltInSectionKind, 'team_review_requested' | 'your_turn'>,
+  string
+> = {
   authored: 'author:@me',
   review_requested: 'user-review-requested:@me',
   mentioned: 'mentions:@me',
@@ -46,10 +53,13 @@ export function buildSearchQuery(section: Section, filters: RepoFilters): string
     scoped = OWN_SCOPE.test(query);
     parts.push(query);
   } else {
+    // "Your turn" is derived from the other sections and never searched (see fetchPullRequests).
     const who =
       section.kind === 'team_review_requested'
         ? 'team-review-requested-user:@me'
-        : PRESET_QUALIFIER[section.kind];
+        : section.kind === 'your_turn'
+          ? ''
+          : PRESET_QUALIFIER[section.kind];
     parts.push('is:open', who, 'archived:false');
   }
   if (!scoped) parts.push(...filters.repoInclude.map(scope));
@@ -125,4 +135,24 @@ export function validateCustomQuery(query: string): string[] {
     errors.push(t('searchWordsLimit', MAX_TEXT_LENGTH, text.length));
   }
   return errors;
+}
+
+/**
+ * Section id -> what its search asks GitHub for (query, filters, limit, unfollowed teams), for
+ * every section a poll searches. Equal across two polls: a PR new to the section is new on
+ * GitHub, not brought in by a section turned on or a query or filter changed (see the diff).
+ */
+export function sectionScopes(settings: ScopeSettings): Record<string, string> {
+  const searched = settings.sections.filter((s) => s.enabled && s.kind !== 'your_turn');
+  return Object.fromEntries(
+    searched.map((section) => [
+      section.id,
+      JSON.stringify([
+        buildSearchQuery(section, settings),
+        settings.repoInclude,
+        settings.maxPerSection,
+        section.kind === 'team_review_requested' ? settings.unfollowedTeams : [],
+      ]),
+    ]),
+  );
 }

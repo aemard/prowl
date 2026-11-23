@@ -76,7 +76,7 @@ test('re-runs failed Actions jobs and other failed check suites', async ({
   const panel = await openPanel();
   const target = await expand(panel, FAILING.title);
   await expectNoA11yViolations(panel);
-  await target.getByRole('button', { name: `Re-run failed checks of ${FAILING.ref}` }).click();
+  await target.getByRole('button', { name: `Re-run failed checks ${FAILING.ref}` }).click();
   await expect(toasts(panel)).toContainText(`Re-running failed checks of ${FAILING.ref}`);
 
   const posted = github.requests.filter((r) => r.method === 'POST' && r.path.startsWith('/repos/'));
@@ -106,7 +106,7 @@ test('marks a draft ready for review and converts a ready PR to draft', async ({
   const panel = await openPanel();
   const draft = await expand(panel, DRAFT.title);
   await expectNoA11yViolations(panel);
-  await draft.getByRole('button', { name: `Ready for review: ${DRAFT.ref}` }).click();
+  await draft.getByRole('button', { name: `Ready for review ${DRAFT.ref}` }).click();
   await expect(toasts(panel)).toContainText(`Marked ready for review: ${DRAFT.ref}`);
   expect(github.requestsFor('ProwlMarkReady')[0]?.body).toMatchObject({
     variables: { id: DRAFT.id },

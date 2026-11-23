@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome 同步未能保存设置。设置仍保留在此设备上。"
   },
-  "ciFailing": {
-    "message": "CI 失败"
-  },
-  "changesRequested": {
-    "message": "已请求更改"
-  },
-  "readyToMerge": {
-    "message": "可合并"
-  },
   "withUnseenChanges": {
     "message": "$P1$：$P2$ 有未查看的更改",
     "placeholders": {
@@ -190,9 +181,6 @@
       }
     }
   },
-  "bot": {
-    "message": "机器人"
-  },
   "someone": {
     "message": "有人"
   },
@@ -350,17 +338,6 @@
   "convertedToDraft": {
     "message": "已转换为草稿："
   },
-  "of": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "通过变基更新"
   },
@@ -381,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "已启用自动合并："
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "已禁用自动合并："
@@ -420,12 +386,6 @@
         "content": "$2"
       }
     }
-  },
-  "commitTitleOptional": {
-    "message": "提交标题（可选）"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "留空则使用 GitHub 默认值。"
   },
   "enterAWholeNumberFromTo": {
     "message": "请输入 $P1$ 到 $P2$ 之间的整数。",
@@ -613,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "暂无审查。"
-  },
-  "actions": {
-    "message": "操作"
   },
   "tryAgain": {
     "message": "重试"
@@ -1203,9 +1160,6 @@
   "pullRequestsPerSection": {
     "message": "每个分区的 PR 数"
   },
-  "appearance": {
-    "message": "外观"
-  },
   "theme": {
     "message": "主题"
   },
@@ -1232,9 +1186,6 @@
   },
   "privacy": {
     "message": "隐私"
-  },
-  "about": {
-    "message": "关于"
   },
   "settingsSections": {
     "message": "设置分区"
@@ -1708,9 +1659,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "冲突"
-  },
   "include": {
     "message": "包含"
   },
@@ -1836,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -2417,5 +2354,891 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "这里没有可重新运行的失败检查。请在 GitHub 或报告这些检查的服务上重新运行其他检查。"
+  },
+  "quietDigestOne": {
+    "message": "勿扰时段内：$P1$ 条更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "勿扰时段内：$P1$ 条更新",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "轮到你"
+  },
+  "yourTurnEmpty": {
+    "message": "没有等你处理的事项。轮到你行动时（待审查、待修复 CI、待回复反馈或待合并），拉取请求会出现在这里。"
+  },
+  "yourTurnPreset": {
+    "message": "你其他分区中轮到你行动的拉取请求"
+  },
+  "yourTurnEventDescription": {
+    "message": "当拉取请求开始等待你时"
+  },
+  "yourTurnBadgeHint": {
+    "message": "统计轮到你行动的拉取请求：待审查、待修复 CI、待回复反馈、待合并。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$：$P2$ 在等你（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "审查"
+  },
+  "turnReReview": {
+    "message": "再次审查"
+  },
+  "turnCiFailed": {
+    "message": "修复 CI"
+  },
+  "turnChangesRequested": {
+    "message": "处理修改意见"
+  },
+  "turnConflicts": {
+    "message": "解决冲突"
+  },
+  "turnFeedback": {
+    "message": "回复反馈"
+  },
+  "turnReadyToMerge": {
+    "message": "去合并"
+  },
+  "yourTurnSince": {
+    "message": "轮到你：$P1$，自 $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "Chrome 设备端 AI"
+  },
+  "localAiDescription": {
+    "message": "使用 Chrome 在此设备上运行的 Gemini Nano 总结拉取请求并解释失败的检查。不会向任何服务器发送内容。"
+  },
+  "localAiAvailable": {
+    "message": "已可在此设备上使用。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome 需要下载一次模型（数 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome 正在下载模型。"
+  },
+  "localAiUnavailable": {
+    "message": "此浏览器或设备不可用：需要较新的桌面版 Chrome，并有足够的内存和磁盘空间。"
+  },
+  "localAiDownload": {
+    "message": "下载模型"
+  },
+  "localAiProgress": {
+    "message": "正在下载模型：$P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "总结"
+  },
+  "aiExplainFailure": {
+    "message": "解释失败原因"
+  },
+  "aiWorking": {
+    "message": "正在你的设备上处理"
+  },
+  "aiGeneratedNote": {
+    "message": "由 Chrome 内置 AI 在你的设备上生成，可能有误。"
+  },
+  "aiFailed": {
+    "message": "设备端 AI 无法回答：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "摘要"
+  },
+  "aiExplanationHeading": {
+    "message": "检查失败的原因"
+  },
+  "aiNothingToExplain": {
+    "message": "失败的检查没有可解释的详情，请在 GitHub 上查看。"
+  },
+  "aiAssistant": {
+    "message": "设备端 AI"
+  },
+  "conversations": {
+    "message": "对话"
+  },
+  "showConversationsOne": {
+    "message": "显示 $P1$ 个对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "显示 $P1$ 个对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noOpenConversations": {
+    "message": "没有未解决的对话。"
+  },
+  "outdated": {
+    "message": "已过时"
+  },
+  "earlierComments": {
+    "message": "GitHub 上还有 $P1$ 条更早的评论",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "回复 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "回复"
+  },
+  "resolveAction": {
+    "message": "标记为已解决"
+  },
+  "replied": {
+    "message": "已回复"
+  },
+  "resolved": {
+    "message": "已解决"
+  },
+  "viewInTheDiff": {
+    "message": "在差异中查看"
+  },
+  "couldNotLoadConversations": {
+    "message": "无法加载对话：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "将选中的拉取请求暂停提醒 1 小时"
+  },
+  "shortcutYourTurn": {
+    "message": "显示等你处理的内容（轮到你）"
+  },
+  "snoozedForAnHour": {
+    "message": "已暂停提醒 1 小时：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "加入合并队列"
+  },
+  "removeFromMergeQueue": {
+    "message": "移出合并队列"
+  },
+  "addToMergeQueueDescription": {
+    "message": "轮到它且检查通过后，GitHub 会将 $P1$ 合并到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "在合并队列中：第 $P1$ 位",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "在合并队列中：第 $P1$ 位，约 $P2$ 分钟",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "已加入合并队列"
+  },
+  "removedFromMergeQueue": {
+    "message": "已移出合并队列"
+  },
+  "deployments": {
+    "message": "部署"
+  },
+  "deployed": {
+    "message": "已部署"
+  },
+  "deploying": {
+    "message": "部署中"
+  },
+  "deployFailed": {
+    "message": "失败"
+  },
+  "turnSummaryWaiting": {
+    "message": "等你处理：$P1$ 个，最早的自 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "你有 $P1$ 个拉取请求已等待审查超过 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "你有 $P1$ 个拉取请求已等待审查超过 2 天。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "awaitingReview": {
+    "message": "等待审查"
+  },
+  "stackHeading": {
+    "message": "$P1$ · 堆栈 #$P2$ · $P3$，合并到 $P4$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "显示堆栈 #$P1$ 的拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "隐藏堆栈 #$P1$ 的拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "就绪"
+  },
+  "stackProgress": {
+    "message": "进行中"
+  },
+  "stackBlocked": {
+    "message": "受阻"
+  },
+  "stackDrafts": {
+    "message": "草稿"
+  },
+  "stackBar": {
+    "message": "堆栈 #$P1$，从下到上：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "底部 $P1$ 个现在可以合并",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "整个堆栈现在可以合并"
+  },
+  "stackMergeSome": {
+    "message": "合并 $P2$ 个中的 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "合并整个堆栈"
+  },
+  "stackMergeAria": {
+    "message": "合并堆栈 #$P2$ 底部已就绪的 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "合并 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "合并 $P1$ 个拉取请求",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "$P2$ 中堆栈 #$P1$ 的底部，按此顺序合并到 $P3$。要么全部合并，要么都不合并。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "上方的 $P1$ 个保持打开，GitHub 会将它们变基到 $P2$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMerged": {
+    "message": "已合并"
+  },
+  "stackStillMerging": {
+    "message": "GitHub 仍在合并"
+  },
+  "stackMissing": {
+    "message": "此堆栈另有 $P1$ 个不在你的分区中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · 堆栈基础分支",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "堆栈 #$P3$ 中第 $P1$ / $P2$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "此堆栈另有 $P1$ 个不在你的分区中。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commitTitle": {
+    "message": "提交标题"
+  },
+  "mergeWhenReady": {
+    "message": "就绪后合并"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "检查和审查通过后，GitHub 会将 $P1$ 加入 $P2$ 的合并队列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "即使缩短，这个拉取请求对设备端 AI 来说仍然太长。"
+  },
+  "aiSummarizeAgain": {
+    "message": "重新总结"
+  },
+  "aiExplainAgain": {
+    "message": "重新解释"
+  },
+  "stackAndMore": {
+    "message": " 等 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "此堆栈另有 $P1$ 个未在此显示：在其他分区中，或被筛选隐藏。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "轮到你："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "单键快捷键"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/ 和 ? 用于操作列表。如果你使用语音输入或常误按按键，请关闭它们；方向键和回车键仍可使用。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "单键快捷键已关闭。可在“设置 → 列表”中开启。"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "请求你审查时，包括列表中新出现的拉取请求"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "审查请求 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "审查请求 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "待再次审查 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "待再次审查 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "CI 失败 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "CI 失败 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "被要求修改 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "被要求修改 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "存在冲突 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "存在冲突 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "待回复反馈 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "待回复反馈 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "可合并 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "可合并 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnUnresolvedThreads": {
+    "message": "解决对话"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "有待解决对话 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "有待解决对话 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "落后于基础分支 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "落后于基础分支 $P1$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "在合并队列中"
+  },
+  "turnChipDetail": {
+    "message": "$P1$。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "轮到你：再次审查"
+  },
+  "notifyTurnCiFailed": {
+    "message": "轮到你：修复 CI"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "轮到你：处理请求的更改"
+  },
+  "notifyTurnConflicts": {
+    "message": "轮到你：解决冲突"
+  },
+  "notifyTurnFeedback": {
+    "message": "轮到你：回复反馈"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "轮到你：解决对话"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "轮到你：更新分支"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "轮到你：合并它"
+  },
+  "stackStateCount": {
+    "message": "$P2$ $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": "、"
+  },
+  "stackMergeLater": {
+    "message": "位于堆栈 #$P1$：当它及其下方的所有拉取请求都就绪后，从堆栈合并。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "合并到此处"
+  },
+  "stackMergeUpToAria": {
+    "message": "将堆栈 #$P2$ 合并到 $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "将 $P1$ 个拉取请求加入合并队列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "将 $P1$ 个拉取请求加入合并队列",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "打开后堆栈已更改。请检查上面的拉取请求，然后再次确认。"
+  },
+  "stackMergeChecking": {
+    "message": "正在检查 $P1$ 的合并方式…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl 无法从这里将此堆栈合并到 $P1$。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ 通过合并队列合并：它们按此顺序加入队列。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sendReplyOn": {
+    "message": "发送对 $P1$ 的回复",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "解决 $P1$ 上的对话",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub 未确认对话已解决。"
+  },
+  "moreConversationsOnGitHub": {
+    "message": "此拉取请求的对话多于 Prowl 读取的数量；未解决的对话可能只在 GitHub 上。"
+  },
+  "aiNeedsClick": {
+    "message": "Chrome 仅在点击后立即下载设备端模型。请再次点击以下载。"
+  },
+  "checksFailingOptional": {
+    "message": "仅可选检查失败：$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "可以合并；需要有写入权限的人来合并"
+  },
+  "forPr": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

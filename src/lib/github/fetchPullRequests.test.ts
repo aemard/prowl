@@ -52,6 +52,7 @@ describe('fetchPullRequests', () => {
         [b.id]: expect.any(String),
         [c.id]: expect.any(String),
       },
+      sectionScopes: { authored: expect.any(String), review_requested: expect.any(String) },
       rateLimit: { limit: 5000, remaining: 4990, resetAt: '2026-10-06T13:00:00.000Z' },
     });
   });

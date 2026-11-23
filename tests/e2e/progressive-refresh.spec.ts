@@ -77,7 +77,9 @@ test('opening a cached card refreshes only its merge state and shares that read 
   const node = prNode({ title: 'Refresh only this card', mergeStateStatus: 'CLEAN' });
   const pr = { ...mapPullRequest(node), mergeStateStatus: 'blocked' as const };
   await signIn();
-  await seedStorage({ snapshot: buildSnapshotOf({ authored: [pr] }) });
+  // A fresh list: opening the panel on an old one would poll it first.
+  const fetchedAt = new Date().toISOString();
+  await seedStorage({ snapshot: buildSnapshotOf({ authored: [pr] }, { fetchedAt }) });
   let release = () => {};
   const gate = new Promise<void>((resolve) => {
     release = resolve;

@@ -19,15 +19,6 @@
   "chromeSyncDidNotTakeYourSettingsTheyStay": {
     "message": "Chrome 同期で設定を保存できませんでした。設定はこのデバイスに保存されています。"
   },
-  "ciFailing": {
-    "message": "CI 失敗"
-  },
-  "changesRequested": {
-    "message": "変更要求あり"
-  },
-  "readyToMerge": {
-    "message": "マージ可能"
-  },
   "withUnseenChanges": {
     "message": "$P1$: 未確認の変更がある $P2$",
     "placeholders": {
@@ -190,9 +181,6 @@
       }
     }
   },
-  "bot": {
-    "message": "Bot"
-  },
   "someone": {
     "message": "誰か"
   },
@@ -350,17 +338,6 @@
   "convertedToDraft": {
     "message": "ドラフトに変換しました:"
   },
-  "of": {
-    "message": "$P2$ の$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "リベースで更新"
   },
@@ -381,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "自動マージを有効にしました:"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "自動マージを無効にしました:"
@@ -420,12 +386,6 @@
         "content": "$2"
       }
     }
-  },
-  "commitTitleOptional": {
-    "message": "コミットタイトル（任意）"
-  },
-  "emptyUsesGithubSDefault": {
-    "message": "空欄の場合は GitHub の既定値を使います。"
   },
   "enterAWholeNumberFromTo": {
     "message": "$P1$ から $P2$ までの整数を入力してください。",
@@ -613,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "まだレビューはありません。"
-  },
-  "actions": {
-    "message": "操作"
   },
   "tryAgain": {
     "message": "再試行"
@@ -1203,9 +1160,6 @@
   "pullRequestsPerSection": {
     "message": "セクションごとの PR 数"
   },
-  "appearance": {
-    "message": "表示"
-  },
   "theme": {
     "message": "テーマ"
   },
@@ -1232,9 +1186,6 @@
   },
   "privacy": {
     "message": "プライバシー"
-  },
-  "about": {
-    "message": "このアプリについて"
   },
   "settingsSections": {
     "message": "設定のセクション"
@@ -1708,9 +1659,6 @@
       }
     }
   },
-  "conflictsLower": {
-    "message": "競合"
-  },
   "include": {
     "message": "含める"
   },
@@ -1836,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -2417,5 +2354,891 @@
   },
   "noFailedCheckRunsToReRunHere": {
     "message": "ここで再実行できる失敗したチェック実行はありません。その他のチェックは GitHub か、報告元のサービスで再実行してください。"
+  },
+  "quietDigestOne": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quietDigestOther": {
+    "message": "通知しない時間帯の更新: $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnSection": {
+    "message": "あなたの番"
+  },
+  "yourTurnEmpty": {
+    "message": "あなたを待っているものはありません。レビュー、CI の修正、フィードバックへの対応、マージなど、あなたが動く番になったプルリクエストがここに表示されます。"
+  },
+  "yourTurnPreset": {
+    "message": "ほかのセクションのうち、あなたが動く番のプルリクエスト"
+  },
+  "yourTurnEventDescription": {
+    "message": "プルリクエストがあなたの対応待ちになったとき"
+  },
+  "yourTurnBadgeHint": {
+    "message": "あなたが動く番のプルリクエストを数えます（レビュー、CI の修正、フィードバックへの対応、マージ）。"
+  },
+  "waitingOnYou": {
+    "message": "$P1$: あなたを待っている $P2$（$P3$）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "turnReviewRequested": {
+    "message": "レビュー"
+  },
+  "turnReReview": {
+    "message": "再レビュー"
+  },
+  "turnCiFailed": {
+    "message": "CI を修正"
+  },
+  "turnChangesRequested": {
+    "message": "変更に対応"
+  },
+  "turnConflicts": {
+    "message": "競合を解消"
+  },
+  "turnFeedback": {
+    "message": "フィードバックに対応"
+  },
+  "turnReadyToMerge": {
+    "message": "マージ"
+  },
+  "yourTurnSince": {
+    "message": "あなたの番: $P1$（$P2$ から）",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "localAiLabel": {
+    "message": "Chrome のオンデバイス AI"
+  },
+  "localAiDescription": {
+    "message": "Chrome がこのデバイス上で実行する Gemini Nano で、プルリクエストを要約し、失敗したチェックを説明します。サーバーには何も送信されません。"
+  },
+  "localAiAvailable": {
+    "message": "このデバイスで使用できます。"
+  },
+  "localAiDownloadable": {
+    "message": "Chrome がモデルを一度ダウンロードする必要があります（数 GB）。"
+  },
+  "localAiDownloading": {
+    "message": "Chrome がモデルをダウンロードしています。"
+  },
+  "localAiUnavailable": {
+    "message": "このブラウザまたはデバイスでは使用できません。十分なメモリと空きディスク容量がある最新のデスクトップ版 Chrome が必要です。"
+  },
+  "localAiDownload": {
+    "message": "モデルをダウンロード"
+  },
+  "localAiProgress": {
+    "message": "モデルをダウンロード中: $P1$%",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummarize": {
+    "message": "要約"
+  },
+  "aiExplainFailure": {
+    "message": "失敗を説明"
+  },
+  "aiWorking": {
+    "message": "デバイス上で処理中"
+  },
+  "aiGeneratedNote": {
+    "message": "Chrome の組み込み AI がデバイス上で生成しました。誤りを含む場合があります。"
+  },
+  "aiFailed": {
+    "message": "オンデバイス AI が応答できませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "aiSummaryHeading": {
+    "message": "要約"
+  },
+  "aiExplanationHeading": {
+    "message": "チェックが失敗する理由"
+  },
+  "aiNothingToExplain": {
+    "message": "失敗したチェックには説明できる詳細がありません。GitHub で開いてください。"
+  },
+  "aiAssistant": {
+    "message": "オンデバイス AI"
+  },
+  "conversations": {
+    "message": "会話"
+  },
+  "showConversationsOne": {
+    "message": "$P1$ 件の会話を表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "showConversationsOther": {
+    "message": "$P1$ 件の会話を表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "noOpenConversations": {
+    "message": "未解決の会話はありません。"
+  },
+  "outdated": {
+    "message": "古い"
+  },
+  "earlierComments": {
+    "message": "GitHub に以前のコメントが $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyOn": {
+    "message": "$P1$ に返信",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "replyAction": {
+    "message": "返信"
+  },
+  "resolveAction": {
+    "message": "解決"
+  },
+  "replied": {
+    "message": "返信しました"
+  },
+  "resolved": {
+    "message": "解決しました"
+  },
+  "viewInTheDiff": {
+    "message": "差分で表示"
+  },
+  "couldNotLoadConversations": {
+    "message": "会話を読み込めませんでした: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcutSnooze": {
+    "message": "選択中のプルリクエストを 1 時間スヌーズ"
+  },
+  "shortcutYourTurn": {
+    "message": "あなたを待っているものを表示（あなたの番）"
+  },
+  "snoozedForAnHour": {
+    "message": "1 時間スヌーズしました: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "addToMergeQueue": {
+    "message": "マージキューに追加"
+  },
+  "removeFromMergeQueue": {
+    "message": "マージキューから削除"
+  },
+  "addToMergeQueueDescription": {
+    "message": "キューの順番が来てチェックが通ると、GitHub が $P1$ を $P2$ にマージします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "inMergeQueue": {
+    "message": "マージキュー内: $P1$ 番目",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueEta": {
+    "message": "マージキュー内: $P1$ 番目、約 $P2$ 分",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "addedToMergeQueue": {
+    "message": "マージキューに追加しました"
+  },
+  "removedFromMergeQueue": {
+    "message": "マージキューから削除しました"
+  },
+  "deployments": {
+    "message": "デプロイ"
+  },
+  "deployed": {
+    "message": "デプロイ済み"
+  },
+  "deploying": {
+    "message": "デプロイ中"
+  },
+  "deployFailed": {
+    "message": "失敗"
+  },
+  "turnSummaryWaiting": {
+    "message": "あなたの対応待ち: $P1$ 件（最も古いもの: $P2$）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "turnSummaryStuckOne": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnSummaryStuckOther": {
+    "message": "あなたのプルリクエスト $P1$ 件が 2 日以上レビュー待ちです。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "awaitingReview": {
+    "message": "レビュー待ち"
+  },
+  "stackHeading": {
+    "message": "$P1$ · スタック #$P2$ · $P4$ への $P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      },
+      "p4": {
+        "content": "$4"
+      }
+    }
+  },
+  "stackShow": {
+    "message": "スタック #$P1$ のプルリクエストを表示",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackHide": {
+    "message": "スタック #$P1$ のプルリクエストを隠す",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackReady": {
+    "message": "準備完了"
+  },
+  "stackProgress": {
+    "message": "進行中"
+  },
+  "stackBlocked": {
+    "message": "ブロック中"
+  },
+  "stackDrafts": {
+    "message": "下書き"
+  },
+  "stackBar": {
+    "message": "スタック #$P1$（下から上）: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackCanMerge": {
+    "message": "下の $P1$ 件は今すぐマージできます",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackCanMergeAll": {
+    "message": "スタック全体を今すぐマージできます"
+  },
+  "stackMergeSome": {
+    "message": "$P2$ 件中 $P1$ 件をマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeAll": {
+    "message": "スタック全体をマージ"
+  },
+  "stackMergeAria": {
+    "message": "スタック #$P2$ の下にある準備済みの $P1$ 件をマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMergeOne": {
+    "message": "$P1$ 件のプルリクエストをマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeOther": {
+    "message": "$P1$ 件のプルリクエストをマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeDescription": {
+    "message": "$P2$ のスタック #$P1$ の下側を、この順に $P3$ へマージします。すべてマージされるか、何もマージされません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMergeRest": {
+    "message": "上の $P1$ 件は開いたままです。GitHub が $P2$ にリベースします。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackMerged": {
+    "message": "マージしました"
+  },
+  "stackStillMerging": {
+    "message": "GitHub がまだマージ中です"
+  },
+  "stackMissing": {
+    "message": "このスタックの残り $P1$ 件はあなたのセクションにありません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackBase": {
+    "message": "$P1$ · スタックのベース",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackPosition": {
+    "message": "スタック #$P3$ の $P2$ 件中 $P1$ 番目",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "stackMissingOne": {
+    "message": "このスタックの残り $P1$ 件はあなたのセクションにありません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "commitTitle": {
+    "message": "コミットのタイトル"
+  },
+  "mergeWhenReady": {
+    "message": "準備ができたらマージ"
+  },
+  "mergeWhenReadyDescription": {
+    "message": "チェックとレビューが通ると、GitHub が $P1$ を $P2$ のマージキューに追加します。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "aiTooLong": {
+    "message": "このプルリクエストは、短くしてもデバイス上の AI には長すぎます。"
+  },
+  "aiSummarizeAgain": {
+    "message": "もう一度要約"
+  },
+  "aiExplainAgain": {
+    "message": "もう一度説明"
+  },
+  "stackAndMore": {
+    "message": " ほか $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhereOne": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackElsewhere": {
+    "message": "このスタックの残り $P1$ 件はここに表示されていません（別のセクションか、フィルターで非表示）。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "yourTurnPrefix": {
+    "message": "あなたの番："
+  },
+  "singleKeyShortcutsLabel": {
+    "message": "1 キーのショートカット"
+  },
+  "singleKeyShortcutsDescription": {
+    "message": "j、k、o、s、t、r、/、? でリストを操作します。音声入力を使う場合や誤ってキーを押してしまう場合はオフにしてください。矢印キーと Enter は引き続き使えます。"
+  },
+  "singleKeyShortcutsOff": {
+    "message": "1 キーのショートカットはオフです。設定 → リストでオンにできます。"
+  },
+  "reviewRequestedEventDescription": {
+    "message": "あなたのレビューが依頼されたとき（リストに新しく加わったプルリクエストも含む）"
+  },
+  "badgeReviewRequestedOne": {
+    "message": "レビュー依頼 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReviewRequestedOther": {
+    "message": "レビュー依頼 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOne": {
+    "message": "再レビュー $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReReviewOther": {
+    "message": "再レビュー $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOne": {
+    "message": "CI 失敗 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeCiFailedOther": {
+    "message": "CI 失敗 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOne": {
+    "message": "変更依頼 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeChangesRequestedOther": {
+    "message": "変更依頼 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOne": {
+    "message": "競合あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeConflictsOther": {
+    "message": "競合あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOne": {
+    "message": "未対応のフィードバック $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeFeedbackOther": {
+    "message": "未対応のフィードバック $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOne": {
+    "message": "マージ可能 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeReadyToMergeOther": {
+    "message": "マージ可能 $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "turnUnresolvedThreads": {
+    "message": "会話を解決"
+  },
+  "badgeUnresolvedThreadsOne": {
+    "message": "未解決の会話あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUnresolvedThreadsOther": {
+    "message": "未解決の会話あり $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOne": {
+    "message": "ベースブランチより遅れ $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeUpdateBranchOther": {
+    "message": "ベースブランチより遅れ $P1$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "inMergeQueueShort": {
+    "message": "マージキュー内"
+  },
+  "turnChipDetail": {
+    "message": "$P1$。$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notifyTurnReReview": {
+    "message": "あなたの番: 再レビュー"
+  },
+  "notifyTurnCiFailed": {
+    "message": "あなたの番: CI を修正"
+  },
+  "notifyTurnChangesRequested": {
+    "message": "あなたの番: 依頼された変更に対応"
+  },
+  "notifyTurnConflicts": {
+    "message": "あなたの番: 競合を解消"
+  },
+  "notifyTurnFeedback": {
+    "message": "あなたの番: フィードバックに返答"
+  },
+  "notifyTurnUnresolvedThreads": {
+    "message": "あなたの番: 会話を解決"
+  },
+  "notifyTurnUpdateBranch": {
+    "message": "あなたの番: ブランチを更新"
+  },
+  "notifyTurnReadyToMerge": {
+    "message": "あなたの番: マージする"
+  },
+  "stackStateCount": {
+    "message": "$P2$ $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": "、"
+  },
+  "stackMergeLater": {
+    "message": "スタック #$P1$ 内: このプルリクエストと下のすべてのプルリクエストの準備ができたら、スタックからマージされます。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUpTo": {
+    "message": "ここまでマージ"
+  },
+  "stackMergeUpToAria": {
+    "message": "スタック #$P2$ を $P1$ までマージ",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackQueueOne": {
+    "message": "$P1$ 件のプルリクエストをマージキューに追加",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackQueueOther": {
+    "message": "$P1$ 件のプルリクエストをマージキューに追加",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackChangedSinceOpened": {
+    "message": "開いた後にスタックが変更されました。上のプルリクエストを確認して、もう一度確定してください。"
+  },
+  "stackMergeChecking": {
+    "message": "$P1$ のマージ方法を確認しています…",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeUnknown": {
+    "message": "Prowl からはこのスタックを $P1$ にマージできません。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stackMergeQueued": {
+    "message": "$P1$ はマージキューでマージされます。この順番でキューに入ります。",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sendReplyOn": {
+    "message": "$P1$ に返信を送信",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "resolveConversationOn": {
+    "message": "$P1$ の会話を解決",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "githubDidNotConfirmTheResolve": {
+    "message": "GitHub は会話の解決を確認しませんでした。"
+  },
+  "moreConversationsOnGitHub": {
+    "message": "このプルリクエストには Prowl が読み込める以上の会話があります。未解決の会話が GitHub にのみある可能性があります。"
+  },
+  "aiNeedsClick": {
+    "message": "Chrome はクリックの直後にのみオンデバイスモデルをダウンロードします。もう一度クリックしてダウンロードしてください。"
+  },
+  "checksFailingOptional": {
+    "message": "失敗しているのは任意のチェックのみ: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "readyAwaitsMaintainer": {
+    "message": "マージ可能です。書き込み権限を持つ人がマージする必要があります"
+  },
+  "forPr": {
+    "message": "$P2$ の$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

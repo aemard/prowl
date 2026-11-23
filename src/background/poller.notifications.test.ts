@@ -44,7 +44,7 @@ describe('poll', () => {
     expect(await types('success')).toEqual(['ci_passed']);
     expect(await types('pending')).toEqual([]);
     expect(await types('success')).toEqual([]);
-    expect(await types('failure')).toEqual(['ci_failed']);
+    expect(await types('failure')).toEqual(['ci_failed', 'your_turn']);
   });
 
   it('notifies each recovery once and stays silent after a worker module reload', async () => {
@@ -168,7 +168,9 @@ describe('poll', () => {
   });
 
   it('notifies and counts a draft opened by a bot despite legacy preferences', async () => {
-    await setItem('settings', { ...defaultSettings(), hideDrafts: true, hideBots: true });
+    // Keys an older version stored: normalization drops them.
+    const legacy = { hideDrafts: true, hideBots: true, badge: 'attention' as const };
+    await setItem('settings', { ...defaultSettings(), ...legacy });
     let checks: CheckState = 'pending';
     const dependabot = { __typename: 'Bot', login: 'dependabot', avatarUrl: 'a' };
     github(() =>
@@ -200,6 +202,6 @@ describe('poll', () => {
     await poll();
     checks = 'failure';
     later(2 * MINUTE);
-    expect((await poll())?.events).toHaveLength(1);
+    expect((await poll())?.events).toHaveLength(2);
   });
 });

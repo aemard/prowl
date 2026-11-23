@@ -8,7 +8,8 @@ import {
   requestedReviewer,
   statusContextNode,
 } from '../../../tests/fixtures/github';
-import { mapClosedState, mapPullRequest, mapPullRequestDetail } from './mapPullRequest';
+import { mapClosedState, mapPullRequest } from './mapPullRequest';
+import { mapPullRequestDetail } from './mapPullRequestDetail';
 
 const open = mapPullRequest(prNode());
 
@@ -108,6 +109,79 @@ describe('mapPullRequestDetail', () => {
       }),
     ]);
     expect(detail.checks.map((c) => c.url)).toEqual([null, null, 'HTTPS://ci.example/c']);
+  });
+
+  it("links a third-party CI's check run to its GitHub page", () => {
+    const page = 'https://github.com/acme/widgets/runs/7';
+    const detail = mapPullRequestDetail([
+      detailNode({
+        checks: [
+          checkRunNode('circle', 'FAILURE', { detailsUrl: 'https://circleci.com/x', url: page }),
+          checkRunNode('older', 'FAILURE', { detailsUrl: 'https://ci.example/y' }),
+        ],
+      }),
+    ]);
+    expect(detail.checks.map((c) => c.url)).toEqual([page, 'https://ci.example/y']);
+  });
+
+  it('reads the merge queue only where the base branch has one', () => {
+    expect(mapPullRequestDetail([detailNode()]).mergeQueue).toBeUndefined();
+    expect(mapPullRequestDetail([detailNode({ isMergeQueueEnabled: true })]).mergeQueue).toBeNull();
+    const entry = { position: 4, state: 'QUEUED', estimatedTimeToMerge: null };
+    expect(
+      mapPullRequestDetail([detailNode({ isMergeQueueEnabled: true, mergeQueueEntry: entry })])
+        .mergeQueue,
+    ).toEqual({ position: 4, estimatedSeconds: null });
+  });
+
+  it('lists the newest deployment per environment and leaves inactive ones out', () => {
+    const deployment = (env: string | null, state: string, url: string | null = null) => ({
+      latestEnvironment: env,
+      latestStatus: { state, environmentUrl: url },
+    });
+    const node = detailNode();
+    const commit = node.commits.nodes?.[0]?.commit;
+    if (commit)
+      commit.deployments = {
+        nodes: [
+          deployment('preview', 'FAILURE'),
+          deployment('staging', 'INACTIVE'),
+          null,
+          deployment(null, 'SUCCESS'),
+          deployment('preview', 'SUCCESS', 'https://pr-1.example.dev'),
+          { latestEnvironment: 'docs', latestStatus: null },
+          deployment('prod', 'QUEUED', 'javascript:alert(1)'),
+        ],
+      };
+    expect(mapPullRequestDetail([node]).deployments).toEqual([
+      { environment: 'prod', state: 'pending', url: null },
+      { environment: 'preview', state: 'passed', url: 'https://pr-1.example.dev' },
+    ]);
+    expect(mapPullRequestDetail([detailNode()]).deployments).toBeUndefined();
+  });
+
+  it("gives GitHub's default commit titles from the repository's settings", () => {
+    const node = (squash: string, merge: string, commits = 3) =>
+      detailNode({
+        number: 42,
+        title: 'Improve widgets',
+        headRefName: 'feature',
+        headRepositoryOwner: { login: 'octocat' },
+        repository: { squashMergeCommitTitle: squash, mergeCommitTitle: merge },
+        firstCommit: {
+          totalCount: commits,
+          nodes: [{ commit: { messageHeadline: 'Speed up widgets' } }],
+        },
+      });
+    expect(mapPullRequestDetail([node('PR_TITLE', 'MERGE_MESSAGE')]).commitTitles).toEqual({
+      squash: 'Improve widgets (#42)',
+      merge: 'Merge pull request #42 from octocat/feature',
+    });
+    expect(mapPullRequestDetail([node('COMMIT_OR_PR_TITLE', 'PR_TITLE', 1)]).commitTitles).toEqual({
+      squash: 'Speed up widgets (#42)',
+      merge: 'Improve widgets (#42)',
+    });
+    expect(mapPullRequestDetail([detailNode()]).commitTitles).toBeUndefined();
   });
 
   it('merges the checks of every page and reports the total of the first', () => {

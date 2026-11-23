@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Section } from '../model';
-import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
+import { buildSearchQuery, filterByRepo, sectionScopes, validateCustomQuery } from './search';
 
 const none = { repoInclude: [], repoExclude: [] };
 const preset = (kind: Exclude<Section['kind'], 'custom'>): Section => ({
@@ -199,5 +199,37 @@ describe('validateCustomQuery', () => {
   it('reports every problem at once', () => {
     const query = `is:issue ${'a OR '.repeat(6)}${'x'.repeat(260)}`;
     expect(validateCustomQuery(query)).toHaveLength(3);
+  });
+});
+
+describe('sectionScopes', () => {
+  const base = {
+    sections: [
+      { id: 'authored', kind: 'authored', label: 'Mine', enabled: true },
+      { id: 'off', kind: 'mentioned', label: 'Off', enabled: false },
+      { id: 'your_turn', kind: 'your_turn', label: 'Your turn', enabled: true },
+      { id: 'teams', kind: 'team_review_requested', label: 'Teams', enabled: true },
+    ] satisfies Section[],
+    repoInclude: [] as string[],
+    repoExclude: [] as string[],
+    maxPerSection: 50,
+    unfollowedTeams: [] as string[],
+  };
+
+  it('covers the sections a poll searches', () => {
+    expect(Object.keys(sectionScopes(base))).toEqual(['authored', 'teams']);
+  });
+
+  it('changes with the query, the filters, the limit and, for teams, the unfollowed ones', () => {
+    const before = sectionScopes(base);
+    const changed = (patch: Partial<typeof base>) => {
+      const after = sectionScopes({ ...base, ...patch });
+      return Object.keys(before).filter((id) => before[id] !== after[id]);
+    };
+    expect(changed({ repoExclude: ['acme/old'] })).toEqual(['authored', 'teams']);
+    expect(changed({ repoInclude: ['acme'] })).toEqual(['authored', 'teams']);
+    expect(changed({ maxPerSection: 20 })).toEqual(['authored', 'teams']);
+    expect(changed({ unfollowedTeams: ['acme/web'] })).toEqual(['teams']);
+    expect(changed({})).toEqual([]);
   });
 });

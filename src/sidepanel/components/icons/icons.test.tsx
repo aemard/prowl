@@ -2,10 +2,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/preact';
 import { describe, expect, it } from 'vitest';
-import logoUrl from '../../../assets/logo.png';
 import { createIcon } from './Icon';
 import * as icons from './index';
-import { ProwlMark } from './ProwlMark';
+import { LOGO_URL, ProwlMark } from './ProwlMark';
 
 const root = resolve(import.meta.dirname, '../../../..');
 
@@ -53,7 +52,7 @@ describe('ProwlMark', () => {
     const img = container.querySelector('img');
     expect(img?.getAttribute('alt')).toBe('');
     expect(img?.getAttribute('width')).toBe('20');
-    expect(img?.getAttribute('src')).toBe(logoUrl);
+    expect(img?.getAttribute('src')).toBe(LOGO_URL);
   });
 
   it('can stand alone with a name', () => {

@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/preact';
 import { vi } from 'vitest';
-import type { PullRequest } from '../../lib/model';
-import { buildAuth, buildPullRequest } from '../../test/panel';
+import type { PullRequest, PullRequestDetail } from '../../lib/model';
+import { buildAuth, buildDetail, buildPullRequest } from '../../test/panel';
+import { mergeKey } from '../state/loadDetail';
 import { pendingActions } from '../state/prActions';
+import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
 import { MergeAction } from './MergeAction';
 import { toasts } from './ui/Toast';
@@ -34,8 +36,28 @@ export function stubGitHub(answer: (sent: Sent) => Response | Promise<Response>)
   return sent;
 }
 
-export const show = (overrides: Partial<PullRequest> = {}) =>
-  render(<MergeAction pr={{ ...pr, ...overrides }} />);
+/** Puts `detail` in as the loaded detail of `shown`, as an expanded card would have read it. */
+export function withDetail(shown: PullRequest, detail: Partial<PullRequestDetail> = {}) {
+  details.value = {
+    [shown.id]: {
+      key: detailKey(shown),
+      mergeKey: mergeKey(shown),
+      loading: false,
+      detail: buildDetail(detail),
+    },
+  };
+}
+
+/** Renders the merge control of `pr` with `overrides`, its detail loaded unless told otherwise. */
+export function show(
+  overrides: Partial<PullRequest> = {},
+  detail?: Partial<PullRequestDetail>,
+  placement?: 'merge' | 'auto',
+) {
+  const shown = { ...pr, ...overrides };
+  if (detail || !details.value[shown.id]) withDetail(shown, detail);
+  return render(<MergeAction pr={shown} placement={placement} />);
+}
 export const opener = () =>
   screen.getByRole('button', { name: /^(Merge|Merge without waiting) acme\/widgets#1$/ });
 export const dialog = () => screen.getByRole('dialog', { name: 'Merge pull request' });
@@ -44,7 +66,7 @@ export const commitTitle = () => within(dialog()).getByRole('textbox', { name: /
 export const confirm = () => within(dialog()).getByRole('button', { name: 'Merge' });
 export const choose = (value: string) => fireEvent.change(method(), { target: { value } });
 export const toastTexts = () => toasts.value.map(({ message, tone }) => `${tone}: ${message}`);
-export const poll = { type: 'poll', force: true, afterCurrent: true };
+export const poll = { type: 'poll', reason: 'change' };
 
 export function setupMergeTest() {
   auth.value = buildAuth('octocat');
@@ -52,6 +74,7 @@ export function setupMergeTest() {
 
 export function resetMergeTest() {
   auth.value = undefined;
+  details.value = {};
   pendingActions.value = {};
   toasts.value = [];
   vi.unstubAllGlobals();

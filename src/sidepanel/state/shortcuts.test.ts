@@ -25,6 +25,15 @@ describe('shortcutFor', () => {
     expect(shortcutFor({ key: 'x', target: document.body })).toBeNull();
   });
 
+  it('keeps only the arrows of the list when single-key shortcuts are off', () => {
+    const inList = card();
+    for (const key of ['j', 'k', 'o', 's', 't', 'r', '/', '?']) {
+      expect(shortcutFor({ key, target: inList }, false)).toBeNull();
+    }
+    expect(shortcutFor({ key: 'ArrowDown', target: inList }, false)).toBe('next');
+    expect(shortcutFor({ key: 'ArrowUp', target: inList }, false)).toBe('previous');
+  });
+
   it('leaves arrows and o alone outside the list', () => {
     for (const key of ['ArrowDown', 'ArrowUp', 'o']) {
       expect(shortcutFor({ key, target: document.body })).toBeNull();
@@ -62,6 +71,6 @@ describe('requestRefresh', () => {
     requestRefresh();
     expect(refreshRequested.value).toBeTypeOf('number');
     await Promise.resolve();
-    expect(sent).toEqual([{ type: 'poll', force: true }]);
+    expect(sent).toEqual([{ type: 'poll', reason: 'user' }]);
   });
 });

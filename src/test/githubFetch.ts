@@ -2,7 +2,7 @@
 import { vi } from 'vitest';
 import { detailNode, detailResponse } from '../../tests/fixtures/github';
 import { jsonResponse } from '../../tests/fixtures/http';
-import type { DetailData } from '../lib/github/queries';
+import type { DetailData } from '../lib/github/detailQuery';
 
 type Answer = DetailData['node'] | Response;
 

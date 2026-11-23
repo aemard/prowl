@@ -31,9 +31,13 @@ Prowl is a free, open source Chrome extension for managing GitHub pull requests 
 Keep an eye on CI, reviews and merge readiness while you work. Catch changes that need your attention and act without switching tabs.
 
 - YOUR PR INBOX: follow pull requests you authored, personal and team review requests, mentions, assignments or a custom GitHub search.
+- YOUR TURN: one section and the toolbar badge show which pull requests wait on you and why: a review, CI to fix, feedback to answer, a merge to make.
 - CLEAR STATUS: see failing checks, approvals, requested changes, conflicts and merge readiness. Expand a PR to understand what blocks it.
-- ACTIONS BESIDE YOUR WORK: approve, request changes, comment, merge, manage auto-merge, update a branch or re-run failed checks.
-- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours, snooze PRs and hide stale, draft or bot PRs.
+- ACTIONS BESIDE YOUR WORK: approve, request changes, comment, reply to and resolve review conversations, merge, manage auto-merge, update a branch or re-run failed checks.
+- STACKS AND MERGE QUEUES: see a GitHub stack as one item and merge its ready pull requests in one go; add a PR to the merge queue and follow its position.
+- FAST UPDATES: a free check of your GitHub notifications every minute brings new reviews and comments between refreshes.
+- QUIETER NOTIFICATIONS: choose which events notify you, set quiet hours with one digest afterwards, and snooze PRs until you want them back.
+- OPTIONAL ON-DEVICE AI: summarize a pull request or explain failing checks with Gemini Nano, which Chrome runs on your device. Off by default.
 - YOUR PREFERRED VIEW: light and dark themes, keyboard navigation, repository grouping and optional settings sync.
 
 FREE AND OPEN SOURCE
@@ -164,6 +168,27 @@ publisher can have one service account.
 
 The next release then stops at "Review deployments"; approve it and the job submits it.
 
+## Microsoft Edge Add-ons
+
+Edge runs the same Manifest V3 package, side panel included, so every release can also go to
+[Edge Add-ons](https://microsoftedge.microsoft.com/addons). `edge-add-ons.yml` uploads the
+release's attested zip and submits it for certification through the
+[Publish API](https://learn.microsoft.com/microsoft-edge/extensions/publish/api/using-addons-api);
+`release-please.yml` and `release-tag.yml` call it after the assets job, next to the Chrome Web
+Store job, and skip it until it is set up.
+
+One-time setup:
+
+1. Create the product in [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge)
+   with the listing text above and the store images, and publish a first version by hand.
+2. In Partner Center, open **Publish API**, create API credentials and note the client id, the
+   API key and the product id.
+3. In the repository settings, create the environment `edge-add-ons` with required reviewers,
+   the secret `EDGE_API_KEY` in it, and the variables `EDGE_CLIENT_ID` and `EDGE_PRODUCT_ID`.
+   Releases start publishing to Edge once `EDGE_PRODUCT_ID` is set.
+
+API keys expire after 72 days: create a new one in Partner Center and replace `EDGE_API_KEY`.
+
 ## When it fails
 
 The job log has the store's answer.
@@ -176,5 +201,12 @@ The job log has the store's answer.
 - **400 on upload about the version**: the zip's version is not higher than the store's.
 - **Publish refused while a review is pending**: wait for the review, or cancel the pending
   submission in the dashboard, then run the workflow again for the tag.
+- **Edge: "The upload Failed" about the version**: Partner Center refuses a package whose version
+  is not higher than the one already published or submitted, so running `edge-add-ons.yml` again
+  for a tag Edge already has fails at the upload, on purpose. Publish a new release instead.
+- **Edge: "accepted without an operation id"**: Partner Center answered without the `Location`
+  header that names the operation to follow. Nothing was submitted; check the product's state in
+  Partner Center (a submission still in certification blocks a new one) and run the job again.
+- **Edge: 401**: the API key expired (72 days) or does not match `EDGE_CLIENT_ID`.
 - **`gh attestation verify` fails**: the zip on the release was not built by
   `release-assets.yml`. Do not publish it; rebuild the release assets.

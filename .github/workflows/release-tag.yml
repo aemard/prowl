@@ -66,3 +66,18 @@ jobs:
     uses: ./.github/workflows/chrome-web-store.yml
     with:
       tag: ${{ github.ref_name }}
+
+  # Edge Add-ons: the same zip, after approval in the `edge-add-ons` environment. Skipped until
+  # the product is set up (docs/chrome-web-store.md), so releases keep working without it.
+  edge:
+    name: Edge Add-ons
+    needs: assets
+    if: vars.EDGE_PRODUCT_ID != ''
+    permissions:
+      contents: read
+      attestations: read
+    uses: ./.github/workflows/edge-add-ons.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}

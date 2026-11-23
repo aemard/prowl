@@ -3,16 +3,27 @@
  * merge) and the sentence a screen reader gets for the whole card. Pure, so it is table-tested;
  * `PullRequestCard` only picks an icon per `StatusIcon` and renders.
  */
-import { isReadyToMerge } from '../../lib/diff/diffSnapshots';
+
 import { countMessage, t } from '../../lib/i18n';
-import type { CheckSummary, MergeMethod, PullRequest } from '../../lib/model';
+import { failingChecksBlock, isReadyToMerge } from '../../lib/mergeEligibility';
+import type { CheckSummary, MergeMethod, PullRequest, Turn } from '../../lib/model';
 import { formatRelativeTime } from '../../lib/time/relative';
+import { TURN_LABELS } from '../../lib/turn/whoseTurn';
 import type { Tone } from './ui/cx';
 
-export type StatusIcon = 'draft' | 'check' | 'x' | 'dot' | 'diff' | 'eye' | 'alert' | 'merge';
+export type StatusIcon =
+  | 'draft'
+  | 'check'
+  | 'x'
+  | 'dot'
+  | 'diff'
+  | 'eye'
+  | 'alert'
+  | 'merge'
+  | 'bell';
 
 export interface Status {
-  id: 'draft' | 'ci' | 'review' | 'merge';
+  id: 'turn' | 'draft' | 'ci' | 'review' | 'merge';
   tone: Tone;
   icon: StatusIcon;
   /** Short chip text. */
@@ -34,8 +45,11 @@ export const MERGE_METHOD_NAMES: Record<MergeMethod, string> = {
   },
 };
 
-/** CI rollup chip, or null when the commit has no checks. */
-export function ciStatus(checks: CheckSummary): Status | null {
+/**
+ * CI rollup chip, or null when the commit has no checks. A failure that does not `block` (only
+ * optional checks fail, `failingChecksBlock`) is neutral, not red.
+ */
+export function ciStatus(checks: CheckSummary, block = true): Status | null {
   const { failed, pending, passed, neutral, total } = checks;
   const counts = [
     failed && countMessage(failed, 'failed2One', 'failed2'),
@@ -50,10 +64,10 @@ export function ciStatus(checks: CheckSummary): Status | null {
     case 'failure':
       return {
         id: 'ci',
-        tone: 'danger',
+        tone: block ? 'danger' : 'neutral',
         icon: 'x',
         label: countMessage(failed, 'failingOne', 'failing'),
-        detail: t('checksFailing', of),
+        detail: t(block ? 'checksFailing' : 'checksFailingOptional', of),
       };
     case 'pending':
       return {
@@ -102,7 +116,7 @@ function reviewStatus(pr: PullRequest): Status | null {
             id: 'review',
             tone: 'attention',
             icon: 'eye',
-            label: t('reviewRequired'),
+            label: t('awaitingReview'),
             detail: t('reviewRequired'),
           };
     default:
@@ -110,45 +124,86 @@ function reviewStatus(pr: PullRequest): Status | null {
   }
 }
 
-/** Chips in reading order: Draft, CI, review, then conflicts or ready to merge. */
-export function pullRequestStatuses(pr: PullRequest): Status[] {
+/** The chip each reason of the viewer's turn takes over: one chip per fact. */
+const TURN_CHIP: Partial<Record<Turn['reason'], Status['id']>> = {
+  ci_failed: 'ci',
+  changes_requested: 'review',
+  review_requested: 'review',
+  re_review: 'review',
+  conflicts: 'merge',
+  ready_to_merge: 'merge',
+};
+
+/**
+ * When it is the viewer's move, the chip stating that fact becomes the action: same color, a
+ * bell, words saying what to do ("Fix CI · 1 failing", "Review", "Merge it"). A reason with no
+ * chip of its own (feedback to answer, a review asked with no decision yet) adds one up front.
+ */
+function withTurn(chips: Status[], turn: Turn | undefined, now: number): Status[] {
+  const key = turn?.owner === 'you' ? TURN_LABELS[turn.reason] : undefined;
+  if (!turn || !key) return chips;
+  const action = t(key);
+  const detail = t('yourTurnSince', action, formatRelativeTime(turn.since, now));
+  const target = TURN_CHIP[turn.reason];
+  const index = chips.findIndex((chip) => chip.id === target);
+  const fact = chips[index];
+  if (!fact) return [{ id: 'turn', tone: 'accent', icon: 'bell', label: action, detail }, ...chips];
+  const merged: Status = {
+    ...fact,
+    // Someone else's review state is neutral news; asked of you, it is your action.
+    tone: fact.tone === 'attention' ? 'accent' : fact.tone,
+    icon: 'bell',
+    label: turn.reason === 'ci_failed' ? `${action} · ${fact.label}` : action,
+    detail: t('turnChipDetail', detail, fact.detail),
+  };
+  return chips.map((chip, i) => (i === index ? merged : chip));
+}
+
+const mergeChip = (label: string, detail: string, tone: Tone = 'accent'): Status => ({
+  id: 'merge',
+  tone,
+  icon: 'merge',
+  label,
+  detail,
+});
+
+/** Conflicts, who merges it (the merge queue, auto-merge), or ready to merge; else nothing. */
+function mergeStatus(pr: PullRequest, ready: boolean): Status | null {
+  if (pr.mergeable === 'conflicting')
+    return { ...mergeChip(t('conflicts'), t('hasMergeConflicts'), 'warning'), icon: 'alert' };
+  if (pr.state !== 'open') return null;
+  if (pr.inMergeQueue) return mergeChip(t('inMergeQueueShort'), t('inMergeQueueShort'));
+  if (pr.autoMerge) {
+    const method = MERGE_METHOD_NAMES[pr.autoMerge.method];
+    const by = pr.autoMerge.enabledBy;
+    return mergeChip(
+      t('autoMerge'),
+      by ? t('autoMergeBy', method, by) : t('autoMergeMethod', method),
+    );
+  }
+  if (!ready) return null;
+  // Ready, but not the viewer's to merge (`waiting_on_merge`): the chip says who merges it.
+  const detail = pr.viewerCanMerge ? t('readyToMerge2') : t('readyAwaitsMaintainer');
+  return mergeChip(t('readyToMerge2'), detail, 'success');
+}
+
+/** Chips in reading order: Draft, CI, review, then the merge chip; see `withTurn`. */
+export function pullRequestStatuses(pr: PullRequest, turn?: Turn, now = Date.now()): Status[] {
   const ready = isReadyToMerge(pr);
   const chips: (Status | null)[] = [
     pr.isDraft
       ? { id: 'draft', tone: 'neutral', icon: 'draft', label: t('draft'), detail: t('draft') }
       : null,
-    ciStatus(pr.checks),
+    ciStatus(pr.checks, failingChecksBlock(pr)),
     // "Ready to merge" already says approved.
     ready && pr.reviewDecision === 'approved' ? null : reviewStatus(pr),
-    pr.mergeable === 'conflicting'
-      ? {
-          id: 'merge',
-          tone: 'warning',
-          icon: 'alert',
-          label: t('conflicts'),
-          detail: t('hasMergeConflicts'),
-        }
-      : pr.autoMerge && pr.state === 'open'
-        ? {
-            id: 'merge',
-            tone: 'accent',
-            icon: 'merge',
-            label: t('autoMerge'),
-            detail: pr.autoMerge.enabledBy
-              ? t('autoMergeBy', MERGE_METHOD_NAMES[pr.autoMerge.method], pr.autoMerge.enabledBy)
-              : t('autoMergeMethod', MERGE_METHOD_NAMES[pr.autoMerge.method]),
-          }
-        : ready
-          ? {
-              id: 'merge',
-              tone: 'success',
-              icon: 'merge',
-              label: t('readyToMerge2'),
-              detail: t('readyToMerge2'),
-            }
-          : null,
+    mergeStatus(pr, ready),
   ];
-  return chips.filter((chip): chip is Status => chip !== null);
+  return withTurn(
+    chips.filter((chip): chip is Status => chip !== null),
+    turn,
+    now,
+  );
 }
 
 /** One sentence per fact, for the card's accessible description (its name is the title). */

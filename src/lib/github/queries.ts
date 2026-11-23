@@ -3,18 +3,26 @@
  * the E2E mock dispatches on the name. Enum values are typed as `string` because GitHub adds
  * values over time; `mapPullRequest.ts` maps unknown ones to safe defaults.
  *
- * Estimated cost (GitHub: requests needed for every connection / 100, rounded): a search page
- * of 25 PRs with its 7 nested connections is 1 + 25 x 7 = 176 requests, about 2 points;
- * `ProwlNodes` with 100 ids and `ProwlMergeState` with 10 are 1 point. Lists use counts
- * (`checkRunCountsByState`) instead of check nodes, so the page stays light whatever the number
- * of checks.
+ * What each read costs is worked out once, in docs/architecture.md ("Query cost"): update it
+ * there when a connection is added or removed. Lists use counts (`checkRunCountsByState`)
+ * instead of check nodes, so the page stays light whatever the number of checks.
  *
  * Points are not the limit, GitHub's 10 s execution time is: `mergeStateStatus` and
  * `reviewDecision` take about half a second per PR on busy repositories (branch rules are
  * evaluated each time), so they live in `ProwlMergeState`, asked for few PRs at a time.
  */
+import { RATE_LIMIT_FIELDS } from './rateLimit';
 
-const RATE_LIMIT = 'rateLimit { limit remaining resetAt cost }';
+/** Entries read per stack: a longer stack's open bottom is not known (`PullRequest.stack.bottom`). */
+const STACK_ENTRIES = 20;
+
+/**
+ * GitHub stacks are recent: should GitHub rename or drop the field, `withoutStacks` lets the
+ * searches go on without it (`fetchSearch.ts`) instead of failing every section. The entries'
+ * states say where the open part of the stack starts, whatever Prowl's sections hold.
+ */
+const STACK_ENTRY = `stackEntry { position stack { id number size baseRefName
+  entries(first: ${STACK_ENTRIES}) { totalCount nodes { position pullRequest { state } } } } }`;
 
 /**
  * One page of a section's search, without the merge facts of `MERGE_STATE_QUERY`. Team reviewers
@@ -53,9 +61,10 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           autoMergeAllowed
         }
         autoMergeRequest { mergeMethod enabledBy { login } }
+        isInMergeQueue
         totalCommentsCount
         labels(first: 20) { nodes { name color } }
-        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { login } } }
+        latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { id state submittedAt author { __typename login } } }
         reviewRequests(first: 20) {
           totalCount pageInfo { hasNextPage }
           nodes {
@@ -67,7 +76,8 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
           }
         }
         reviewThreads(first: 100) { totalCount pageInfo { hasNextPage } nodes { isResolved } }
-        comments(last: 1) { nodes { createdAt author { login } } }
+        ${STACK_ENTRY}
+        comments(last: 5) { nodes { createdAt author { __typename login } } }
         commits(last: 1) {
           nodes {
             commit {
@@ -84,7 +94,7 @@ query ProwlSearch($query: String!, $first: Int!, $after: String) {
       }
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** Team fields are isolated: repo-only tokens must still load all other sections. */
@@ -92,6 +102,9 @@ export const TEAM_SEARCH_QUERY = SEARCH_QUERY.replace(
   '... on User { login }',
   '... on User { login } ... on Team { slug organization { login } }',
 );
+
+/** `query` without its stack selection: pull requests then read as outside any stack. */
+export const withoutStacks = (query: string) => query.replace(STACK_ENTRY, '');
 
 /** The merge facts of open PRs: what GitHub computes per PR on every read (see the top). */
 export const MERGE_STATE_QUERY = /* GraphQL */ `
@@ -109,7 +122,7 @@ query ProwlMergeState($ids: [ID!]!) {
       viewerCanDisableAutoMerge
     }
   }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** Final state of PRs that left every section: merged or closed, and by whom. */
@@ -127,52 +140,7 @@ query ProwlNodes($ids: [ID!]!) {
       }
     }
   }
-  ${RATE_LIMIT}
-}`;
-
-/**
- * What the expanded card needs about one PR: its head commit's check runs and status contexts
- * (100 per page, `$after` pages through more), who reviewed or was asked to, and the base
- * branch's rules. `isRequired(pullRequestId:)` says which checks block the merge. Teams are left
- * out of the requested reviewers like in `ProwlSearch` (`read:org`). Not polled: one request per
- * page when a card is expanded, about 1 point (1 + 4 connections = 5 requests).
- */
-export const DETAIL_QUERY = /* GraphQL */ `
-query ProwlPullRequestDetail($id: ID!, $after: String) {
-  node(id: $id) {
-    ... on PullRequest {
-      latestReviews(first: 20) { totalCount pageInfo { hasNextPage } nodes { state author { login avatarUrl(size: 64) } } }
-      reviewRequests(first: 20) {
-        totalCount pageInfo { hasNextPage }
-        nodes {
-          requestedReviewer {
-            ... on User { login avatarUrl(size: 64) }
-            ... on Bot { login avatarUrl(size: 64) }
-            ... on Mannequin { login avatarUrl(size: 64) }
-          }
-        }
-      }
-      baseRef { branchProtectionRule { requiredApprovingReviewCount requiresConversationResolution } }
-      commits(last: 1) {
-        nodes {
-          commit {
-            statusCheckRollup {
-              contexts(first: 100, after: $after) {
-                totalCount
-                pageInfo { hasNextPage endCursor }
-                nodes {
-                  __typename
-                  ... on CheckRun { name status conclusion detailsUrl isRequired(pullRequestId: $id) }
-                  ... on StatusContext { context state targetUrl isRequired(pullRequestId: $id) }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  ${RATE_LIMIT}
+  ${RATE_LIMIT_FIELDS}
 }`;
 
 /** A connection as selected here: only `nodes`, whose entries are null where a read failed. */
@@ -182,8 +150,13 @@ export interface Nodes<T> {
   nodes: (T | null)[] | null;
 }
 
-interface Login {
+export interface Login {
   login: string;
+}
+
+/** An `Actor` with its GraphQL type: `Bot` for an app account (Copilot, CodeRabbit, Dependabot). */
+export interface TypedLogin extends Login {
+  __typename: string;
 }
 
 export interface StateCount {
@@ -203,7 +176,7 @@ export interface PullRequestNode {
   headRefOid: string;
   createdAt: string;
   updatedAt: string;
-  author: (Login & { __typename: string; avatarUrl: string }) | null;
+  author: (TypedLogin & { avatarUrl: string }) | null;
   mergedBy: Login | null;
   repository: {
     name: string;
@@ -220,20 +193,37 @@ export interface PullRequestNode {
   };
   /** Null while auto-merge is off. */
   autoMergeRequest: { mergeMethod: string; enabledBy: Login | null } | null;
+  /** Absent in older fixtures. */
+  isInMergeQueue?: boolean;
   totalCommentsCount: number | null;
   labels: Nodes<{ name: string; color: string }> | null;
   latestReviews: Nodes<{
     id: string;
     state: string;
     submittedAt: string | null;
-    author: Login | null;
+    author: TypedLogin | null;
   }> | null;
   /** `{}` for a team (not selected, see `SEARCH_QUERY`). */
   reviewRequests: Nodes<{
     requestedReviewer: (Partial<Login> & { slug?: string; organization?: Login | null }) | null;
   }> | null;
   reviewThreads: Nodes<{ isResolved: boolean }>;
-  comments: Nodes<{ createdAt: string; author: Login | null }>;
+  /** Null outside a GitHub stack; absent in older fixtures. */
+  stackEntry?: {
+    position: number;
+    stack: {
+      id: string;
+      number: number;
+      size: number;
+      baseRefName: string;
+      /** Absent in older fixtures. */
+      entries?: {
+        totalCount: number;
+        nodes: ({ position: number; pullRequest: { state: string } | null } | null)[] | null;
+      };
+    } | null;
+  } | null;
+  comments: Nodes<{ createdAt: string; author: TypedLogin | null }>;
   commits: Nodes<{
     commit: {
       /** Committer date (set by git, renewed by a rebase or amend). */
@@ -295,59 +285,5 @@ export interface ClosedPullRequestNode {
 export interface NodesData {
   /** Same order as the ids; null for a deleted or inaccessible PR. */
   nodes: (ClosedPullRequestNode | Record<string, never> | null)[];
-  rateLimit: GraphQLRateLimit | null;
-}
-
-export interface CheckRunNode {
-  __typename: 'CheckRun';
-  name: string;
-  /** `CheckStatusState`; `COMPLETED` means `conclusion` is set. */
-  status: string;
-  conclusion: string | null;
-  detailsUrl: string | null;
-  isRequired: boolean | null;
-}
-
-export interface StatusContextNode {
-  __typename: 'StatusContext';
-  context: string;
-  state: string;
-  targetUrl: string | null;
-  isRequired: boolean | null;
-}
-
-export interface DetailPullRequestNode {
-  latestReviews: Nodes<{
-    state: string;
-    author: (Login & { avatarUrl: string }) | null;
-  }> | null;
-  /** `{}` for a team (not selected, see `DETAIL_QUERY`). */
-  reviewRequests: Nodes<{
-    requestedReviewer: Partial<Login & { avatarUrl: string }> | null;
-  }> | null;
-  /** Null for a base branch without a rule, or when the token cannot see rules. */
-  baseRef: {
-    branchProtectionRule: {
-      requiredApprovingReviewCount: number | null;
-      requiresConversationResolution: boolean;
-    } | null;
-  } | null;
-  commits: Nodes<{
-    commit: {
-      statusCheckRollup: {
-        contexts: {
-          totalCount: number;
-          pageInfo: { hasNextPage: boolean; endCursor: string | null };
-          /** Null where a read failed (e.g. a token without access to check runs). */
-          nodes: (CheckRunNode | StatusContextNode | null)[] | null;
-        };
-      } | null;
-    };
-  }>;
-}
-
-export interface DetailData {
-  /** `{}` when the id is not a pull request, null when it is gone or hidden. */
-  node: DetailPullRequestNode | Record<string, never> | null;
   rateLimit: GraphQLRateLimit | null;
 }

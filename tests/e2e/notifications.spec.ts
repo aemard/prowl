@@ -95,9 +95,28 @@ test('switched-off events and quiet hours produce no notification', async ({
   await signIn();
   await poll();
 
+  // CI off: the turn it makes (fix CI) still tells it; both off, nothing does.
   await seedStorage({
     settings: { notifications: { enabled: true, events: { ci_failed: false } } },
   });
+  state.checks = 'failure';
+  await poll();
+  expect(await shown(serviceWorker)).toEqual([
+    expect.stringMatching(new RegExp(`^${prId(1)}:your_turn:ci_failed:`)),
+  ]);
+  // Forget it, so only the toggle can keep the same turn from showing again.
+  await serviceWorker.evaluate(async () => {
+    for (const id of Object.keys(await chrome.notifications.getAll()))
+      await chrome.notifications.clear(id);
+    await chrome.storage.session.remove('notified');
+  });
+  await seedStorage({
+    settings: {
+      notifications: { enabled: true, events: { ci_failed: false, your_turn: false } },
+    },
+  });
+  state.checks = 'pending';
+  await poll();
   state.checks = 'failure';
   await poll();
   expect(await shown(serviceWorker)).toEqual([]);
@@ -189,7 +208,11 @@ test('every kind of change by someone else notifies with its own event', async (
         (one = {
           ...one,
           totalCommentsCount: 1,
-          comments: { nodes: [{ createdAt: '2026-10-06T09:00:00Z', author: { login: 'dave' } }] },
+          comments: {
+            nodes: [
+              { createdAt: '2026-10-06T09:00:00Z', author: { __typename: 'User', login: 'dave' } },
+            ],
+          },
         }),
     ),
   ).toEqual(['comment_new']);

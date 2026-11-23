@@ -1,10 +1,8 @@
-import { t } from '../i18n';
 /**
  * GitHub GraphQL nodes -> `PullRequest` of `src/lib/model.ts`. The only place that reads raw
  * PR JSON. Enum values GitHub may add later map to safe defaults instead of leaking through.
  */
 import type {
-  CheckItem,
   CheckItemState,
   CheckSummary,
   Label,
@@ -12,27 +10,26 @@ import type {
   MergeMethod,
   MergeStateStatus,
   PullRequest,
-  PullRequestDetail,
   PullRequestState,
   ReviewDecision,
-  Reviewer,
   ReviewState,
 } from '../model';
 import type {
-  CheckRunNode,
   ClosedPullRequestNode,
-  DetailPullRequestNode,
   MergeStateNode,
   Nodes,
   PullRequestNode,
   StateCount,
-  StatusContextNode,
+  TypedLogin,
 } from './queries';
 
 /** GitHub's name for a deleted account. */
-const GHOST = 'ghost';
+export const GHOST = 'ghost';
 /** REST spells a bot's login `dependabot[bot]`; GraphQL gives `dependabot` and `__typename: Bot`. */
 const BOT_SUFFIX = '[bot]';
+/** An app account, by what GraphQL says it is (the suffix covers REST-shaped logins). */
+const isBot = (author: TypedLogin) =>
+  author.__typename === 'Bot' || author.login.endsWith(BOT_SUFFIX);
 /** Used when a label color is not six hex digits. */
 export const NEUTRAL_LABEL_COLOR = 'ededed';
 const HEX_COLOR = /^[0-9a-f]{6}$/i;
@@ -43,7 +40,7 @@ const REVIEW_DECISIONS: readonly ReviewDecision[] = [
   'changes_requested',
   'review_required',
 ];
-const REVIEW_STATES: readonly ReviewState[] = [
+export const REVIEW_STATES: readonly ReviewState[] = [
   'approved',
   'changes_requested',
   'commented',
@@ -65,7 +62,7 @@ const MERGE_STATE_STATUSES: readonly MergeStateStatus[] = [
 ];
 
 /** GitHub's upper-case enum value lower-cased when the model knows it, else `fallback`. */
-function pick<T extends string, F>(
+export function pick<T extends string, F>(
   allowed: readonly T[],
   value: string | null,
   fallback: F,
@@ -75,11 +72,11 @@ function pick<T extends string, F>(
 }
 
 /** The nodes of a connection without the holes left by failed reads. */
-const present = <T>(connection: Nodes<T> | null): T[] =>
+export const present = <T>(connection: Nodes<T> | null): T[] =>
   (connection?.nodes ?? []).filter((node): node is T => node !== null);
 
 /** A connection can be bounded without being empty or inaccessible. */
-function limitedConnections(
+export function limitedConnections(
   connections: Record<string, Nodes<unknown> | null | undefined>,
 ): string[] {
   return Object.entries(connections)
@@ -97,7 +94,7 @@ function limitedConnections(
  * PENDING) -> bucket. Everything else is neutral: NEUTRAL, SKIPPED, CANCELLED, STALE, COMPLETED
  * and new values.
  */
-const BUCKET: Record<string, CheckItemState> = {
+export const BUCKET: Record<string, CheckItemState> = {
   SUCCESS: 'passed',
   FAILURE: 'failed',
   ERROR: 'failed',
@@ -113,27 +110,37 @@ const BUCKET: Record<string, CheckItemState> = {
 };
 
 /**
+ * Pending states that mean the check executes now (or waits for a runner): `IN_PROGRESS` and
+ * `QUEUED` check runs, `PENDING` commit statuses (a CI service reports one when it starts). A
+ * `PENDING`, `WAITING` or `REQUESTED` check run (concurrency, a deployment review, a fork
+ * workflow awaiting approval) and an `EXPECTED` status (a required check nothing reported yet)
+ * wait on something that may never come.
+ */
+const RUNNING_RUNS = ['IN_PROGRESS', 'QUEUED'];
+const RUNNING_STATUSES = ['PENDING'];
+
+/**
  * Summary of the head commit's checks, from the per-state counts. The state is derived from
  * the counts rather than read from `statusCheckRollup.state`, which reports a cancelled run
  * as a failure and changes when `contexts` is selected in the same query.
  */
-function mapChecks(counts: StateCount[]): CheckSummary {
-  const summary: CheckSummary = {
-    state: 'none',
-    total: 0,
-    passed: 0,
-    failed: 0,
-    pending: 0,
-    neutral: 0,
+function mapChecks(runs: StateCount[], statuses: StateCount[]): CheckSummary {
+  const summary = { total: 0, passed: 0, failed: 0, pending: 0, neutral: 0 };
+  let running = 0;
+  const add = (counts: StateCount[], runningStates: string[]) => {
+    for (const { state, count } of counts) {
+      summary[BUCKET[state] ?? 'neutral'] += count;
+      summary.total += count;
+      if (runningStates.includes(state)) running += count;
+    }
   };
-  for (const { state, count } of counts) {
-    summary[BUCKET[state] ?? 'neutral'] += count;
-    summary.total += count;
-  }
-  if (summary.failed > 0) summary.state = 'failure';
-  else if (summary.pending > 0) summary.state = 'pending';
-  else if (summary.total > 0) summary.state = 'success';
-  return summary;
+  add(runs, RUNNING_RUNS);
+  add(statuses, RUNNING_STATUSES);
+  let state: CheckSummary['state'] = 'none';
+  if (summary.failed > 0) state = 'failure';
+  else if (summary.pending > 0) state = 'pending';
+  else if (summary.total > 0) state = 'success';
+  return { ...summary, state, running };
 }
 
 const mapLabel = ({ name, color }: { name: string; color: string }): Label => ({
@@ -170,13 +177,23 @@ export function mapMergeState(node: Partial<MergeStateNode>): MergeFacts {
 }
 
 function mapConversation(node: PullRequestNode) {
-  const lastComment = present(node.comments).at(-1);
+  const comments = present(node.comments);
+  const lastComment = comments.at(-1);
+  const lastHuman = comments.findLast(({ author }) => !author || !isBot(author));
   return {
     reviews: present(node.latestReviews)
       .flatMap(({ id, state, submittedAt, author }) => {
         const mapped = pick(REVIEW_STATES, state, null);
         return mapped && submittedAt
-          ? [{ id, author: author?.login ?? GHOST, state: mapped, submittedAt }]
+          ? [
+              {
+                id,
+                author: author?.login ?? GHOST,
+                isBot: author ? isBot(author) : false,
+                state: mapped,
+                submittedAt,
+              },
+            ]
           : [];
       })
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
@@ -184,13 +201,50 @@ function mapConversation(node: PullRequestNode) {
       ({ requestedReviewer }) => requestedReviewer?.login ?? [],
     ),
     labels: present(node.labels).map(mapLabel),
-    // ponytail: counts the first 100 threads; PRs with more under-report unresolved threads.
+    // ponytail: counts the first 100 threads; `incomplete` then names conversations and the card shows N+.
     unresolvedThreads: present(node.reviewThreads).filter(({ isResolved }) => !isResolved).length,
     commentCount: node.totalCommentsCount ?? 0,
     lastComment: lastComment
-      ? { author: lastComment.author?.login ?? GHOST, createdAt: lastComment.createdAt }
+      ? {
+          author: lastComment.author?.login ?? GHOST,
+          isBot: lastComment.author ? isBot(lastComment.author) : false,
+          createdAt: lastComment.createdAt,
+        }
+      : null,
+    lastHumanComment: lastHuman
+      ? { author: lastHuman.author?.login ?? GHOST, createdAt: lastHuman.createdAt }
       : null,
   };
+}
+
+/**
+ * How many of the stack's pull requests are open and the lowest open position, when GitHub
+ * listed every entry. An entry whose pull request the token cannot see counts as open.
+ */
+function openEntries(stack: NonNullable<NonNullable<PullRequestNode['stackEntry']>['stack']>) {
+  const nodes = stack.entries?.nodes;
+  if (!nodes || nodes.length !== stack.entries?.totalCount || nodes.some((node) => !node))
+    return {};
+  const open = nodes.flatMap((node) =>
+    node && (node.pullRequest?.state ?? 'OPEN') === 'OPEN' ? [node.position] : [],
+  );
+  return open.length > 0 ? { open: open.length, bottom: Math.min(...open) } : { open: 0 };
+}
+
+/** GitHub's stack membership; nothing outside a stack. */
+function mapStack({ stackEntry: entry }: PullRequestNode): Pick<PullRequest, 'stack'> {
+  return entry?.stack
+    ? {
+        stack: {
+          id: entry.stack.id,
+          number: entry.stack.number,
+          size: entry.stack.size,
+          position: entry.position,
+          base: entry.stack.baseRefName,
+          ...openEntries(entry.stack),
+        },
+      }
+    : {};
 }
 
 /** A search result; its merge facts are unknown until `mapMergeState` fills them in. */
@@ -206,6 +260,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
   });
   return {
     ...(incomplete.length ? { incomplete } : {}),
+    ...mapStack(node),
     id: node.id,
     number: node.number,
     title: node.title,
@@ -214,7 +269,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
     author: node.author && {
       login: node.author.login,
       avatarUrl: node.author.avatarUrl,
-      isBot: node.author.__typename === 'Bot' || node.author.login.endsWith(BOT_SUFFIX),
+      isBot: isBot(node.author),
     },
     state: pick(PR_STATES, node.state, 'open'),
     isDraft: node.isDraft,
@@ -226,10 +281,10 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
     // A head commit that failed to load counts as the last activity: a read error alone never
     // hides a PR that something recently happened on.
     lastCommitAt: head?.committedDate ?? node.updatedAt,
-    checks: mapChecks([
-      ...(contexts?.checkRunCountsByState ?? []),
-      ...(contexts?.statusContextCountsByState ?? []),
-    ]),
+    checks: mapChecks(
+      contexts?.checkRunCountsByState ?? [],
+      contexts?.statusContextCountsByState ?? [],
+    ),
     ...mapMergeState(node),
     ...mapConversation(node),
     // A search result does not carry the ClosedEvent: closed PRs get their closer from
@@ -245,6 +300,7 @@ export function mapPullRequest(node: PullRequestNode & Partial<MergeStateNode>):
           enabledBy: node.autoMergeRequest.enabledBy?.login ?? null,
         }
       : null,
+    inMergeQueue: node.isInMergeQueue === true,
   };
 }
 
@@ -261,81 +317,5 @@ export function mapClosedState(pr: PullRequest, node: ClosedPullRequestNode): Pu
     state,
     updatedAt: node.updatedAt,
     closedBy: node.mergedBy?.login ?? closer ?? null,
-  };
-}
-
-const CHECK_ORDER: Record<CheckItemState, number> = {
-  failed: 0,
-  pending: 1,
-  passed: 2,
-  neutral: 3,
-};
-const REVIEWER_ORDER: Record<Reviewer['state'], number> = {
-  changes_requested: 0,
-  requested: 1,
-  approved: 2,
-  commented: 3,
-  dismissed: 4,
-};
-const HTTP_URL = /^https?:\/\//i;
-
-/** A check run's state is its conclusion once it completed, else where it is in its run. */
-function mapContext(node: CheckRunNode | StatusContextNode): CheckItem {
-  const run = node.__typename === 'CheckRun';
-  const state = run
-    ? node.status === 'COMPLETED'
-      ? (node.conclusion ?? '')
-      : node.status
-    : node.state;
-  const url = run ? node.detailsUrl : node.targetUrl;
-  return {
-    name: run ? node.name : node.context,
-    state: BUCKET[state] ?? 'neutral',
-    // ponytail: the panel only opens URLs on the GitHub origin, so third-party CI links are text.
-    url: url !== null && HTTP_URL.test(url) ? url : null,
-    required: typeof node.isRequired === 'boolean' ? node.isRequired : null,
-  };
-}
-
-/**
- * Detail of an expanded card (`ProwlPullRequestDetail`). `pages` are the PR node of each page of
- * check contexts, first page first: reviewers and branch rules come from the first, the checks
- * from all. A reviewer who reviewed shows that review even when asked to review again.
- */
-export function mapPullRequestDetail(
-  pages: [DetailPullRequestNode, ...DetailPullRequestNode[]],
-): PullRequestDetail {
-  const [node] = pages;
-  const rollups = pages.flatMap(
-    (page) => page.commits.nodes?.at(-1)?.commit.statusCheckRollup?.contexts ?? [],
-  );
-  const rule = node.baseRef?.branchProtectionRule;
-  const warnings = limitedConnections({
-    reviews: node.latestReviews,
-    'review requests': node.reviewRequests,
-  }).map((name) => t(name === 'reviews' ? 'reviewsNotLoaded' : 'reviewRequestsNotLoaded'));
-  const reviewed: Reviewer[] = present(node.latestReviews).flatMap(({ state, author }) => {
-    const mapped = pick(REVIEW_STATES, state, null);
-    return mapped
-      ? [{ login: author?.login ?? GHOST, avatarUrl: author?.avatarUrl ?? '', state: mapped }]
-      : [];
-  });
-  const requested: Reviewer[] = present(node.reviewRequests).flatMap(
-    ({ requestedReviewer: who }) =>
-      who?.login && !reviewed.some(({ login }) => login === who.login)
-        ? [{ login: who.login, avatarUrl: who.avatarUrl ?? '', state: 'requested' as const }]
-        : [],
-  );
-  return {
-    checks: rollups
-      .flatMap(({ nodes }) => (nodes ?? []).flatMap((check) => (check ? [mapContext(check)] : [])))
-      .sort((a, b) => CHECK_ORDER[a.state] - CHECK_ORDER[b.state]),
-    checksTotal: rollups[0]?.totalCount ?? 0,
-    reviewers: [...reviewed, ...requested].sort(
-      (a, b) => REVIEWER_ORDER[a.state] - REVIEWER_ORDER[b.state],
-    ),
-    ...(warnings.length ? { warnings } : {}),
-    requiredApprovals: rule?.requiredApprovingReviewCount ?? null,
-    requiresConversationResolution: rule?.requiresConversationResolution ?? false,
   };
 }

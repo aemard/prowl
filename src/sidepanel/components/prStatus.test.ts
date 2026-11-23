@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CheckSummary } from '../../lib/model';
+import { fakeChrome } from '../../test/chrome';
 import { buildPullRequest } from '../../test/panel';
 import { ciStatus, describePullRequest, pullRequestStatuses } from './prStatus';
 
@@ -15,6 +16,16 @@ const checks = (overrides: Partial<CheckSummary>): CheckSummary => ({
 });
 
 describe('ciStatus', () => {
+  it('is neutral, not red, when only optional checks fail', () => {
+    const failing = checks({ state: 'failure', total: 2, failed: 1, passed: 1 });
+    expect(ciStatus(failing, false)).toMatchObject({
+      tone: 'neutral',
+      label: '1 failing',
+      detail: 'Only optional checks failing: 1 failed, 1 passed (2 checks)',
+    });
+    expect(ciStatus(failing)?.tone).toBe('danger');
+  });
+
   it.each([
     [
       checks({ state: 'failure', total: 8, failed: 2, pending: 1, passed: 5 }),
@@ -69,10 +80,91 @@ describe('pullRequestStatuses', () => {
     ]);
   });
 
+  it('shows an optional failure on a ready PR as neutral beside Ready to merge', () => {
+    const pr = buildPullRequest({
+      checks: checks({ state: 'failure', total: 2, failed: 1, passed: 1 }),
+      reviewDecision: 'approved',
+      mergeStateStatus: 'unstable',
+    });
+    expect(pullRequestStatuses(pr)).toMatchObject([
+      { id: 'ci', tone: 'neutral', label: '1 failing' },
+      { id: 'merge', tone: 'success', label: 'Ready to merge', detail: 'Ready to merge' },
+    ]);
+  });
+
+  it('says who merges a ready PR the viewer may not merge', () => {
+    const pr = buildPullRequest({
+      reviewDecision: 'approved',
+      mergeStateStatus: 'clean',
+      viewerCanMerge: false,
+    });
+    expect(pullRequestStatuses(pr)).toMatchObject([
+      {
+        id: 'merge',
+        label: 'Ready to merge',
+        detail: 'Ready to merge; someone with write access has to merge it',
+      },
+    ]);
+  });
+
   it('asks for a review unless the PR is a draft', () => {
     const pr = buildPullRequest({ reviewDecision: 'review_required' });
-    expect(labels(pr)).toEqual(['Review required']);
+    expect(labels(pr)).toEqual(['Awaiting review']);
     expect(labels({ ...pr, isDraft: true })).toEqual(['Draft']);
+  });
+
+  it("turns the chip of the fact into the action when it is the viewer's move: one chip per fact", () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const now = Date.parse('2026-10-06T12:00:00.000Z');
+    const failing = buildPullRequest({
+      checks: { state: 'failure', total: 2, passed: 1, failed: 1, pending: 0, neutral: 0 },
+    });
+    const fix = pullRequestStatuses(failing, { owner: 'you', reason: 'ci_failed', since }, now);
+    expect(fix.map(({ id, tone, icon, label }) => ({ id, tone, icon, label }))).toEqual([
+      { id: 'ci', tone: 'danger', icon: 'bell', label: 'Fix CI · 1 failing' },
+    ]);
+    expect(fix[0]?.detail).toMatch(/^Your turn: Fix CI, since 1 h ago\. Checks failing/);
+
+    const asked = buildPullRequest({ reviewDecision: 'review_required' });
+    const review = pullRequestStatuses(
+      asked,
+      { owner: 'you', reason: 'review_requested', since },
+      now,
+    );
+    expect(review.map(({ tone, label }) => [tone, label])).toEqual([['accent', 'Review']]);
+
+    const feedback = pullRequestStatuses(failing, { owner: 'you', reason: 'feedback', since }, now);
+    expect(feedback.map(({ id, label }) => [id, label])).toEqual([
+      ['turn', 'Answer feedback'],
+      ['ci', '1 failing'],
+    ]);
+    expect(
+      pullRequestStatuses(asked, { owner: 'them', reason: 'waiting_on_author', since }, now),
+    ).toHaveLength(1);
+  });
+
+  it('says a branch to update with the update action’s words, and a queued PR as queued', () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const behind = buildPullRequest({ reviewDecision: 'approved', mergeStateStatus: 'behind' });
+    const update = pullRequestStatuses(behind, { owner: 'you', reason: 'update_branch', since });
+    expect(update.map(({ id, label }) => [id, label])).toEqual([
+      ['turn', 'Update branch'],
+      ['review', 'Approved'],
+    ]);
+    const queued = buildPullRequest({
+      reviewDecision: 'approved',
+      mergeStateStatus: 'clean',
+      inMergeQueue: true,
+    });
+    expect(labels(queued)).toEqual(['In merge queue']);
+  });
+
+  it('joins the turn and the fact as sentences of the language', () => {
+    const since = '2026-10-06T11:00:00.000Z';
+    const conflicting = buildPullRequest({ mergeable: 'conflicting' });
+    fakeChrome().__state.locale = 'ja';
+    const [chip] = pullRequestStatuses(conflicting, { owner: 'you', reason: 'conflicts', since });
+    expect(chip?.detail).toContain('。');
   });
 
   it('folds "approved" into "ready to merge", and keeps it when something blocks the merge', () => {

@@ -46,7 +46,6 @@ export function updateBadge(): Promise<void> {
       stored.snapshot,
       normalizePrLocal(stored.prLocal),
       settings.badge,
-      settings,
       Date.now(),
     );
   });

@@ -1,0 +1,49 @@
+# Checks every week that Prowl's GraphQL operations still validate against GitHub's live schema,
+# not only the pinned copy that CI uses (tests/fixtures/github-schema.graphql). A failed run is
+# GitHub announcing, through a deprecation or a removal, that an operation must change. When the
+# operations pass but the pinned copy is stale, the run fails too, so GitHub notifies the
+# maintainer: refresh it with `pnpm schema:update` in a pull request (docs/decisions.md).
+# Read-only: it opens nothing and holds no secret.
+name: GitHub schema
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    name: Operations against the live schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the live schema
+        run: pnpm schema:update
+
+      - name: Validate the operations
+        run: pnpm exec vitest run tests/unit/githubSchema.test.ts
+
+      # A failure, not only a summary: nobody reads the summary of a green scheduled run.
+      - name: Fail on a stale pinned schema
+        run: |
+          if ! git diff --quiet -- tests/fixtures/github-schema.graphql; then
+            echo "GitHub's schema changed: run \`pnpm schema:update\` in a pull request." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi

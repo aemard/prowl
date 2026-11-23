@@ -25,7 +25,8 @@ describe('CI outcome identities', () => {
     ] as const) {
       const next = advance(prev, state);
       const changes = diffSnapshots(prev, next, VIEWER);
-      events.push(...changes);
+      // The CI events only: the turn has its own tests.
+      events.push(...changes.filter(({ type }) => type !== 'your_turn'));
       // A restarted worker reads the same persisted snapshots and reproduces the same ids.
       expect(diffSnapshots(structuredClone(prev), structuredClone(next), VIEWER)).toEqual(changes);
       prev = JSON.parse(JSON.stringify(next)) as Snapshot;

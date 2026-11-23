@@ -128,7 +128,7 @@ describe('poll', () => {
         consecutiveFailures: 1,
         nextAllowedAt: at(reset),
       });
-      await poll({ force: true });
+      await poll({ reason: 'user' });
       expect(teamCalls).toBe(1);
       later(20 * MINUTE);
       await poll();
@@ -141,7 +141,11 @@ describe('poll', () => {
       await poll();
       expect(teamCalls).toBe(1);
 
-      const [shared, refreshed] = await Promise.all([poll(), poll({ refreshTeams: true })]);
+      later(2 * MINUTE);
+      const [shared, refreshed] = await Promise.all([
+        poll(),
+        poll({ reason: 'user', refreshTeams: true }),
+      ]);
       expect(teamCalls).toBe(2);
       expect(requests).toHaveLength(3);
       expect(refreshed).not.toBe(shared);
