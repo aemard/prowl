@@ -20,9 +20,13 @@ const UPDATED = '2026-11-05T10:04:00Z';
 const MINUTE = 60_000;
 const VIEWER = { login: 'octocat', avatarUrl: '', isBot: false };
 let answer: () => Response;
-const fetch = vi.fn(async () => answer());
+const fetch = vi.fn(async (_url: string, _init?: RequestInit) => answer());
 const inbox = async () =>
   (await chrome.storage.session.get<{ inbox?: Record<string, unknown> }>('inbox')).inbox;
+/** The lane's state as it stores it for the sign-in of `buildAuth()`. */
+const SIGN_IN = { signIn: buildAuth().createdAt };
+const seedInbox = (state: Record<string, unknown>) =>
+  chrome.storage.session.set({ inbox: { ...state, ...SIGN_IN } });
 const alarms = () => [...fakeChrome().__state.alarms.keys()].sort();
 const prThread = (updatedAt: string, reason?: string) =>
   notificationThread({ updatedAt, reason, repo: 'watched/repo' });
@@ -61,7 +65,7 @@ describe('checkFastLane: the inbox', () => {
 
   it('never polls for old unread pull request threads a change elsewhere sent back', async () => {
     await setItem('auth', buildAuth());
-    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    await seedInbox({ lastModified: LAST });
     const old = '2026-11-01T08:00:00Z';
     answer = () =>
       jsonResponse([{ subject: { type: 'Issue' }, updated_at: UPDATED }, prThread(old)], {
@@ -93,7 +97,7 @@ describe('checkFastLane: the inbox', () => {
 
   it('polls for a watched repository’s thread only when the list shows that repository', async () => {
     await setItem('auth', buildAuth());
-    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    await seedInbox({ lastModified: LAST });
     answer = () =>
       jsonResponse([prThread(UPDATED, 'subscribed')], { headers: { 'last-modified': LAST } });
     await checkFastLane();
@@ -108,11 +112,11 @@ describe('checkFastLane: the inbox', () => {
 
   it('leaves the inbox unread for a list under a minute old, so its news waits', async () => {
     await setItem('auth', buildAuth());
-    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    await seedInbox({ lastModified: LAST });
     await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: ago(30_000) }));
     await checkFastLane();
     expect(fetch).not.toHaveBeenCalled();
-    expect(await inbox()).toEqual({ lastModified: LAST });
+    expect(await inbox()).toEqual({ lastModified: LAST, ...SIGN_IN });
     await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: ago(MINUTE) }));
     answer = () => jsonResponse([prThread(UPDATED)], { headers: { 'last-modified': LATER } });
     await checkFastLane();
@@ -123,9 +127,22 @@ describe('checkFastLane: the inbox', () => {
     await setItem('auth', buildAuth());
     answer = () => jsonResponse({ message: 'Resource not accessible' }, { status: 403 });
     await checkFastLane();
-    expect(await inbox()).toEqual({ lastModified: null, off: true });
+    expect(await inbox()).toEqual({ lastModified: null, off: true, ...SIGN_IN });
     await checkFastLane();
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts afresh for another sign-in: its token may read the inbox, its dates are its own', async () => {
+    await seedInbox({ lastModified: LAST, off: true });
+    await setItem('auth', { ...buildAuth(), createdAt: '2026-11-05T11:00:00.000Z' });
+    answer = () => new Response(null, { status: 304, headers: { 'last-modified': LATER } });
+    await checkFastLane();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0]?.[1]).not.toMatchObject({
+      headers: { 'If-Modified-Since': expect.anything() },
+    });
+    expect(await inbox()).toMatchObject({ signIn: '2026-11-05T11:00:00.000Z' });
+    expect(await inbox()).not.toHaveProperty('off');
   });
 });
 
@@ -185,7 +202,7 @@ describe('checkFastLane: the cadence policy', () => {
 
   it('keeps the last Last-Modified through a rate limit, so the next check stays conditional', async () => {
     await setItem('auth', buildAuth());
-    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    await seedInbox({ lastModified: LAST });
     answer = () => jsonResponse({ message: 'API rate limit exceeded' }, { status: 403 });
     await checkFastLane();
     expect(await inbox()).toMatchObject({ lastModified: LAST });

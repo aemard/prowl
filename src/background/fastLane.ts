@@ -22,16 +22,33 @@ import { getItems, withLock } from '../lib/storage/storage';
 import { isWaiting, rateLimitedUntil } from '../lib/time/backoff';
 import { ciWatched, inboxDue, pollVerdict } from '../lib/time/cadence';
 import { poll } from './poller';
-import { clearAlarms, IDLE, iso, recordPollFailure } from './pollState';
+import { clearAlarms, IDLE, INBOX_STATE, iso, recordPollFailure } from './pollState';
 
-const STATE = 'inbox';
 const MINUTE = 60_000;
 
 /**
  * `chrome.storage.session` key `inbox`: GitHub's `Last-Modified` of the last answer, when the
- * next check may run (`X-Poll-Interval` after the last one), and whether the lane is off.
+ * next check may run (`X-Poll-Interval` after the last one), and whether the lane is off, for
+ * the sign-in `signIn` names (`auth.createdAt`). Another sign-in (an account or token switched
+ * without a sign-out in between) starts afresh: its token may read the inbox, and the previous
+ * account's `Last-Modified` says nothing of its own.
  */
-type InboxState = { lastModified: string | null; nextAt?: string; off?: true };
+type InboxState = {
+  lastModified: string | null;
+  nextAt?: string | null;
+  off?: true;
+  signIn?: string;
+};
+
+async function readState(auth: AuthState): Promise<InboxState | undefined> {
+  const stored = (await chrome.storage.session.get<{ [INBOX_STATE]?: InboxState }>(INBOX_STATE))[
+    INBOX_STATE
+  ];
+  return stored?.signIn === auth.createdAt ? stored : undefined;
+}
+
+const saveState = (auth: AuthState, state: InboxState) =>
+  chrome.storage.session.set({ [INBOX_STATE]: { ...state, signIn: auth.createdAt } });
 
 interface LaneContext {
   auth: AuthState;
@@ -47,7 +64,7 @@ async function inboxChanged(
   repos: ReadonlySet<string>,
 ): Promise<boolean> {
   if (auth.tokenType === 'fine_grained') return false;
-  const stored = (await chrome.storage.session.get<{ [STATE]?: InboxState }>(STATE))[STATE];
+  const stored = await readState(auth);
   // `isWaiting` ignores a wait over an hour long: the clock went back since it was stored.
   if (stored?.off || isWaiting(stored?.nextAt ?? null, at)) return false;
   try {
@@ -57,9 +74,7 @@ async function inboxChanged(
       stored?.lastModified ?? null,
       repos,
     );
-    await chrome.storage.session.set({
-      [STATE]: { lastModified, nextAt: iso(at + pollSeconds * 1000) },
-    });
+    await saveState(auth, { lastModified, nextAt: iso(at + pollSeconds * 1000) });
     return changed;
   } catch (error) {
     if (!(error instanceof GitHubError)) throw error;
@@ -76,11 +91,11 @@ async function inboxChanged(
 async function laneFailed(error: GitHubError, lane: LaneContext, lastModified: string | null) {
   const { auth, state, interval } = lane;
   if (['forbidden', 'not_found'].includes(error.kind))
-    await chrome.storage.session.set({ [STATE]: { lastModified: null, off: true } });
+    await saveState(auth, { lastModified: null, off: true });
   if (error.kind === 'rate_limited') {
     const now = Date.now();
     const until = rateLimitedUntil(now, error) ?? now + MINUTE;
-    await chrome.storage.session.set({ [STATE]: { lastModified, nextAt: iso(until) } });
+    await saveState(auth, { lastModified, nextAt: iso(until) });
   }
   if (error.kind === 'unauthorized')
     await withLock('prowl:poll', async () => {

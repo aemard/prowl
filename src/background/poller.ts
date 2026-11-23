@@ -41,7 +41,14 @@ import { isExplicit, isTrailing, pollVerdict } from '../lib/time/cadence';
 import { clearBadge, updateBadge } from './badge';
 import { clearMergePriority, mergePriority } from './mergeState';
 import { forgetNotified, notifyEvents } from './notifier';
-import { clearAlarms, IDLE, iso, recordPollFailure, scheduleAlarms } from './pollState';
+import {
+  clearAlarms,
+  IDLE,
+  INBOX_STATE,
+  iso,
+  recordPollFailure,
+  scheduleAlarms,
+} from './pollState';
 
 export { refreshMergeState, setMergePriority } from './mergeState';
 
@@ -66,6 +73,7 @@ export async function clearSignedOut(): Promise<void> {
       removeItems('pollState'),
       clearBadge(),
       forgetNotified(),
+      chrome.storage.session.remove(INBOX_STATE),
       ...Object.keys(shown).map((id) => chrome.notifications.clear(id)),
     ]);
   });

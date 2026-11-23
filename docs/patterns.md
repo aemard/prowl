@@ -76,7 +76,8 @@ appending a newer one.
 - Inbox threads in tests: `notificationThread` (`tests/fixtures/notifications.ts`); only a listed
   repository or a section reason (`author`, `review_requested`, `mention`, `assign`) counts.
 - Alarms are in `pollState.ts` (`scheduleAlarms`, `clearAlarms`): whatever stops polling clears
-  both. `clearSignedOut()` clears alarms, pollState, badge and notifications.
+  both. `clearSignedOut()` clears alarms, pollState, badge, notifications and the `inbox` state;
+  that state is also tagged with `auth.createdAt`, so another sign-in starts afresh.
 - Pages may send only `panel`, `user` and `change` polls (`messages.ts`); a message resolves when
   handled.
 - Wrap every account-dependent worker write in `withSignedIn(auth, task)`

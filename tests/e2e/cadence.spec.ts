@@ -20,6 +20,12 @@ const fireInbox = (worker: Worker) =>
     if (snapshot) await chrome.storage.local.set({ snapshot: { ...snapshot, fetchedAt } });
     await chrome.alarms.create('inbox', { when: Date.now() + 50 });
   });
+/** Stores the lane's last `Last-Modified` for the current sign-in, as a previous check would. */
+const seedInbox = (worker: Worker, lastModified: string) =>
+  worker.evaluate(async (lastModified) => {
+    const { auth } = await chrome.storage.local.get<{ auth: { createdAt: string } }>('auth');
+    await chrome.storage.session.set({ inbox: { lastModified, signIn: auth.createdAt } });
+  }, lastModified);
 const inboxReads = (github: MockGitHub) =>
   github.requests.filter((request) => request.path.startsWith('/notifications'));
 const searches = (github: MockGitHub) => github.requestsFor('ProwlSearch').length;
@@ -52,10 +58,7 @@ test('an inbox thread updated since the last check polls; old unread ones do not
   }));
   await signIn();
   await poll();
-  await serviceWorker.evaluate(
-    (lastModified) => chrome.storage.session.set({ inbox: { lastModified } }),
-    LAST,
-  );
+  await seedInbox(serviceWorker, LAST);
   const before = searches(github);
   await fireInbox(serviceWorker);
   await expect.poll(() => inboxReads(github).length).toBe(1);
@@ -63,10 +66,7 @@ test('an inbox thread updated since the last check polls; old unread ones do not
   expect(searches(github)).toBe(before);
 
   threadUpdatedAt = '2026-11-05T10:04:30Z';
-  await serviceWorker.evaluate(
-    (lastModified) => chrome.storage.session.set({ inbox: { lastModified } }),
-    LAST,
-  );
+  await seedInbox(serviceWorker, LAST);
   await fireInbox(serviceWorker);
   await expect.poll(() => searches(github)).toBe(before + 1);
 });
@@ -132,10 +132,7 @@ test('an unchanged inbox answers 304 to the worker: If-Modified-Since is sent, n
   );
   await signIn();
   await poll();
-  await serviceWorker.evaluate(
-    (lastModified) => chrome.storage.session.set({ inbox: { lastModified } }),
-    LAST,
-  );
+  await seedInbox(serviceWorker, LAST);
   const before = searches(github);
   await fireInbox(serviceWorker);
   await expect.poll(() => inboxReads(github).length).toBe(1);

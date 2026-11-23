@@ -233,6 +233,7 @@ describe('clearSignedOut', () => {
     await chrome.action.setBadgeText({ text: '3' });
     await chrome.storage.session.set({
       notified: { 'PR_1:ci_failed:a': 'https://github.com/a/b/pull/1' },
+      inbox: { lastModified: null, off: true },
     });
     await chrome.notifications.create('PR_1:ci_failed:a', {
       type: 'basic',
@@ -246,7 +247,7 @@ describe('clearSignedOut', () => {
     expect(await getItems(['auth', 'pollState'])).toEqual({});
     expect(fakeChrome().__state.badge.text).toBe('');
     expect(fakeChrome().__state.notifications.size).toBe(0);
-    expect(await chrome.storage.session.get('notified')).toEqual({});
+    expect(await chrome.storage.session.get(['notified', 'inbox'])).toEqual({});
   });
 });
 

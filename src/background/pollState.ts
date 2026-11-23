@@ -11,6 +11,8 @@ import { retryAt } from '../lib/time/backoff';
 export const POLL_ALARM = 'poll';
 /** The fast lane's minute alarm (fastLane.ts): the inbox check and the CI watch. */
 export const INBOX_ALARM = 'inbox';
+/** The fast lane's `chrome.storage.session` key (fastLane.ts), which sign-out removes. */
+export const INBOX_STATE = 'inbox';
 
 /**
  * Makes sure both alarms exist while polling runs: the poll alarm with this period (recreated

@@ -480,7 +480,7 @@ a poll is done. A page may only give the reasons `panel`, `user` and `change`; t
 are refused. `refreshTeams` is `poll({ reason: 'user', refreshTeams: true })`, answered once
 that poll is done. `markSeen` stores the snapshot's `updatedAt` of each known PR;
 `signedOut` calls `clearSignedOut()`: the `poll` alarm, `pollState`, the badge text, every
-notification and the memory of what was reported.
+notification, the memory of what was reported and the fast lane's `inbox` state.
 
 ### Inbox fast lane
 
@@ -507,9 +507,11 @@ default 2-minute interval at most 30 more full polls an hour than the schedule, 
 watch (see [Query cost](#query-cost): about 4 to 8 points a poll with the default
 sections, so up to 120 to 240 points an hour, 5% of the budget); the 304s are free. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
 the alarm's scheduled time so alarm jitter does not skip a minute. The first check of a browser
-session only records the date. Fine-grained tokens cannot read the inbox, and a 403 or 404 turns
-the lane off until the browser restarts (`chrome.storage.session` key `inbox`); polls keep their
-schedule either way. A 401 met by the inbox is recorded like a poll's (`recordPollFailure`): a
+session (or of a sign-in) only records the date. Fine-grained tokens cannot read the inbox, and a
+403 or 404 turns the lane off until the browser restarts or another sign-in
+(`chrome.storage.session` key `inbox`, tagged with the sign-in's `auth.createdAt`: a state of
+another sign-in, an account or token switched without a sign-out, is ignored; sign-out removes
+it); polls keep their schedule either way. A 401 met by the inbox is recorded like a poll's (`recordPollFailure`): a
 rejected token stops both alarms and shows the banner. A rate limit backs off only the lane (its
 `nextAt` moves to the reset or `retry-after`, `Last-Modified` is kept): `/notifications` spends
 the REST budget and polls the GraphQL one, separate pools, so polls keep going.
