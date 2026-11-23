@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { threadNode, threadsResponse } from '../../../tests/fixtures/threads';
 import { buildAuth, buildPullRequest } from '../../test/panel';
-import { loadThreads, reviewThreads } from './reviewThreads';
+import { loadThreads, reviewThreads, threadsStale } from './reviewThreads';
 import { auth } from './store';
 
 const pr = buildPullRequest({ unresolvedThreads: 1 });
@@ -18,6 +18,18 @@ describe('loadThreads', () => {
     auth.value = undefined;
     answer.mockReset();
     vi.unstubAllGlobals();
+  });
+
+  it('is keyed to the update GitHub had when it answered, so the poll after a reply reads nothing', async () => {
+    const replied = '2026-10-06T11:00:00.000Z';
+    answer.mockResolvedValueOnce(jsonResponse({ data: threadsResponse([], null, replied) }));
+    await loadThreads(pr);
+    const entry = reviewThreads.value[pr.id];
+    expect(entry?.key).toBe(replied);
+    // The poll brings the reply's own `updatedAt`: nothing to read again; a later one is.
+    expect(threadsStale(entry, { ...pr, updatedAt: replied })).toBe(false);
+    expect(threadsStale(entry, pr)).toBe(false);
+    expect(threadsStale(entry, { ...pr, updatedAt: '2026-10-06T12:00:00.000Z' })).toBe(true);
   });
 
   it('does nothing while signed out', async () => {

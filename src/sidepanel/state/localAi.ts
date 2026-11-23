@@ -59,9 +59,17 @@ export interface AiAnswer {
   loading: boolean;
   text?: string;
   error?: string;
+  /** What it was asked for (`askedFor`). */
+  for: AskedFor;
 }
-/** `answerKey` -> answer. */
+/** `<PR id>:<task>` -> its latest answer; `answerOf` says whether it still fits the PR. */
 export const aiAnswers = signal<Record<string, AiAnswer>>({});
+
+interface AskedFor {
+  version: string;
+  /** The failing check runs, where the card's detail listed them. */
+  runs?: string;
+}
 
 /** What runs now, so that an account change stops it. */
 const running = new Set<AbortController>();
@@ -72,19 +80,37 @@ onAccountChange(() => {
 });
 
 /**
- * What an answer was given for: a summary for the PR's text as last updated (a comment, review or
+ * What an answer is given for: a summary for the PR's text as last updated (a comment, review or
  * edit moves `updatedAt`, a push without new words too), an explanation for the failing checks of
- * the head commit, by identity where the card's detail lists them (a re-run is a new check run
- * with its own page, even with the same count), else by count. Anything else changed, the answer
- * is no longer shown and the button asks again.
+ * the head commit, by count and, where the card's detail lists them, by identity (a re-run is a
+ * new check run with its own page, even with the same count).
  */
-export function answerKey(pr: PullRequest, task: AiTask, detail?: PullRequestDetail): string {
-  if (task === 'summary') return `${pr.id}:summary:${pr.updatedAt}`;
-  const failing = detail?.checks
+function askedFor(pr: PullRequest, task: AiTask, detail?: PullRequestDetail): AskedFor {
+  if (task === 'summary') return { version: pr.updatedAt };
+  const runs = detail?.checks
     .filter(({ state }) => state === 'failed')
     .map(({ url, name }) => url ?? name)
     .join(' ');
-  return `${pr.id}:failure:${pr.headSha}:${failing ?? pr.checks.failed}`;
+  return { version: `${pr.headSha}:${pr.checks.failed}`, runs };
+}
+
+/**
+ * The answer for `pr` as it is now, if any. Whether the card's detail had loaded when the user
+ * asked, or has now, does not matter: the runs are compared only when both sides know them.
+ * Anything else changed, it is no longer shown and the button asks again.
+ */
+export function answerOf(
+  pr: PullRequest,
+  task: AiTask,
+  detail?: PullRequestDetail,
+): AiAnswer | undefined {
+  const answer = aiAnswers.value[`${pr.id}:${task}`];
+  const now = askedFor(pr, task, detail);
+  const asked = answer?.for;
+  if (asked?.version !== now.version) return undefined;
+  return asked.runs === undefined || now.runs === undefined || asked.runs === now.runs
+    ? answer
+    : undefined;
 }
 
 /** What the panel says when an answer failed: Chrome's own words are English and technical. */
@@ -108,17 +134,18 @@ export async function runAi(
 ): Promise<void> {
   const session = auth.value;
   const { models } = aiState.value;
-  const key = answerKey(pr, task, detail);
-  if (!session || !models || aiAnswers.value[key]?.loading) return;
+  const key = `${pr.id}:${task}`;
+  if (!session || !models || answerOf(pr, task, detail)?.loading) return;
   const controller = new AbortController();
   running.add(controller);
   const started = startTask(task, models, uiLocale(), { signal: controller.signal });
   started.catch(() => {});
-  const request: AiAnswer = { loading: true };
+  // Asked for the PR as it was at the click, whenever the detail arrives.
+  const request: AiAnswer = { loading: true, for: askedFor(pr, task, detail) };
   aiAnswers.value = { ...aiAnswers.value, [key]: request };
-  const put = (answer: AiAnswer) => {
+  const put = (answer: Omit<AiAnswer, 'for'>) => {
     if (auth.value === session && aiAnswers.value[key] === request)
-      aiAnswers.value = { ...aiAnswers.value, [key]: answer };
+      aiAnswers.value = { ...aiAnswers.value, [key]: { ...answer, for: request.for } };
   };
   try {
     const client = createGitHubClient({ token: session.token, apiUrl: env.apiUrl });

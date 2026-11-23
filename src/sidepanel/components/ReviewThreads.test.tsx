@@ -95,7 +95,9 @@ describe('ReviewThreads', () => {
   it('reads the conversations again when the pull request changes', async () => {
     const pr = buildPullRequest({ unresolvedThreads: 1 });
     open = [threadNode('7')];
-    reviewThreads.value = { [pr.id]: { key: 'earlier', loading: false, threads: [] } };
+    reviewThreads.value = {
+      [pr.id]: { key: '2026-10-01T00:00:00.000Z', loading: false, threads: [] },
+    };
     render(<ReviewThreads pr={pr} id="d" />);
     await waitFor(() => expect(reviewThreads.value[pr.id]?.threads).toHaveLength(1));
     expect(reviewThreads.value[pr.id]?.key).toBe(pr.updatedAt);
@@ -114,7 +116,8 @@ describe('ReviewThreads', () => {
     render(<ReviewThreads pr={pr} id="d" />);
     fireEvent.click(screen.getByRole('button', { name: 'Show 2 conversations' }));
     await screen.findByRole('list', { name: 'Conversations' });
-    expect(screen.getByText('3 earlier comments on GitHub')).toBeTruthy();
+    expect(screen.getByText('2 earlier comments on GitHub')).toBeTruthy();
+    expect(screen.getByText('Why a literal here?')).toBeTruthy();
     // One reply box, for the thread that takes replies; a path without a line names the file.
     const box = screen.getByRole('textbox', { name: 'Reply on src/widget.ts' });
     const reply = screen.getByRole('button', {

@@ -1,9 +1,10 @@
+import { Fragment } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { replyToThread, resolveThread } from '../../lib/github/threads';
 import { countMessage, formatNumber, t } from '../../lib/i18n';
 import type { PullRequest, ReviewThread } from '../../lib/model';
 import { pendingActions, runPrAction } from '../state/prActions';
-import { loadThreads, reviewThreads } from '../state/reviewThreads';
+import { loadThreads, reviewThreads, threadsStale } from '../state/reviewThreads';
 import { GitHubLink } from './GitHubLink';
 import { AlertIcon } from './icons';
 import { Badge } from './ui/Badge';
@@ -12,7 +13,7 @@ import { TextField } from './ui/TextField';
 import './ReviewThreads.css';
 
 /**
- * One conversation: where it is, its last comments as text, a reply box and Resolve, both named
+ * One conversation: where it is, its opening and last comments as text, a reply box and Resolve, both named
  * by the place they act on. A failed reply or resolve says why under the thread's buttons.
  */
 function Thread({ pr, thread }: { pr: PullRequest; thread: ReviewThread }) {
@@ -40,15 +41,18 @@ function Thread({ pr, thread }: { pr: PullRequest; thread: ReviewThread }) {
           </GitHubLink>
         )}
       </p>
-      {earlier > 0 && (
-        <p class="review-thread__earlier">{t('earlierComments', formatNumber(earlier))}</p>
-      )}
       <ul class="review-thread__comments">
-        {thread.comments.map((comment) => (
-          <li key={comment.url}>
-            <strong>{comment.author}</strong>{' '}
-            <span class="review-thread__text">{comment.text}</span>
-          </li>
+        {thread.comments.map((comment, index) => (
+          <Fragment key={comment.url}>
+            <li>
+              <strong>{comment.author}</strong>{' '}
+              <span class="review-thread__text">{comment.text}</span>
+            </li>
+            {/* Between the opening comment and the latest ones. */}
+            {index === 0 && earlier > 0 && (
+              <li class="review-thread__earlier">{t('earlierComments', formatNumber(earlier))}</li>
+            )}
+          </Fragment>
         ))}
       </ul>
       {thread.canReply && (
@@ -107,7 +111,7 @@ function Thread({ pr, thread }: { pr: PullRequest; thread: ReviewThread }) {
  */
 export function ReviewThreads({ pr, id }: { pr: PullRequest; id: string }) {
   const entry = reviewThreads.value[pr.id];
-  const stale = entry !== undefined && !entry.loading && entry.key !== pr.updatedAt;
+  const stale = threadsStale(entry, pr);
   useEffect(() => {
     if (stale) void loadThreads(pr);
   }, [stale, pr.updatedAt]);

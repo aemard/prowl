@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { taskAvailability } from '../../lib/ai/builtInAi';
 import { t } from '../../lib/i18n';
 import type { PullRequest } from '../../lib/model';
-import { type AiTask, aiAnswers, aiState, answerKey, checkAi, runAi } from '../state/localAi';
+import { type AiTask, aiState, answerOf, checkAi, runAi } from '../state/localAi';
 import { detailOf } from '../state/prDetail';
 import { Button } from './ui/Button';
 import './LocalAi.css';
@@ -13,7 +13,7 @@ const HEADINGS: Record<AiTask, 'aiSummaryHeading' | 'aiExplanationHeading'> = {
 };
 
 function Answer({ pr, task }: { pr: PullRequest; task: AiTask }) {
-  const answer = aiAnswers.value[answerKey(pr, task, detailOf(pr).detail)];
+  const answer = answerOf(pr, task, detailOf(pr).detail);
   if (!answer || answer.loading) return null;
   if (answer.error)
     return (
@@ -45,7 +45,7 @@ export function LocalAi({ pr }: { pr: PullRequest }) {
   }, [availability]);
   if (availability !== 'available' || !models) return null;
   const offered = (task: AiTask) => taskAvailability(task, models) !== 'unavailable';
-  const entry = (task: AiTask) => aiAnswers.value[answerKey(pr, task, detail)];
+  const entry = (task: AiTask) => answerOf(pr, task, detail);
   const loading = (task: AiTask) => entry(task)?.loading === true;
   // An answer for the PR as it is now can be asked for again: the model may answer better.
   const answered = (task: AiTask) => entry(task)?.text !== undefined;

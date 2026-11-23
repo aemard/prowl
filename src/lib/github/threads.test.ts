@@ -13,7 +13,7 @@ function setup(data: unknown) {
 }
 
 describe('fetchReviewThreads', () => {
-  it('lists open conversations, current first, with their last comments', async () => {
+  it('lists open conversations, current first, with the opening and last comments', async () => {
     const { client } = setup(
       threadsResponse([
         threadNode('1', { isOutdated: true }),
@@ -34,9 +34,13 @@ describe('fetchReviewThreads', () => {
       ['3', false, null, 4],
       ['1', true, 12, 1],
     ]);
+    // Of four comments: the opening one, then the latest GitHub sent.
     expect(threads[0]?.comments).toEqual([
+      expect.objectContaining({ author: 'alice', text: 'Why a literal here?' }),
       expect.objectContaining({ author: 'ghost', text: 'Should this be a constant?' }),
     ]);
+    // A short thread is all in the latest comments: its opening is not repeated.
+    expect(threads[1]?.comments.map(({ author }) => author)).toEqual(['bob']);
   });
 
   it('reads the next pages to find open conversations after resolved ones, up to five', async () => {

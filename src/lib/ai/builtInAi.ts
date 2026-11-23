@@ -170,27 +170,66 @@ export function startTask(
   const monitor = (m: Monitor) =>
     m.addEventListener('downloadprogress', (event) => onProgress?.(event.loaded));
   const options = { signal, monitor };
+  let run: Promise<AiRun>;
   if (model === 'summarizer' && Summarizer)
-    return Summarizer.create({ ...summarizerOptions(language), ...options }).then((session) => ({
+    run = Summarizer.create({ ...summarizerOptions(language), ...options }).then((session) => ({
       destroy: () => session.destroy(),
-      answer: async (input) => {
-        const text = await fitInput(session, input);
-        return intoLanguage(await session.summarize(text, { signal }), language);
-      },
+      answer: async (input) => session.summarize(await fitInput(session, input), { signal }),
     }));
-  if (model === 'prompt' && LanguageModel)
-    return LanguageModel.create({
+  else if (model === 'prompt' && LanguageModel)
+    run = LanguageModel.create({
       ...languageModelOptions(language),
       ...options,
       initialPrompts: [{ role: 'system', content: system(INSTRUCTIONS[task], language) }],
     }).then((session) => ({
       destroy: () => session.destroy(),
-      answer: async (input) => {
-        const prompt = await fitInput(session, input, (text) => `---\n${text}`);
-        return intoLanguage(await session.prompt(prompt, { signal }), language);
-      },
+      answer: async (input) =>
+        session.prompt(await fitInput(session, input, (text) => `---\n${text}`), { signal }),
     }));
-  return Promise.reject(new Error('unavailable'));
+  else return Promise.reject(new Error('unavailable'));
+  return translated(run, startTranslator(language, signal));
+}
+
+type Translation = Destroyable & { translate(text: string): Promise<string> };
+
+/**
+ * The Translator from English into the panel's language when the model cannot write it, created
+ * in the same click as the model (a missing language pack downloads only with a user gesture).
+ * None when Chrome cannot translate into it: the answer then stays in English.
+ */
+function startTranslator(language: string, signal?: AbortSignal) {
+  const { Translator } = ai();
+  const target = language.split('-')[0] ?? 'en';
+  if (!Translator || modelLanguage(language) !== 'en' || target === 'en')
+    return Promise.resolve(undefined);
+  return Translator.create({ sourceLanguage: 'en', targetLanguage: language, signal }).catch(
+    () => undefined,
+  );
+}
+
+/** `run`, its answers translated by `translator` when there is one, both destroyed together. */
+function translated(
+  run: Promise<AiRun>,
+  translator: Promise<Translation | undefined>,
+): Promise<AiRun> {
+  const drop = () => void translator.then((each) => each?.destroy());
+  return run.then(
+    (session) => ({
+      destroy: () => {
+        session.destroy();
+        drop();
+      },
+      answer: async (input) => {
+        const text = await session.answer(input);
+        const each = await translator;
+        return each ? each.translate(text) : text;
+      },
+    }),
+    (error: unknown) => {
+      drop();
+      throw error;
+    },
+  );
 }
 
 /**
@@ -207,19 +246,4 @@ export async function downloadModel(
   );
   if (!task) return;
   (await startTask(task, models, language, { onProgress })).destroy();
-}
-
-/** Translates English model output into the panel's language when the model cannot write it. */
-async function intoLanguage(text: string, language: string): Promise<string> {
-  const target = language.split('-')[0] ?? 'en';
-  if (modelLanguage(language) !== 'en' || target === 'en') return text;
-  const { Translator } = ai();
-  const options = { sourceLanguage: 'en', targetLanguage: language };
-  if (!Translator || (await Translator.availability(options)) === 'unavailable') return text;
-  const translator = await Translator.create(options);
-  try {
-    return await translator.translate(text);
-  } finally {
-    translator.destroy();
-  }
 }

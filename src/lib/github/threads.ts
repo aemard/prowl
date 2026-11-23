@@ -13,17 +13,20 @@ export const THREADS_QUERY = /* GraphQL */ `
 query ProwlReviewThreads($id: ID!, $after: String) {
   node(id: $id) {
     ... on PullRequest {
+      updatedAt
       reviewThreads(first: 100, after: $after) {
         pageInfo { hasNextPage endCursor }
         nodes {
           id isResolved isOutdated path line viewerCanResolve viewerCanReply
-          comments(last: 3) { totalCount nodes { author { login } bodyText createdAt url } }
+          opening: comments(first: 1) { nodes { ...ProwlThreadComment } }
+          comments(last: 3) { totalCount nodes { ...ProwlThreadComment } }
         }
       }
     }
   }
   ${RATE_LIMIT_FIELDS}
-}`;
+}
+fragment ProwlThreadComment on PullRequestReviewComment { author { login } bodyText createdAt url }`;
 
 export const RESOLVE_THREAD_MUTATION = /* GraphQL */ `
 mutation ProwlResolveThread($id: ID!) {
@@ -37,6 +40,12 @@ mutation ProwlReplyThread($id: ID!, $body: String!) {
   }
 }`;
 
+type CommentNodes = ({
+  author: { login: string } | null;
+  bodyText: string;
+  createdAt: string;
+  url: string;
+} | null)[];
 interface ThreadNode {
   id: string;
   isResolved: boolean;
@@ -45,20 +54,12 @@ interface ThreadNode {
   line: number | null;
   viewerCanResolve: boolean;
   viewerCanReply: boolean;
-  comments: {
-    totalCount: number;
-    nodes:
-      | ({
-          author: { login: string } | null;
-          bodyText: string;
-          createdAt: string;
-          url: string;
-        } | null)[]
-      | null;
-  };
+  opening?: { nodes: CommentNodes | null };
+  comments: { totalCount: number; nodes: CommentNodes | null };
 }
 export interface ThreadsData {
   node: {
+    updatedAt?: string;
     reviewThreads?: {
       pageInfo?: { hasNextPage: boolean; endCursor: string | null };
       nodes: (ThreadNode | null)[] | null;
@@ -74,11 +75,20 @@ export interface OpenThreads {
   threads: ReviewThread[];
   /** False when GitHub has more threads than `MAX_PAGES` pages: some may be open. */
   complete: boolean;
+  /** The pull request's `updatedAt` as GitHub had it when it answered. */
+  updatedAt?: string;
 }
 
-/** Maps one thread; exported for tests. */
+/**
+ * Maps one thread; exported for tests. A long thread keeps its opening comment, what the
+ * conversation is about, before the latest ones.
+ */
 export function mapThread(node: ThreadNode): ReviewThread {
-  const comments = (node.comments.nodes ?? []).flatMap((c) =>
+  const latest = node.comments.nodes ?? [];
+  const opening = node.opening?.nodes?.[0];
+  const listed =
+    opening && node.comments.totalCount > latest.length ? [opening, ...latest] : latest;
+  const comments = listed.flatMap((c) =>
     c
       ? [
           {
@@ -110,6 +120,7 @@ export function mapThread(node: ThreadNode): ReviewThread {
 export async function fetchReviewThreads(client: GitHubClient, id: string): Promise<OpenThreads> {
   const threads: ReviewThread[] = [];
   let after: string | null = null;
+  let updatedAt: string | undefined;
   for (let page = 0; page < MAX_PAGES; page++) {
     const data: ThreadsData = await client.graphql<ThreadsData>(
       THREADS_QUERY,
@@ -118,13 +129,14 @@ export async function fetchReviewThreads(client: GitHubClient, id: string): Prom
     );
     const list = data.node?.reviewThreads;
     if (!list) throw new GitHubError('not_found', t('thisPullRequestIsNotAvailable'));
+    updatedAt ??= data.node?.updatedAt;
     for (const thread of list.nodes ?? [])
       if (thread && !thread.isResolved) threads.push(mapThread(thread));
     after = list.pageInfo?.hasNextPage ? list.pageInfo.endCursor : null;
     if (!after) break;
   }
   threads.sort((a, b) => Number(a.outdated) - Number(b.outdated));
-  return { threads, complete: after === null };
+  return { threads, complete: after === null, updatedAt };
 }
 
 /** Marks the conversation resolved. */

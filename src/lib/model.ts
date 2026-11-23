@@ -228,7 +228,10 @@ export interface ReviewThread {
   line: number | null;
   canResolve: boolean;
   canReply: boolean;
-  /** Every comment of the thread; `comments` holds the last three, oldest first. */
+  /**
+   * Every comment of the thread; `comments` holds the last three, oldest first, after the
+   * opening one when they leave it out.
+   */
   commentCount: number;
   comments: { author: string; text: string; createdAt: string; url: string }[];
 }

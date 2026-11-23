@@ -123,10 +123,25 @@ describe('startTask', () => {
     expect(await (await startTask('failure', states, 'zh-CN')).answer(input('log'))).toBe(
       '测试失败。',
     );
-    g.Translator = factory('unavailable', {});
+    // Chrome refuses a language it cannot translate into: the answer stays in English.
+    g.Translator = { create: () => Promise.reject(new DOMException('No', 'NotSupportedError')) };
     expect(await (await startTask('failure', states, 'zh-CN')).answer(input('log'))).toBe(
       'Tests fail.',
     );
+  });
+
+  it('creates the Translator in the click too, and destroys it with the session', async () => {
+    g.LanguageModel = factory('available', { prompt: async () => 'Tests fail.' });
+    const translator = factory('downloadable', { translate: async () => 'テスト' });
+    g.Translator = translator;
+    const started = startTask('failure', models('unavailable', 'available'), 'zh-TW');
+    expect(translator.create).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceLanguage: 'en', targetLanguage: 'zh-TW' }),
+    );
+    const run = await started;
+    run.destroy();
+    const session = await translator.create.mock.results[0]?.value;
+    await vi.waitFor(() => expect(session.destroy).toHaveBeenCalled());
   });
 
   it('fails when no model runs the task', async () => {
