@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { buildSnapshotOf } from '../../test/panel';
-import { snapshot } from '../state/store';
+import { settings, snapshot } from '../state/store';
 import { ListView } from './List';
 import { cardTitles, pr, withSections } from './List.test-support';
 
@@ -45,13 +45,45 @@ describe('Your turn section', () => {
     const tab = screen.getByRole('tab', { name: /^Your turn/ });
     expect(tab.textContent).toBe('Your turn2');
     fireEvent.click(tab);
-    // Newest turn first: "Asked of me" has waited since 2 October.
     expect(cardTitles()).toEqual(['Mine, red', 'Asked of me']);
     // A status that reads as one: whose move it is, then what to do.
     expect(chip('Your turn: Fix CI · 1 failing')).toBeTruthy();
     expect(chip('Your turn: Review')?.closest('[title]')?.getAttribute('title')).toMatch(
       /^Your turn: Review, since /,
     );
+  });
+
+  it('follows the list sort setting like every section', () => {
+    const viewer = snapshot.value?.viewer.login ?? 'octocat';
+    const me = { login: viewer, avatarUrl: '', isBot: false };
+    snapshot.value = buildSnapshotOf({
+      authored: [
+        pr(1, {
+          author: me,
+          title: 'Mine, red',
+          checks: failing,
+          createdAt: '2026-10-01T09:00:00.000Z',
+          updatedAt: '2026-10-03T09:00:00.000Z',
+        }),
+      ],
+      review_requested: [
+        pr(3, {
+          title: 'Asked of me',
+          requestedReviewers: [viewer],
+          createdAt: '2026-10-02T09:00:00.000Z',
+          updatedAt: '2026-10-02T09:00:00.000Z',
+        }),
+      ],
+    });
+    settings.value = { ...settings.value, sort: 'updated' };
+    const { unmount } = render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Your turn/ }));
+    expect(cardTitles()).toEqual(['Mine, red', 'Asked of me']);
+    unmount();
+    settings.value = { ...settings.value, sort: 'created' };
+    render(<ListView />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Your turn/ }));
+    expect(cardTitles()).toEqual(['Asked of me', 'Mine, red']);
   });
 
   it('sums up the queue above the list', async () => {

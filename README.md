@@ -63,7 +63,7 @@ Details: [sign-in guide](docs/auth.md).
   "Snoozed" fold until the time you pick.
 - **Your turn**: a section, the toolbar badge (by default) and a notification say which pull
   requests wait on you and why (your review, a re-review after a push, CI to fix, feedback to
-  answer, a merge to make), newest first. On a card, the chip that states the fact becomes
+  answer, a merge to make), in your chosen sort order. On a card, the chip that states the fact becomes
   the action, with a bell ("Review", "Fix CI · 1 failing", "Merge it").
 - **Deployments**: an expanded card lists where its head commit is deployed (preview, staging)
   and how that went.

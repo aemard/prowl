@@ -138,7 +138,7 @@ describe('whoseTurn on other pull requests', () => {
 });
 
 describe('yourTurnIds', () => {
-  it('lists each pull request once, newest turn first', () => {
+  it('lists each pull request where it is your move once', () => {
     const older = theirs({
       number: 1,
       requestedReviewers: ['me'],
@@ -151,7 +151,7 @@ describe('yourTurnIds', () => {
       { authored: [newer], review_requested: [older, waiting], mentioned: [older] },
       { viewer: { login: 'me', avatarUrl: '', name: null } },
     );
-    expect(yourTurnIds(snapshot)).toEqual([newer.id, older.id]);
+    expect([...yourTurnIds(snapshot)].sort()).toEqual([newer.id, older.id].sort());
   });
 });
 

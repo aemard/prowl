@@ -254,7 +254,7 @@ the `turn` badge and the turn events. The first match wins:
 
 "Last push" is the head commit's `committedDate`, so a force-push of an old commit can read as
 older than it is. `yourTurnIds(snapshot)` lists the PRs of every other section where the owner
-is `you`, newest turn first; the Your turn section is never searched.
+is `you`, shown in the list's sort order like every section; the Your turn section is never searched.
 
 ## Invariants
 

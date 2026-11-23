@@ -136,17 +136,15 @@ export const turnIn = (snapshot: Snapshot, pr: PullRequest): Turn =>
   whoseTurn(pr, snapshot.viewer.login, snapshot.teamRequests?.[pr.id]);
 
 /**
- * The ids of the PRs of every section where it is the viewer's turn, newest turn first:
- * what the "Your turn" section lists and the `turn` badge counts.
+ * The ids of the PRs of every section where it is the viewer's turn: what the "Your turn"
+ * section lists (in the list's sort order, like every section) and the `turn` badge counts.
  */
 export function yourTurnIds(snapshot: Snapshot): string[] {
   const ids = new Set(Object.values(snapshot.sections).flat());
   return [...ids]
     .flatMap((id) => snapshot.pullRequests[id] ?? [])
-    .map((pr) => ({ pr, turn: turnIn(snapshot, pr) }))
-    .filter(({ turn }) => turn.owner === 'you')
-    .sort((a, b) => Date.parse(b.turn.since) - Date.parse(a.turn.since))
-    .map(({ pr }) => pr.id);
+    .filter((pr) => turnIn(snapshot, pr).owner === 'you')
+    .map((pr) => pr.id);
 }
 
 /** How long a PR may wait on reviewers before the summary calls it stuck. */

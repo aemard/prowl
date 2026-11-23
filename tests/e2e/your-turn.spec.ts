@@ -25,7 +25,7 @@ test('the Your turn section lists what waits on you, with why, and matches the b
               number: 7,
               title: 'Asks for my review',
               author: bob,
-              // Waiting longer than the red build: listed after it (newest turn first).
+              // Waiting longer than the red build; the list order follows the sort setting.
               commits: headCommit({ SUCCESS: 1 }, {}, '2026-09-01T12:00:00Z'),
               reviewRequests: { nodes: [requestedReviewer('octocat')] },
             }),
