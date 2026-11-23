@@ -59,7 +59,7 @@ mutation ProwlEnableAutoMerge($id: ID!, $method: PullRequestMergeMethod!, $oid: 
   enablePullRequestAutoMerge(
     input: { pullRequestId: $id, mergeMethod: $method, expectedHeadOid: $oid, commitHeadline: $headline }
   ) {
-    pullRequest { autoMergeRequest { mergeMethod } }
+    pullRequest { autoMergeRequest { mergeMethod } isInMergeQueue }
   }
 }`;
 
@@ -70,11 +70,15 @@ mutation ProwlDisableAutoMerge($id: ID!) {
   }
 }`;
 
-type AutoMergePayload = { pullRequest: { autoMergeRequest: object | null } | null } | null;
+type AutoMergePayload = {
+  pullRequest: { autoMergeRequest: object | null; isInMergeQueue?: boolean } | null;
+} | null;
 
 /**
  * Turns auto-merge on with `method` (GitHub merges once the requirements pass, unless the head
- * moved from `headSha`; `title` as for `mergePullRequest`), or off when `method` is null.
+ * moved from `headSha`; `title` as for `mergePullRequest`), or off when `method` is null. On a
+ * merge-queue branch ("Merge when ready") GitHub may queue a PR whose requirements already pass
+ * at once, with no auto-merge request left: that is the change asked for too.
  */
 export async function setAutoMerge(
   client: GitHubClient,
@@ -97,13 +101,12 @@ export async function setAutoMerge(
         }
       : { id: prId },
   );
-  const payload = method ? data.enablePullRequestAutoMerge : data.disablePullRequestAutoMerge;
-  if (
-    !payload?.pullRequest ||
-    (payload.pullRequest.autoMergeRequest !== null) !== (method !== null)
-  ) {
+  const pr = (method ? data.enablePullRequestAutoMerge : data.disablePullRequestAutoMerge)
+    ?.pullRequest;
+  const on =
+    pr && (pr.autoMergeRequest !== null || (method !== null && pr.isInMergeQueue === true));
+  if (!pr || on !== (method !== null))
     throw new GitHubError('server', t('githubDidNotConfirmChange'));
-  }
 }
 
 /** Adds the pull request to its base branch's merge queue, pinned to the head the user saw. */
@@ -129,7 +132,7 @@ export async function enqueuePullRequest(
     enqueuePullRequest: { mergeQueueEntry: { position: number } | null } | null;
   }>(ENQUEUE_MUTATION, { id: prId, oid: headSha });
   if (!data.enqueuePullRequest?.mergeQueueEntry)
-    throw new GitHubError('server', t('githubDidNotConfirmTheMerge'));
+    throw new GitHubError('server', t('githubDidNotConfirmChange'));
 }
 
 /** Takes the pull request out of the merge queue. */
@@ -137,5 +140,5 @@ export async function dequeuePullRequest(client: GitHubClient, prId: string): Pr
   const data = await client.graphql<{ dequeuePullRequest: unknown }>(DEQUEUE_MUTATION, {
     id: prId,
   });
-  if (!data.dequeuePullRequest) throw new GitHubError('server', t('githubDidNotConfirmTheMerge'));
+  if (!data.dequeuePullRequest) throw new GitHubError('server', t('githubDidNotConfirmChange'));
 }

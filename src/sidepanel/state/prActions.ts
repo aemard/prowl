@@ -20,10 +20,14 @@ export const pendingActions = signal<Readonly<Record<string, string>>>({});
 /** `acme/web#12`: what toasts and labels call a pull request. */
 export const prRef = ({ repo, number }: PullRequest) => `${repo.nameWithOwner}#${number}`;
 
+/** "Merge acme/web#12": the accessible name of a button that runs `label` on `pr`. */
+export const forPr = (label: string, pr: PullRequest) => t('forPr', label, prRef(pr));
+
 /**
- * Runs `run` with a client for the signed-in account and reports the outcome in a toast: `done`
- * on success (and a forced poll), `<name> failed: <GitHub's message>` otherwise, or that message
- * to `onError` when the caller shows it itself (a dialog's field). Resolves to whether it worked;
+ * Runs `run` with a client for the signed-in account and reports the outcome in a toast: what
+ * `run` resolved to, else `done`, on success (and a forced poll), `<name> failed: <GitHub's
+ * message>` otherwise, or that message to `onError` when the caller shows it itself (a dialog's
+ * field). Resolves to whether it worked;
  * it never rejects, does nothing while another action of the PR runs, and drops the outcome (no
  * toast, no poll, `false`) when another account signed in meanwhile.
  * `name` is the button's wording ("Approve", "Request changes") and names the pending action.
@@ -31,9 +35,9 @@ export const prRef = ({ repo, number }: PullRequest) => `${repo.nameWithOwner}#$
 export async function runPrAction(
   pr: PullRequest,
   name: string,
-  /** The toast's verb; a function when it depends on how the action ended. */
-  done: string | (() => string),
-  run: (client: GitHubClient) => Promise<void>,
+  /** The toast's verb, unless `run` resolves to one (a string: how the action ended). */
+  done: string,
+  run: (client: GitHubClient) => Promise<unknown>,
   onError?: (message: string) => void,
 ): Promise<boolean> {
   const session = auth.value;
@@ -41,12 +45,10 @@ export async function runPrAction(
   if (!token || pendingActions.value[pr.id]) return false;
   pendingActions.value = { ...pendingActions.value, [pr.id]: name };
   try {
-    await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
+    const outcome = await run(createGitHubClient({ token, apiUrl: env.apiUrl }));
     if (auth.value !== session) return false;
-    showToast({
-      message: t('message2', typeof done === 'function' ? done() : done, prRef(pr)),
-      tone: 'success',
-    });
+    const verb = typeof outcome === 'string' && outcome ? outcome : done;
+    showToast({ message: t('prDone', verb, prRef(pr)), tone: 'success' });
     void sendToBackground({ type: 'poll', reason: 'change' });
     return true;
   } catch (error) {

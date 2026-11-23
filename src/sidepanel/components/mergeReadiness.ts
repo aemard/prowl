@@ -7,7 +7,7 @@
 
 import { countMessage, t } from '../../lib/i18n';
 import { isReadyToMerge } from '../../lib/mergeEligibility';
-import type { MergeMethod, PullRequest, PullRequestDetail } from '../../lib/model';
+import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import type { Tone } from './ui/cx';
 
 export interface MergeLine {
@@ -141,44 +141,3 @@ export function mergeReadiness(
   if (pr.autoMerge) lines.unshift({ tone: 'neutral', text: t('autoMergeOnMergesWhenReady') });
   return lines;
 }
-
-/** Where a merge control sits: before the review actions (merge), after them (auto), or both. */
-export type MergePlacement = 'merge' | 'auto' | 'all';
-
-/**
- * What the merge control may offer, so it never contradicts the blockers listed above it: Merge
- * when GitHub's verdict is ready; "Merge without waiting" when it is not but the viewer can bypass
- * the rules (`viewerCanMergeAsAdmin`); otherwise auto-merge when the repository and the viewer
- * allow it, or nothing. On a branch with a merge queue (`queue`), Merge is "Add to merge queue",
- * offered only when ready (the queue is no way around the rules), and auto-merge is GitHub's
- * "Merge when ready", which queues the PR once its requirements pass. Unverified merge facts
- * offer nothing until a refresh fills them in. GitHub still has the last word; a refusal shows
- * its reason in the dialog and requests a refresh.
- */
-export function mergeOptions(pr: PullRequest, placement: MergePlacement = 'all', queue = false) {
-  const ready = isReadyToMerge(pr);
-  const known =
-    pr.mergeable !== 'unknown' &&
-    pr.mergeStateStatus !== 'unknown' &&
-    pr.reviewDecision !== 'unknown';
-  const bypass = !queue && pr.viewerCanMergeAsAdmin === true;
-  return {
-    ready,
-    canMerge: placement !== 'auto' && known && (ready || bypass),
-    offerAutoMerge:
-      placement !== 'merge' &&
-      known &&
-      !ready &&
-      pr.autoMergeAllowed &&
-      !pr.autoMerge &&
-      pr.viewerCanEnableAutoMerge === true,
-  };
-}
-
-/**
- * The method a merge goes with: the first of `preferred` that `methods` allows (the user's pick,
- * then the repository's default), else the first allowed one. `methods` are the detail's, which
- * the base branch's rules narrowed (`PullRequestDetail.allowedMergeMethods`), where known.
- */
-export const pickMethod = (methods: MergeMethod[], ...preferred: (MergeMethod | undefined)[]) =>
-  [...preferred, ...methods].find((m): m is MergeMethod => m !== undefined && methods.includes(m));

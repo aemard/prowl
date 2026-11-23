@@ -415,18 +415,6 @@
     "message": "Converted to draft:",
     "description": "Extension text: Converted to draft:"
   },
-  "of": {
-    "message": "$P1$ of $P2$",
-    "description": "Extension text: $1 of $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Update with a rebase",
     "description": "Extension text: Update with a rebase"
@@ -454,18 +442,6 @@
   "autoMergeIsOnFor": {
     "message": "Auto-merge is on for",
     "description": "Extension text: Auto-merge is on for"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "description": "Extension text: $1 $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Auto-merge is off for",
@@ -723,10 +699,6 @@
   "noReviewsYet": {
     "message": "No reviews yet.",
     "description": "Extension text: No reviews yet."
-  },
-  "actions": {
-    "message": "Actions",
-    "description": "Extension text: Actions"
   },
   "tryAgain": {
     "message": "Try again",
@@ -2217,18 +2189,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$: $P2$",
-    "description": "Extension text: $1: $2",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3798,5 +3758,53 @@
   "readyAwaitsMaintainer": {
     "message": "Ready to merge; someone with write access has to merge it",
     "description": "Extension text: Ready to merge; someone with write access has to merge it"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "description": "Accessible name of a button that acts on one pull request: the action ($1, such as 'Merge' or 'Turn off auto-merge'), then the pull request ($2, such as acme/web#12).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "description": "Toast once GitHub confirmed an action: what happened ($1, such as 'Merged'), then the pull request ($2, such as acme/web#12).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "description": "Chip of a stack: what waits on you ($1, such as 'Review'), then the number of the one pull request it concerns ($2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "description": "Chip of a stack: what waits on you ($1, such as 'Review'), then how many of its pull requests it concerns ($2).",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

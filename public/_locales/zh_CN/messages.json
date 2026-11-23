@@ -338,17 +338,6 @@
   "convertedToDraft": {
     "message": "已转换为草稿："
   },
-  "of": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "通过变基更新"
   },
@@ -369,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "已启用自动合并："
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "已禁用自动合并："
@@ -595,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "暂无审查。"
-  },
-  "actions": {
-    "message": "操作"
   },
   "tryAgain": {
     "message": "重试"
@@ -1809,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3232,5 +3196,49 @@
   },
   "readyAwaitsMaintainer": {
     "message": "可以合并；需要有写入权限的人来合并"
+  },
+  "forPr": {
+    "message": "$P1$：$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$ 个",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

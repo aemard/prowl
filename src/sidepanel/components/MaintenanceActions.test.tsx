@@ -28,7 +28,7 @@ describe('MaintenanceActions', () => {
 
   it('offers a re-run only for failed checks on an open PR the viewer can write to', () => {
     show({ checks: failing, viewerCanMerge: true });
-    expect(screen.getByRole('button', { name: /^Re-run failed checks of / })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Re-run failed checks acme/ })).toBeTruthy();
     show({
       checks: failing,
       viewerCanMerge: false,
@@ -45,13 +45,13 @@ describe('MaintenanceActions', () => {
       viewerCanMerge: false,
       author: { login: 'OctoCat', avatarUrl: '', isBot: false },
     });
-    expect(screen.getByRole('button', { name: /^Ready for review: / })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Ready for review acme/ })).toBeTruthy();
     show({
       isDraft: false,
       viewerCanMerge: true,
       author: { login: 'someone', avatarUrl: '', isBot: false },
     });
-    expect(screen.queryByRole('button', { name: /^Convert to draft: / })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Convert to draft acme/ })).toBeNull();
     show({ viewerCanMerge: false, author: { login: 'someone', avatarUrl: '', isBot: false } });
     expect(screen.getAllByRole('button', { name: /draft|review/ })).toHaveLength(1);
   });
@@ -72,7 +72,7 @@ describe('MaintenanceActions', () => {
       ),
     );
     show({ isDraft: true, viewerCanMerge: true });
-    fireEvent.click(screen.getByRole('button', { name: /^Ready for review: / }));
+    fireEvent.click(screen.getByRole('button', { name: /^Ready for review acme/ }));
     await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Marked ready for review:/));
   });
 
@@ -82,7 +82,7 @@ describe('MaintenanceActions', () => {
       vi.fn(async () => jsonResponse({ data: { node: null } })),
     );
     show({ checks: failing, viewerCanMerge: true });
-    fireEvent.click(screen.getByRole('button', { name: /^Re-run failed checks of / }));
+    fireEvent.click(screen.getByRole('button', { name: /^Re-run failed checks acme/ }));
     await waitFor(() =>
       expect(toastTexts()[0]).toBe(
         'danger: Re-run failed checks failed: GitHub did not find the pull request.',
@@ -92,7 +92,7 @@ describe('MaintenanceActions', () => {
 
   it('offers to update a branch that is behind, to whoever may push to it', () => {
     show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
-    expect(screen.getByRole('button', { name: /^Update branch of / })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Update branch acme/ })).toBeTruthy();
     show({ mergeStateStatus: 'behind', viewerCanUpdate: false });
     show({ mergeStateStatus: 'clean', viewerCanUpdate: true });
     show({ mergeStateStatus: 'behind', viewerCanUpdate: true, state: 'closed' });
@@ -114,7 +114,7 @@ describe('MaintenanceActions', () => {
       }),
     );
     show({ mergeStateStatus: 'behind', viewerCanUpdate: true });
-    fireEvent.click(screen.getByRole('button', { name: /^Update branch of / }));
+    fireEvent.click(screen.getByRole('button', { name: /^Update branch acme/ }));
     fireEvent.click(screen.getByRole('menuitem', { name: label }));
     await waitFor(() => expect(toastTexts()[0]).toMatch(/^success: Updated the branch of /));
     expect(bodies).toEqual([{ id: base.id, oid: base.headSha, method }]);

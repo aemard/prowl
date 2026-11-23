@@ -162,22 +162,24 @@ appending a newer one.
   answer must match both its loading entry and the auth it started with.
 - Stacks: `listItems` (groups open members; a merged or closed one is a plain card) / `stackMembers` (open members only) / `stackState` / `stackSummary` (ready
   run from `stack.bottom`) in `src/lib/stacks.ts`; `StackItem` loads lazily, so tests wait for it
-  with `findBy…`. `StackMergeButton` / `StackMergeDialog` serve the stack and a stacked card's
-  "Merge up to here"; the dialog needs the top's detail (unit tests seed `details`).
-- Review threads load on demand through `state/reviewThreads.ts` (keyed by `updatedAt`, paged,
-  `complete: false` past 5 pages); written review drafts survive folding in `state/reviewDrafts.ts`.
+  with `findBy…`. The stack and a stacked card's "Merge up to here" are a `MergeButton` with a
+  stack `MergeTarget`; the dialog needs the top's detail (unit tests seed `details`).
+- Review threads load on demand through `state/reviewThreads.ts` (keyed by the `updatedAt` GitHub
+  answered with, so the poll after a reply reads nothing; `threadsStale`), paged,
+  `complete: false` past 5 pages; written review drafts survive folding in `state/reviewDrafts.ts`.
 - State one account read resets through `onAccountChange(reset)` (`state/store.ts`); loaders
   publish only while `auth.value` is their session and their entry is still the request they put.
 
 ## Actions
 
 - Run every GitHub write from the panel with `runPrAction(pr, name, done, run, onError?)`
-  (`state/prActions.ts`): one action per PR, toast, then a `change` poll. E2E asserts on
+  (`state/prActions.ts`): one action per PR, toast (`run` may resolve to its own verb), then a
+  `change` poll. Name buttons with `forPr(label, pr)`. E2E asserts on
   `github.requestsFor('ProwlApprove')[0].body.variables`.
-- `MergeAction` renders nothing until `detailOf(pr)` has the detail (only it says whether a merge
-  queue applies); what it may offer is `mergeOptions` and the method `pickMethod`
-  (`components/mergeReadiness.ts`, shared with `MergeQueueAction` and the stack merge). A stacked
-  PR gets only `StackRoute`. Unit tests use `show()` from `MergeAction.test-support.tsx`.
+- Merging: one model in `components/mergeTarget.ts` (`MergeTarget`, `mergeVerbs` = the readiness
+  rules, `mergePlan`, `sendMerge`) and one `MergeDialog`; controls read `mergeDetailOf`
+  (`state/loadDetail.ts`), never `detailOf`, so a poll does not close the dialog. Unit tests use
+  `show()` from `MergeAction.test-support.tsx`.
 - To make a merged PR leave the list in E2E, drop it from the `ProwlSearch` answer and answer
   `ProwlNodes` with `closedNode(id)`.
 - Shortcuts: one case in `shortcutFor` (`state/shortcuts.ts`), one row in `SHORTCUTS` and its

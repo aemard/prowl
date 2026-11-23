@@ -1,27 +1,27 @@
-import { setAutoMerge } from '../../lib/github/mergeActions';
+import { useState } from 'preact/hooks';
+import type { GitHubClient } from '../../lib/github/client';
+import { dequeuePullRequest, setAutoMerge } from '../../lib/github/mergeActions';
 import { formatNumber, t } from '../../lib/i18n';
-import type { PullRequest } from '../../lib/model';
+import { isReadyToMerge } from '../../lib/mergeEligibility';
+import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { stackMembers, stackSummary } from '../../lib/stacks';
-import { pendingActions, prRef, runPrAction } from '../state/prActions';
-import { detailOf } from '../state/prDetail';
+import { mergeDetailOf } from '../state/loadDetail';
+import { forPr, pendingActions, prRef, runPrAction } from '../state/prActions';
 import { auth, snapshot } from '../state/store';
 import { GitHubLink } from './GitHubLink';
 import { GitMergeIcon } from './icons';
-import { MergeDialog, type MergeDialogProps, useMergeControls } from './MergeDialog';
-import { MergeQueueAction } from './MergeQueueAction';
-import { type MergePlacement, mergeOptions, pickMethod } from './mergeReadiness';
-import { StackMergeButton } from './StackMergeDialog';
-import { Button } from './ui/Button';
+import { MergeDialog } from './MergeDialog';
+import { type MergePlacement, type MergeTarget, mergePlan } from './mergeTarget';
+import { Button, type ButtonProps } from './ui/Button';
 import './MergeAction.css';
 
 /**
  * Merging an open, non-draft PR the viewer can merge, in one of two places of the actions row:
- * Merge before the review actions, auto-merge after them (`placement`). Nothing shows until the
- * card's detail says whether the base branch merges through a merge queue: a direct Merge there
- * is one GitHub refuses. With a queue, `MergeQueueAction` takes over; when the detail cannot be
- * read, a link to merge on GitHub stands in. A stacked PR merges only with its stack, through
- * GitHub's asynchronous merge API (the GraphQL merge and auto-merge mutations refuse it), so its
- * card offers `StackRoute` instead.
+ * Merge (or "Add to merge queue") before the review actions, auto-merge after them
+ * (`placement`). Nothing shows until the card's detail says whether the base branch merges
+ * through a merge queue, where a direct Merge is one GitHub refuses; when the detail cannot be
+ * read, or the rules leave no method, a link to merge on GitHub stands in. A queued PR shows its
+ * place instead. A stacked PR merges only with its stack ("Merge up to here").
  */
 export function MergeAction({
   pr,
@@ -30,76 +30,73 @@ export function MergeAction({
   pr: PullRequest;
   placement?: MergePlacement;
 }) {
-  const { detail, failed } = detailOf(pr);
+  const { detail, failed } = mergeDetailOf(pr);
   if (!auth.value || !pr.viewerCanMerge || pr.state !== 'open' || pr.isDraft) return null;
+  const link = placement !== 'auto' && <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>;
+  const off = placement !== 'merge' && <TurnOffAutoMerge pr={pr} />;
   if (pr.stack)
     return (
       <>
         {placement !== 'auto' && <StackRoute pr={pr} />}
-        {placement !== 'merge' && <TurnOffAutoMerge pr={pr} />}
+        {off}
       </>
     );
-  if (!detail)
-    return failed && placement !== 'auto' ? (
-      <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
-    ) : null;
-  const methods = detail.allowedMergeMethods ?? pr.allowedMergeMethods;
+  if (!detail) return failed ? link : null;
+  const { mergeQueue } = detail;
+  // Off a queue, every offer needs a method the rules allow.
+  const noMethod = mergeQueue === undefined && !mergePlan({ pr }, detail).method;
   return (
     <>
-      {detail.mergeQueue !== undefined ? (
-        <MergeQueueAction
-          pr={pr}
-          queue={detail.mergeQueue}
-          placement={placement}
-          method={pickMethod(methods, pr.defaultMergeMethod)}
-        />
-      ) : methods.length > 0 ? (
-        <DirectMerge pr={pr} detail={detail} methods={methods} placement={placement} />
+      {mergeQueue ? (
+        placement !== 'auto' && <QueuePlace pr={pr} place={mergeQueue} />
+      ) : noMethod ? (
+        link
       ) : (
-        placement !== 'auto' && <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
+        <MergeButton target={{ pr }} placement={placement} />
       )}
-      {placement !== 'merge' && <TurnOffAutoMerge pr={pr} />}
+      {off}
     </>
   );
 }
 
-/** Merge (or "Merge without waiting", or "Enable auto-merge") and its confirmation. */
-function DirectMerge({
-  pr,
-  detail,
-  methods,
-  placement,
-}: Omit<MergeDialogProps, 'method' | 'controls'>) {
-  const controls = useMergeControls(pr, detail);
-  const method = pickMethod(methods, controls.picked, pr.defaultMergeMethod);
-  const { pending, setConfirming } = controls;
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  if (!method || (!canMerge && !offerAutoMerge)) return null;
-  const action = canMerge ? t('merge') : t('enableAutoMerge');
-  const label = canMerge ? (ready ? t('merge') : t('mergeWithoutWaiting')) : action;
+type MergeButtonProps = { target: MergeTarget; placement?: MergePlacement } & Partial<
+  Omit<ButtonProps, 'onClick' | 'size' | 'loading' | 'disabled'>
+>;
+
+/**
+ * What opens `MergeDialog` for `target`: named after what a lone PR's plan offers ("Merge",
+ * "Merge without waiting", "Enable auto-merge", "Add to merge queue", "Merge when ready") and
+ * emphasized only when ready, or as its caller names it for a stack. Hidden while it offers
+ * nothing, but the dialog it opened stays open across polls.
+ */
+export function MergeButton({ target, placement, children, ...button }: MergeButtonProps) {
+  const [open, setOpen] = useState(false);
+  const { pr, stack } = target;
+  const plan = mergePlan(target, mergeDetailOf(pr).detail, placement);
+  const pending = pendingActions.value[pr.id];
+  const mine = plan.verbs.some((verb) => plan.name(verb) === pending);
+  const ready = stack !== undefined || isReadyToMerge(pr);
+  const [first = 'merge'] = plan.verbs;
+  const label = plan.verbs.includes('merge')
+    ? t(ready ? 'merge' : 'mergeWithoutWaiting')
+    : plan.name(first);
   return (
     <>
-      <Button
-        size="sm"
-        variant={ready ? 'primary' : 'secondary'}
-        icon={<GitMergeIcon size={12} />}
-        aria-label={t('message2', label, prRef(pr))}
-        loading={pending === action}
-        disabled={pending !== undefined && pending !== action}
-        onClick={() => setConfirming(true)}
-      >
-        {label}
-      </Button>
-      {controls.confirming && (
-        <MergeDialog
-          pr={pr}
-          detail={detail}
-          methods={methods}
-          method={method}
-          controls={controls}
-          placement={placement}
-        />
+      {(stack || plan.verbs.length > 0) && (
+        <Button
+          size="sm"
+          variant={ready ? 'primary' : 'secondary'}
+          icon={<GitMergeIcon size={12} />}
+          aria-label={children ? undefined : forPr(label, pr)}
+          loading={mine}
+          disabled={pending !== undefined && !mine}
+          {...button}
+          onClick={() => setOpen(true)}
+        >
+          {children ?? label}
+        </Button>
       )}
+      {open && <MergeDialog target={target} placement={placement} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -114,39 +111,79 @@ function StackRoute({ pr }: { pr: PullRequest }) {
   const members = stackMembers(Object.values(snapshot.value?.pullRequests ?? {}), stack.id);
   const { mergeable, total } = stackSummary(members);
   const upTo = mergeable.findIndex((member) => member.id === pr.id);
-  const top = mergeable[upTo];
   const number = formatNumber(stack.number);
-  if (!top) return <span class="merge-action__note">{t('stackMergeLater', number)}</span>;
+  if (upTo < 0) return <span class="merge-action__note">{t('stackMergeLater', number)}</span>;
   return (
-    <StackMergeButton
-      members={mergeable.slice(0, upTo + 1)}
-      top={top}
-      size={total}
-      icon={<GitMergeIcon size={12} />}
+    <MergeButton
+      target={{ pr, stack: { members: mergeable.slice(0, upTo + 1), open: total } }}
       aria-label={t('stackMergeUpToAria', prRef(pr), number)}
     >
       {t('stackMergeUpTo')}
-    </StackMergeButton>
+    </MergeButton>
+  );
+}
+
+/** Where a queued PR stands, and a way out. */
+function QueuePlace({
+  pr,
+  place,
+}: {
+  pr: PullRequest;
+  place: NonNullable<PullRequestDetail['mergeQueue']>;
+}) {
+  const minutes = place.estimatedSeconds ? Math.ceil(place.estimatedSeconds / 60) : null;
+  const position = formatNumber(place.position);
+  return (
+    <>
+      <span class="merge-action__note" role="status">
+        {minutes
+          ? t('inMergeQueueEta', position, formatNumber(minutes))
+          : t('inMergeQueue', position)}
+      </span>
+      <PrButton
+        pr={pr}
+        name={t('removeFromMergeQueue')}
+        done={t('removedFromMergeQueue')}
+        run={(client) => dequeuePullRequest(client, pr.id)}
+      />
+    </>
   );
 }
 
 /** "Turn off auto-merge" while it is on and the viewer may turn it off, with or without a queue. */
 function TurnOffAutoMerge({ pr }: { pr: PullRequest }) {
-  const pending = pendingActions.value[pr.id];
   if (!pr.autoMerge || pr.viewerCanDisableAutoMerge !== true) return null;
+  return (
+    <PrButton
+      pr={pr}
+      name={t('turnOffAutoMerge')}
+      done={t('autoMergeIsOffFor')}
+      run={(client) => setAutoMerge(client, pr.id, null, pr.headSha)}
+    />
+  );
+}
+
+interface PrButtonProps {
+  pr: PullRequest;
+  /** The button's wording, which also names the pending action. */
+  name: string;
+  /** The toast's verb once GitHub confirmed. */
+  done: string;
+  run: (client: GitHubClient) => Promise<void>;
+}
+
+/** A one-click action on `pr` that needs no confirmation (it merges nothing). */
+function PrButton({ pr, name, done, run }: PrButtonProps) {
+  const pending = pendingActions.value[pr.id];
   return (
     <Button
       size="sm"
-      aria-label={t('of', t('turnOffAutoMerge'), prRef(pr))}
-      loading={pending === t('turnOffAutoMerge')}
-      disabled={pending !== undefined && pending !== t('turnOffAutoMerge')}
-      onClick={() =>
-        void runPrAction(pr, t('turnOffAutoMerge'), t('autoMergeIsOffFor'), (client) =>
-          setAutoMerge(client, pr.id, null, pr.headSha),
-        )
-      }
+      aria-label={forPr(name, pr)}
+      loading={pending === name}
+      disabled={pending !== undefined && pending !== name}
+      onClick={() => void runPrAction(pr, name, done, run)}
     >
-      {t('turnOffAutoMerge')}
+      {name}
     </Button>
   );
 }

@@ -8,7 +8,7 @@ import { openStacks, toggleStack } from '../state/stacks';
 import { GitHubLink } from './GitHubLink';
 import { BellIcon, ChevronDownIcon, ChevronUpIcon } from './icons';
 import { StackIcon } from './icons/StackIcon';
-import { StackMergeButton, type StackMergeTarget } from './StackMergeDialog';
+import { MergeButton } from './MergeAction';
 import { Badge } from './ui/Badge';
 import { IconButton } from './ui/IconButton';
 import './StackItem.css';
@@ -33,7 +33,9 @@ function turnChips(snapshot: Snapshot, members: PullRequest[]) {
     return {
       reason,
       text:
-        prs.length === 1 ? `${label} · #${prs[0]?.number}` : `${label} ${formatNumber(prs.length)}`,
+        prs.length === 1
+          ? t('stackTurnOne', label, String(prs[0]?.number))
+          : t('stackTurnMany', label, formatNumber(prs.length)),
     };
   });
 }
@@ -128,7 +130,7 @@ export function StackItem({ members, shown, snapshot, card }: StackItemProps) {
           <p class="stack-item__base">{t('stackBase', base)}</p>
         </>
       )}
-      {top?.viewerCanMerge && <StackMerge members={mergeable} top={top} size={total} />}
+      {top?.viewerCanMerge && <StackMerge members={mergeable} top={top} open={total} />}
     </li>
   );
 }
@@ -156,9 +158,17 @@ function TurnChips({ snapshot, members }: { snapshot: Snapshot; members: PullReq
 }
 
 /** The ready run at the bottom: how many can merge, and Merge behind its confirmation. */
-function StackMerge({ members, top, size }: StackMergeTarget) {
+function StackMerge({
+  members,
+  top,
+  open,
+}: {
+  members: PullRequest[];
+  top: PullRequest;
+  open: number;
+}) {
   const why = useId();
-  const all = members.length === size;
+  const all = members.length === open;
   const count = formatNumber(members.length);
   return (
     <div class="stack-item__merge">
@@ -166,9 +176,9 @@ function StackMerge({ members, top, size }: StackMergeTarget) {
       <span id={`${why}-what`} hidden>
         {t('stackMergeAria', count, formatNumber(top.stack?.number ?? 0))}
       </span>
-      <StackMergeButton members={members} top={top} size={size} aria-describedby={`${why}-what`}>
-        {all ? t('stackMergeAll') : t('stackMergeSome', count, formatNumber(size))}
-      </StackMergeButton>
+      <MergeButton target={{ pr: top, stack: { members, open } }} aria-describedby={`${why}-what`}>
+        {all ? t('stackMergeAll') : t('stackMergeSome', count, formatNumber(open))}
+      </MergeButton>
     </div>
   );
 }

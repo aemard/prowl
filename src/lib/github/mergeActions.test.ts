@@ -101,11 +101,27 @@ describe('setAutoMerge', () => {
     await expect(setAutoMerge(stillOff.client, 'PR_1', 'merge', 'abc')).rejects.toMatchObject({
       kind: 'server',
     });
+    const stillOn = setup({
+      disablePullRequestAutoMerge: {
+        pullRequest: { autoMergeRequest: { mergeMethod: 'MERGE' }, isInMergeQueue: false },
+      },
+    });
+    await expect(setAutoMerge(stillOn.client, 'PR_1', null, 'abc')).rejects.toMatchObject({
+      message: 'GitHub did not confirm the change.',
+    });
     const empty = setup({ disablePullRequestAutoMerge: null });
     await expect(setAutoMerge(empty.client, 'PR_1', null, 'abc')).rejects.toBeInstanceOf(
       GitHubError,
     );
   });
+});
+
+it('accepts "Merge when ready" that GitHub answers by queuing the PR at once', async () => {
+  const queued = setup({
+    enablePullRequestAutoMerge: { pullRequest: { autoMergeRequest: null, isInMergeQueue: true } },
+  });
+  await expect(setAutoMerge(queued.client, 'PR_1', 'merge', 'abc')).resolves.toBeUndefined();
+  expect(ENABLE_AUTO_MERGE_MUTATION).toContain('isInMergeQueue');
 });
 
 describe('merge queue actions', () => {
@@ -118,10 +134,9 @@ describe('merge queue actions', () => {
     expect(out.sent[0]?.variables).toEqual({ id: 'PR_1' });
   });
 
-  it('fails when GitHub does not confirm', async () => {
-    await expect(enqueuePullRequest(setup({}).client, 'PR_1', 'abc')).rejects.toBeInstanceOf(
-      GitHubError,
-    );
-    await expect(dequeuePullRequest(setup({}).client, 'PR_1')).rejects.toBeInstanceOf(GitHubError);
+  it('fails when GitHub does not confirm, not that it merged', async () => {
+    const queue = { kind: 'server', message: 'GitHub did not confirm the change.' };
+    await expect(enqueuePullRequest(setup({}).client, 'PR_1', 'abc')).rejects.toMatchObject(queue);
+    await expect(dequeuePullRequest(setup({}).client, 'PR_1')).rejects.toMatchObject(queue);
   });
 });

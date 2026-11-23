@@ -13,6 +13,8 @@ export interface DetailEntry {
   key: string;
   /** The last detail that loaded, kept while a newer one loads or fails. */
   detail?: PullRequestDetail;
+  /** The `mergeKey` (`loadDetail.ts`) that `detail` was read for. */
+  mergeKey?: string;
   error?: string;
   loading: boolean;
 }

@@ -60,7 +60,7 @@ test('updates a branch that is behind with a rebase, pinned to its head', async 
   const panel = await openPanel();
   const card = await expand(panel, 'Behind its base, acme/widgets#1');
   await expectNoA11yViolations(panel);
-  await card.getByRole('button', { name: 'Update branch of acme/widgets#1' }).click();
+  await card.getByRole('button', { name: 'Update branch acme/widgets#1' }).click();
   await expect(panel.getByRole('menuitem', { name: 'Update with a merge commit' })).toBeVisible();
   await panel.getByRole('menuitem', { name: 'Update with a rebase' }).click();
   await expect(toasts(panel)).toContainText('Updated the branch of acme/widgets#1');
@@ -112,7 +112,7 @@ test('turns auto-merge on from the merge dialog, shows it on the card, and off a
 
   // The forced poll brings the new state: a chip that says so, and the way to turn it off.
   await expect(card.getByTitle('Auto-merge on (squash), by octocat')).toHaveText('Auto-merge');
-  await card.getByRole('button', { name: 'Turn off auto-merge of acme/widgets#2' }).click();
+  await card.getByRole('button', { name: 'Turn off auto-merge acme/widgets#2' }).click();
   await expect(toasts(panel)).toContainText('Auto-merge is off for acme/widgets#2');
   await expect(card.getByTitle(/^Auto-merge on/)).toHaveCount(0);
 });

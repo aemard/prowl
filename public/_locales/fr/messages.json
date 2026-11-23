@@ -338,17 +338,6 @@
   "convertedToDraft": {
     "message": "Convertie en brouillon :"
   },
-  "of": {
-    "message": "$P1$ de $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Mettre à jour par rebase"
   },
@@ -369,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "Fusion automatique activée pour"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Fusion automatique désactivée pour"
@@ -595,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "Aucune revue pour le moment."
-  },
-  "actions": {
-    "message": "Actions"
   },
   "tryAgain": {
     "message": "Réessayer"
@@ -1809,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$ : $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3232,5 +3196,49 @@
   },
   "readyAwaitsMaintainer": {
     "message": "Prête à fusionner ; une personne ayant l’accès en écriture doit la fusionner"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

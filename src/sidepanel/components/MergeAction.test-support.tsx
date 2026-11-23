@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/preact';
 import { vi } from 'vitest';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
 import { buildAuth, buildDetail, buildPullRequest } from '../../test/panel';
+import { mergeKey } from '../state/loadDetail';
 import { pendingActions } from '../state/prActions';
 import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
@@ -38,7 +39,12 @@ export function stubGitHub(answer: (sent: Sent) => Response | Promise<Response>)
 /** Puts `detail` in as the loaded detail of `shown`, as an expanded card would have read it. */
 export function withDetail(shown: PullRequest, detail: Partial<PullRequestDetail> = {}) {
   details.value = {
-    [shown.id]: { key: detailKey(shown), loading: false, detail: buildDetail(detail) },
+    [shown.id]: {
+      key: detailKey(shown),
+      mergeKey: mergeKey(shown),
+      loading: false,
+      detail: buildDetail(detail),
+    },
   };
 }
 

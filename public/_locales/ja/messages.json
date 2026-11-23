@@ -338,17 +338,6 @@
   "convertedToDraft": {
     "message": "ドラフトに変換しました:"
   },
-  "of": {
-    "message": "$P2$ の$P1$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "リベースで更新"
   },
@@ -369,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "自動マージを有効にしました:"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "自動マージを無効にしました:"
@@ -595,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "まだレビューはありません。"
-  },
-  "actions": {
-    "message": "操作"
   },
   "tryAgain": {
     "message": "再試行"
@@ -1809,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$：$P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3232,5 +3196,49 @@
   },
   "readyAwaitsMaintainer": {
     "message": "マージ可能です。書き込み権限を持つ人がマージする必要があります"
+  },
+  "forPr": {
+    "message": "$P2$ の$P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$ 件",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

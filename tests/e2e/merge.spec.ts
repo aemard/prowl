@@ -55,16 +55,20 @@ async function expand(panel: Page, title: RegExp): Promise<Locator> {
 }
 /** Ids of the pull requests GitHub has merged: gone from the search, final in `ProwlNodes`. */
 let gone: Set<string>;
+/** PR id -> the `updatedAt` a later search reports (a comment arrived). */
+let updated: Record<string, string>;
 
 test.describe('merge', () => {
   test.beforeEach(async ({ context, github, seedStorage, signIn, poll }) => {
     gone = new Set();
+    updated = {};
     github.onGraphQL(SEARCH, (variables) =>
       searchResponse(
         authored
           .filter(({ id }) => !gone.has(id))
           .map((node) => ({
             ...node,
+            updatedAt: updated[node.id] ?? node.updatedAt,
             repository: { ...node.repository, ...REPOSITORIES[node.id] },
           })),
         variables,
@@ -202,6 +206,28 @@ test.describe('merge', () => {
     await expect(dialog).toHaveCount(0);
     expect(github.requestsFor(MERGE)).toHaveLength(0);
     await expect(card(panel, API.title)).toHaveCount(1);
+  });
+
+  test('a poll that brings a comment keeps the open dialog and the edited title', async ({
+    github,
+    openPanel,
+  }) => {
+    const panel = await openPanel();
+    const mine = await expand(panel, API.title);
+    await mine.getByRole('button', { name: `Merge ${API.ref}` }).click();
+    const dialog = panel.getByRole('dialog', { name: 'Merge pull request' });
+    const title = dialog.getByRole('textbox', { name: /Commit title/ });
+    await title.fill('Add rate limiting, reviewed');
+    const reads = github.requestsFor('ProwlPullRequestDetail').length;
+    updated[API.id] = new Date().toISOString();
+    await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'poll', reason: 'user' }));
+    // The card reads the detail again for the newer PR, behind the dialog, which stays.
+    await expect
+      .poll(() => github.requestsFor('ProwlPullRequestDetail').length)
+      .toBeGreaterThan(reads);
+    await expect(dialog).toBeVisible();
+    await expect(title).toHaveValue('Add rate limiting, reviewed');
+    await expect(title).toBeFocused();
   });
 
   test('has no Merge button without write access or on a draft', async ({ openPanel }) => {

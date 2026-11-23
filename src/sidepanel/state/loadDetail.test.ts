@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkRunNode, detailNode } from '../../../tests/fixtures/github';
 import { jsonResponse } from '../../../tests/fixtures/http';
 import { stubDetailFetch } from '../../test/githubFetch';
-import { buildAuth, buildPullRequest } from '../../test/panel';
-import { loadDetail } from './loadDetail';
-import { detailKey, details } from './prDetail';
+import { buildAuth, buildDetail, buildPullRequest } from '../../test/panel';
+import { loadDetail, mergeDetailOf, mergeKey } from './loadDetail';
+import { detailKey, detailOf, details } from './prDetail';
 import { auth, snapshot } from './store';
 
 const pr = buildPullRequest({ number: 7 });
@@ -63,6 +63,7 @@ describe('loadDetail', () => {
     await reloading;
     expect(details.value[pr.id]?.detail?.checks[0]?.name).toBe('new');
     expect(details.value[pr.id]?.key).toBe(detailKey(changed));
+    expect(details.value[pr.id]?.mergeKey).toBe(mergeKey(changed));
   });
 
   it('drops an answer that a newer request has overtaken', async () => {
@@ -145,5 +146,35 @@ describe('loadDetail', () => {
     await loadDetail({ ...pr, updatedAt: '2026-10-07T00:00:00.000Z' });
     expect(details.value[pr.id]?.detail).toBeDefined();
     expect(details.value[pr.id]?.error).toBe('Could not load the details.');
+  });
+});
+
+describe('mergeDetailOf', () => {
+  const read = buildDetail({ mergeQueue: null });
+  const commented = { ...pr, updatedAt: '2030-01-01T00:00:00Z' };
+  afterEach(() => {
+    details.value = {};
+  });
+
+  it('keeps the previous detail while a reload for a comment is pending or failed', () => {
+    for (const reload of [{ loading: true }, { loading: false, error: 'Offline' }]) {
+      details.value = {
+        [pr.id]: { key: detailKey(commented), mergeKey: mergeKey(pr), detail: read, ...reload },
+      };
+      expect(detailOf(commented).detail).toBeUndefined();
+      expect(mergeDetailOf(commented)).toEqual({ detail: read, failed: false });
+    }
+  });
+
+  it('drops it once the head, the base or the methods changed', () => {
+    details.value = {
+      [pr.id]: { key: detailKey(pr), mergeKey: mergeKey(pr), detail: read, loading: true },
+    };
+    for (const changed of [
+      { headSha: 'c'.repeat(40) },
+      { baseRefName: 'next' },
+      { allowedMergeMethods: [] },
+    ])
+      expect(mergeDetailOf({ ...pr, ...changed }).detail).toBeUndefined();
   });
 });

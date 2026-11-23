@@ -179,7 +179,9 @@ test.describe('expanding a card', () => {
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('link', { name: /^Refactor checkout flow/ })).toBeFocused();
     await panel.keyboard.press('Tab');
-    await expect(checkout.getByRole('button', { name: /^Re-run failed checks of / })).toBeFocused();
+    await expect(
+      checkout.getByRole('button', { name: /^Re-run failed checks acme/ }),
+    ).toBeFocused();
     await panel.keyboard.press('Tab');
     await expect(checkout.getByRole('button', { name: /^Comment on / })).toBeFocused();
     await panel.keyboard.press('Tab');

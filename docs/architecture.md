@@ -290,7 +290,7 @@ connections, not nodes, so it is unchanged.
 | `ProwlMergeState`, 10 ids | 1 (no connection) | 1 |
 | `ProwlNodes`, 100 ids | 1 + 100 (timelineItems) = 101 | 1 |
 | `ProwlPullRequestDetail`, one page of 100 contexts, on expand only | 1 + 6 connections (latestReviews, reviewRequests, firstCommit, commits, contexts, deployments) = 7 | 1 |
-| `ProwlReviewThreads`, one page, on demand | 1 + 1 (reviewThreads) + 100 (comments) = 102 | 1 |
+| `ProwlReviewThreads`, one page, on demand | 1 + 1 (reviewThreads) + 100 (latest comments) + 100 (opening comment) = 202 | about 2 |
 | `ProwlPullRequestText`, on demand | 1 + 4 (comments, reviews, commits, contexts) + 50 (annotations) = 55 | 1 |
 
 Team reviews runs one `ProwlSearch`, like any section; `/user/teams` uses the REST core budget,
@@ -609,37 +609,44 @@ numbered by position, then how many are elsewhere (another section or the filter
 are in none of the viewer's sections.
 Members are the open ones (a PR merged a poll ago stays in the snapshot with its `stack`);
 `stackSummary` finds the ready run from the lowest open position (`bottom`, else 1), none
-missing, since GitHub merges every open PR below the one it is asked for; "Merge K of N" (or "Merge the whole stack")
-confirms in `StackMergeDialog`, then `mergeStackUpTo` (`src/lib/github/stackMerge.ts`) calls
-GitHub's asynchronous merge API on the top of that run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`,
-pinned to its head, `direct_merge` with a method or `merge_queue`) and follows
-`GET …/merge-async/{uuid}` for up to a minute, both with `X-GitHub-Api-Version: 2026-03-10`, the
-version that documents them. A 200 (already merged or queued) ends there; a 409 (a merge request
-is already pending, from another tab or device) names that operation's uuid, which Prowl follows
-as its own. GitHub merges the run atomically or not at all; the GraphQL merge mutation refuses
-stacked PRs. The dialog reads the top's detail (`loadDetail`) like the card's Merge: with a merge
-queue on the base it only queues; otherwise it merges now with the methods the base branch's
-rules leave (`detail.allowedMergeMethods`, `pickMethod`); until the detail loads it waits, and
-when it cannot be read it links to GitHub. `merge-async` pins only the top's head (`sha`), so
-before sending the dialog compares every member's head with what it listed when it opened and,
-when one moved in the snapshot, shows the new list and asks to confirm again. Residual risk: a
-push to a lower member after the last poll merges as GitHub has it (its rules and checks still
-apply). A stacked PR's own card has no Merge, auto-merge or queue control of its own (all
-GraphQL, which refuses stacked PRs): it offers "Merge up to here", the same dialog for the
-ready run up to that PR, or says it merges from the stack once the PRs below it are ready.
+missing, since GitHub merges every open PR below the one it is asked for; "Merge K of N" (or
+"Merge the whole stack") confirms that run in the one `MergeDialog` (see [Merging](#merging)),
+whose `sendMerge` calls `mergeStackUpTo` (`src/lib/github/stackMerge.ts`): GitHub's asynchronous
+merge API on the top of the run (`PUT /repos/{o}/{r}/pulls/{n}/merge-async`, pinned to its head,
+`direct_merge` with a method or `merge_queue`), followed by `GET …/merge-async/{uuid}` for up to a
+minute, both with `X-GitHub-Api-Version: 2026-03-10`, the version that documents them. A 200
+(already merged or queued) ends there; a 409 (a merge request is already pending, from another
+tab or device) names that operation's uuid, which Prowl follows as its own. GitHub merges the run
+atomically or not at all; the GraphQL merge mutations refuse stacked PRs. `merge-async` pins only
+the top's head (`sha`), so the dialog compares every listed head with what it showed when it
+opened and, when one moved in the snapshot, refuses once and asks to confirm the new list.
+Residual risk: a push to a lower member after the last poll merges as GitHub has it (its rules
+and checks still apply). A stacked PR's own card offers "Merge up to here", the same dialog for
+the ready run up to that PR, or says it merges from the stack once the PRs below it are ready.
 
 Where the base branch merges through a merge queue (`isMergeQueueEnabled`, read with the card
-details), a lone PR's merge control (`MergeQueueAction`) follows the readiness rules of Merge
-(`mergeOptions` in `components/mergeReadiness.ts`): a ready PR offers "Add to merge queue"
-(`ProwlEnqueue`, pinned to the head the user saw, behind a confirmation); one that is not ready
-yet offers GitHub's "Merge when ready", which is auto-merge on a queue branch
-(`ProwlEnableAutoMerge`: GitHub queues the PR once its checks and reviews pass; the queue's own
+details), a lone PR's control offers "Add to merge queue" when ready (`ProwlEnqueue`) and GitHub's
+"Merge when ready" otherwise (auto-merge on a queue branch: GitHub queues the PR once its checks
+and reviews pass, or at once, which `setAutoMerge` accepts through `isInMergeQueue`; the queue's
 settings decide the method and message, so the dialog asks for neither); a queued PR shows its
-position, GitHub's estimate and "Remove from merge queue" (`ProwlDequeue`). Red CI, conflicts,
-requested changes or unverified merge facts offer no queue action, and the queue is no bypass:
-"Merge without waiting" is not offered there. Until the card's detail has loaded, the merge
-control shows nothing, since only the detail says whether a queue applies; if the detail cannot
-be read, a "Merge on GitHub" link stands in.
+position, GitHub's estimate and "Remove from merge queue" (`ProwlDequeue`). The queue is no
+bypass: "Merge without waiting" is not offered there.
+
+### Merging
+
+One model (`components/mergeTarget.ts`) feeds every merge control: a `MergeTarget` is a lone PR
+or a stack's ready run up to its top; `mergeVerbs` holds the readiness rules (`merge`, `auto`,
+`enqueue`, see the Merge bullet under [Side panel](#side-panel)); `mergePlan` turns a target and
+its detail into the verbs, methods (`pickMethod`) and names; `sendMerge` sends a verb, pinned to
+the head the user saw. `MergeAction` (the card), `StackItem` and `MergeButton` open the one
+`MergeDialog`, which lists what merges, the blockers it skips, the method and commit title where
+GitHub takes them, keeps a refusal in a `role="alert"` (and asks for a refresh) and cannot be
+dismissed while it sends. Merge controls read `mergeDetailOf` (`state/loadDetail.ts`): the
+previous detail while a reload for the same head, base and methods (`mergeKey`) is pending, so a
+poll bringing a comment neither hides the buttons nor closes an open dialog; a moved head does.
+Until the card's detail has loaded, a lone PR's control shows nothing (only the detail says
+whether a queue applies); when it cannot be read, or the rules leave no method, a "Merge on
+GitHub" link stands in.
 
 ### Badge
 
@@ -965,9 +972,9 @@ signal (`state/store.ts`).
   one method is named in confirmation, with focus on the first available field.
   Mutations use the last polled `headSha`; a GitHub refusal stays in the dialog (`Dialog`'s
   `error`, a `role="alert"` above the footer: a toast would sit under the inert modal), keeps
-  the choices and forces a refresh; the merge queue confirmations and the stack merge do the
-  same. Successful merges close, toast and refresh. A dialog cannot be dismissed while its
-  action is sent.
+  the choices and forces a refresh, for every target ([Merging](#merging)). Successful merges
+  close, toast and refresh. A dialog cannot be dismissed while its action is sent; a poll does
+  not close it, Cancel forgets its choices.
 - Expanded cards (`state/prDetail.ts`): `expandedIds` and the per-PR `details` cache are module
   signals, so a card stays open through background refreshes, tab switches and Settings. They
   reset when the token changes or goes away. `loadDetail(pr)` (`state/loadDetail.ts`, in the

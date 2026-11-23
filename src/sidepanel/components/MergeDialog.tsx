@@ -1,15 +1,27 @@
-import { useState } from 'preact/hooks';
-import { mergePullRequest, setAutoMerge } from '../../lib/github/mergeActions';
-import { t } from '../../lib/i18n';
-import type { MergeMethod, PullRequest, PullRequestDetail } from '../../lib/model';
+import { useEffect, useState } from 'preact/hooks';
+import { formatNumber, t } from '../../lib/i18n';
+import { isReadyToMerge } from '../../lib/mergeEligibility';
+import type { MergeMethod, PullRequest } from '../../lib/model';
 import { sendToBackground } from '../state/background';
+import { loadDetail, mergeDetailOf } from '../state/loadDetail';
 import { pendingActions, prRef, runPrAction } from '../state/prActions';
+import { detailKey } from '../state/prDetail';
+import { GitHubLink } from './GitHubLink';
 import { AlertIcon } from './icons';
-import { type MergePlacement, mergeOptions, mergeReadiness } from './mergeReadiness';
+import { mergeReadiness } from './mergeReadiness';
+import {
+  type MergePlacement,
+  type MergePlan,
+  type MergeTarget,
+  type MergeVerb,
+  mergePlan,
+  sendMerge,
+} from './mergeTarget';
 import { Button } from './ui/Button';
 import { Dialog } from './ui/Dialog';
 import { Select } from './ui/Select';
 import { TextField } from './ui/TextField';
+import './MergeDialog.css';
 
 const METHODS: Record<MergeMethod, string> = {
   get merge() {
@@ -23,97 +35,123 @@ const METHODS: Record<MergeMethod, string> = {
   },
 };
 
-/** The title GitHub gives the commit unless told otherwise (`PullRequestDetail.commitTitles`). */
-function defaultCommitTitle(pr: PullRequest, detail: PullRequestDetail, method: MergeMethod) {
-  const titles = detail.commitTitles;
-  return (method === 'merge' ? titles?.merge : titles?.squash) ?? `${pr.title} (#${pr.number})`;
+/** The heads the dialog lists, to tell whether one moved since it opened. */
+const heads = (members: PullRequest[]) => members.map((pr) => `${pr.id}@${pr.headSha}`).join(' ');
+
+export interface MergeDialogProps {
+  target: MergeTarget;
+  placement?: MergePlacement;
+  onClose: () => void;
 }
 
 /**
- * The merge dialog's state. A commit title the user edited belongs to the method it was written
- * for: a squash title is not a merge commit's, so switching the method shows that method's own
- * title (GitHub's, or the user's earlier edit of it), and switching back restores the edit.
+ * The dialog's state, which a poll does not reset (it reads `mergeDetailOf`). A commit title the
+ * user edited belongs to the method it was written for: switching the method shows that method's
+ * own title (GitHub's, or the user's earlier edit of it), and switching back restores the edit.
+ * GitHub pins only the top's head, so a send refuses once when a listed head (or the stack's run)
+ * changed since the dialog opened, and asks to confirm the list again.
  */
-export function useMergeControls(pr: PullRequest, detail: PullRequestDetail) {
-  const [confirming, setConfirming] = useState(false);
+function useMergeDialog({ target, placement, onClose }: MergeDialogProps) {
+  const { pr, stack } = target;
+  const members = stack?.members ?? [pr];
+  const [seen, setSeen] = useState(() => heads(members));
   const [picked, setPicked] = useState<MergeMethod>();
-  // Per method, only once the user edits it: untouched, the field shows GitHub's own title.
   const [edited, setEdited] = useState<Partial<Record<MergeMethod, string>>>({});
-  // Why GitHub refused, shown in the dialog, which stays open to try again or cancel.
   const [error, setError] = useState<string>();
+  // The list's stack Merge opens before any card read the top's detail.
+  useEffect(() => void loadDetail(pr), [detailKey(pr)]);
+  const { detail, failed } = mergeDetailOf(pr);
+  const plan = mergePlan(target, detail, placement, picked);
   const pending = pendingActions.value[pr.id];
-  const titleFor = (method: MergeMethod) =>
-    edited[method] ?? defaultCommitTitle(pr, detail, method);
-  const setTitle = (method: MergeMethod, title: string) =>
-    setEdited((all) => ({ ...all, [method]: title }));
   // What is being sent cannot be taken back by closing the dialog.
-  const close = () => {
-    if (pending !== undefined) return;
-    setConfirming(false);
+  const close = () => pending === undefined && onClose();
+  const send = async (verb: MergeVerb) => {
     setError(undefined);
-  };
-  const done = () => {
-    setConfirming(false);
-    setEdited({});
-  };
-  const merge = async (method: MergeMethod) => {
-    setError(undefined);
-    const merged = await runPrAction(
+    if (heads(members) !== seen) {
+      setSeen(heads(members));
+      return setError(t('stackChangedSinceOpened'));
+    }
+    const { method = 'merge' } = plan;
+    // `sendMerge` says what GitHub did; untouched, the title is GitHub's, as the field showed.
+    const sent = await runPrAction(
       pr,
-      t('merge'),
-      t('merged'),
-      (client) =>
-        // Untouched, GitHub applies its own default, which is what the field showed.
-        mergePullRequest(client, pr.id, { method, headSha: pr.headSha, title: edited[method] }),
+      plan.name(verb),
+      '',
+      (client) => sendMerge(client, target, verb, method, edited[method]),
       setError,
     );
-    if (merged) done();
+    // A refusal often means the copy is stale (the head moved): ask for a fresh one.
+    if (sent) onClose();
     else void sendToBackground({ type: 'poll', reason: 'change' });
   };
-  const enableAutoMerge = async (method: MergeMethod) => {
-    setError(undefined);
-    const enabled = await runPrAction(
-      pr,
-      t('enableAutoMerge'),
-      t('autoMergeIsOnFor'),
-      (client) => setAutoMerge(client, pr.id, method, pr.headSha, edited[method]),
-      setError,
-    );
-    if (enabled) done();
-  };
-  return {
-    confirming,
-    setConfirming,
-    picked,
-    setPicked,
-    titleFor,
-    setTitle,
-    pending,
-    error,
-    close,
-    merge,
-    enableAutoMerge,
-  };
+  // GitHub's own title unless the user edited it (`PullRequestDetail.commitTitles`).
+  const titleOf = (method: MergeMethod) =>
+    edited[method] ??
+    detail?.commitTitles?.[method === 'merge' ? 'merge' : 'squash'] ??
+    `${pr.title} (#${pr.number})`;
+  const setTitle = (method: MergeMethod, title: string) =>
+    setEdited((all) => ({ ...all, [method]: title }));
+  return { detail, failed, plan, pending, error, close, send, setPicked, titleOf, setTitle };
 }
 
-export type MergeControls = ReturnType<typeof useMergeControls>;
+type MergeDialogState = ReturnType<typeof useMergeDialog>;
 
-export interface MergeDialogProps {
-  pr: PullRequest;
-  detail: PullRequestDetail;
-  methods: MergeMethod[];
-  method: MergeMethod;
-  controls: MergeControls;
-  placement: MergePlacement;
-}
-
-/** Confirms a direct merge or auto-merge: the blockers it skips, the method and commit title. */
+/**
+ * Confirms any merge (`MergeTarget`): a lone PR now, with auto-merge or through its branch's
+ * merge queue, or a stack's ready run. It says what merges where, what still blocks it, and asks
+ * for the method and commit title where GitHub takes them. Failures stay in the dialog; it
+ * cannot be dismissed while the merge is sent.
+ */
 export function MergeDialog(props: MergeDialogProps) {
-  const { pr, detail, methods, method, controls, placement } = props;
-  const { pending, error, close, merge, enableAutoMerge } = controls;
+  const state = useMergeDialog(props);
+  const { pr, stack } = props.target;
+  return (
+    <Dialog
+      open
+      onClose={state.close}
+      {...copy(props.target, state.plan)}
+      error={state.error}
+      footer={<MergeFooter state={state} stack={stack !== undefined} />}
+    >
+      {stack ? (
+        <StackRun pr={pr} members={stack.members} open={stack.open} state={state} />
+      ) : (
+        <LoneSummary pr={pr} state={state} />
+      )}
+      <MethodFields state={state} titled={!stack && !state.plan.queue} />
+    </Dialog>
+  );
+}
+
+/** The dialog's title, and what merges where. */
+function copy({ pr, stack }: MergeTarget, plan: MergePlan) {
   const ref = prRef(pr);
-  const { ready, canMerge, offerAutoMerge } = mergeOptions(pr, placement);
-  // The modal hides the blockers listed above the button: the dialog repeats them.
+  const into = pr.baseRefName;
+  const { verbs } = plan;
+  if (stack) {
+    const number = formatNumber(pr.stack?.number ?? 0);
+    const description = t('stackMergeDescription', number, pr.repo.nameWithOwner, base(pr));
+    return { title: plan.name('merge'), description };
+  }
+  if (plan.queue) {
+    const verb = verbs[0] ?? 'enqueue';
+    const key = verb === 'enqueue' ? 'addToMergeQueueDescription' : 'mergeWhenReadyDescription';
+    return { title: plan.name(verb), description: t(key, ref, into) };
+  }
+  const key = !verbs.includes('merge')
+    ? 'letGitHubMergeIntoOnceItsChecksAndReviewsPass'
+    : verbs.includes('auto')
+      ? 'mergeIntoNowOrLetGithubMergeItOnce'
+      : 'mergeInto';
+  return { title: t('mergePullRequest'), description: t(key, ref, into) };
+}
+
+const base = (pr: PullRequest) => pr.stack?.base ?? pr.baseRefName;
+
+/** A lone PR: whether the rules are bypassed, its title, and the blockers the modal hides. */
+function LoneSummary({ pr, state }: { pr: PullRequest; state: MergeDialogState }) {
+  const { detail, plan } = state;
+  const ready = isReadyToMerge(pr);
   const blockers = ready
     ? []
     : mergeReadiness(pr, detail)
@@ -121,92 +159,10 @@ export function MergeDialog(props: MergeDialogProps) {
         .map(({ text }) => text.replace(/^Blocked: /, ''))
         .map((text) => text.charAt(0).toLowerCase() + text.slice(1));
   return (
-    <Dialog
-      open
-      onClose={close}
-      title={t('mergePullRequest')}
-      description={
-        !canMerge
-          ? t('letGitHubMergeIntoOnceItsChecksAndReviewsPass', ref, pr.baseRefName)
-          : offerAutoMerge
-            ? t('mergeIntoNowOrLetGithubMergeItOnce', ref, pr.baseRefName)
-            : t('mergeInto', ref, pr.baseRefName)
-      }
-      error={error}
-      footer={
-        <MergeFooter
-          methodLabel={methods.length === 1 ? METHODS[method] : t('merge')}
-          pending={pending}
-          offerAutoMerge={offerAutoMerge}
-          canMerge={canMerge}
-          close={close}
-          merge={() => void merge(method)}
-          enableAutoMerge={() => void enableAutoMerge(method)}
-        />
-      }
-    >
-      {canMerge && !ready && <p>{t('youCanBypassTheBranchRulesForThisPullRequest')}</p>}
-      <MergeFields {...props} blockers={blockers} />
-    </Dialog>
-  );
-}
-
-function MergeFooter({
-  methodLabel,
-  pending,
-  offerAutoMerge,
-  canMerge,
-  close,
-  merge,
-  enableAutoMerge,
-}: {
-  methodLabel: string;
-  pending: string | undefined;
-  offerAutoMerge: boolean;
-  canMerge: boolean;
-  close: () => void;
-  merge: () => void;
-  enableAutoMerge: () => void;
-}) {
-  return (
     <>
-      <Button disabled={pending !== undefined} onClick={close}>
-        {t('cancel')}
-      </Button>
-      {offerAutoMerge && (
-        <Button
-          variant="primary"
-          loading={pending === t('enableAutoMerge')}
-          disabled={pending !== undefined && pending !== t('enableAutoMerge')}
-          onClick={() => void enableAutoMerge()}
-        >
-          {t('enableAutoMerge')}
-        </Button>
+      {plan.verbs.includes('merge') && !ready && (
+        <p>{t('youCanBypassTheBranchRulesForThisPullRequest')}</p>
       )}
-      {canMerge && (
-        <Button
-          variant={offerAutoMerge ? 'secondary' : 'primary'}
-          loading={pending === t('merge')}
-          disabled={pending !== undefined && pending !== t('merge')}
-          onClick={() => void merge()}
-        >
-          {methodLabel}
-        </Button>
-      )}
-    </>
-  );
-}
-
-function MergeFields({
-  pr,
-  methods,
-  method,
-  controls,
-  blockers,
-}: MergeDialogProps & { blockers: string[] }) {
-  const { pending, titleFor, setPicked, setTitle } = controls;
-  return (
-    <>
       <p class="merge-dialog__pr">{pr.title}</p>
       {blockers.length > 0 && (
         <p class="merge-dialog__blockers">
@@ -214,6 +170,59 @@ function MergeFields({
           <span>{t('notReadyReasons', blockers.join('; '))}</span>
         </p>
       )}
+    </>
+  );
+}
+
+/** A stack's run in merge order, what stays open, and how it merges (or why not from here). */
+function StackRun({
+  pr,
+  members,
+  open,
+  state,
+}: {
+  pr: PullRequest;
+  members: PullRequest[];
+  open: number;
+  state: MergeDialogState;
+}) {
+  const { detail, failed, plan } = state;
+  return (
+    <>
+      <ol class="merge-dialog__run">
+        {members.map((member) => (
+          <li key={member.id}>
+            <span class="merge-dialog__position">{formatNumber(member.stack?.position ?? 0)}</span>
+            <span class="merge-dialog__ref">{prRef(member)}</span> {member.title}
+          </li>
+        ))}
+      </ol>
+      {members.length < open && (
+        <p class="merge-dialog__rest">
+          {t('stackMergeRest', formatNumber(open - members.length), base(pr))}
+        </p>
+      )}
+      {!detail && !failed ? (
+        <p role="status">{t('stackMergeChecking', base(pr))}</p>
+      ) : plan.verbs.length === 0 ? (
+        <p>
+          {t('stackMergeUnknown', base(pr))}{' '}
+          <GitHubLink href={pr.url}>{t('mergeOnGitHub')}</GitHubLink>
+        </p>
+      ) : (
+        plan.queue && <p>{t('stackMergeQueued', base(pr))}</p>
+      )}
+    </>
+  );
+}
+
+/** The method where GitHub lets it be chosen, and the commit title of a lone direct merge. */
+function MethodFields({ state, titled }: { state: MergeDialogState; titled: boolean }) {
+  const { plan, pending, setPicked, titleOf, setTitle } = state;
+  const { method, methods } = plan;
+  if (!method || plan.queue || plan.verbs.length === 0) return null;
+  return (
+    <>
       {methods.length > 1 && (
         <Select
           label={t('mergeMethod')}
@@ -223,14 +232,42 @@ function MergeFields({
           onValueChange={setPicked}
         />
       )}
-      {method !== 'rebase' && (
+      {titled && method !== 'rebase' && (
         <TextField
           label={t('commitTitle')}
-          value={titleFor(method)}
+          value={titleOf(method)}
           readOnly={pending !== undefined}
           onValueChange={(title) => setTitle(method, title)}
         />
       )}
+    </>
+  );
+}
+
+/** Cancel, then one button per verb, the first emphasized; a stack's waits for its detail. */
+function MergeFooter({ state, stack }: { state: MergeDialogState; stack: boolean }) {
+  const { plan, pending, close, send } = state;
+  const { verbs, method, methods } = plan;
+  const shown: MergeVerb[] = verbs.length > 0 || !stack ? verbs : ['merge'];
+  return (
+    <>
+      <Button disabled={pending !== undefined} onClick={close}>
+        {t('cancel')}
+      </Button>
+      {shown.map((verb, index) => {
+        const name = plan.name(verb);
+        return (
+          <Button
+            key={verb}
+            variant={index === 0 ? 'primary' : 'secondary'}
+            loading={pending === name}
+            disabled={!verbs.includes(verb) || (pending !== undefined && pending !== name)}
+            onClick={() => void send(verb)}
+          >
+            {verb === 'merge' && !stack && method && methods.length === 1 ? METHODS[method] : name}
+          </Button>
+        );
+      })}
     </>
   );
 }

@@ -338,17 +338,6 @@
   "convertedToDraft": {
     "message": "Convertida en borrador:"
   },
-  "of": {
-    "message": "$P1$ de $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Actualizar con rebase"
   },
@@ -369,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "Fusión automática activada para"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Fusión automática desactivada para"
@@ -595,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "Aún no hay revisiones."
-  },
-  "actions": {
-    "message": "Acciones"
   },
   "tryAgain": {
     "message": "Reintentar"
@@ -1809,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$: $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3232,5 +3196,49 @@
   },
   "readyAwaitsMaintainer": {
     "message": "Lista para fusionar; alguien con acceso de escritura debe fusionarla"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

@@ -338,17 +338,6 @@
   "convertedToDraft": {
     "message": "In Entwurf umgewandelt:"
   },
-  "of": {
-    "message": "$P1$ für $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
-  },
   "updateWithARebase": {
     "message": "Mit Rebase aktualisieren"
   },
@@ -369,17 +358,6 @@
   },
   "autoMergeIsOnFor": {
     "message": "Automatisches Mergen aktiviert für"
-  },
-  "message2": {
-    "message": "$P1$ $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
-      }
-    }
   },
   "autoMergeIsOffFor": {
     "message": "Automatisches Mergen deaktiviert für"
@@ -595,9 +573,6 @@
   },
   "noReviewsYet": {
     "message": "Noch keine Reviews."
-  },
-  "actions": {
-    "message": "Aktionen"
   },
   "tryAgain": {
     "message": "Erneut versuchen"
@@ -1809,17 +1784,6 @@
     "placeholders": {
       "p1": {
         "content": "$1"
-      }
-    }
-  },
-  "actionReference": {
-    "message": "$P1$: $P2$",
-    "placeholders": {
-      "p1": {
-        "content": "$1"
-      },
-      "p2": {
-        "content": "$2"
       }
     }
   },
@@ -3232,5 +3196,49 @@
   },
   "readyAwaitsMaintainer": {
     "message": "Bereit zum Mergen; jemand mit Schreibzugriff muss ihn mergen"
+  },
+  "forPr": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "prDone": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnOne": {
+    "message": "$P1$ · #$P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "stackTurnMany": {
+    "message": "$P1$ $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
   }
 }

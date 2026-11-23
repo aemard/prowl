@@ -6,7 +6,7 @@ import { buildAuth, buildDetail, buildPullRequest } from '../../test/panel';
 import { pendingActions } from '../state/prActions';
 import { detailKey, details } from '../state/prDetail';
 import { auth } from '../state/store';
-import { StackMergeDialog } from './StackMergeDialog';
+import { MergeDialog } from './MergeDialog';
 import { toasts } from './ui/Toast';
 
 const ready = { mergeStateStatus: 'clean', reviewDecision: 'approved' } as const;
@@ -33,17 +33,15 @@ const onClose = vi.fn();
 function open(members: PullRequest[], size = 3) {
   const top = members.at(-1) as PullRequest;
   const view = render(
-    <StackMergeDialog members={members} top={top} size={size} onClose={onClose} />,
+    <MergeDialog target={{ pr: top, stack: { members, open: size } }} onClose={onClose} />,
   );
   return {
     ...view,
     dialog: () => screen.getByRole('dialog'),
     rerender: (next: PullRequest[]) =>
       view.rerender(
-        <StackMergeDialog
-          members={next}
-          top={next.at(-1) as PullRequest}
-          size={size}
+        <MergeDialog
+          target={{ pr: next.at(-1) as PullRequest, stack: { members: next, open: size } }}
           onClose={onClose}
         />,
       ),
@@ -58,7 +56,7 @@ function stubMerge(answer: () => Response) {
 const body = (fetch: ReturnType<typeof stubMerge>) =>
   JSON.parse(String(fetch.mock.calls.at(-1)?.[1].body));
 
-describe('StackMergeDialog', () => {
+describe('MergeDialog for a stack', () => {
   beforeEach(() => {
     auth.value = buildAuth();
   });
