@@ -4,7 +4,7 @@
  * through it, so a rejected token, a backoff and a rate-limit wait stop them all alike. Pure.
  */
 import type { PollReason, PollState, Snapshot } from '../model';
-import { isWaiting } from './backoff';
+import { isWaiting, rateLimitWaitEnd } from './backoff';
 
 const MINUTE = 60_000;
 /** The panel refreshes a list older than this when it opens or is shown again. */
@@ -75,11 +75,8 @@ export function pollVerdict(
   const explicit = isExplicit(reason);
   if (state.lastError?.kind === 'unauthorized' && !explicit)
     return { run: false, why: 'unauthorized' };
-  if (isWaiting(state.nextAllowedAt, now)) {
-    const backoff = state.lastError !== null && state.lastError.kind !== 'rate_limited';
-    if (!backoff) return { run: false, why: 'rate_limited' };
-    if (!explicit) return { run: false, why: 'backoff' };
-  }
+  if (rateLimitWaitEnd(state, now) !== null) return { run: false, why: 'rate_limited' };
+  if (isWaiting(state.nextAllowedAt, now) && !explicit) return { run: false, why: 'backoff' };
   const age = now - Date.parse(fetchedAt ?? '');
   if (age >= 0 && age < staleAfter(reason, intervalMinutes)) return { run: false, why: 'fresh' };
   return { run: true };

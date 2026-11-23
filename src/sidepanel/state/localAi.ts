@@ -14,12 +14,11 @@ import {
   startTask,
   taskAvailability,
 } from '../../lib/ai/builtInAi';
-import { env } from '../../lib/env';
-import { createGitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
 import { fetchPullRequestText } from '../../lib/github/fetchPullRequestText';
 import { t, uiLocale } from '../../lib/i18n';
 import type { PullRequest, PullRequestDetail } from '../../lib/model';
+import { readClient } from './readClient';
 import { auth, onAccountChange } from './store';
 
 export type { AiTask };
@@ -148,7 +147,7 @@ export async function runAi(
       aiAnswers.value = { ...aiAnswers.value, [key]: { ...answer, for: request.for } };
   };
   try {
-    const client = createGitHubClient({ token: session.token, apiUrl: env.apiUrl });
+    const client = readClient(session.token);
     const text = await fetchPullRequestText(client, pr.id);
     if (task === 'failure' && text.failures.length === 0)
       return put({ loading: false, text: t('aiNothingToExplain') });

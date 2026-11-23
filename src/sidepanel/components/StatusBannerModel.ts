@@ -1,11 +1,11 @@
-import { countMessage, t, uiLocale } from '../../lib/i18n';
 /**
  * What the status banner says about the last poll, or about a token that expires soon. Pure: the
  * component only renders it.
  */
+import { countMessage, t } from '../../lib/i18n';
 import type { PollState } from '../../lib/model';
 import { isWaiting, LOW_RATE_LIMIT } from '../../lib/time/backoff';
-import { formatRelativeTime } from '../../lib/time/relative';
+import { formatClock, formatRelativeTime } from '../../lib/time/relative';
 
 export type BannerKind =
   | 'unauthorized'
@@ -35,9 +35,6 @@ const EXPIRY_WARNING_DAYS = 7;
 /** With no error to explain it, a snapshot older than this many poll intervals is stale. */
 const STALE_INTERVALS = 5;
 const STALE_MIN_MS = 10 * MINUTE;
-
-const clock = (ms: number) =>
-  new Date(ms).toLocaleTimeString(uiLocale(), { hour: 'numeric', minute: '2-digit' });
 
 const RETRY = {
   type: 'retry',
@@ -76,7 +73,7 @@ export function describeStatus(
       kind: 'rate_limited',
       tone: 'warning',
       title: t('githubRateLimitAlmostUsedUp'),
-      detail: t('refreshingResumesAt', clock(until)),
+      detail: t('refreshingResumesAt', formatClock(until)),
       age,
       action: null,
     };
@@ -124,7 +121,7 @@ function describePollError(
       return {
         kind: 'rate_limited',
         tone: 'warning',
-        title: waiting ? t('rateLimitedUntil', clock(until)) : t('githubRateLimitHasReset'),
+        title: waiting ? t('rateLimitedUntil', formatClock(until)) : t('githubRateLimitHasReset'),
         detail: waiting
           ? t('githubIsLimitingProwlSRequestsSoRefreshingIs')
           : t('prowlRefreshesAgainShortly'),

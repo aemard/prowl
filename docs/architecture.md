@@ -333,6 +333,12 @@ first error unless the read passes `{ partial: true }` (searches, `nodes(ids:)`,
 which keeps the data that came back; authentication and quota errors always throw. Mutations are
 strict, since their payload is null when they fail.
 
+The panel's own reads (a card's detail, its conversations, the text on-device AI reads) use
+`readClient` (`src/sidepanel/state/readClient.ts`): during a rate-limit wait (`rateLimitWaitEnd`)
+it refuses them before any request, with the banner's "Rate limited until …". An error backoff
+does not hold them. Actions keep `createGitHubClient`: a person stands behind each write, and
+GitHub refuses one it cannot take.
+
 ### Searches
 
 `src/lib/github/search.ts` turns a `Section` into a search string. Every query starts with

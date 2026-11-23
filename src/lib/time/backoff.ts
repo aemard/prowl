@@ -1,5 +1,5 @@
 /** When the poller may try again: exponential backoff, rate-limit waits, clock sanity. Pure. */
-import type { ErrorKind } from '../model';
+import type { ErrorKind, PollState } from '../model';
 
 const MINUTE = 60_000;
 /** Longest backoff after failed polls. */
@@ -45,6 +45,18 @@ export function isWaiting(until: string | null, now: number): boolean {
   if (until === null) return false;
   const wait = Date.parse(until) - now;
   return wait > 0 && wait <= MAX_WAIT_MS;
+}
+
+/**
+ * When the rate-limit wait of `state` ends (epoch ms), or null outside one. A wait follows a rate
+ * limit, or a success that left a low budget; the backoff after another error is not one.
+ */
+export function rateLimitWaitEnd(
+  { nextAllowedAt, lastError }: Pick<PollState, 'nextAllowedAt' | 'lastError'>,
+  now: number,
+): number | null {
+  if (nextAllowedAt === null || !isWaiting(nextAllowedAt, now)) return null;
+  return lastError === null || lastError.kind === 'rate_limited' ? Date.parse(nextAllowedAt) : null;
 }
 
 /**

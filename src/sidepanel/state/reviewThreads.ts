@@ -3,12 +3,11 @@
  * account changes, or the pull request does (`threadsStale`).
  */
 import { signal } from '@preact/signals';
-import { env } from '../../lib/env';
-import { createGitHubClient } from '../../lib/github/client';
 import { GitHubError } from '../../lib/github/errors';
 import { fetchReviewThreads } from '../../lib/github/threads';
 import { t } from '../../lib/i18n';
 import type { PullRequest, ReviewThread } from '../../lib/model';
+import { readClient } from './readClient';
 import { auth, onAccountChange } from './store';
 
 export interface ThreadsEntry {
@@ -54,7 +53,7 @@ export async function loadThreads(pr: PullRequest): Promise<void> {
     };
   };
   try {
-    const client = createGitHubClient({ token: session.token, apiUrl: env.apiUrl });
+    const client = readClient(session.token);
     const { updatedAt = request.key, ...read } = await fetchReviewThreads(client, pr.id);
     put({ ...read, key: updatedAt });
   } catch (error) {

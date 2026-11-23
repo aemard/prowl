@@ -352,3 +352,4 @@ One line each, with the reason. Product decisions from the brief are not repeate
 - 2026-11-23 — Signing in as another login also drops `quietHeld`: the quiet-hours digest held one account's events for the next. A token change for the same login keeps it.
 - 2026-11-23 — A consulted card's merge read keeps the carried facts on a same-head `UNKNOWN`, as polls do (`settledMergeFacts`, one rule for both); it used to overwrite them with unknown.
 - 2026-11-23 — The poll alarm skips a list read less than a minute ago (`SCHEDULE_STALE_MS`): fast-lane and panel polls run on their own phase and doubled the cost seconds before it. A list may get up to a minute older than the interval.
+- 2026-11-23 — Panel reads (detail, conversations, AI text) are refused during the poll's rate-limit wait (`readClient`, "Rate limited until …"); writes are not held: a person asked for each, and GitHub refuses what it cannot take.

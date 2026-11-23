@@ -113,6 +113,8 @@ appending a newer one.
 - Signals in `store.ts` (`settings`, `auth`, `snapshot`, `pollState`, `prLocal`); `route` /
   `navigate()` in `router.ts`; `sendToBackground()` in `background.ts`; URLs open only through
   `openGitHubUrl()` (`src/sidepanel/openUrl.ts`).
+- Panel reads of GitHub (detail, conversations, AI text) take `readClient(token)`
+  (`readClient.ts`), which refuses during a rate-limit wait; writes use `createGitHubClient`.
 - A component re-renders only when the signals it reads or its props change: call `useNow(ms)`
   in the component that shows a relative time, and read `Date.now()` there.
 - Settings change only through `saveSettings(patch | updater, { refresh })` (`settings.ts`);
