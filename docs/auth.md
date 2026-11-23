@@ -142,8 +142,8 @@ owned by your own account sees none.
 
 **Review requested** lists the pull requests that ask *you* for a review. Requests sent to a
 team you belong to are in their own section, **Team reviews**: Prowl finds your teams (with
-`read:org`, once a day and at each sign-in) and searches each one's open review requests, up
-to 10 teams. Turn the section on in Settings. A pull request that asks both you and one of your
+`read:org`, once a day and at each sign-in) and searches the open review requests of all of
+them at once. Turn the section on in Settings, and choose which teams to follow under it. A pull request that asks both you and one of your
 teams shows up in both sections, and counts once in the badge.
 
 ## Signing out and revoking access
