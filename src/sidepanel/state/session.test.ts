@@ -24,6 +24,28 @@ describe('completeSignIn', () => {
     expect(location.hash).toBe('#/');
   });
 
+  it.each([
+    ['another account', 'hubot', false],
+    ['the same account in other case', 'OctoCat', true],
+  ])(
+    'signing in as %s forgets or keeps the list, poll state and held digest',
+    async (_, login, kept) => {
+      const held = [{ heldAt: '2026-10-06T11:00:00.000Z', event: { id: 'PR_1:approved:R' } }];
+      await chrome.storage.local.set({
+        snapshot: buildSnapshot(),
+        pollState: buildPollState(),
+        quietHeld: held,
+      });
+
+      await completeSignIn(buildAuth(login));
+
+      const stored = await chrome.storage.local.get(['snapshot', 'pollState', 'quietHeld']);
+      expect(Object.keys(stored).sort()).toEqual(
+        kept ? ['pollState', 'quietHeld', 'snapshot'] : [],
+      );
+    },
+  );
+
   it('keeps a warning on screen as a toast', async () => {
     await completeSignIn(buildAuth('octocat'), 'This token has no repo scope.');
     expect(toasts.value).toMatchObject([

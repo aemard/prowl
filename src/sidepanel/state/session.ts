@@ -3,7 +3,7 @@ import { env } from '../../lib/env';
 import { t } from '../../lib/i18n';
 import { type AuthState, STORAGE_KEYS } from '../../lib/model';
 import { forgetSeenFacts } from '../../lib/storage/prLocal';
-import { SESSION_LOCK } from '../../lib/storage/session';
+import { SESSION_LOCK, sameLogin } from '../../lib/storage/session';
 import { getItem, removeItems, setItem, withLock } from '../../lib/storage/storage';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';
@@ -19,10 +19,10 @@ export async function completeSignIn(
 ): Promise<void> {
   await withLock(SESSION_LOCK, async () => {
     await forgetSeenFacts();
-    // Never show one account's cached pull requests to another.
+    // Never show one account's cached pull requests to another, nor its held digest.
     const cached = await getItem(STORAGE_KEYS.snapshot);
-    if (cached && cached.viewer.login.toLowerCase() !== auth.viewer.login.toLowerCase()) {
-      await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState);
+    if (cached && !sameLogin(cached.viewer.login, auth.viewer.login)) {
+      await removeItems(STORAGE_KEYS.snapshot, STORAGE_KEYS.pollState, STORAGE_KEYS.quietHeld);
     }
     const context = await getItem('panelState');
     if (context && context.login !== auth.viewer.login.toLowerCase())

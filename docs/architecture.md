@@ -145,6 +145,7 @@ Other storage: `chrome.storage.session` keys `notified` (event id → URL, newes
 (the fast lane's `Last-Modified`, next check, off flag, tagged with `auth.createdAt`);
 `chrome.storage.sync` key `settings` (the mirrored copy, at most 8 KB, written only while `sync`
 is on). Sign-out removes `auth`, `snapshot`, `pollState`, `teams`, `panelState` and `quietHeld`;
+a sign-in as another login removes `snapshot`, `pollState`, `quietHeld` and `panelState`;
 `settings` and `prLocal` stay (no secrets, no account data beyond PR ids), minus seen facts.
 
 Web Locks (origin-wide, shared by panel and worker; none is reentrant):
