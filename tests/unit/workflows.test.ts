@@ -53,6 +53,22 @@ it('fails the weekly schema check on a stale pinned copy, with read-only permiss
   expect(yaml).not.toMatch(/secrets\./);
 });
 
+/**
+ * Any branch's workflow run can write the Actions cache, so a workflow that deploys, publishes
+ * or holds a secret restores none: a poisoned cache would reach what ships.
+ */
+it('restores no cache in workflows that deploy, release or hold secrets', () => {
+  const files = readdirSync(dir).filter((file) => /\.ya?ml$/.test(file));
+  for (const file of files) {
+    const yaml = readFileSync(resolve(dir, file), 'utf8');
+    if (!/pages: write|id-token: write|contents: write|secrets\./.test(yaml)) continue;
+    expect({ file, cache: /^\s*cache:|actions\/cache@/m.test(yaml) }).toEqual({
+      file,
+      cache: false,
+    });
+  }
+});
+
 it('rejects runners that are billed or self-hosted', () => {
   for (const label of ['ubuntu-latest', 'ubuntu-24.04', 'ubuntu-24.04-arm']) {
     expect(label).toMatch(FREE_RUNNER);

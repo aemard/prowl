@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+          # No dependency cache: other branches can write one, and this build is what deploys.
 
       # The site shares src/styles/tokens.css, src/assets/logo.png and docs/screenshots with the
       # extension, so those files are in the checkout; only the site's dependencies are installed.
