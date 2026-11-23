@@ -62,7 +62,7 @@ it('restores no cache in workflows that deploy, release or hold secrets', () => 
   for (const file of files) {
     const yaml = readFileSync(resolve(dir, file), 'utf8');
     if (!/pages: write|id-token: write|contents: write|secrets\./.test(yaml)) continue;
-    expect({ file, cache: /^\s*cache:|actions\/cache@/m.test(yaml) }).toEqual({
+    expect({ file, cache: /^(?:\s*cache:|.*actions\/cache@)/m.test(yaml) }).toEqual({
       file,
       cache: false,
     });
