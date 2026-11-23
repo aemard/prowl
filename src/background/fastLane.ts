@@ -2,8 +2,9 @@
  * Near-real-time news between polls, from the `inbox` alarm (every minute). It only asks for
  * polls; whether one runs is the cadence policy's call (`pollVerdict`), like every other trigger.
  * - a conditional read of the notifications inbox (`checkInbox`), no more often than GitHub's
- *   `X-Poll-Interval`; a pull request thread updated since the last check asks for an `inbox`
- *   poll. Off for tokens that cannot read the inbox (fine-grained ones, or a 403/404) for the
+ *   `X-Poll-Interval` and only on a list at least a minute old (`inboxDue`); a pull request
+ *   thread updated since the last check, in a repository the list shows or for a reason a
+ *   section searches, asks for an `inbox` poll. Off for tokens that cannot read the inbox (fine-grained ones, or a 403/404) for the
  *   browser session.
  * - while CI runs on one of the viewer's own listed pull requests that changed in the last hour
  *   (`ciWatched`), a `ci` poll every 2 minutes, so a red or green build shows up quickly
@@ -13,13 +14,13 @@
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
 import { GitHubError } from '../lib/github/errors';
-import { checkInbox } from '../lib/github/notifications';
+import { checkInbox, listedRepos } from '../lib/github/notifications';
 import type { AuthState, PollState } from '../lib/model';
 import { withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItems, withLock } from '../lib/storage/storage';
 import { isWaiting, rateLimitedUntil } from '../lib/time/backoff';
-import { ciWatched, pollVerdict } from '../lib/time/cadence';
+import { ciWatched, inboxDue, pollVerdict } from '../lib/time/cadence';
 import { poll } from './poller';
 import { clearAlarms, IDLE, iso, recordPollFailure } from './pollState';
 
@@ -40,7 +41,11 @@ interface LaneContext {
   at: number;
 }
 
-async function inboxChanged({ auth, state, interval, at }: LaneContext): Promise<boolean> {
+/** `repos`: those the list shows (`listedRepos`), where any pull request thread is news. */
+async function inboxChanged(
+  { auth, state, interval, at }: LaneContext,
+  repos: ReadonlySet<string>,
+): Promise<boolean> {
   if (auth.tokenType === 'fine_grained') return false;
   const stored = (await chrome.storage.session.get<{ [STATE]?: InboxState }>(STATE))[STATE];
   // `isWaiting` ignores a wait over an hour long: the clock went back since it was stored.
@@ -50,6 +55,7 @@ async function inboxChanged({ auth, state, interval, at }: LaneContext): Promise
     const { changed, lastModified, pollSeconds } = await checkInbox(
       client,
       stored?.lastModified ?? null,
+      repos,
     );
     await chrome.storage.session.set({
       [STATE]: { lastModified, nextAt: iso(at + pollSeconds * 1000) },
@@ -101,8 +107,13 @@ export async function checkFastLane(at = Date.now()): Promise<void> {
       if (verdict.why === 'unauthorized') await withSignedIn(auth, clearAlarms);
       return;
     }
-    if (await inboxChanged({ auth, state, interval, at })) await poll({ reason: 'inbox' });
-    else if (ciWatched(snapshot, Date.now())) await poll({ reason: 'ci' });
+    // Another account's list says nothing of this one's.
+    const own = snapshot?.viewer.login === auth.viewer.login ? snapshot : undefined;
+    // A poll just ran: read the inbox at a later alarm (a `ci` poll waits longer still).
+    if (!inboxDue(own?.fetchedAt ?? null, Date.now())) return;
+    const lane = { auth, state, interval, at };
+    if (await inboxChanged(lane, listedRepos(own))) await poll({ reason: 'inbox' });
+    else if (ciWatched(own, Date.now())) await poll({ reason: 'ci' });
   } catch (error) {
     console.error('Prowl: the fast lane failed', error);
   }

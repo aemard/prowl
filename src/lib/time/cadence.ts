@@ -14,6 +14,19 @@ export const PANEL_STALE_MS = MINUTE;
  * floor of the poll interval (10 s of slack for alarm jitter and the poll's own duration).
  */
 export const CI_STALE_MS = 2 * MINUTE - 10_000;
+/**
+ * The fast lane reads the inbox on a list at least this old, so inbox news polls at most once a
+ * minute and never right after another poll. Deferring the read loses nothing: the next one
+ * still asks with the same `If-Modified-Since`. Not a floor of the `inbox` poll itself, which
+ * trails a poll in flight that may have read GitHub before the news.
+ */
+export const INBOX_STALE_MS = MINUTE;
+
+/** Whether the fast lane may read the inbox, given the stored list's `fetchedAt`. */
+export function inboxDue(fetchedAt: string | null, now: number): boolean {
+  const age = now - Date.parse(fetchedAt ?? '');
+  return !(age >= 0 && age < INBOX_STALE_MS);
+}
 /** CI is watched this long after the pull request last changed (a push, a comment). */
 export const CI_WATCH_MS = 60 * MINUTE;
 

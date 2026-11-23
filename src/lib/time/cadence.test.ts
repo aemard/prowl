@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildPollState, buildPullRequest, buildSnapshotOf } from '../../test/panel';
 import type { CheckSummary, PollReason } from '../model';
 import { whoseTurn } from '../turn/whoseTurn';
-import { CI_WATCH_MS, ciWatched, isTrailing, pollVerdict } from './cadence';
+import { CI_WATCH_MS, ciWatched, inboxDue, isTrailing, pollVerdict } from './cadence';
 
 const NOW = Date.parse('2026-11-22T12:00:00.000Z');
 const MINUTE = 60_000;
@@ -140,5 +140,14 @@ describe('ciWatched', () => {
     expect(watched({ checks: checks(1), lastCommitAt: at(NOW - 3 * CI_WATCH_MS) })).toBe(true);
     const future = at(NOW + MINUTE);
     expect(watched({ checks: checks(1), updatedAt: future, lastCommitAt: future })).toBe(false);
+  });
+});
+
+describe('inboxDue', () => {
+  it('reads the inbox on a list a minute old or more, missing, or dated in the future', () => {
+    expect(inboxDue(at(NOW - 30_000), NOW)).toBe(false);
+    expect(inboxDue(at(NOW - MINUTE), NOW)).toBe(true);
+    expect(inboxDue(null, NOW)).toBe(true);
+    expect(inboxDue(at(NOW + MINUTE), NOW)).toBe(true);
   });
 });

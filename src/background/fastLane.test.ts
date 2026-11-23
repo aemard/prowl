@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { jsonResponse } from '../../tests/fixtures/http';
+import { notificationThread } from '../../tests/fixtures/notifications';
 import type { CheckSummary } from '../lib/model';
 import { getItem, setItem } from '../lib/storage/storage';
 import { fakeChrome } from '../test/chrome';
@@ -23,10 +24,8 @@ const fetch = vi.fn(async () => answer());
 const inbox = async () =>
   (await chrome.storage.session.get<{ inbox?: Record<string, unknown> }>('inbox')).inbox;
 const alarms = () => [...fakeChrome().__state.alarms.keys()].sort();
-const prThread = (updatedAt: string) => ({
-  subject: { type: 'PullRequest' },
-  updated_at: updatedAt,
-});
+const prThread = (updatedAt: string, reason?: string) =>
+  notificationThread({ updatedAt, reason, repo: 'watched/repo' });
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
 beforeEach(() => {
@@ -90,6 +89,34 @@ describe('checkFastLane: the inbox', () => {
     // A wait stored before the clock went back by hours does not stall the lane.
     await checkFastLane(due - 5 * 60 * MINUTE);
     expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('polls for a watched repository’s thread only when the list shows that repository', async () => {
+    await setItem('auth', buildAuth());
+    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    answer = () =>
+      jsonResponse([prThread(UPDATED, 'subscribed')], { headers: { 'last-modified': LAST } });
+    await checkFastLane();
+    expect(poll).not.toHaveBeenCalled();
+    const listed = buildPullRequest({
+      repo: { owner: 'watched', name: 'repo', nameWithOwner: 'watched/repo' },
+    });
+    await setItem('snapshot', buildSnapshotOf({ mine: [listed] }, { fetchedAt: ago(MINUTE) }));
+    await checkFastLane(Date.now() + MINUTE);
+    expect(poll).toHaveBeenCalledWith({ reason: 'inbox' });
+  });
+
+  it('leaves the inbox unread for a list under a minute old, so its news waits', async () => {
+    await setItem('auth', buildAuth());
+    await chrome.storage.session.set({ inbox: { lastModified: LAST } });
+    await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: ago(30_000) }));
+    await checkFastLane();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(await inbox()).toEqual({ lastModified: LAST });
+    await setItem('snapshot', buildSnapshotOf({}, { fetchedAt: ago(MINUTE) }));
+    answer = () => jsonResponse([prThread(UPDATED)], { headers: { 'last-modified': LATER } });
+    await checkFastLane();
+    expect(poll).toHaveBeenCalledWith({ reason: 'inbox' });
   });
 
   it('stops asking for the session when the token cannot read the inbox', async () => {

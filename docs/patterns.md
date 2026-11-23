@@ -71,7 +71,10 @@ appending a newer one.
 
 - `poll({ reason })` (`poller.ts`) is the only way to poll: pass the trigger's `PollReason` and let
   `pollVerdict` (`src/lib/time/cadence.ts`) decide; never gate a trigger on age or backoff in the
-  caller. Notifications and the badge run once at the end of `runPoll`.
+  caller. Notifications and the badge run once at the end of `runPoll`. The one exception is
+  the fast lane's inbox read (`inboxDue`), which defers a read, never a poll.
+- Inbox threads in tests: `notificationThread` (`tests/fixtures/notifications.ts`); only a listed
+  repository or a section reason (`author`, `review_requested`, `mention`, `assign`) counts.
 - Alarms are in `pollState.ts` (`scheduleAlarms`, `clearAlarms`): whatever stops polling clears
   both. `clearSignedOut()` clears alarms, pollState, badge and notifications.
 - Pages may send only `panel`, `user` and `change` polls (`messages.ts`); a message resolves when

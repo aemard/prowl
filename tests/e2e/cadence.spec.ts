@@ -1,15 +1,25 @@
 import type { Worker } from '@playwright/test';
 import type { PollState } from '../../src/lib/model';
 import { headCommit, prNode, RECENT_COMMIT, searchResponse } from '../fixtures/github';
+import { notificationThread } from '../fixtures/notifications';
 import { expect, test } from './fixtures';
 import type { MockGitHub } from './mock-github/server';
 
 const LAST = 'Thu, 05 Nov 2026 10:00:00 GMT';
 const LATER = 'Thu, 05 Nov 2026 10:05:00 GMT';
+const LATEST = '2026-11-05T10:04:45Z';
 
-/** Fires the worker's `inbox` alarm now (unpacked extensions have no minimum delay). */
+/**
+ * Ages the list past the fast lane's floors (a minute for the inbox, 2 for the CI watch), then
+ * fires the worker's `inbox` alarm now (unpacked extensions have no minimum delay).
+ */
 const fireInbox = (worker: Worker) =>
-  worker.evaluate(() => chrome.alarms.create('inbox', { when: Date.now() + 50 }));
+  worker.evaluate(async () => {
+    const { snapshot } = await chrome.storage.local.get<{ snapshot?: object }>('snapshot');
+    const fetchedAt = new Date(Date.now() - 3 * 60_000).toISOString();
+    if (snapshot) await chrome.storage.local.set({ snapshot: { ...snapshot, fetchedAt } });
+    await chrome.alarms.create('inbox', { when: Date.now() + 50 });
+  });
 const inboxReads = (github: MockGitHub) =>
   github.requests.filter((request) => request.path.startsWith('/notifications'));
 const searches = (github: MockGitHub) => github.requestsFor('ProwlSearch').length;
@@ -34,8 +44,10 @@ test('an inbox thread updated since the last check polls; old unread ones do not
   github.on('GET', '/notifications', () => ({
     headers: { 'last-modified': LATER },
     body: [
-      { subject: { type: 'Issue' }, updated_at: '2026-11-05T10:04:00Z' },
-      { subject: { type: 'PullRequest' }, updated_at: threadUpdatedAt },
+      notificationThread({ type: 'Issue', updatedAt: '2026-11-05T10:04:00Z' }),
+      // A repository the viewer watches, where the list shows nothing: no news for it.
+      notificationThread({ updatedAt: LATEST, reason: 'subscribed', repo: 'watched/repo' }),
+      notificationThread({ updatedAt: threadUpdatedAt }),
     ],
   }));
   await signIn();
@@ -159,13 +171,7 @@ test("the CI watch polls for running CI on the viewer's own PR, not on a teammat
   );
   // A fine-grained token keeps the inbox out of it: only the CI watch can poll.
   await signIn({ tokenType: 'fine_grained' });
-  /** Ages the list past the CI watch's 2-minute floor, then fires the fast lane. */
   const watch = async () => {
-    await serviceWorker.evaluate(async () => {
-      const { snapshot } = await chrome.storage.local.get<{ snapshot: object }>('snapshot');
-      const fetchedAt = new Date(Date.now() - 3 * 60_000).toISOString();
-      await chrome.storage.local.set({ snapshot: { ...snapshot, fetchedAt } });
-    });
     await fireInbox(serviceWorker);
     await settle(serviceWorker);
   };

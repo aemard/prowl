@@ -274,8 +274,11 @@ Mapping (`mapPullRequest`):
 | `viewerCanMergeAsAdmin`, `viewerCanEnableAutoMerge`, `viewerCanDisableAutoMerge` | Explicit GraphQL merge permissions; missing values default to false. Cached and invalidated with the head-specific merge facts. |
 | `viewerCanMerge` | Repository `viewerPermission` is `WRITE`, `MAINTAIN` or `ADMIN` (GraphQL has no `viewerCanMerge`; `viewerCanUpdate` is also true for an author without write access). False for `TRIAGE`, `READ`, unknown levels and a GitHub App (null). |
 
-Estimated cost (GitHub counts the requests every connection could need, divides by 100 and
-rounds; `rateLimit.cost` in each response gives the real figure):
+### Query cost
+
+The one place for these figures: code comments point here. Estimated cost (GitHub counts the
+requests every connection could need, divides by 100 and rounds; `rateLimit.cost` in each
+response gives the real figure):
 
 | Query | Requests | Points |
 |---|---|---|
@@ -422,7 +425,7 @@ pure) decides whether it runs now:
 |---|---|---|---|
 | `schedule` | the `poll` alarm (the interval) | always | no |
 | `startup` | install, browser start | always | no |
-| `inbox` | the fast lane: a PR thread updated since the last check | always (trailing) | no |
+| `inbox` | the fast lane: a PR thread the list could show updated since the last check, read only on a list at least 1 min old (`inboxDue`) | always (trailing) | no |
 | `ci` | the fast lane: CI runs on one of the viewer's own listed PRs (`ciWatched`) | 110 s (one every 2 min) | no |
 | `focus` | a Chrome window got focus | the poll interval | no |
 | `panel` | the panel opened or became visible | 1 min | no |
@@ -490,7 +493,19 @@ asks GitHub nothing (and a rejected token also clears an inbox alarm that outliv
 rate limit, until something changes. The inbox lists every unread thread, so a 200 after an
 issue comment (or a thread marked read) also carries old pull request threads: only a pull
 request thread whose `updated_at` is after the previous `Last-Modified` asks for an `inbox`
-poll. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
+poll, and only one the list could show: in a repository of the snapshot's pull requests
+(`listedRepos`), or notified for a reason a preset section searches (`author`,
+`review_requested`, `mention`, `assign`), since that PR may be new to every section. A watched
+repository's PRs (`subscribed`), threads the viewer subscribed to (`manual`), `ci_activity`,
+`comment`, `team_mention` and the rest count only in a listed repository; a custom section on a
+repository where nothing is listed yet waits for the scheduled poll. The lane reads the inbox
+only on a list at least a minute old (`inboxDue`, `INBOX_STALE_MS`): right after another poll it
+waits for a later alarm, which still asks with the same `If-Modified-Since`, so the news is
+deferred, not lost. The `inbox` poll itself has no floor, since it trails a poll in flight that
+may have read GitHub before the news. Cost: at most one inbox poll a minute, so with the
+default 2-minute interval at most 30 more full polls an hour than the schedule, as for the CI
+watch (see [Query cost](#query-cost): about 4 to 8 points a poll with the default
+sections, so up to 120 to 240 points an hour, 5% of the budget); the 304s are free. GitHub's `X-Poll-Interval` (at least 60 s) sets when the next check may run, counted from
 the alarm's scheduled time so alarm jitter does not skip a minute. The first check of a browser
 session only records the date. Fine-grained tokens cannot read the inbox, and a 403 or 404 turns
 the lane off until the browser restarts (`chrome.storage.session` key `inbox`); polls keep their
