@@ -8,7 +8,8 @@ and color only where it means something.
 ## Principles
 
 1. **Typography does the work.** Hierarchy comes from size, weight and the muted text color, not
-   from boxes and fills. Most surfaces are the plain panel background with hairline separators.
+   from fills. Cards and the panel chrome are quiet glass surfaces on a plain background (see
+   [Surfaces](#surfaces)).
 2. **Color means state.** Hues are reserved for pull request state (CI, review, merge) and for
    the one primary action on a screen. Everything else is neutral.
 3. **Never color alone.** Every state color is paired with an icon, a word or a shape
@@ -18,7 +19,8 @@ and color only where it means something.
 5. **Follow the system.** The panel and the website take the system's light or dark theme by
    default; Settings can force one. Both themes are designed, checked for contrast and
    screenshotted.
-6. **Quiet motion.** 120–180 ms, ease-out, only to show where something came from. Off under
+6. **Quiet motion.** 120–180 ms for controls, ease-out, only to show where something came from
+   (a card arriving or leaving takes longer, see [Motion](#motion)). Off under
    `prefers-reduced-motion` (the spinner keeps turning, slowly, because it is the only
    progress signal).
 7. **Short words.** Sentence case, verbs on buttons ("Merge", "Request changes"), no jargon
@@ -42,8 +44,9 @@ and color only where it means something.
 
 ## Color
 
-All colors live in `src/styles/tokens.css` and its imported `tokens.base.css`. Components use semantic tokens only (`--color-*`).
-A unit test fails if any other stylesheet contains a hex, `rgb()` or `hsl()` color.
+All colors live in `src/styles/tokens.css` and its imported `tokens.base.css`. Components use
+semantic tokens only (`--color-*`, `--glass-*`). A unit test fails if any other stylesheet
+contains a hex, `rgb()` or `hsl()` color.
 
 ### Themes
 
@@ -157,6 +160,17 @@ with its name in `fg-muted` after a 6 px dot of the label's color (`--label-colo
 carries the meaning, so the dot needs no contrast; a faint `--color-fg` ring keeps near-white and
 near-black dots visible in both themes. An E2E test checks every rendered dot against its label.
 
+## Surfaces
+
+The panel background is solid. PR cards, stack rows, the sticky header with the quick filter
+under it (one island), and the floating section bar are translucent rounded "glass" surfaces:
+`--glass-card` / `--glass-chrome` fills, a `--glass-edge` border, a `--glass-rim` top highlight
+and `--glass-shadow`, defined per theme in `tokens.css`. Only the header, the filter and the
+section bar blur what is behind them (`--glass-blur`, `App.css`); cards need no per-card filter.
+Without `backdrop-filter` support, or under `prefers-reduced-transparency`, every glass fill is
+the opaque `--glass-solid`. Menus, dialogs and expanded details keep opaque reading surfaces.
+There are no pointer-tracking reflections or hover lifts.
+
 ## Typography
 
 System UI font (`--font-sans`), so Prowl matches the browser chrome on every OS; `--font-mono`
@@ -164,45 +178,40 @@ for branch names and SHAs. Numbers in badges use tabular figures.
 
 | Token | Size / line height | Use |
 |---|---|---|
-| `--text-xs` / `--leading-xs` | 10 / 14 px | Small counts (`Badge size="sm"`). Never for sentences. |
+| `--text-xs` / `--leading-xs` | 10 / 14 px | Small counts (`Badge size="sm"`), card flags. Never for sentences. |
 | `--text-sm` / `--leading-sm` | 11 / 16 px | Metadata (repo#number, time), hints, labels, small buttons, badges |
-| `--text-md` / `--leading-md` | 12 / 18 px | Body default, PR titles, controls |
-| `--text-lg` / `--leading-lg` | 13 / 20 px | Panel and dialog titles, empty-state titles |
-| `--text-xl` / `--leading-xl` | 16 / 22 px | The Settings heading |
+| `--text-md` / `--leading-md` | 12 / 18 px | Body default, controls |
+| `--text-lg` / `--leading-lg` | 13 / 20 px | PR card titles, dialog titles, empty-state titles |
+| `--text-xl` / `--leading-xl` | 16 / 22 px | The header title, the Settings heading |
 | `--text-2xl` / `--leading-2xl` | 20 / 26 px | The device-flow code only |
 
 The scale is one step smaller than Chrome's own UI text so a 400 px panel shows more pull
-requests; Chrome's page zoom (and the OS text scale) still enlarges it, since every size is in
-CSS px.
-
-Weights: `--weight-regular` 400 (body), `--weight-medium` 500 (PR titles, buttons, labels),
-`--weight-semibold` 600 (headings). Long titles wrap; branch names and labels truncate with an
-ellipsis and keep the full text in `title`.
+requests; page zoom and the OS text scale still enlarge it, since every size is in CSS px.
+Weights: `--weight-regular` 400 (body), `--weight-medium` 500 (buttons, labels),
+`--weight-semibold` 600 (headings, PR titles). Long titles wrap; branch names and labels truncate
+with an ellipsis and keep the full text in `title`.
 
 ## Spacing, size and shape
 
 - **Spacing:** 4 px grid: `--space-1` 4, `-2` 8, `-3` 12, `-4` 16, `-5` 20, `-6` 24, `-8` 32,
-  `-10` 40, `-12` 48 px, plus `--space-0-5` (2) and `--space-1-5` (6) for optical alignment
-  inside controls. Panel gutters are `--space-4`; list rows use `--space-3` vertical padding.
+  `-10` 40, `-12` 48 px, plus `--space-0-5` (2) and `--space-1-5` (6) for optical alignment.
 - **Controls:** `--control-sm` 24 px (dense rows), `--control-md` 28 px (default); 24 px is the
   WCAG 2.2 minimum target size, so nothing interactive is smaller. Icons `--icon-sm` 12,
   `--icon-md` 16 (also avatars), `--icon-lg` 20 px.
-- **Radius:** `--radius-sm` 4 (skeleton lines), `--radius-md` 6 (buttons, inputs, menu items),
-  `--radius-lg` 10 (cards, menus, dialogs, toasts), `--radius-full` (badges, labels, switches,
-  avatars).
-- **Borders:** `--border-width` 1 px hairlines. Focus: `--focus-width` 2 px solid `--color-focus`
-  at `--focus-offset` 2 px, set once in `base.css` on `:focus-visible`. Text inputs show a ring on
-  any focus.
-- **Elevation:** only overlays are raised: `--shadow-sm` (switch thumb), `--shadow-md` (menus,
-  toasts), `--shadow-lg` (dialogs). Dark shadows are stronger, and dark surfaces also step lighter.
-- **Layers:** `--z-sticky` 10 (sticky header, section bar), `--z-menu` 40, `--z-toast` 50; dialogs
-  use the browser top layer.
-- **Bottom bar:** while the section bar is fixed at the bottom of the panel it sets
-  `--app-inset-bottom` (48 px + hairline) on `:root`, and nothing else may sit under it: the page
-  ends above it (`.app-main` padding), focus and `scrollIntoView` stop above it (`html`
-  `scroll-padding-bottom`), toasts rise above it, menus open above it (they measure the element
-  marked `data-bottom-bar`) and close when their trigger scrolls behind it, and a card behind it
-  does not count as seen.
+- **Radius:** `--radius-sm` 4 (skeleton lines), `--radius-md` 6 (buttons, inputs, menu items,
+  chips), `--radius-lg` 10 (menus, dialogs, toasts), `--radius-full` (badges, labels, switches,
+  avatars). Glass cards and bars use larger, rounder corners.
+- **Borders and focus:** `--border-width` 1 px. Focus: `--focus-width` 2 px solid
+  `--color-focus` at `--focus-offset` 2 px, set once in `base.css` on `:focus-visible`; text
+  inputs show a ring on any focus.
+- **Elevation:** `--shadow-sm` (switch thumb), `--shadow-md` (menus, toasts), `--shadow-lg`
+  (dialogs), stronger in dark; glass surfaces use `--glass-shadow`.
+- **Layers:** `--z-sticky` 10 (header, section bar), `--z-menu` 40, `--z-toast` 50; dialogs and
+  `Menu` use the browser top layer.
+- **Insets:** the sticky header sets `--app-inset-top` and the section bar `--app-inset-bottom`
+  on `:root`. Nothing may sit under them: content ends above the bar, focus and `scrollIntoView`
+  stop clear of both (`scroll-padding`), toasts and menus rise above the bar (menus measure the
+  element marked `data-bottom-bar`), and a card behind the bar does not count as seen.
 
 ## Motion
 
@@ -216,8 +225,9 @@ ellipsis and keep the full text in `title`.
 | `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | | Things entering |
 
 Use the duration tokens for every transition and animation, so `prefers-reduced-motion: reduce`
-collapses them in one place. Purely decorative animations (like the shimmer) also switch off in
-their own stylesheet.
+collapses them in one place. Purely decorative animations also switch off in their own stylesheet,
+as do the card arrival and merge or close exits (`PullRequestCardMotion.css`), which run longer
+(0.7 to 1.1 s) to show where a card came from or went.
 
 ## Icons
 
@@ -243,6 +253,7 @@ Prowl's own artwork.
 | `SyncIcon`, `GearIcon`, `KebabHorizontalIcon`, `ChevronDownIcon`, `ChevronUpIcon`, `ChevronRightIcon`, `ArrowLeftIcon` | Refresh, settings, more actions, expand, navigate, back |
 | `SearchIcon`, `FilterIcon`, `BellIcon`, `BellSlashIcon`, `ClockIcon`, `LinkExternalIcon`, `CopyIcon` | Filter, custom section, notifications, muted, snooze (and the rate-limit and stale banners), open in GitHub, copy |
 | `SignOutIcon`, `MarkGithubIcon`, `KeyIcon`, `PlusIcon`, `TrashIcon`, `PencilIcon`, `InboxIcon`, `CloudOfflineIcon` | Account, sign-in, token (and the rejected-token banner), add/remove/edit, empty list, offline (and the offline banner) |
+
 
 ## Components
 
@@ -272,62 +283,34 @@ attributes (`data-variant`, `data-size`, `data-tone`) styled in the component's 
 
 ### Feature components
 
-Built from the components above; they live in `components/`, not `components/ui/`.
+Built from the components above, in `components/` (behaviour is in each file's header comment):
 
-| Component | Use it for | Notes |
-|---|---|---|
-| `PullRequestCard` | One PR in the list | A summary and, expanded, its details. The title is a link to GitHub (`GitHubLink`, opens a new tab) and a sibling `IconButton` chevron expands the card; a click on the rest of the summary does the same, Escape folds it back with focus on the chevron. Full width, hairline separated, hover `bg-hover`. Rows: avatar + repo#number + last activity + chevron, title (2 lines, then ellipsis, underlined on hover), status chips (plain: icon and word in the tone's color, no fill), labels (dots), counts + "Opened ... ago". Labels and counts share a line when they fit. The link is named "Title, owner/name#n"; the chevron is "Details for Title" and its description is every fact the card shows (`describePullRequest`). A dot in the left gutter marks unseen changes (same `isSeen` as the badge) and is in the description too. Row actions go beside the link, never inside it. Under the list, "Snoozed (N)" is a ghost `sm` button (icon in line with the avatars) whose cards appear right under it, full width like the others. |
-| `PullRequestDetails` | What an expanded card shows | Status list named “Merge status” with one icon and line per independent blocker; no Merge/Actions labels or routine freshness narration. One wrapping fieldset named “Actions for #N”: Merge, Re-run failed, Update branch, Ready for review, review actions, auto-merge, View changes on GitHub. Convert to draft stays in the menu; rerun is row only. Checks and Reviewers retain labels, failures-first and the passed fold. Checks show Required only when known; unreadable checks link to GitHub. Incomplete data gets one short GitHub link. Merge dialogs omit method hints, hide a single-method select and name the method in confirmation; no methods offers Merge on GitHub. Skeletons and error retry remain. |
-| `StatusBanner` | Why Prowl cannot update, or that the list is stale | A full-width strip under the header, above the list (which it never hides): tone icon (key, clock, cloud-off, alert), a semibold title, one or two `--text-sm` lines (GitHub's message, the "Last updated 14 min ago." age) and at most one `size="sm"` button (Re-authenticate is primary, Retry / Refresh now secondary). `danger` background for a rejected token and GitHub errors, `warning` for rate limits, offline and stale data; text stays `--color-fg` (not the tone's own fg) so it keeps its contrast on the tinted background, the icon and the words carry the meaning. Title and detail are a `role="status"` live region (`alert` for a rejected token); the age is outside it, since it ticks. |
-| `SectionTabs` | The section bar at the bottom of the list | Fixed under the scrolling list (header and quick filter stay on top), hairline above, `bg` fill, shown only in the list with two or more sections. Equal slots (at most 480 px in all, centred), each 48 px tall: the section's 16 px icon with its count `Badge` beside it, over a short `--text-sm` label (Mine `GitPullRequestIcon`, Review `EyeIcon`, Teams `PeopleIcon`, Mentions `MentionIcon`, Assigned `PersonIcon`, a custom section's own label with `FilterIcon`, cut with an ellipsis); the full name is the tooltip. Selected: a 2 px accent bar on the top edge, accent icon and count, semibold label, `aria-selected`. A failed section shows a warning icon + "Could not load" instead of its count. Up to five sections fit 320 px; past five, the fifth slot is "More" (`KebabHorizontalIcon`), a `Menu` of the rest (`menuitemradio`: icon, full name, count), marked selected like a tab when the section shown is in it and named "More sections, Docs selected". APG tabs: one tab stop (the first tab while the selection is under More), arrows / Home / End move and select; "More" is a separate menu button after the tab list. In the DOM the bar comes after the filter and before the panel it controls. Kinds map to icon, short name and empty-list hint in `KINDS` (`views/sectionKinds.ts`), one entry per kind (Your turn `BellIcon`). |
-| `RepoGroup` | A repository's cards in a grouped list | An `li` holding an `h2` with a full-width button (`bg-subtle` strip, hairline below, 24 px tall at least): chevron (right folded, down open), `owner/name` in `--text-sm` semibold, truncated with the full name in `title`, and a count `Badge size="sm"`. The button is named by its text plus a hidden "pull requests" ("acme/web 2 pull requests"), `aria-expanded`, `aria-controls` only while open; the focus ring is drawn inside. Open, the cards are a `ul.pr-list` named "owner/name pull requests"; folded, nothing is rendered. Cards under it hide their repository name (`PullRequestCard grouped`). |
-| `SettingsGroup` (view) | A titled block of the settings screen | `h2` title, optional muted description, groups separated by a hairline, `--space-4` gutters. Sub-headings are `h3`; lists of switches are `ul`s named by their heading. Hints and notes are `--text-sm` muted. |
-| `RepoFilter` | A list of `owner` / `owner/name` patterns | A `fieldset` named "Include" or "Exclude" with its hint as description; mono chips with a 28 px remove button each (truncated with the full text in `title`), then a field plus Add that validates, rejects duplicates and announces adds and removals. |
-| `NumberField` | A whole number that saves as you type | A `TextField type="number"`; shows an error while the text is out of range and the saved value again on blur. |
-| `StackItem` | A GitHub stack as one list item | Loaded on first use. Stack icon, name and base branch, a progress bar, one turn chip per reason ("Review 2", "Fix CI · #2473") and Merge for the ready run at the bottom, all counted over every member Prowl knows. Opened, the members this section shows, top to bottom, each the usual card, on a numbered rail down to the base branch. Merge opens `MergeDialog` for the run (which PRs in which order, now or through the merge queue, the method). |
-| `MergeAction`, `MergeDialog` | Every merge: now, auto-merge, the merge queue, a stack's run | The button follows the readiness rules (`mergeTarget.ts`) and is emphasized only when ready; on a queue branch it is "Add to merge queue" or "Merge when ready", and a queued PR shows its position (an ETA when GitHub gives one) and "Remove from merge queue". The one dialog repeats the blockers the modal hides, the method and the commit title (an edited title belongs to its method), or lists a stack's run in order; a poll does not close it. |
-| `ReviewThreads` | Open review conversations of an expanded card | Shown only when GitHub counts open threads, loaded when asked for: `path:line`, the opening and last comments as text, a reply field and Resolve. |
-| `LocalAi` | On-device summary and CI explanation in an expanded card | Only when turned on in Settings and Chrome has the model; says that nothing leaves the device but the GitHub read of the PR's text. |
-| `Deployments` | Where the head commit is deployed | Environment and a state chip; a URL off GitHub is shown as text, never a link. |
-| `TurnSummary` | One or two sentences above the Your turn list | The queue (how many, the oldest) and the viewer's stuck PRs; nothing when both are zero. |
-| `SignOutDialog` | Confirming sign-out (header menu and Settings) | A `Dialog` with Cancel first and a `danger` Sign out; the token stays valid on GitHub, and the text says so. |
+| Component | Look |
+|---|---|
+| `PullRequestCard` | A glass card: avatar, repo#number, last activity and chevron; the title (link to GitHub, 2 lines); status chips; label dots; counts and "Opened ... ago". An accent dot in the gutter marks unseen changes. The chevron is a sibling of the title link, never inside it, and its description lists every fact the card shows (`describePullRequest`). |
+| `PullRequestDetails` | The expanded part: "Merge status" (one icon and line per blocker), one "Actions for #N" fieldset, then Checks (failures first, passed folded) and Reviewers. |
+| `StatusBanner` | A strip under the header: tone icon, semibold title, one or two `--text-sm` lines, at most one `sm` button. `danger` for a rejected token and GitHub errors, `warning` for rate limits, offline and stale data; text stays `--color-fg` on the tint, so icon and words carry the meaning. |
+| `SectionTabs` | The floating bar at the bottom: up to five equal slots (icon, count `Badge`, short label; the selected one on an accent tint), past five a "More" `Menu`. APG tabs with one tab stop. Icons and short names per kind are in `KINDS` (`views/sectionKinds.ts`). |
+| `RepoGroup` | A repository's header in a grouped list: chevron, `owner/name` in `--text-sm` semibold, count badge; folded, its cards are not rendered. |
+| `StackItem` | A GitHub stack as one item: stack icon, name and base, progress bar, turn chips and Merge; opened, its cards on a numbered rail. |
+| `MergeAction`, `MergeDialog` | Every merge (now, auto-merge, merge queue, a stack's run): emphasized only when ready; the dialog repeats the blockers, the method and the commit title. |
+| `RepoFilter`, `NumberField`, `SettingsGroup` | Settings building blocks: mono chips with a remove button; a number field that saves as you type; a titled `h2` block with hairlines between groups. |
+| `ReviewThreads`, `LocalAi`, `Deployments`, `TurnSummary`, `SignOutDialog` | Expanded-card and list extras; a URL off GitHub is shown as text, never a link. |
 
-**Status chips** (`prStatus.ts`, always icon + word in the tone's `-fg`, no fill, tone from the
-table above): Draft (neutral);
-CI "2 failing" / "3 pending" / "8 passed" (none when there are no checks); Approved / Changes
-requested / Review required (hidden on drafts, which nobody is expected to review yet);
-Conflicts (warning) or Ready to merge (success, replaces Approved because it implies it).
-When it is the viewer's turn, the chip stating that fact becomes the action (`withTurn`): a bell,
-the same tone (attention becomes accent) and words saying what to do ("Fix CI · 1 failing",
-"Review", "Merge it"); a reason with no chip of its own (feedback, a review asked) adds one up
-front.
+**Status chips** (`prStatus.ts`): `Badge variant="plain"`, icon and word in the tone's `-fg` on a
+faint tint: Draft (neutral); CI "2 failing" / "3 pending" / "8 passed" (none without checks);
+Approved / Changes requested / Review required (hidden on drafts); Conflicts (warning) or Ready to
+merge (success, replacing Approved). When it is the viewer's turn, the chip stating that fact
+becomes the action (`withTurn`): a bell, accent instead of attention, and words saying what to do
+("Fix CI · 1 failing", "Review", "Merge it"); a reason without a chip of its own adds one up front.
 
-### Patterns
+## Patterns
 
 - **One primary button per view.** Destructive confirmations put Cancel first and a `danger`
   button last; `initialFocus` goes to the least destructive control.
-- **Lists:** rows are full-width, hairline-separated (`--color-border-subtle`), hover
-  `--color-bg-hover`, selected `--color-bg-active`. Row actions use `size="sm"` controls.
-  Rows that touch the panel edge draw their focus ring inside (`outline-offset` negative).
-- **Status chips:** `Badge tone=… variant="plain"` with a 12 px icon: ✕ "2 failing", ● "Review
-  required", ⚠ "Conflicts", merge icon "Merged". Keep fills for counts and the few badges that
-  stand alone (onboarding's "Recommended"); a row of text stays fill-free.
-- **Loading:** show skeletons that match the final layout for first loads. For refreshes keep the
-  data and spin the refresh `IconButton` (`loading`).
-- **Feedback:** use a toast for results of actions, inline `TextField` errors for validation, and
-  banners (`StatusBanner`) for persistent problems.
-
-## Soft Liquid Glass
-
-The panel uses a solid theme background, translucent rounded PR cards and a floating section
-bar. Glass colors live in the token stylesheets for system and forced light/dark themes.
-Only the header, search and navigation use backdrop blur; cards need no per-card filter.
-The search and header meet as one island, with the search remaining sticky above the cards.
-Titles use the 13 px token; states keep their icon, text and semantic tint. There are no
-pointer-tracking reflections or hover lifts. Reduced transparency and unsupported blur use
-opaque surfaces. Menus, dialogs and expanded details keep stable reading surfaces.
-
-Team switches appear inline only under the enabled Team reviews switch in Settings → Sections,
-grouped by organization and labelled @org/slug. No list picker, count, cap or freshness labels.
-New installs land directly on the list with no first-run note. Refresh and coverage use short
-copy; Privacy keeps the no-site-access promise visible with “What Prowl can access” as a native disclosure.
+- **Rows** use `size="sm"` controls; rows that touch an edge draw their focus ring inside
+  (negative `outline-offset`).
+- **Loading:** skeletons that match the final layout for first loads; refreshes keep the data and
+  spin the refresh `IconButton`.
+- **Feedback:** a toast for action results, inline errors for validation and for a failed action
+  inside a dialog, a `StatusBanner` for persistent problems.
