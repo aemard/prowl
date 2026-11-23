@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PullRequest, Snapshot } from '../model';
-import { diffSnapshots } from './diffSnapshots';
+import { diffSnapshots, seenUntil } from './diffSnapshots';
 import { pr, VIEWER } from './diffSnapshots.test-support';
 
 const SEEN = '2026-10-06T09:00:00.000Z';
@@ -50,6 +50,19 @@ describe('diffSnapshots on pull requests new to the previous poll', () => {
     // The next poll has it as a baseline; a replay of the same poll gives the same id.
     expect(types(next, poll([known, asked()], '2026-10-06T09:04:00.000Z'))).toEqual([]);
     expect(diffSnapshots(prev, next, VIEWER)[0]?.id).toBe(`PR_asked:review_requested:${ASKED}`);
+  });
+
+  it('takes the arrival cut-off it is given over the one of a publication it diffs from', () => {
+    const baseline = poll([known], SEEN);
+    // A poll's first publication already holds a PR GitHub updated after the review was asked
+    // (with a local clock running ahead, even dated as the baseline it would put the cut-off there).
+    const own = pr({ id: 'PR_own', updatedAt: '2026-10-06T09:01:30Z' });
+    const published = poll([known, own], '2026-10-06T09:01:50.000Z');
+    const next = poll([...Object.values(published.pullRequests), asked()], POLLED);
+    expect(diffSnapshots(published, next, VIEWER)).toEqual([]);
+    expect(
+      diffSnapshots(published, next, VIEWER, seenUntil(baseline)).map(({ type }) => type),
+    ).toEqual(['review_requested']);
   });
 
   it('says nothing on the first poll or for another account', () => {

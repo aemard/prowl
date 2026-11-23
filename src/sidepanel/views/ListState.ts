@@ -190,13 +190,15 @@ function useMarkSeen(
   }, [renderedKey]);
   // Scrolling and folding only adjust the next poll's order; they never fetch on their own.
   const onScreenKey = onScreen.join('\n');
-  const fetchedAt = snapshot.value?.fetchedAt;
+  // Every publication renews the hint (it expires after a minute), including a poll's partial
+  // ones, which keep the previous `fetchedAt` until the poll completes.
+  const published = snapshot.value;
   useEffect(() => {
     void sendToBackground({ type: 'mergePriority', prIds: panelVisible ? onScreen : [] });
     return () => {
       void sendToBackground({ type: 'mergePriority', prIds: [] });
     };
-  }, [panelVisible, onScreenKey, fetchedAt]);
+  }, [panelVisible, onScreenKey, published]);
   useEffect(() => {
     const unseen = new Set(unseenKey.split('\n'));
     const prIds = onScreen.filter((id) => unseen.has(id));

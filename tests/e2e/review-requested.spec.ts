@@ -46,3 +46,27 @@ test('a review asked on a new pull request notifies once', async ({
   await poll();
   expect(await shown(serviceWorker)).toEqual([]);
 });
+
+test('a review asked before an update to an earlier section still notifies', async ({
+  github,
+  signIn,
+  poll,
+  serviceWorker,
+}) => {
+  const requested: ReturnType<typeof asking>[] = [];
+  let own = prNode({ number: 9 });
+  github.onGraphQL('ProwlSearch', (variables) => {
+    const query = String(variables.query);
+    if (query.includes('user-review-requested:@me')) return searchResponse(requested, variables);
+    return searchResponse(query.includes('author:@me') ? [own] : [], variables);
+  });
+  await signIn();
+  await poll();
+
+  const fresh = asking(2);
+  requested.push(fresh);
+  // The viewer's own PR, searched first, changes after the review was asked.
+  own = prNode({ number: 9, updatedAt: new Date(Date.now() + 1000).toISOString() });
+  await poll();
+  expect(await shown(serviceWorker)).toEqual([`${fresh.id}:review_requested:${fresh.updatedAt}`]);
+});

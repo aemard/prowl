@@ -35,9 +35,10 @@ type Add = (
 
 /**
  * Up to when `prev` saw GitHub, in GitHub's time: its local fetch time, or the newest update it
- * read when that is earlier, so a local clock running ahead never hides a change.
+ * read when that is earlier, so a local clock running ahead never hides a change. A poll takes it
+ * from its baseline once: its own publications hold PRs it just read (see `diffSnapshots`).
  */
-function seenUntil(prev: Snapshot): number {
+export function seenUntil(prev: Snapshot): number {
   const fetched = Date.parse(prev.fetchedAt);
   const updates = Object.values(prev.pullRequests).map(({ updatedAt }) => Date.parse(updatedAt));
   return updates.length ? Math.min(fetched, Math.max(...updates)) : fetched;
@@ -108,16 +109,19 @@ function turnChange(
  * for another account gives none. Changes the viewer made (their reviews, comments, merges)
  * are left out. Ids are `<pr id>:<type>:<key>` and do not depend on when the poll ran, so a
  * repeated poll yields the same ids; `at` is GitHub's time, or `next.fetchedAt` for check and
- * ready-to-merge changes, whose time the snapshot does not carry.
+ * ready-to-merge changes, whose time the snapshot does not carry. `since` is the arrival cut-off
+ * (`seenUntil(prev)` by default): a poll diffing its publications one after another passes its
+ * baseline's, since a publication that already holds an earlier section's fresh PRs would put the
+ * cut-off past news that later sections bring.
  */
 export function diffSnapshots(
   prev: Snapshot | null,
   next: Snapshot,
   viewerLogin: string,
+  since = prev ? seenUntil(prev) : 0,
 ): PrEvent[] {
   const viewer = viewerLogin.toLowerCase();
   if (!prev || prev.viewer.login.toLowerCase() !== viewer) return [];
-  const since = seenUntil(prev);
   const events = new Map<string, PrEvent>();
 
   for (const pr of Object.values(next.pullRequests)) {

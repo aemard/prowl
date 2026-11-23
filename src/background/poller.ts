@@ -4,7 +4,7 @@
  * any time): the schedule is the alarms, everything else is `pollState` and `snapshot` in storage.
  */
 import { carryCiOutcomes } from '../lib/diff/checkTransitions';
-import { carrySettledChecks, diffSnapshots } from '../lib/diff/diffSnapshots';
+import { carrySettledChecks, diffSnapshots, seenUntil } from '../lib/diff/diffSnapshots';
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
 import { type FetchResult, fetchPullRequests } from '../lib/github/fetchPullRequests';
@@ -176,9 +176,14 @@ async function preparePoll(reason: PollReason) {
 
 type PollAttempt = NonNullable<Awaited<ReturnType<typeof preparePoll>>>;
 
-function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchResult): Snapshot {
+function snapshotOf(
+  auth: AuthState,
+  previous: Snapshot | null,
+  fetched: FetchResult,
+  fetchedAt = new Date().toISOString(),
+): Snapshot {
   return {
-    fetchedAt: new Date().toISOString(),
+    fetchedAt,
     viewer: auth.viewer,
     pullRequests: fetched.pullRequests,
     sections: fetched.sections,
@@ -194,14 +199,22 @@ function snapshotOf(auth: AuthState, previous: Snapshot | null, fetched: FetchRe
   };
 }
 
+/**
+ * Stores each progressive publication, diffed against the one before with the arrival cut-off of
+ * the poll's baseline. A publication keeps the baseline's `fetchedAt` until the poll completes
+ * (`finishPoll`): the list is only as fresh as its last complete read, for the freshness gates,
+ * the header and the next poll's baseline should this one fail.
+ */
 function progressPublisher({ auth, previous, attempt, settings }: PollAttempt) {
   let published = previous;
+  const since = previous ? seenUntil(previous) : 0;
   const events: PrEvent[] = [];
   const publish = async (fetched: FetchResult, mergePending: string[]) => {
     await withSignedIn(auth, async () => {
       if (previous) await updatePrLocal((state) => baselineSeenFacts(state, previous.pullRequests));
-      const next = snapshotOf(auth, previous, fetched);
-      const changes = previous ? diffSnapshots(published, next, auth.viewer.login) : [];
+      // ponytail: without a baseline (first poll) a publication is dated now; a failure backs off.
+      const next = snapshotOf(auth, previous, fetched, previous?.fetchedAt);
+      const changes = previous ? diffSnapshots(published, next, auth.viewer.login, since) : [];
       await setItems({ snapshot: next, pollState: { ...attempt, mergePending, lastError: null } });
       // Clone the baseline: fetchPullRequests enriches its result in place after each batch.
       published = structuredClone(next);

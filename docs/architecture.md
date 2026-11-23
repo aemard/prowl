@@ -75,10 +75,13 @@ next snapshot replaces.
    were merged or closed, then reads merge facts (`ProwlMergeState`) in batches. Requests go one
    at a time (GitHub's advice against secondary limits).
 5. The poller publishes a snapshot after each completed section, before merge reads and after
-   each merge batch. Each publication is diffed against the previous publication, repaints the
-   badge and notifies, so events never repeat within a poll.
-6. The final snapshot is stored with `pollState` (and `teams` when discovered). Ended snoozes,
-   and local choices of PRs confirmed closed, are then pruned from `prLocal`.
+   each merge batch. Each publication is diffed against the previous publication, with the arrival
+   cut-off of the poll's baseline (`seenUntil(previous)`, computed once), repaints the badge and
+   notifies, so events never repeat within a poll. A publication keeps the baseline's `fetchedAt`:
+   a poll that fails midway leaves its partial list dated as the last complete read, and that
+   list is the next baseline.
+6. The final snapshot is stored, dated now, with `pollState` (and `teams` when discovered). Ended
+   snoozes, and local choices of PRs confirmed closed, are then pruned from `prLocal`.
 7. On error the failure is classified and stored, and the next attempt waits (see
    [Poll outcome](#poll-outcome)).
 
@@ -160,7 +163,7 @@ absent (older snapshots).
 
 | Field | Meaning |
 |---|---|
-| `fetchedAt`, `viewer` | When and for whom. A snapshot of another login is never a diff baseline. |
+| `fetchedAt`, `viewer` | When the last complete poll read GitHub (a progressive publication keeps its baseline's; the first poll's are dated now), and for whom. A snapshot of another login is never a diff baseline. |
 | `pullRequests` | id → `PullRequest`; merged or closed PRs stay one poll, in no section |
 | `sections` | section id → ordered PR ids; a PR may be in several; `your_turn` has no entry |
 | `sectionCoverage` | Per section: `hasMore`, `partial`, `stale` and per-query cursors and totals |
@@ -216,7 +219,9 @@ Rules:
   event, and only when it *arrived*: GitHub updated it after `prev` (the earlier of
   `prev.fetchedAt` and the newest `updatedAt` it read, so a fast local clock hides nothing) and a
   section that has it ran with the same `sectionScopes` fingerprint in `prev`. A PR that appears
-  because a section, query, filter or limit changed is not news.
+  because a section, query, filter or limit changed is not news. A poll passes its baseline's
+  cut-off to every progressive diff: a publication holding an earlier section's fresh PRs would
+  put it past what later sections bring.
 - The CI ordinal (`carryCiOutcomes`) increments on each observed failure or recovery and survives
   restarts and scope changes, so a repeated outcome on the same SHA gets a new id without poll
   times. Progressive publications recompute from the poll's baseline, so it never advances twice.
