@@ -106,6 +106,7 @@ describe('poll', () => {
           reached();
         }),
     );
+    later(2 * MINUTE);
     const loading = poll();
     await started;
     try {
@@ -207,6 +208,7 @@ describe('poll', () => {
     const [first, ...others] = await Promise.all(polls);
     expect(requests).toHaveLength(1);
     for (const other of others) expect(other).toBe(first);
+    later(2 * MINUTE);
     await poll();
     expect(requests).toHaveLength(2);
   });

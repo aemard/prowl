@@ -109,7 +109,7 @@ is the one cadence policy. Callers never gate a trigger on age or backoff themse
 
 | Reason | Who asks | Runs on a list older than | Through backoff / rejected token |
 |---|---|---|---|
-| `schedule` | the `poll` alarm | always | no |
+| `schedule` | the `poll` alarm | 1 min (`SCHEDULE_STALE_MS`): a fast-lane or panel poll just before stands for it | no |
 | `startup` | install, browser start | always | no |
 | `inbox` | fast lane: a relevant PR thread changed | always (trailing) | no |
 | `ci` | fast lane: CI running on the viewer's own listed PR (`ciWatched`) | 110 s (`CI_STALE_MS`) | no |
@@ -515,7 +515,9 @@ policy: during a wait or after a rejected token it asks GitHub nothing.
 - The same alarm asks for a `ci` poll while `ciWatched`: CI *running* (not merely expected or
   waiting) on one of the viewer's own open listed PRs that changed in the last hour. Only their
   own, because CI decides the turn only for the author; otherwise an active team would keep the
-  fastest cadence forever. With a 2-minute interval it adds nothing.
+  fastest cadence forever. A scheduled poll skips a list read less than a minute before
+  (`SCHEDULE_STALE_MS`), since the two alarms run on their own phases: with a 2-minute interval
+  the watch adds no poll, it only moves one earlier.
 
 ### Teams
 

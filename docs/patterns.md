@@ -85,7 +85,9 @@ appending a newer one.
   handled.
 - Wrap every account-dependent worker write in `withSignedIn(auth, task)`
   (`src/lib/storage/session.ts`); Web Locks are not reentrant, so never nest it, and keep GitHub
-  reads outside it.
+  reads outside it. Compare logins with `sameLogin` (same file): GitHub ignores their case.
+- A poll's partial publications keep the baseline's `fetchedAt`; tests that poll twice as
+  `schedule` advance the clock past `SCHEDULE_STALE_MS` (1 min) or the second one is skipped.
 - Notifications: `notifyEvents` (`notifier.ts`) over the pure `filterEvents` (`src/lib/notify`)
   and `isQuietNow`. The diff always emits turn events; `filterEvents` drops a `your_turn` that
   a kept event of its PR tells (`TOLD_BY`), so filter before the dedupe. Reported ids live in `chrome.storage.session` key `notified`, held events in

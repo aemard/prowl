@@ -49,6 +49,20 @@ describe('poll reasons', () => {
     expect(requests).toHaveLength(3);
   });
 
+  it('the poll alarm right after a CI-watch poll asks GitHub nothing, then polls as usual', async () => {
+    const requests = github();
+    await signIn();
+    await poll({ reason: 'schedule' });
+    later(110_000);
+    await poll({ reason: 'ci' });
+    later(10_000);
+    await poll({ reason: 'schedule' });
+    expect(requests).toHaveLength(2);
+    later(2 * MINUTE);
+    await poll({ reason: 'schedule' });
+    expect(requests).toHaveLength(3);
+  });
+
   it('no reason polls through a rate-limit wait, not even an explicit one', async () => {
     const requests = github();
     await signIn();

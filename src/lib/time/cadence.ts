@@ -21,6 +21,13 @@ export const CI_STALE_MS = 2 * MINUTE - 10_000;
  * trails a poll in flight that may have read GitHub before the news.
  */
 export const INBOX_STALE_MS = MINUTE;
+/**
+ * The poll alarm skips a list read less than this ago. The fast lane's minute alarm runs on its
+ * own phase, so an inbox or CI-watch poll (or the panel, a person) can come seconds before it:
+ * that read stands for the scheduled one. The alarm's previous poll is always older, as the
+ * interval is at least 2 minutes and a poll lasts seconds (one past a minute delays the next).
+ */
+export const SCHEDULE_STALE_MS = MINUTE;
 
 /** Whether the fast lane may read the inbox, given the stored list's `fetchedAt`. */
 export function inboxDue(fetchedAt: string | null, now: number): boolean {
@@ -48,6 +55,7 @@ function staleAfter(reason: PollReason, intervalMinutes: number): number {
   if (reason === 'panel') return PANEL_STALE_MS;
   if (reason === 'focus') return intervalMinutes * MINUTE;
   if (reason === 'ci') return CI_STALE_MS;
+  if (reason === 'schedule') return SCHEDULE_STALE_MS;
   return 0;
 }
 

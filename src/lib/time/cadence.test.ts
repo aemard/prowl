@@ -64,14 +64,16 @@ describe('pollVerdict', () => {
     expect(verdict('schedule', state)).toEqual({ run: true });
   });
 
-  it('polls a list for the panel past a minute, for focus past the interval, for CI past 110 s', () => {
+  it('polls a list for the panel or the alarm past a minute, for focus past the interval, for CI past 110 s', () => {
     const fresh = (reason: PollReason, age: number) =>
       verdict(reason, buildPollState(), at(NOW - age)).run;
     expect([fresh('panel', 30_000), fresh('panel', MINUTE)]).toEqual([false, true]);
+    // A fast-lane poll just before the alarm stands for the scheduled one.
+    expect([fresh('schedule', 10_000), fresh('schedule', MINUTE)]).toEqual([false, true]);
     expect([fresh('focus', MINUTE), fresh('focus', 2 * MINUTE)]).toEqual([false, true]);
     // With the minute alarm, a CI watch polls every 2 minutes: the poll interval's floor.
     expect([fresh('ci', MINUTE), fresh('ci', 110_000)]).toEqual([false, true]);
-    for (const reason of ['schedule', 'startup', 'inbox', 'user', 'change'] as const)
+    for (const reason of ['startup', 'inbox', 'user', 'change'] as const)
       expect(fresh(reason, 0)).toBe(true);
   });
 
