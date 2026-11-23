@@ -5,7 +5,7 @@ import { isSnoozed } from '../storage/prLocal';
 import { GitHubError } from './errors';
 import type { FetchResult, FetchSettings } from './fetchPullRequests';
 import { type MergeFacts, mapMergeState } from './mapPullRequest';
-import { MERGE_STATE_QUERY, type MergeStateData } from './queries';
+import { MERGE_STATE_QUERY, type MergeStateData, type MergeStateNode } from './queries';
 
 export type ReadGitHub = <T extends { rateLimit: unknown }>(
   query: string,
@@ -73,6 +73,17 @@ export const carriedMergeFacts = (before: PullRequest, pr: PullRequest): MergeFa
 
 const unsettled = (facts: MergeFacts) =>
   facts.mergeable === 'unknown' || facts.mergeStateStatus === 'unknown';
+
+/**
+ * The merge facts a read of `node` (for the PR's current head) settles, or null while GitHub is
+ * still computing them (after the base moved): the facts carried for this head then stand, and
+ * the PR stays due, rather than flipping out of ready and back as news. Polls and consulted-card
+ * reads both apply this rule.
+ */
+export function settledMergeFacts(node: Partial<MergeStateNode>): MergeFacts | null {
+  const facts = mapMergeState(node);
+  return unsettled(facts) ? null : facts;
+}
 
 function staleMergeStates(
   result: FetchResult,
@@ -197,18 +208,16 @@ export async function readMergeState({
       // A hole or a failed batch leaves the baseline above; facts computed for another head
       // are unknown for this one, and unread, so the next poll asks again.
       if (!isNode(node)) return;
-      const sameHead = node.headRefOid === pr.headSha && messages.length === 0;
-      const facts = mapMergeState(sameHead ? node : {});
-      // GitHub still computing (after the base moved): the facts carried for this head stand,
-      // and the PR stays due, rather than flipping out of ready and back as news.
-      if (sameHead && unsettled(facts)) return;
-      result.pullRequests[pr.id] = { ...pr, ...facts };
-      if (sameHead) {
-        result.mergeStateAt[pr.id] = readAt;
-        result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
-      } else {
+      if (node.headRefOid !== pr.headSha || messages.length > 0) {
+        result.pullRequests[pr.id] = { ...pr, ...mapMergeState({}) };
         delete result.mergeStateAt[pr.id];
+        return;
       }
+      const facts = settledMergeFacts(node);
+      if (!facts) return;
+      result.pullRequests[pr.id] = { ...pr, ...facts };
+      result.mergeStateAt[pr.id] = readAt;
+      result.mergeStateDue = result.mergeStateDue?.filter((id) => id !== pr.id);
     });
   }
   if (result.mergeStateDue?.length === 0) delete result.mergeStateDue;

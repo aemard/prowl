@@ -415,7 +415,8 @@ repositories, against its 10 s limit. `ProwlMergeState` (`fetchMergeState.ts`) r
   `carriedMergeFacts`), so a ready PR does not leave Your turn and come back as news; a new head,
   base, check, review, conversation count or draft flag starts it `unknown`.
 - `headRefOid` is selected so facts for another head are dropped. A same-head `UNKNOWN` keeps the
-  carried facts and leaves the PR due. A response with errors leaves its PRs unknown and unread.
+  carried facts and leaves the PR due (`settledMergeFacts`, for polls and consulted cards alike).
+  A response with errors leaves its PRs unknown and unread.
 - A consulted card (`refreshMergeState`, `mergeState.ts`) is moved up in any remaining batch, or
   read alone under `prowl:poll`; facts under a minute old are shared across reopens. It does not
   search, advance `fetchedAt` or ignore waits; only `unauthorized` and `rate_limited` failures

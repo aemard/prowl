@@ -3,7 +3,7 @@ import { diffSnapshots } from '../lib/diff/diffSnapshots';
 import { env } from '../lib/env';
 import { createGitHubClient } from '../lib/github/client';
 import { GitHubError, isPollBudgetFailure } from '../lib/github/errors';
-import { mapMergeState } from '../lib/github/mapPullRequest';
+import { settledMergeFacts } from '../lib/github/fetchMergeState';
 import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import type { AuthState, PollState, Settings, Snapshot } from '../lib/model';
@@ -150,10 +150,11 @@ async function publishMergeState(
     latestPr.headSha !== headSha
   )
     return false;
-  if (node && node.id === id && node.headRefOid === headSha) {
+  const facts = node?.id === id && node.headRefOid === headSha ? settledMergeFacts(node) : null;
+  if (facts) {
     const next: Snapshot = {
       ...latest,
-      pullRequests: { ...latest.pullRequests, [id]: { ...latestPr, ...mapMergeState(node) } },
+      pullRequests: { ...latest.pullRequests, [id]: { ...latestPr, ...facts } },
       mergeStateAt: { ...latest.mergeStateAt, [id]: new Date().toISOString() },
       mergeStateDue: latest.mergeStateDue?.filter((other) => other !== id),
     };
