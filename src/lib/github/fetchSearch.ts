@@ -1,5 +1,5 @@
-import { t } from '../i18n';
 /** Bounded section searches, coverage metadata and cached membership after cut scans. */
+import { t } from '../i18n';
 import type {
   ErrorKind,
   PullRequest,
@@ -15,9 +15,11 @@ import type { FetchResult, FetchSettings } from './fetchPullRequests';
 import { mapPullRequest } from './mapPullRequest';
 import { SEARCH_QUERY, type SearchData, TEAM_SEARCH_QUERY, withoutStacks } from './queries';
 import { parseRateLimit } from './rateLimit';
-import { buildSearchQuery, filterByRepo } from './search';
+import { buildSearchQuery, filterByRepo, validateCustomQuery } from './search';
 import { teamEvidence } from './teamEvidence';
 
+/** A query that already says how GitHub sorts its results. */
+const HAS_SORT = /(?:^|[\s(])sort:/i;
 /** A search came back with holes where an organization's SAML enforcement refused the token. */
 const SAML = /\bSAML\b/i;
 
@@ -234,26 +236,39 @@ export class SearchContext {
     return true;
   }
 
-  /** One search even without team discovery; exclusions require complete evidence. */
-  async searchTeams(section: Section): Promise<void> {
-    const query = `${buildSearchQuery(section, this.settings)} sort:updated-desc`;
+  /**
+   * Searches one section into `result`, newest updates first unless its query sorts. A custom
+   * query that is invalid, or a search refused or given up on (`sectionLevel`), is reported in
+   * `sectionErrors` and keeps the cached members; the team section searches even without team
+   * discovery, and only complete evidence excludes a PR (`teamEvidence`).
+   */
+  async searchSection(section: Section): Promise<void> {
+    const { id } = section;
+    const invalid = section.kind === 'custom' ? validateCustomQuery(section.query ?? '') : [];
+    if (invalid.length > 0) {
+      this.result.sectionErrors[id] = invalid.join(' ');
+      return;
+    }
+    const built = buildSearchQuery(section, this.settings);
+    const query = HAS_SORT.test(built) ? built : `${built} sort:updated-desc`;
     try {
-      const page = await this.search(query, true);
+      const page = await this.search(query, section.kind === 'team_review_requested');
       for (const pr of page.prs) this.put(pr);
-      this.result.sections[section.id] = page.prs.map(({ id }) => id);
-      if (page.problems.length)
-        this.result.sectionErrors[section.id] = this.problemText(page.problems);
+      this.result.sections[id] = page.prs.map((pr) => pr.id);
+      if (page.problems.length) this.result.sectionErrors[id] = this.problemText(page.problems);
       if (page.coverage.stale) this.preserve(section);
-      this.coverageFor(section.id, page.coverage);
+      this.coverageFor(id, page.coverage);
     } catch (error) {
       if (!this.sectionLevel(error)) throw error;
-      this.result.sectionErrors[section.id] = error.message;
+      this.result.sectionErrors[id] = error.message;
       this.preserve(section);
-      this.coverageFor(section.id, {
-        hasMore: false,
+      const cached = this.previous?.sectionCoverage?.[id];
+      const queries = cached?.queries ?? [];
+      this.coverageFor(id, {
+        hasMore: cached?.hasMore ?? false,
         partial: true,
         stale: true,
-        queries: [{ query, cursor: null }],
+        queries,
       });
     }
   }

@@ -1,9 +1,9 @@
-import { t } from '../i18n';
 /**
  * The one HTTP client for GitHub (GraphQL and REST). It runs in the service worker and the
  * side panel, so it only uses `fetch` and `AbortController`. It never retries: the poller owns
  * backoff. Every failure is a `GitHubError`; the token is masked in everything it carries.
  */
+import { t } from '../i18n';
 import { classifyGraphQLType, classifyHttpStatus, GitHubError } from './errors';
 import { headerCount, resetAtFromHeaders } from './rateLimit';
 

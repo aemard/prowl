@@ -1,9 +1,9 @@
-import { t } from '../i18n';
 /**
  * Team discovery: the teams the viewer belongs to, for the `team_review_requested` section.
  * REST `GET /user/teams` lists them across organizations in one call; GraphQL has no such
  * field, and every `Team` field there needs `read:org` (see docs/decisions.md).
  */
+import { t } from '../i18n';
 import type { AuthState, Team, TeamsState } from '../model';
 import { TEAM_KEY } from '../storage/settings';
 import type { GitHubClient } from './client';

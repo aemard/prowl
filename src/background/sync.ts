@@ -1,4 +1,3 @@
-import { setLanguage, t } from '../lib/i18n';
 /**
  * Optional settings sync (US-041). While this device's `sync.enabled` is on, settings are mirrored
  * to `chrome.storage.sync` (Chrome's own sync, one key), and settings another device synced come
@@ -7,6 +6,7 @@ import { setLanguage, t } from '../lib/i18n';
  * local PR state and teams never leave the device. A write happens only when the two copies
  * differ, which also stops each side from echoing the other.
  */
+import { setLanguage, t } from '../lib/i18n';
 import { type Settings, STORAGE_KEYS } from '../lib/model';
 import { jsonEqual } from '../lib/storage/guards';
 import { loadSettings, normalizeSettings, subscribeSettings } from '../lib/storage/settings';

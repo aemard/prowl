@@ -1,5 +1,5 @@
-import { t, uiLocale } from '../i18n';
 /** Snooze presets offered on every card. Times are local, like the user's working day. */
+import { t, uiLocale } from '../i18n';
 export type SnoozePreset = 'hour' | 'four_hours' | 'tomorrow' | 'monday';
 
 export const SNOOZE_PRESETS: readonly SnoozePreset[] = ['hour', 'four_hours', 'tomorrow', 'monday'];

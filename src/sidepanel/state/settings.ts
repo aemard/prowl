@@ -1,7 +1,7 @@
-import { t } from '../../lib/i18n';
 /** Writing settings from the panel: saved at once, and the list refreshed when the scope changed. */
 
 import { signal } from '@preact/signals';
+import { t } from '../../lib/i18n';
 import { normalizeSettings, updateSettings } from '../../lib/storage/settings';
 import { showToast } from '../components/ui/Toast';
 import { sendToBackground } from './background';

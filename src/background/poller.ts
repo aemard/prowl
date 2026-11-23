@@ -26,7 +26,7 @@ import {
   pruneExpired,
   updatePrLocal,
 } from '../lib/storage/prLocal';
-import { SESSION_LOCK, withSignedIn } from '../lib/storage/session';
+import { SESSION_LOCK, sameLogin, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import {
   getItem,
@@ -140,7 +140,9 @@ async function preparePoll(reason: PollReason) {
   await setLanguage(settings.language);
   const now = Date.now();
   // Another account's snapshot is no baseline, and its PRs are not this account's business.
-  const previous = stored.snapshot?.viewer.login === auth.viewer.login ? stored.snapshot : null;
+  const previous = sameLogin(stored.snapshot?.viewer.login, auth.viewer.login)
+    ? (stored.snapshot ?? null)
+    : null;
   const verdict = pollVerdict(
     reason,
     state,

@@ -1,4 +1,3 @@
-import { t } from '../lib/i18n';
 /**
  * Desktop notifications for a poll's events. The worker can stop at any time, so what must
  * survive lives in `chrome.storage.session` (cleared when the browser closes): `notified`
@@ -11,6 +10,7 @@ import { t } from '../lib/i18n';
  */
 
 import { env } from '../lib/env';
+import { t } from '../lib/i18n';
 import type { NotificationSettings, PrEvent, PrLocalState } from '../lib/model';
 import { filterEvents } from '../lib/notify/filterEvents';
 import {

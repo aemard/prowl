@@ -1,16 +1,17 @@
-import { t } from '../i18n';
 /**
  * One poll's worth of GitHub reads: every enabled section's search, the merge facts of the PRs
- * that left all sections, then merge facts of the PRs that changed. Requests run one after another, as GitHub asks of clients
- * to stay clear of secondary rate limits.
+ * that left all sections, then merge facts of the PRs that changed. Requests run one after
+ * another, as GitHub asks of clients to stay clear of secondary rate limits.
  */
-import type { PrLocalState, RateLimit, Section, Settings, Snapshot, TeamsState } from '../model';
+import { t } from '../i18n';
+import type { PrLocalState, RateLimit, Settings, Snapshot, TeamsState } from '../model';
 import type { GitHubClient } from './client';
 import { isNode, readMergeState } from './fetchMergeState';
 import { SearchContext } from './fetchSearch';
 import { mapClosedState } from './mapPullRequest';
 import { NODES_QUERY, type NodesData } from './queries';
-import { buildSearchQuery, filterByRepo, sectionScopes, validateCustomQuery } from './search';
+import { filterByRepo, sectionScopes } from './search';
+
 export interface FetchResult
   extends Pick<
     Snapshot,
@@ -33,7 +34,6 @@ export type FetchSettings = Pick<
   'sections' | 'repoInclude' | 'repoExclude' | 'maxPerSection' | 'unfollowedTeams'
 >;
 
-const HAS_SORT = /(?:^|[\s(])sort:/i;
 const IDS_PER_QUERY = 100;
 /**
  * Fetches every enabled section (`maxPerSection` most recently updated PRs each), dedupes PRs
@@ -96,41 +96,6 @@ export async function fetchPullRequests(
   return result;
 }
 
-async function searchSection(context: SearchContext, section: Section) {
-  const { result, previous, settings } = context;
-  if (section.kind === 'team_review_requested') {
-    await context.searchTeams(section);
-  } else {
-    const problems = section.kind === 'custom' ? validateCustomQuery(section.query ?? '') : [];
-    if (problems.length > 0) {
-      result.sectionErrors[section.id] = problems.join(' ');
-    } else {
-      const query = buildSearchQuery(section, settings);
-      try {
-        const page = await context.search(
-          HAS_SORT.test(query) ? query : `${query} sort:updated-desc`,
-        );
-        for (const pr of page.prs) context.put(pr);
-        result.sections[section.id] = page.prs.map(({ id }) => id);
-        if (page.problems.length)
-          result.sectionErrors[section.id] = context.problemText(page.problems);
-        if (page.coverage.stale) context.preserve(section);
-        context.coverageFor(section.id, page.coverage);
-      } catch (error) {
-        if (!context.sectionLevel(error)) throw error;
-        result.sectionErrors[section.id] = error.message;
-        context.preserve(section);
-        context.coverageFor(section.id, {
-          hasMore: previous?.sectionCoverage?.[section.id]?.hasMore ?? false,
-          partial: true,
-          stale: true,
-          queries: previous?.sectionCoverage?.[section.id]?.queries ?? [],
-        });
-      }
-    }
-  }
-}
-
 function pendingPublication(context: SearchContext, pending: Set<string>): FetchResult {
   const { result, previous } = context;
   // The sections still to search keep their cached cards, without claiming they were searched.
@@ -170,7 +135,7 @@ async function searchSections(
   );
   const pending = new Set(enabled.map(({ id }) => id));
   for (const section of enabled) {
-    await searchSection(context, section);
+    await context.searchSection(section);
     pending.delete(section.id);
     if (pending.size > 0 && onProgress) {
       await onProgress(pendingPublication(context, pending), []);

@@ -8,7 +8,7 @@ import { MERGE_STATE_QUERY, type MergeStateData } from '../lib/github/queries';
 import { parseRateLimit } from '../lib/github/rateLimit';
 import type { AuthState, PollState, Settings, Snapshot } from '../lib/model';
 import { normalizePrLocal } from '../lib/storage/prLocal';
-import { withSignedIn } from '../lib/storage/session';
+import { sameLogin, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItem, getItems, setItem, withLock } from '../lib/storage/storage';
 import { isWaiting, LOW_RATE_LIMIT, rateLimitedUntil } from '../lib/time/backoff';
@@ -68,7 +68,7 @@ async function refreshCard(id: string, headSha: string, requestedAuth: AuthState
     !snapshot ||
     !pr ||
     pr.state !== 'open' ||
-    snapshot.viewer.login !== auth.viewer.login ||
+    !sameLogin(snapshot.viewer.login, auth.viewer.login) ||
     pr.headSha !== headSha ||
     state.lastError?.kind === 'unauthorized' ||
     isWaiting(state.nextAllowedAt, now)
@@ -146,7 +146,7 @@ async function publishMergeState(
     !latest ||
     !latestPr ||
     latestPr.state !== 'open' ||
-    latest.viewer.login !== auth.viewer.login ||
+    !sameLogin(latest.viewer.login, auth.viewer.login) ||
     latestPr.headSha !== headSha
   )
     return false;

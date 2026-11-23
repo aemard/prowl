@@ -1,7 +1,7 @@
-import { t } from '../i18n';
 /**
  * The read behind an expanded card: `ProwlPullRequestDetail` for one PR, mapped to the model.
  */
+import { t } from '../i18n';
 import type { PullRequest, PullRequestDetail } from '../model';
 import { isRecord } from '../storage/guards';
 import type { GitHubClient } from './client';

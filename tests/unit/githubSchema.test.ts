@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildSchema, NoDeprecatedCustomRule, parse, specifiedRules, validate } from 'graphql';
 import { describe, expect, it } from 'vitest';
+import { SEARCH_QUERY, TEAM_SEARCH_QUERY, withoutStacks } from '../../src/lib/github/queries';
 
 const modules = import.meta.glob<Record<string, unknown>>(
   ['../../src/lib/github/**/*.ts', '!**/*.test.ts', '!**/*.test-support.ts'],
@@ -35,6 +36,9 @@ for (const exported of Object.values(modules)) {
     names.add(name);
   }
 }
+// The searches sent once GitHub drops its stack fields (`fetchSearch.ts`) are built, not exported.
+for (const [key, query] of Object.entries({ SEARCH_QUERY, TEAM_SEARCH_QUERY }))
+  operations.set(`withoutStacks(${key})`, withoutStacks(query));
 
 describe('GraphQL operations against the GitHub schema', () => {
   it('exports every operation written in src/lib/github', () => {
@@ -46,6 +50,11 @@ describe('GraphQL operations against the GitHub schema', () => {
     expect([...names]).toEqual(
       expect.arrayContaining([...written, 'ProwlApprove', 'ProwlRequestChanges']),
     );
+  });
+
+  it('strips the stack fields from both searches', () => {
+    for (const key of ['SEARCH_QUERY', 'TEAM_SEARCH_QUERY'])
+      expect(operations.get(`withoutStacks(${key})`)).not.toMatch(/stackEntry/);
   });
 
   it.each([...operations])('%s is valid and uses no deprecated field', (_, document) => {

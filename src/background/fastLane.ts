@@ -16,7 +16,7 @@ import { createGitHubClient } from '../lib/github/client';
 import { GitHubError } from '../lib/github/errors';
 import { checkInbox, listedRepos } from '../lib/github/notifications';
 import type { AuthState, PollState } from '../lib/model';
-import { withSignedIn } from '../lib/storage/session';
+import { sameLogin, withSignedIn } from '../lib/storage/session';
 import { normalizeSettings } from '../lib/storage/settings';
 import { getItems, withLock } from '../lib/storage/storage';
 import { isWaiting, rateLimitedUntil } from '../lib/time/backoff';
@@ -123,7 +123,7 @@ export async function checkFastLane(at = Date.now()): Promise<void> {
       return;
     }
     // Another account's list says nothing of this one's.
-    const own = snapshot?.viewer.login === auth.viewer.login ? snapshot : undefined;
+    const own = sameLogin(snapshot?.viewer.login, auth.viewer.login) ? snapshot : undefined;
     // A poll just ran: read the inbox at a later alarm (a `ci` poll waits longer still).
     if (!inboxDue(own?.fetchedAt ?? null, Date.now())) return;
     const lane = { auth, state, interval, at };

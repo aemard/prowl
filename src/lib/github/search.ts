@@ -1,9 +1,9 @@
-import { t } from '../i18n';
 /**
  * Search queries for the PR list: one GitHub issue-search string per section, plus the
  * repo include/exclude filters. Inputs come from `normalizeSettings`, which already validated
  * the repo patterns (`owner` or `owner/name`), so they are interpolated verbatim.
  */
+import { t } from '../i18n';
 import type { PullRequest, Section, Settings } from '../model';
 import type { BuiltInSectionKind } from '../storage/settings';
 
