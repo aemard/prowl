@@ -132,7 +132,7 @@ export interface PullRequest {
   reviewDecision: ReviewDecision;
   /** Latest review per reviewer, newest first. */
   reviews: Review[];
-  /** Logins (or team slugs prefixed with `@`) whose review is requested. */
+  /** Logins of the users whose review is requested (team requests are in `Snapshot.teamRequests`). */
   requestedReviewers: string[];
   mergeable: Mergeable;
   mergeStateStatus: MergeStateStatus;
@@ -295,7 +295,7 @@ export interface SectionCoverage {
   hasMore: boolean;
   partial?: boolean;
   stale?: boolean;
-  /** Each team query has its own cursor; totals must not be summed across overlapping teams. */
+  /** The section's search queries, each with its own cursor; totals must not be summed across queries that overlap. */
   queries: { query: string; cursor: string | null; total?: number }[];
 }
 
@@ -322,8 +322,8 @@ export interface Snapshot {
    */
   sectionErrors?: Record<string, string>;
   /**
-   * PR id -> keys (`teamKey`) of the followed teams whose search returned it, for the PRs of the
-   * `team_review_requested` section. Absent means none.
+   * PR id -> keys (`teamKey`) of the viewer's followed teams that the PR asks to review, read
+   * from its review requests, for the PRs of the `team_review_requested` section. Absent means none.
    */
   teamRequests?: Record<string, string[]>;
   /**
@@ -437,7 +437,6 @@ export interface AuthState {
 
 export type * from './modelSettings';
 
-/** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 /**
  * Whether this device mirrors its settings through Chrome sync, and why the last write there
  * failed. Device-local: it never goes to `chrome.storage.sync` itself.
@@ -451,6 +450,7 @@ export interface SyncState {
 /** The manifest command that opens the side panel from the keyboard. */
 export const OPEN_PANEL_COMMAND = 'open-panel';
 
+/** Keys used in `chrome.storage.local`. The token never goes to `storage.sync`. */
 export const STORAGE_KEYS = {
   sync: 'sync',
   settings: 'settings',
