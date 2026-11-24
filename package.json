@@ -34,20 +34,20 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@crxjs/vite-plugin": "^3.0.0",
     "@playwright/test": "1.65.1",
     "@preact/preset-vite": "^2.10.6",
     "@testing-library/preact": "^3.2.6",
     "@types/chrome": "^0.3.7",
     "@types/node": "^24.19.2",
-    "@vitest/coverage-v8": "^5.1.0",
-    "fast-check": "^4.10.2",
+    "@vitest/coverage-v8": "^5.1.1",
+    "fast-check": "^4.11.0",
     "fflate": "^0.8.3",
     "happy-dom": "^21.0.4",
     "typescript": "~6.0.3",
     "vite": "^8.3.8",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "dependencies": {
     "@preact/signals": "2.11.4",
